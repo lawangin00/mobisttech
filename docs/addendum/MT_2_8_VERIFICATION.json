@@ -1,0 +1,1053 @@
+{
+  "date": "2026-09-01",
+  "point": "MT-2.8 - Addendum foundations and capability contracts",
+  "baseline_head": "41ecc38ec3404c70fa373bdaaedc6cef0f107654",
+  "scope": {
+    "implemented": [
+      "additive schema primitives",
+      "Website capability v1 internal snapshot and creation gate",
+      "custody-aware stock availability and immutable unit lineage",
+      "exact immutable adjustment and milestone reference primitives",
+      "explicit POS/Website/reset permission namespaces",
+      "all-table reset retention classification and dependency barriers"
+    ],
+    "not_implemented": [
+      "MT-2.5 sales/invoices/returns",
+      "transfer/procurement/stocktake/cash/trade-in/promotion/loyalty/repair/bulk workflows",
+      "reset executor/preview/backup/file cleanup",
+      "mode publication/CMS/public API/Website UI",
+      "payment or milestone payment processing",
+      "private source-data migration",
+      "public browser/performance acceptance"
+    ],
+    "registered_business_routes_added": 0,
+    "website_files_changed": 0,
+    "roadmap_or_docx_changed": false,
+    "historical_evidence_changed": false,
+    "source_data_or_runtime_actions": false,
+    "real_provider_or_production_actions": false
+  },
+  "requirements": {
+    "approved_leaf_clauses": 41,
+    "matrix_contract": "addendum-entity-api-permission-matrix.v1",
+    "mapped_rows": 41,
+    "all_rows_have_entities_permissions_reserved_apis_owner_and_acceptance": true,
+    "reserved_api_status": "All listed business HTTP surfaces explicitly state Not implemented in MT-2.8. Customer/public annotations are policies, not administrative grants.",
+    "foundation_contract": "addendum-foundations.v1",
+    "extension_tables": [
+      "website_operating_profiles",
+      "stock_unit_lineage",
+      "inventory_custody_holds",
+      "acquisition_source_references",
+      "monetary_adjustments",
+      "project_milestone_identities",
+      "order_item_milestones"
+    ],
+    "default_public_profile": {
+      "contract": "website-capabilities.v1",
+      "mode": null,
+      "version": "0",
+      "capabilities": {
+        "commerce": false,
+        "digital": false
+      },
+      "cache_namespace": "website-mode:0:unpublished"
+    }
+  },
+  "schema": {
+    "before": {
+      "mode": "identity",
+      "result": "PASS",
+      "database": "mobisttech_test",
+      "port": 13306,
+      "mysql": "8.4.11",
+      "timezone": "+00:00",
+      "strict": true,
+      "counts": {
+        "tables": 73,
+        "columns": 916,
+        "foreign_keys": 117,
+        "indexes": 326
+      },
+      "schema_sha256": "2de954e11845e1dc844586d8a406813116fa0925282b9f626e1c99b65329e9ae",
+      "business_rows": 0
+    },
+    "after": {
+      "mode": "addendum",
+      "result": "PASS",
+      "database": "mobisttech_test",
+      "port": 13306,
+      "mysql": "8.4.11",
+      "timezone": "+00:00",
+      "strict": true,
+      "counts": {
+        "tables": 80,
+        "columns": 962,
+        "foreign_keys": 129,
+        "indexes": 349
+      },
+      "schema_sha256": "7705faeee3918cd9faf9a8434ec136fe4078340263dca9ecbaba9cffec8d2337",
+      "business_rows": 0
+    },
+    "local": {
+      "database": "mobisttech_local",
+      "port": 13306,
+      "tables": 80,
+      "business_rows": 0,
+      "schema_sha256": "7705faeee3918cd9faf9a8434ec136fe4078340263dca9ecbaba9cffec8d2337"
+    },
+    "testing": {
+      "database": "mobisttech_test",
+      "port": 13306,
+      "tables": 80,
+      "business_rows": 0,
+      "schema_sha256": "7705faeee3918cd9faf9a8434ec136fe4078340263dca9ecbaba9cffec8d2337"
+    },
+    "same_normalized_schema": true,
+    "original_schema_manifest_unchanged": {
+      "sha256": "2d05eec73c7a3134be5e9223e6e8992356f4dedbbc9402b17562c76c9a008cf3",
+      "unchanged_from_baseline": true
+    },
+    "migration_sha256": "464801cd68cec3ab08791d7e960bb67c8253dcd5580b3d8031efe07aaab89654",
+    "lifecycle": {
+      "result": "PASS",
+      "database": "mobisttech_test",
+      "port": 13306,
+      "original_tables_unchanged": 73,
+      "extension_tables": 7,
+      "rollback_reapply_cycles": 2,
+      "synthetic_original_row_preserved": true,
+      "nonempty_rollback_refused_before_any_drop": true,
+      "original_definitions_sha256": "2de954e11845e1dc844586d8a406813116fa0925282b9f626e1c99b65329e9ae",
+      "extension_definitions_sha256": "05a65d4492dbe40822e022e07d298166e8334dc9b5b0331a47ecff34a9579674"
+    },
+    "check_constraints": [
+      "profile_singleton",
+      "lineage_forward_only",
+      "custody_shape",
+      "adjustment_owner",
+      "adjustment_value",
+      "adjustment_treatment",
+      "adjustment_source",
+      "milestone_value"
+    ],
+    "all_new_foreign_keys_restrict_deletion": true,
+    "one_use_nonmanual_effect_identity_unique": true,
+    "one_order_item_per_milestone_unique": true,
+    "rollback_boundary": "Test schema only; two down/up cycles. All seven extension tables checked empty before any drop. Populated rollback refused. Original migrations were not rolled back. Local received only normal one-step empty extension reapply after the final uncommitted migration correction."
+  },
+  "verification": {
+    "focused": {
+      "tests": 16,
+      "assertions": 154,
+      "errors": 0,
+      "failures": 0,
+      "test_cases": [
+        {
+          "class": "Tests\\Feature\\AddendumBoundaryTest",
+          "method": "test_internal_creation_gates_require_an_owning_transaction",
+          "time_seconds": 0.224195,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumBoundaryTest",
+          "method": "test_money_contract_rejects_float_rounding_overflow_and_missing_external_identity",
+          "time_seconds": 0.031574,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumBoundaryTest",
+          "method": "test_no_addendum_business_endpoint_is_exposed",
+          "time_seconds": 0.019774,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_unpublished_mode_and_unknown_or_history_operations_never_authorize_creation",
+          "time_seconds": 0.065496,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_three_modes_are_versioned_and_only_allow_their_declared_public_capabilities",
+          "time_seconds": 0.119967,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_profile_constraints_reject_second_singleton_invalid_revision_and_zero_version",
+          "time_seconds": 0.026737,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_new_permissions_preserve_defaults_and_realm_outlet_and_publish_boundaries",
+          "time_seconds": 0.514031,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_quantity_custody_holds_block_sale_reservation_and_excess_adjustment_without_moving_history",
+          "time_seconds": 0.708313,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_serialized_custody_preserves_active_imei_claims_and_rejects_duplicate_or_cross_product_units",
+          "time_seconds": 0.608947,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_lineage_rejects_cycles_branching_and_deletion_of_origin_history",
+          "time_seconds": 0.259439,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_adjustment_identity_is_exact_append_only_replayable_and_not_a_second_money_engine",
+          "time_seconds": 0.241498,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_milestones_cannot_exceed_approved_amount_or_change_paid_history",
+          "time_seconds": 0.032062,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_reference_writes_rollback_with_the_owning_transaction",
+          "time_seconds": 0.027357,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_procurement_reference_retains_acquisition_evidence_and_requires_a_real_acquisition",
+          "time_seconds": 0.294223,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_milestone_order_links_require_existing_items_and_retain_referenced_history",
+          "time_seconds": 0.038277,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_reset_classifies_every_table_and_blocks_retained_financial_dependencies_without_deletion",
+          "time_seconds": 0.11947,
+          "result": "PASS"
+        }
+      ]
+    },
+    "full_backend": {
+      "tests": 105,
+      "assertions": 4733,
+      "errors": 0,
+      "failures": 0,
+      "test_cases": [
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "method": "test_isolated_target_is_accepted",
+          "time_seconds": 0.001839,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "method": "test_unsafe_database_configuration_fails_before_connection with data set \"source port\"",
+          "time_seconds": 0.000759,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "method": "test_unsafe_database_configuration_fails_before_connection with data set \"remote host\"",
+          "time_seconds": 0.000628,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "method": "test_unsafe_database_configuration_fails_before_connection with data set \"source database\"",
+          "time_seconds": 0.000602,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "method": "test_unsafe_database_configuration_fails_before_connection with data set \"root account\"",
+          "time_seconds": 0.000646,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "method": "test_unsafe_database_configuration_fails_before_connection with data set \"URL override\"",
+          "time_seconds": 0.000625,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "method": "test_unsafe_database_configuration_fails_before_connection with data set \"SQLite source path\"",
+          "time_seconds": 0.000612,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "method": "test_unsafe_database_configuration_fails_before_connection with data set \"socket override\"",
+          "time_seconds": 0.000773,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "method": "test_external_integrations_cannot_be_enabled_locally",
+          "time_seconds": 0.000785,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumBoundaryTest",
+          "method": "test_internal_creation_gates_require_an_owning_transaction",
+          "time_seconds": 0.180606,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumBoundaryTest",
+          "method": "test_money_contract_rejects_float_rounding_overflow_and_missing_external_identity",
+          "time_seconds": 0.022144,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumBoundaryTest",
+          "method": "test_no_addendum_business_endpoint_is_exposed",
+          "time_seconds": 0.012016,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_unpublished_mode_and_unknown_or_history_operations_never_authorize_creation",
+          "time_seconds": 0.039986,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_three_modes_are_versioned_and_only_allow_their_declared_public_capabilities",
+          "time_seconds": 0.073031,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_profile_constraints_reject_second_singleton_invalid_revision_and_zero_version",
+          "time_seconds": 0.035181,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_new_permissions_preserve_defaults_and_realm_outlet_and_publish_boundaries",
+          "time_seconds": 0.273018,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_quantity_custody_holds_block_sale_reservation_and_excess_adjustment_without_moving_history",
+          "time_seconds": 0.284274,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_serialized_custody_preserves_active_imei_claims_and_rejects_duplicate_or_cross_product_units",
+          "time_seconds": 0.342885,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_lineage_rejects_cycles_branching_and_deletion_of_origin_history",
+          "time_seconds": 0.23816,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_adjustment_identity_is_exact_append_only_replayable_and_not_a_second_money_engine",
+          "time_seconds": 0.179289,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_milestones_cannot_exceed_approved_amount_or_change_paid_history",
+          "time_seconds": 0.029598,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_reference_writes_rollback_with_the_owning_transaction",
+          "time_seconds": 0.029042,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_procurement_reference_retains_acquisition_evidence_and_requires_a_real_acquisition",
+          "time_seconds": 0.204103,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_milestone_order_links_require_existing_items_and_retain_referenced_history",
+          "time_seconds": 0.049504,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\AddendumFoundationsTest",
+          "method": "test_reset_classifies_every_table_and_blocks_retained_financial_dependencies_without_deletion",
+          "time_seconds": 0.136074,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\FoundationInfrastructureTest",
+          "method": "test_runtime_tables_use_the_isolated_mysql_test_database",
+          "time_seconds": 0.056177,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\FoundationInfrastructureTest",
+          "method": "test_foundation_request_persists_a_database_session",
+          "time_seconds": 0.143593,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "method": "test_public_health_contract_exposes_no_configuration",
+          "time_seconds": 0.02732,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "method": "test_inertia_foundation_renders_without_business_authentication",
+          "time_seconds": 0.020985,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "method": "test_business_and_legacy_transport_routes_are_not_prematurely_exposed",
+          "time_seconds": 0.06974,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "method": "test_external_http_is_disabled_in_isolated_environment",
+          "time_seconds": 0.054604,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "method": "test_same_source_ids_and_emails_remain_separate_outlet_and_credential_identities",
+          "time_seconds": 0.074315,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "method": "test_identity_replay_is_idempotent_and_changed_input_or_email_collision_is_quarantined",
+          "time_seconds": 0.049682,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "method": "test_proven_legacy_owner_is_explicitly_mapped_and_audited_without_customer_identity",
+          "time_seconds": 0.034189,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "method": "test_invalid_privilege_values_are_quarantined_without_partial_accounts",
+          "time_seconds": 0.055865,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "method": "test_unknown_source_fields_fail_before_any_import_and_membership_uses_source_maps",
+          "time_seconds": 0.064558,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "method": "test_timestamps_hashes_and_unsupported_date_values_have_explicit_dispositions",
+          "time_seconds": 0.042381,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "method": "test_matching_unverified_contact_does_not_merge_a_customer_observation",
+          "time_seconds": 0.056355,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_registration_rejects_role_injection_and_rotates_the_session",
+          "time_seconds": 0.068148,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_csrf_is_enforced_even_with_same_origin_fetch_header",
+          "time_seconds": 0.252743,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_customer_and_cms_sessions_and_equal_email_pos_accounts_are_isolated",
+          "time_seconds": 0.496899,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_customer_ownership_does_not_follow_email_or_guest_order_contact",
+          "time_seconds": 0.026315,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_complete_website_role_matrix_and_pos_default_grants",
+          "time_seconds": 0.02507,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_reset_tokens_are_scoped_single_use_and_revoke_existing_sessions",
+          "time_seconds": 0.277639,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_recovery_is_non_enumerating_and_does_not_log_tokens_when_delivery_is_disabled",
+          "time_seconds": 0.47062,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_login_is_rate_limited_and_disabled_accounts_cannot_authenticate",
+          "time_seconds": 1.089293,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_pos_device_limits_replacement_and_logout_keep_other_realms_alive",
+          "time_seconds": 0.084206,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_outlet_assignment_and_permissions_are_rechecked_and_cannot_be_injected",
+          "time_seconds": 0.070851,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_password_change_revokes_other_devices_and_remember_cookie_cannot_restore_access",
+          "time_seconds": 0.090103,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_cross_realm_cookie_renaming_and_csrf_replay_do_not_authenticate",
+          "time_seconds": 0.0488,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_production_session_cookies_are_secure_host_only_and_admin_host_is_separate",
+          "time_seconds": 0.0396,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_logout_does_not_sign_out_another_realm_in_the_same_cookie_jar",
+          "time_seconds": 0.070553,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "method": "test_existing_argon_hash_can_authenticate_without_requiring_a_password_reset",
+          "time_seconds": 0.328544,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryConcurrencyTest",
+          "method": "test_separate_mysql_connections_arbitrate_quantity_sale_versus_reservation",
+          "time_seconds": 1.481418,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryConcurrencyTest",
+          "method": "test_separate_mysql_connections_cannot_reserve_the_same_physical_unit_twice",
+          "time_seconds": 1.494906,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryConcurrencyTest",
+          "method": "test_separate_products_competing_for_global_imei_claim_roll_back_loser",
+          "time_seconds": 1.434913,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryConcurrencyTest",
+          "method": "test_private_acquisition_evidence_is_scoped_and_never_a_client_selected_path",
+          "time_seconds": 0.860045,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "method": "test_acquisition_is_atomic_exact_idempotent_and_derives_physical_units",
+          "time_seconds": 0.290534,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "method": "test_unauthorized_actor_and_injected_fields_do_not_change_stock",
+          "time_seconds": 0.277818,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "method": "test_imei_slots_versions_global_uniqueness_and_rollback",
+          "time_seconds": 0.335955,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "method": "test_quantity_holds_block_sale_adjustment_and_archive_until_release",
+          "time_seconds": 0.320122,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "method": "test_tracked_reserved_sale_uses_held_units_preserves_history_and_release_cannot_restore_stock",
+          "time_seconds": 0.344736,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "method": "test_expiration_boundary_and_cod_holds_are_distinct",
+          "time_seconds": 0.322494,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "method": "test_adjustment_retires_incomplete_unit_and_prevents_negative_stock",
+          "time_seconds": 0.328201,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "method": "test_enclosing_transaction_rollback_undoes_stock_claims_holds_events_and_retry_key",
+          "time_seconds": 0.331379,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "method": "test_snapshot_and_movement_discrepancies_block_operations_without_repair",
+          "time_seconds": 0.293606,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "method": "test_source_registry_defaults_and_reseeding_preserve_managed_customization",
+          "time_seconds": 0.253911,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "method": "test_protected_codes_and_canonical_status_deletion_are_rejected",
+          "time_seconds": 0.158817,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "method": "test_master_data_requires_configuration_grant_and_rejects_actor_or_code_injection",
+          "time_seconds": 0.193242,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "method": "test_option_validation_lifecycle_and_existing_inactive_reference_are_preserved",
+          "time_seconds": 0.181694,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "method": "test_product_definition_preserves_identifiers_usage_history_and_exact_money",
+          "time_seconds": 0.221836,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "method": "test_definition_rejects_duplicate_names_invalid_category_money_and_stock_actor_injection",
+          "time_seconds": 0.24555,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "method": "test_accessory_subcategory_semantics_and_outlet_boundaries_are_enforced",
+          "time_seconds": 0.226071,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "method": "test_unit_variant_keys_and_private_metadata_remain_separate_from_display_labels",
+          "time_seconds": 0.26071,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "method": "test_definition_transaction_rollback_does_not_publish_or_leave_a_product",
+          "time_seconds": 0.21767,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "method": "test_pinned_source_constants_and_variant_name_characterization_match_target",
+          "time_seconds": 0.207341,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "method": "test_existing_holds_block_definition_and_unit_changes_without_rewriting_history",
+          "time_seconds": 0.252313,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "method": "test_products_and_master_data_use_source_qualified_ids_with_unchanged_codes_and_replay",
+          "time_seconds": 0.073113,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "method": "test_listing_candidate_must_match_product_outlet_category_and_contract_without_importing_cached_stock",
+          "time_seconds": 0.105065,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "method": "test_unit_metadata_and_usage_relationships_preserve_history_and_wait_for_unresolved_parents",
+          "time_seconds": 0.085614,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "method": "test_invalid_source_values_and_field_shapes_quarantine_without_partial_products",
+          "time_seconds": 0.132663,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "method": "test_wrong_option_lists_and_protected_category_or_metadata_changes_are_not_guessed",
+          "time_seconds": 0.134832,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "method": "test_import_is_atomic_with_outer_rollback_and_preserves_deleted_snapshot_and_timezone",
+          "time_seconds": 0.095608,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "method": "test_database_queue_dispatches_after_commit_and_discards_rolled_back_jobs",
+          "time_seconds": 0.117995,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "method": "test_worker_failure_retries_then_preserves_terminal_failure_evidence",
+          "time_seconds": 0.112435,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "method": "test_redis_outage_uses_master_without_replaying_callback",
+          "time_seconds": 0.831857,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "method": "test_master_version_change_bypasses_old_cache_and_rollback_preserves_version",
+          "time_seconds": 0.05032,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "method": "test_private_object_roundtrip_stays_outside_public_storage",
+          "time_seconds": 0.020633,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "method": "test_private_object_rejects_paths_and_bad_digests_before_writing",
+          "time_seconds": 0.01413,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "method": "test_s3_network_access_is_disabled_in_isolated_application",
+          "time_seconds": 0.012455,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "method": "test_real_s3_adapter_scopes_private_requests_and_propagates_failures_without_network",
+          "time_seconds": 0.097017,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "method": "test_website_configuration_has_no_database_or_object_store_credentials",
+          "time_seconds": 0.013505,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "method": "test_every_manifest_column_and_foreign_key_exists_on_mysql",
+          "time_seconds": 0.185171,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "method": "test_source_manifest_accounts_for_every_final_column_and_preserves_namespaces",
+          "time_seconds": 0.730561,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "method": "test_money_keeps_exact_large_values_and_rejects_overflow_and_negative_stock",
+          "time_seconds": 0.048142,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "method": "test_cross_outlet_references_and_financial_history_deletion_are_rejected",
+          "time_seconds": 0.041238,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "method": "test_active_imei_is_unique_but_historical_reentry_is_allowed",
+          "time_seconds": 0.024151,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "method": "test_payment_replay_and_multiple_current_holds_are_database_conflicts",
+          "time_seconds": 0.025275,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "method": "test_source_qualified_identity_and_one_canonical_listing_constraints",
+          "time_seconds": 0.047003,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "method": "test_active_unit_allocation_is_unique_and_cannot_switch_products",
+          "time_seconds": 0.03119,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "method": "test_publication_version_and_durable_event_roll_back_together",
+          "time_seconds": 0.03132,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\StockMigrationTest",
+          "method": "test_stock_acquisition_and_movements_preserve_money_source_identity_timezone_and_replay",
+          "time_seconds": 0.307001,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\StockMigrationTest",
+          "method": "test_active_imei_claims_rebuild_from_mapped_history_and_duplicate_or_unmapped_rows_quarantine",
+          "time_seconds": 0.314926,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\StockMigrationTest",
+          "method": "test_source_private_paths_bad_arithmetic_unknown_columns_and_unresolved_references_are_not_guessed",
+          "time_seconds": 0.237546,
+          "result": "PASS"
+        },
+        {
+          "class": "Tests\\Feature\\StockMigrationTest",
+          "method": "test_historical_imei_occurrences_remain_separate_from_current_global_claim",
+          "time_seconds": 0.361216,
+          "result": "PASS"
+        }
+      ]
+    },
+    "existing_independent_process_stock_races_included": true,
+    "pint": "PASS",
+    "composer_validate_strict": "PASS",
+    "composer_platform_requirements": "PASS",
+    "optimize_clear": "PASS",
+    "pos_typecheck_and_production_build": "PASS; 567 modules; generated build output ignored",
+    "website_lint_typecheck_production_build": "PASS; root dynamic and not-found static; generated output ignored",
+    "schema_lineage": "PASS: 79 pinned migration hashes; 58 source tables / 735 columns; 62 shared-manifest tables; 116 invalid shapes rejected",
+    "contract_verifier": "PASS: 41 clauses; contract schema; local/test DDL; lifecycle; full/focused tests; authorities/routes/UI unchanged",
+    "source_snapshot": "PASS: protected refs, branches, origins, status and all 824 POS + 400 Website tracked-file byte fingerprints unchanged",
+    "runtime_final_state": "Stopped: isolated target MySQL",
+    "logs": {
+      "full.xml": {
+        "sha256": "acbf02494edf42a3b0441fa963fcafa799a8dc832a1a96d8198d86c11e411571",
+        "bytes": 35617
+      },
+      "focused.xml": {
+        "sha256": "475bd8f3cef0aee8ecfa61d85c0dea6d30a0eb7a38a1fe338f5732f8d4a8a91c",
+        "bytes": 5799
+      },
+      "full.log": {
+        "sha256": "1539341299a528f8499585a6e669f784c46c76f7b66ae2731968205dec089c71",
+        "bytes": 13368
+      },
+      "focused.log": {
+        "sha256": "8f451b3dc4faf45d0393e417b2e6ba24cba81de3251665fe26efed1dab56e5d7",
+        "bytes": 2144
+      },
+      "lifecycle.json": {
+        "sha256": "73cdf3718f49d9cf42903b255989847cc5ca503640741bd9a3c8d790cde6bc0b",
+        "bytes": 497
+      },
+      "schema-final.json": {
+        "sha256": "c9543075d843d7aaa1ec9b63a8eb396ba291ca0e41fe18986058d055549bd9e7",
+        "bytes": 423
+      },
+      "local-probe.json": {
+        "sha256": "0050d1d1514a547dc0879d6c7b3e9bb474c8210e1919d579dbc73d7bcb087fdb",
+        "bytes": 6035
+      },
+      "test-probe.json": {
+        "sha256": "cdd62f29c9694abedd47e7e84c3e6ea0614ed035b2cc74560c06f3e1555f4f29",
+        "bytes": 6034
+      },
+      "pos-build.log": {
+        "sha256": "850a5ba48dcd72be74229e6c61ed063eb6f420ebc0ce562f6ea230b7e3a201e8",
+        "bytes": 510
+      },
+      "website-checks.log": {
+        "sha256": "32a94577211c78f310b0aee27fb99eb20c49ea78db56acce085a9bd0610287a7",
+        "bytes": 815
+      },
+      "pint.log": {
+        "sha256": "acbf5da6385237b6f4cd342c4454d93f6c4df8bfcf1687838edb3b651981c4e1",
+        "bytes": 35
+      },
+      "composer-validate.log": {
+        "sha256": "617d39e3b4752168f63039991b7e1efaca11e54a1f5a9153d93b0d4efe91fe05",
+        "bytes": 26
+      },
+      "platform.log": {
+        "sha256": "cb7410624da600678eb6ca7ff19e505797bb80da77d539261dcaa8ba5c9db10a",
+        "bytes": 1743
+      },
+      "optimize.log": {
+        "sha256": "2b21c8accfe494892632079afc33e2003a52be8e3b00fde1c2b3a4a72f02e195",
+        "bytes": 1327
+      }
+    }
+  },
+  "security_and_integrity": {
+    "website_mode": "Missing publication is off/off. Profile/revision/mode/version mismatch fails. Creation needs owning transaction and current lock; history is excluded from creation operations.",
+    "stock": "Custody holds share current availability/adjustment/IMEI/definition guards. Serialized origin ID/code/product/claims stay unchanged while held. DB rejects duplicate active unit custody, cross-product unit FK, lineage cycles/branching/history deletion.",
+    "money": "Canonical positive decimal strings only; no floats/rounding/overflow. Append-only snapshots reject changed replay. External effect UUID is one-use. Trade-in is tender; other v1 adjustments are discounts; parent totals are not changed by reference storage.",
+    "milestones": "Current quote lock, immutable amount/scope identity, total cannot exceed quote, identical post-payment replay only, one milestone/order-item link. No payment attempt or paid transition implemented.",
+    "permissions": "Old POS default count remains 9. New outlet permissions need explicit grant/membership. Website content editor previews but cannot publish. Reset requires usable superadmin with no outlet. Real executor must later recheck freshness/reauth/backup/preview/confirmation/audit.",
+    "reset": "All 80 tables classified; unknown/ambiguous tables fail. Classifier never marks executable. Preserved-child to candidate-parent FKs become explicit blockers; no FK disable/null-history/schema destruction or record/file deletion."
+  },
+  "authorities_unchanged": {
+    "docs/PROJECT_GOAL.md": {
+      "sha256": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+      "unchanged_from_baseline": true
+    },
+    "docs/PROJECT_PREFERENCES.md": {
+      "sha256": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+      "unchanged_from_baseline": true
+    },
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": {
+      "sha256": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5",
+      "unchanged_from_baseline": true
+    },
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": {
+      "sha256": "c25c29c6ccff71fecfad9c53efdb4b02cb3a4802f75b552c534d97e7978dc6b5",
+      "unchanged_from_baseline": true
+    },
+    "docs/AI_PROJECT_COMMAND_REGISTRY.md": {
+      "sha256": "1e0d5cf5e8b9cfe8339c3d6eeb57dbfae90eaae56d752787a3dc6dabe2645338",
+      "unchanged_from_baseline": true
+    },
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": {
+      "sha256": "ea971d9c2d1d2b3e1ab4e18d56f4c59949e1238faf4279c4b385b1fa4fcd3828",
+      "unchanged_from_baseline": true
+    },
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": {
+      "sha256": "bc87cf8f1e4a4879a71ba459105c52b685a8110bcb2a9b9f64f6760239f2efab",
+      "unchanged_from_baseline": true
+    },
+    "docs/schema/TARGET_SCHEMA.json": {
+      "sha256": "2d05eec73c7a3134be5e9223e6e8992356f4dedbbc9402b17562c76c9a008cf3",
+      "unchanged_from_baseline": true
+    },
+    "docs/schema/COLUMN_DESTINATIONS.json": {
+      "sha256": "05d60465f79a5fe642f642ade03381ff0623c5c28f2b1a95af7c9997ec770537",
+      "unchanged_from_baseline": true
+    },
+    "docs/design/openapi.json": {
+      "sha256": "42a5129b0387addd5bde61209d757550803317257ef167819c30dc816297900b",
+      "unchanged_from_baseline": true
+    }
+  },
+  "protected_sources": [
+    {
+      "path": "C:\\mobiST\\mobiST-POS",
+      "head": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "branch": "main",
+      "origin": "https://github.com/lawangin00/mobiST-POS.git",
+      "status": "",
+      "tracked_files": 824,
+      "tracked_worktree_sha256": "3586bd2b72331b3d2941412548f72ca82f5d15aba73d158a3d0a6d88bcef57f3",
+      "missing_files": []
+    },
+    {
+      "path": "C:\\mobiST\\mobiST-Website",
+      "head": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "branch": "main",
+      "origin": "https://github.com/lawangin00/mobiST-Website.git",
+      "status": "",
+      "tracked_files": 400,
+      "tracked_worktree_sha256": "9ce009e0e746659c690287724fc301bca0d374d60603390f2e70f1ff33573a3d",
+      "missing_files": []
+    }
+  ],
+  "staged_artifact_git_blob_sha256": {
+    "backend/app/Addendum/FinancialReferences.php": "24df75e938410413748120dab61173f42fe1b440cadb11cdcdcbec25bfdb7164",
+    "backend/app/Addendum/MoneySnapshot.php": "398ea32f0d40504b321b962e087046a1c885561a0b7eb7680bc1545993dfabd3",
+    "backend/app/Addendum/Permissions.php": "346010a0ac743ee89f189098e9deed9bc8b7875eb6fb9514871ad819b76f2e49",
+    "backend/app/Addendum/ResetRetention.php": "e62068bc968f5665631a95e44db6b1f83ed8e66fd20e93a0d0c87c375be54b21",
+    "backend/app/Addendum/WebsiteCapabilities.php": "20945df708d721be9ebb4b7ab49acfa66e5dad97005e3ca365daf2c0b82be927",
+    "backend/app/Catalog/ProductDefinitions.php": "289e6980da00e53fd688ab34ecf1caa23931209dfda69097537375d6da27cef4",
+    "backend/app/Identity/Access.php": "7d514e7334be16ea1a986c9f166408c592a19a2c3076253271b623033c859aa5",
+    "backend/app/Inventory/StockLedger.php": "0e66989334b198e70ba4e3b5acfe8079ecf98495067a4bc65d18bb3563d7d64c",
+    "backend/app/Models/Admin.php": "ad021f6806cb5086fdc1a4071aa0b63a9ce4179bc5cb24dba52f6ff8c950373c",
+    "backend/app/Models/User.php": "d62cdc6cf8bddd7530a187455026dc2729c320f4a519839bf7b7ce7743b109d3",
+    "backend/database/migrations/2026_09_01_100000_add_addendum_foundations.php": "464801cd68cec3ab08791d7e960bb67c8253dcd5580b3d8031efe07aaab89654",
+    "backend/tests/Feature/AddendumBoundaryTest.php": "e329726dfd48b2c665ddd19833d0165ef23e7c34c4121b684f71c03253ec5d68",
+    "backend/tests/Feature/AddendumFoundationsTest.php": "93cd753ca32bce7f2ab9692123ba44af81cca5b81e596dc336f48e2f1d785834",
+    "docs/PROJECT_IMPLEMENTATION_STATUS.md": "4dfb9ce21e11b61ba23efe571e406b673a15217f8ce289a06ba6bc3acd89bb0c",
+    "docs/addendum/CONTRACTS.json": "0c040901948effdb61ed96ff776076a15dc9dde415b2ee3146f988f28e178b72",
+    "docs/addendum/ENTITY_API_PERMISSION_MATRIX.json": "b93cbfef58ffdbc99e6f90036fc3c2b3a370354687e3fb91ef675da2e3e2f78b",
+    "docs/addendum/README.md": "9a8e948e0aa21dcdd9a4f32c1b860db61f8780a0d8972bf33ab96cc3b594f32a",
+    "tools/migration/verify_addendum_lifecycle.php": "a18054635929bcd05f60722527ee69ab88e036772049006d2f23dc41a32ae839",
+    "tools/migration/verify_mysql_schema.php": "4f5a568303b8e122118859152b4e574df9497829d45d44d74986716d69b25713"
+  },
+  "git_closure": {
+    "branch": "main",
+    "origin": "https://github.com/lawangin00/mobisttech.git",
+    "precommit_head_origin_live_equal": "41ecc38ec3404c70fa373bdaaedc6cef0f107654",
+    "staged_paths_excluding_this_self_referential_evidence": 19,
+    "required_final_gate": "Commit these 19 artifacts plus this evidence; push main without force; verify clean HEAD = origin/main = live refs/heads/main, source snapshots unchanged and committed hashes match. Report final commit externally to avoid recursive evidence."
+  },
+  "next": "MT-2.5 - Sales, invoices and returns migration"
+}

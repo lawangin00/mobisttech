@@ -1,0 +1,168 @@
+{
+  "version": "addendum-foundations.v1",
+  "implemented_now": [
+    "7 additive companion tables",
+    "Website capability snapshot/transaction gate without a public route",
+    "exact immutable financial reference DTOs/append-only primitives",
+    "stock custody exclusion and immutable successor relation",
+    "explicit new permission namespaces",
+    "all-table retention classification and FK barriers"
+  ],
+  "no_workflows_enabled": [
+    "transfers",
+    "procurement",
+    "reset",
+    "sales/invoices/returns",
+    "promotion/loyalty engines",
+    "milestone payment processing",
+    "Website publication or interfaces"
+  ],
+  "extension_tables": [
+    "website_operating_profiles",
+    "stock_unit_lineage",
+    "inventory_custody_holds",
+    "acquisition_source_references",
+    "monetary_adjustments",
+    "project_milestone_identities",
+    "order_item_milestones"
+  ],
+  "schemas": {
+    "website-capabilities.v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "mode",
+        "version",
+        "capabilities",
+        "cache_namespace"
+      ],
+      "properties": {
+        "contract": {
+          "const": "website-capabilities.v1"
+        },
+        "mode": {
+          "enum": [
+            null,
+            "digital_only",
+            "hybrid",
+            "commerce_only"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)$"
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "commerce",
+            "digital"
+          ],
+          "properties": {
+            "commerce": {
+              "type": "boolean"
+            },
+            "digital": {
+              "type": "boolean"
+            }
+          }
+        },
+        "cache_namespace": {
+          "type": "string",
+          "pattern": "^website-mode:[0-9]+:(unpublished|digital_only|hybrid|commerce_only)$"
+        }
+      }
+    },
+    "monetary-adjustment.v1": {
+      "required": [
+        "contract",
+        "id",
+        "kind",
+        "treatment",
+        "amount",
+        "currency",
+        "source_reference",
+        "reason"
+      ],
+      "amount": "positive canonical decimal(19,2) string; no float/rounding",
+      "currency": "PKR",
+      "kinds": {
+        "manual_discount": "discount",
+        "promotion": "discount",
+        "loyalty_redemption": "discount",
+        "trade_in_credit": "tender"
+      },
+      "replay": "same UUID, parent and complete snapshot only; each non-manual source effect UUID is globally one-use; no totals applied by the reference store"
+    },
+    "project-milestone.v1": {
+      "required": [
+        "contract",
+        "id",
+        "quote_id",
+        "sequence",
+        "approved_amount",
+        "currency",
+        "approved_scope_sha256"
+      ],
+      "identity": "UUID plus approved quote public UUID; unique positive sequence; quote FK in persistence",
+      "limits": "sum of approved allocations <= quote approved amount under current quote lock",
+      "history": "paid/expired quote allows identical reference replay only, never a new allocation or amount change"
+    },
+    "reset-retention.v1": {
+      "levels": [
+        "transactional",
+        "business",
+        "factory"
+      ],
+      "actions": [
+        "preserve",
+        "candidate_clear",
+        "row_selection_required",
+        "bootstrap_review"
+      ],
+      "unknown_table": "reject",
+      "executable": false
+    }
+  },
+  "locking": [
+    "Owning business transaction and fresh authorization precede internal primitives. Retry the whole business transaction on bounded deadlocks, not only an effect fragment.",
+    "Capability creation locks profile/revision until commit; publication must lock the same singleton. Missing/unpublished profile denies new creation.",
+    "Stock/custody writers lock source/destination products in ascending ID order, then units/claims/holds; existing own reservation never excludes a custody hold.",
+    "Financial references lock invoice/order or quote parent then current reference rows. Quote allocation reads are locking reads. Cross-aggregate orchestration must choose a consistent order before MT-2.7 processing."
+  ],
+  "identity_invariants": [
+    "Products/units retain origin IDs and codes. Successor occurrences are new and link forward without branching/cycles.",
+    "In-transit serialized claims remain attached to held origin until an atomic receipt moves the claim; global IMEI uniqueness is never temporarily disabled.",
+    "Supplier/PO/receipt/trade-in line UUIDs require the owning workflow to resolve an actual authorized row before attaching an acquisition reference.",
+    "Order milestone relationship must match quote, exact amount/currency and quantity one; FK existence alone is not payment authorization.",
+    "No public history grant is inferred from an operating mode or contact details. Explicit account membership or scoped approved-payment capability is mandatory."
+  ],
+  "performance": {
+    "all_modes": true,
+    "lcp_seconds_max": 2.5,
+    "inp_ms_max": 200,
+    "cls_max": 0.1,
+    "mobile_lighthouse_target_min": 90,
+    "measurement": "representative stable production-build/device/network evidence at consuming points; foundation build is not performance acceptance"
+  },
+  "historical_baselines_unchanged": [
+    "docs/schema/TARGET_SCHEMA.json",
+    "docs/schema/COLUMN_DESTINATIONS.json",
+    "docs/design/openapi.json",
+    "all migrations before 2026_09_01_100000"
+  ],
+  "examples": {
+    "unpublished": {
+      "contract": "website-capabilities.v1",
+      "mode": null,
+      "version": "0",
+      "capabilities": {
+        "commerce": false,
+        "digital": false
+      },
+      "cache_namespace": "website-mode:0:unpublished"
+    }
+  }
+}

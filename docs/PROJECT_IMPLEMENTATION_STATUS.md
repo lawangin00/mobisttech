@@ -29,15 +29,15 @@ Last completed stage: MT-1 - Migration inventory and design
 
 Current In Progress point: None
 
-Status: MT-0 and MT-1 complete. MT-2 is in progress. 8/52 complete, 44 pending. Addendum adoption is documentation-only; MT-2.8 and MT-2.5 are not started.
+Status: MT-0 and MT-1 complete. MT-2 is in progress. 9/52 complete, 43 pending. MT-2.8 is complete; MT-2.5 is not started.
 
-Last completed point: MT-2.4 - Inventory and stock integrity migration
+Last completed point: MT-2.8 - Addendum foundations and capability contracts
 
-Next pending point: MT-2.8 - Addendum foundations and capability contracts
+Next pending point: MT-2.5 - Sales, invoices and returns migration
 
-Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, identity/customer/authorization, product/master-data and inventory/acquisition/stock transaction services exist. Identity/product/stock mapping uses synthetic rows only. Real MySQL stock concurrency is verified. Actual private-data migration, full sales/invoice/return/payment processors, POS/Website interfaces, brand, Control and CI remain pending. Backend tests do not constitute UI, live provider, financial transaction or private-data import acceptance.
+Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, identity/customer/authorization, product/master-data and inventory/acquisition/stock transaction services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion now exist. Identity/product/stock mapping uses synthetic rows only. Real MySQL stock concurrency is verified. Actual private-data migration, full sales/invoice/return/payment processors, transfer/procurement/reset/publication workflows, POS/Website interfaces, brand, Control and CI remain pending. Backend tests do not constitute UI, live provider, financial transaction or private-data import acceptance.
 
-Approved addendum v1.1 expands required work; it does not change the last completed point or establish a new initialization. New mode/reset/retail/digital requirements are planned, not implemented.
+Approved addendum v1.1 expands required work without reinitialization. MT-2.8 implements its prerequisites only; mode publication/reset/retail/digital feature workflows remain pending at their named points.
 
 ## Documentation language policy
 
@@ -169,9 +169,21 @@ All 32 original roadmap IDs/titles survive and the first eight completed point b
 
 This is one structural roadmap update and one same-basename DOCX generation. Markdown/Word parity passes for 52 points and 249 content blocks; Microsoft Word rendered 21 pages, all visually inspected without clipping or overlap. Dependency/coverage checks, rendered-page QA, original-input hashes, unchanged application/source fingerprints and committed control-artifact hashes are recorded in `docs/REQUIREMENTS_ADDENDUM_v1.1_VERIFICATION.json`. No application tests/builds or database/services were run; prior target acceptance remains historical evidence. Commit/push synchronization is only the new monorepo main/private origin; no source runtime or remote mutation is permitted.
 
+## MT-2.8 addendum foundation closure - 2026-09-01
+
+On user Proceed, only MT-2.8 executed. `docs/addendum/README.md`, `CONTRACTS.json` and the complete 41-clause `ENTITY_API_PERMISSION_MATRIX.json` define additive schema, reserved APIs, exact permissions, ownership, stock custody, money/milestone identity, reset preservation and future consuming-point contracts. Planned API names are not routed endpoints. No transfer/procurement/reset/promotion/payment/publication or Website interface workflow was enabled.
+
+One additive migration creates seven companion tables while preserving all 73 existing table definitions, original migrations and schema/source mappings. Both isolated local and test schemas have 80 tables, 962 columns, 129 foreign keys and 349 indexes, identical normalized schema hash and zero business rows. The hard-guarded test-schema lifecycle rehearsal passed two rollback/reapply cycles, unchanged original definitions and a synthetic original row, plus refusal of populated rollback before any table drop.
+
+Current stock availability combines reservation and custody holds; future transfers cannot expose held stock to sales, adjustments, IMEI edits or definition changes. Active IMEI claims stay at the held origin during transit; a forward-only successor relation preserves historic identity. Exact-money reference primitives are append-only/idempotent, keep trade-in tender distinct from discounts, reject changed replay and prevent milestone over-allocation or new allocation on paid/expired quotes. They do not implement financial engines. Website capability reads validate the published revision/version and default to unpublished/off; no public mode route is created. Explicit new permissions preserve old POS defaults and Website roles; mode publishing is separate from editor preview and reset is a global superadmin capability with later execution safeguards still required.
+
+Fresh full backend verification passed 105 tests / 4,733 assertions, including all 16 addendum tests and existing independent-process stock races. Focused addendum verification passed 16 tests / 154 assertions. MySQL FK/unique/check constraints and rollback, original schema/source lineage, Pint, Composer/platform, optimize/clear, POS TypeScript/build and Website lint/typecheck/production build passed. All-table retention classification rejects unknown domains and identifies preserved inventory-to-financial FK barriers without deleting anything. `docs/addendum/MT_2_8_VERIFICATION.json` records exact test cases, command/log hashes, schema/contract evidence and checkpoint artifacts. No future public-page performance or browser acceptance is claimed.
+
+Source fingerprints, approved Goal/Preferences/addendum, Source of Truth, registry, roadmap Markdown/DOCX and historical evidence remain unchanged. No Word generation is needed for routine progress. No source runtime/data/remote, secret, provider, production action or browser-policy bypass occurred. The owned target MySQL is restored to its initial stopped state after verification. Intended synchronization is only the new monorepo main/private origin, followed by clean HEAD/upstream/live-main and artifact checks. MT-2.5 remains not started.
+
 ## Roadmap point state - v1.6
 
-This is the live status list. Completed counts are preserved from verified Git checkpoints; every newly inserted point is Pending. The structural roadmap defines scopes and acceptance.
+This is the live status list. Completed counts are preserved from verified Git checkpoints; newly inserted points start Pending and advance only through their own verified checkpoint. The structural roadmap defines scopes and acceptance.
 
 | Point | Title | State |
 |---|---|---|
@@ -183,7 +195,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-2.2 | Identity, customer and authorization migration | Completed |
 | MT-2.3 | Product and master-data migration | Completed |
 | MT-2.4 | Inventory and stock integrity migration | Completed |
-| MT-2.8 | Addendum foundations and capability contracts | Pending |
+| MT-2.8 | Addendum foundations and capability contracts | Completed |
 | MT-2.5 | Sales, invoices and returns migration | Pending |
 | MT-2.6 | Warranty and claim migration | Pending |
 | MT-2.7 | Unified orders, reservations and payments | Pending |
@@ -230,7 +242,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 
 ## Recovery and next action
 
-Do not re-execute the eight completed points or addendum reconciliation. After this documentation checkpoint is committed/pushed and clean synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-2.8 - Addendum foundations and capability contracts`; MT-2.5 waits for it. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r4 adds scope pointers only; existing session alias definitions remain unchanged and do not need a semantic refresh for this checkpoint. The addendum traceability and verification records explain the new dependency and remaining scope.
+Do not re-execute the nine completed points or addendum reconciliation. After the MT-2.8 checkpoint is committed/pushed and clean synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-2.5 - Sales, invoices and returns migration`, using the accepted MT-2.8 custody/financial/permission contracts. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r4 remains unchanged; routine progress requires no registry refresh or Word regeneration. Addendum feature workflows remain assigned to their respective later points.
 
 ## HOLD / decisions
 

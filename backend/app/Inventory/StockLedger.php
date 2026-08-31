@@ -24,8 +24,12 @@ final class StockLedger
 
     public function holds(int $productId, ?int $exceptLine = null): Collection
     {
-        return DB::table('reservation_allocations')->where('product_id', $productId)->whereNull('released_at')
+        $reservations = DB::table('reservation_allocations')->where('product_id', $productId)->whereNull('released_at')
             ->when($exceptLine !== null, fn ($query) => $query->where('reservation_line_id', '!=', $exceptLine))->orderBy('id')->lockForUpdate()->get();
+
+        // Transfer custody never becomes available merely because a sale owns a reservation line.
+        return $reservations->concat(DB::table('inventory_custody_holds')->where('product_id', $productId)
+            ->whereNull('released_at')->orderBy('id')->lockForUpdate()->get());
     }
 
     public function snapshot(int $productId, ?int $exceptLine = null): array
@@ -43,7 +47,7 @@ final class StockLedger
         }
         $eligible = $current->filter(fn ($unit) => $this->complete($product, $unit));
         $holds = $this->holds($productId, $exceptLine);
-        if ($holds->contains(fn ($hold) => $product->track_imei
+        if (($product->track_imei && $holds->pluck('stock_unit_id')->duplicates()->isNotEmpty()) || $holds->contains(fn ($hold) => $product->track_imei
             ? $hold->quantity !== 1 || ! $eligible->contains('id', $hold->stock_unit_id)
             : $hold->stock_unit_id !== null) || $holds->sum('quantity') > $product->qty) {
             throw new LogicException('Outstanding holds disagree with physical stock.');

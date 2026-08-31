@@ -22,6 +22,9 @@ final class Access
         if (! array_key_exists($permission, Admin::PERMISSIONS)) {
             return false;
         }
+        if (str_starts_with($permission, 'system.reset.')) {
+            return $actor instanceof SuperAdmin && $outlet === null;
+        }
         if ($actor instanceof SuperAdmin) {
             return $outlet === null || (! $outlet->status && $outlet->archived_at === null);
         }

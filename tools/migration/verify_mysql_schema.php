@@ -15,15 +15,18 @@ if ($db->db !== 'mobisttech_test' || (int) $db->port !== 13306 || ! $app->enviro
     throw new RuntimeException('Exact disposable target test schema required.');
 }
 $mode = $argv[1] ?? '';
-if (! in_array($mode, ['identity', 'shared', 'runtime'], true)) {
-    throw new RuntimeException('Expected identity, shared or runtime verification mode.');
+if (! in_array($mode, ['addendum', 'identity', 'shared', 'runtime'], true)) {
+    throw new RuntimeException('Expected addendum, identity, shared or runtime verification mode.');
 }
 $schema = Illuminate\Support\Facades\Schema::getFacadeRoot();
 $spec = json_decode(file_get_contents($root.'/docs/schema/TARGET_SCHEMA.json'), true, flags: JSON_THROW_ON_ERROR);
 $runtime = ['cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'sessions', 'migrations'];
 $expected = $mode !== 'runtime' ? array_merge($runtime, array_keys($spec['tables'])) : $runtime;
-if ($mode === 'identity') {
+if (in_array($mode, ['identity', 'addendum'], true)) {
     $expected = array_merge($expected, ['admin_password_reset_tokens', 'super_admin_password_reset_tokens', 'site_admin_password_reset_tokens', 'identity_audit_events']);
+}
+if ($mode === 'addendum') {
+    $expected = array_merge($expected, ['website_operating_profiles', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones']);
 }
 $actual = array_column($schema->getTables(schema: $db->db), 'name');
 sort($expected);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Addendum\Permissions;
 use App\Identity\IdentityAccount;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
@@ -34,7 +35,7 @@ class Admin extends IdentityAccount
         'config.publish' => 'Publish POS Configuration',
     ];
 
-    public const PERMISSIONS = self::OPERATIONAL_PERMISSIONS + self::CONFIGURATION_PERMISSIONS;
+    public const PERMISSIONS = self::OPERATIONAL_PERMISSIONS + self::CONFIGURATION_PERMISSIONS + Permissions::POS;
 
     protected $guarded = ['*'];
 

@@ -4,6 +4,7 @@ namespace App\Catalog;
 
 use App\Identity\Access;
 use App\Identity\IdentityAccount;
+use App\Inventory\StockLedger;
 use App\Migration\SourceRow;
 use App\Models\Outlet;
 use App\Models\PosMasterDataOption;
@@ -153,7 +154,7 @@ final class ProductDefinitions
 
     private function held(int $id): bool
     {
-        return DB::table('reservation_allocations')->where('product_id', $id)->whereNull('released_at')->lockForUpdate()->first() !== null;
+        return app(StockLedger::class)->holds($id)->isNotEmpty();
     }
 
     private function fields(array $input, array $allowed): void

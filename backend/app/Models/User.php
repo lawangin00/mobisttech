@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Addendum\Permissions;
 use App\Identity\IdentityAccount;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -68,6 +69,10 @@ class User extends IdentityAccount
         $role = $this->adminRole();
         if (! $role) {
             return false;
+        }
+
+        if (array_key_exists($ability, Permissions::WEBSITE)) {
+            return in_array($role, Permissions::WEBSITE[$ability], true);
         }
 
         return in_array($ability, self::ROLE_PERMISSIONS[$role] ?? [], true);
