@@ -1,7 +1,7 @@
 # mobiST Tech - AI Project Command Registry
 
-**Registry version:** MT-1.1
-**Universal baseline:** Registry 1.6 / System 7.2
+**Registry version:** MT-1.1-r2
+**Universal baseline:** Registry 1.8 / System 7.2
 **Date:** 2026-08-31
 **Repository root:** `C:\mobisttech`
 **Remote:** `lawangin00/mobisttech` (independent, private)
@@ -12,31 +12,32 @@
 **Word mirror:** `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
 **Ledger:** `docs/PROJECT_IMPLEMENTATION_STATUS.md`
 
-## Project-specific rules - universal baseline se pehle apply karein
+## Project-specific rules - apply before the universal baseline
 
-- Yeh naya project hai; old DP-* task position ko resume/advance nahi karna. Protected source paths `C:\mobiST\mobiST-POS` aur `C:\mobiST\mobiST-Website` hain. Unki files/Git metadata/remotes/databases/services ko mutate nahi karna; read-only source inspection only. Source tests/builds bhi sirf isolated exported copies mein hon.
-- Audit/Verify/Sync/Checkpoint aur handoffs ka mutation scope sirf new monorepo hai. Old source ledger synchronization, push, pull/fetch, bug fixes ya remote repointing forbidden hai, chahe inherited legacy docs kuch aur kahein.
-- Current user instruction highest authority hai. Project Goal required functionality aur approved Preferences implementation boundaries define karte hain; dono read/apply karein. Source legacy docs technical evidence hain; old two-database architecture aur old command semantics new project par inherit nahi hote.
-- Initialize sirf MT-0.1 complete karta hai. Y/Proceed verified current In Progress point continue kare, warna first Pending point execute kare. Aik point fully complete/verified/committed/pushed hone par stop; next point automatic start nahi.
-- Initialization completion se pehle approved Goal aur Preferences collect/read, canonical files mein preserve aur Source of Truth/roadmap/ledger/registry/decisions se reconcile karein. Existing approved input repeat na maangein; sirf missing critical information poochein. Account-level instructions aur current Git-backed global initialization/roadmap rules apply hon; unki copies Goal/Preferences mein add na karein.
-- Authorized local implementation aur intended new-repository commit/push point scope mein hain. Destructive operations, live production/customer-data cutover, real external messaging aur provider activation separately authorized hon; readiness aur safe isolated tests ke liye unnecessary permission na maangein.
-- New remote ko kisi existing repository se replace/repoint/overwrite nahi karna. Creation pehle existence check ke baad independent private repository mein ho. Never force-push.
-- Every completed point records focused/full applicable gates, exact pending state, source-boundary verification and Git evidence. Partial work Complete mark nahi karna.
-- Roadmap Markdown authoritative hai. Same-basename DOCX regenerate/content-check/render-verify in the same checkpoint. Regeneration helper `tools/docs/build_roadmap_docx.py` hai.
-- Registry first alias par once load aur session mein reuse karein. Refresh Registry/Refresh/VP:REFRESH-REGISTRY forced fresh reload hai; roadmap implementation advance nahi hoti.
-- User-facing general language Roman Urdu hai; minimal completion labels aur exact technical/task identifiers unchanged rahenge. Detailed evidence docs mein ho.
+- This is a new project; do not resume or advance the old DP-* task position. Protected source paths are `C:\mobiST\mobiST-POS` and `C:\mobiST\mobiST-Website`. Their files, Git metadata, remotes, databases and services must not be mutated; source inspection is read-only. Source tests/builds may run only in isolated exported copies.
+- Audit/Verify/Sync/Checkpoint and handoff mutation scope is limited to the new monorepo. Source-ledger synchronization, push, pull/fetch, bug fixes or remote repointing are forbidden even if inherited legacy documents say otherwise.
+- Current user instruction has highest authority. Project Goal defines required functionality and approved Preferences define implementation boundaries; read and apply both. Legacy source documents are technical evidence only; old two-database architecture and old command semantics do not carry into the new project.
+- Initialize completes only MT-0.1. Y/Proceed continues a verified current In Progress point, otherwise executes the first Pending point. After one point is fully completed, verified, committed and pushed, stop; do not automatically start the next point.
+- Before initialization can complete, collect/read the approved Goal and Preferences, preserve them in canonical files and reconcile them with Source of Truth/roadmap/ledger/registry/decisions. Reuse existing approved input and ask only for genuinely missing critical information. Account-level instructions and the current Git-backed global initialization/roadmap rules apply; do not duplicate those global rules into Goal or Preferences.
+- Authorized local implementation and intended new-repository commit/push are within point scope. Destructive operations, live production/customer-data cutover, real external messaging and provider activation require separate authorization; do not request unnecessary permission for readiness or safe isolated tests.
+- Never replace/repoint/overwrite the new remote with an existing repository. Creation must follow an existence check and use an independent private repository. Never force-push.
+- Every completed point records applicable focused/full gates, exact pending state, source-boundary verification and Git evidence. Never mark partial work Complete.
+- Roadmap Markdown is authoritative. Regenerate, content-check and render-verify the same-basename DOCX in the same checkpoint. Regeneration helper: `tools/docs/build_roadmap_docx.py`.
+- Load the registry once on the first alias in a session and reuse it. Refresh Registry/Refresh/VP:REFRESH-REGISTRY forces a fresh reload and must not advance roadmap implementation.
+- Roman Urdu is the default only for assistant chat/UI communication. Git-tracked project documentation and technical artifacts must use standard English unless the user explicitly requests another language for a specific artifact. Preserve user-supplied source documents in their original language/content unless transformation is explicitly authorized. Minimal completion labels and exact technical/task identifiers remain unchanged.
+- Detailed evidence belongs in Git-tracked documentation; normal user-facing completion/status output remains concise.
 
 ## Adopted universal definitions
 
-MT-1.1 reconciliation ne sirf binding Preferences authority aur initialization collection gate add kiya. Universal 1.6/System 7.2 baseline, VP:VERIFY boundary aur point order unchanged hain. Session registry reload ab bhi explicit Refresh Registry/Refresh/VP:REFRESH-REGISTRY se hota hai.
+This revision deliberately synchronizes the project registry to Universal Registry 1.8 / System 7.2 and adds the clarified language boundary: Roman Urdu for assistant chat/UI communication, standard English for Git-tracked project documentation/technical artifacts. The existing project-specific Goal/Preferences initialization gate, VP:VERIFY boundary, point order and session-refresh model remain in force. No roadmap task position is advanced by this registry revision.
 
-Neeche canonical universal registry ka verified content snapshot hai; sirf Markdown hard-break trailing spaces normalize kiye gaye hain. Project rules above explicit specialization hain; baqi semantics unchanged hain. Baseline Git blob: `fb0e0e5e516ecc570e46e949277768202892e9d5`. Roadmap specification v1.0 Git blob: `004ff996e0e691941369ce2b7f6e505ab8533312`.
+The canonical universal registry snapshot below is copied from `lawangin00/references/UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`. Project-specific rules above are explicit specializations; all other semantics remain unchanged. Baseline Git blob: `5b1ce3cc888e34ebe7038c63262f8b32f9a77eae`. Roadmap specification v1.0 Git blob: `004ff996e0e691941369ce2b7f6e505ab8533312`.
 
 ---
 
 # Universal Verified Project Command Registry
 
-**Registry version:** 1.6
+**Registry version:** 1.8
 **System version:** 7.2
 **Canonical remote:** `lawangin00/references`
 **Canonical path:** `UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`
@@ -73,11 +74,26 @@ Conversation memory and uploaded Project Source snapshots are non-authoritative.
 - Never repeat work already verified complete.
 - Never mark partial work complete.
 - Read-only aliases never authorize implementation, commits, pushes or unrelated mutations.
+- Default language applies only to assistant chat/UI communication: use Roman Urdu unless explicitly overridden for the current scope. Git-tracked project documentation and technical artifacts (including README files, Source of Truth, roadmaps, status ledgers, command registries, specifications/evidence and code comments) must use standard English unless the user explicitly requests another language for that artifact. Preserve user-supplied source documents in their original language/content unless transformation is explicitly authorized.
 - If a required repository, registry, ledger or tool is inaccessible, state only the minimum access/handoff action required.
 
 ## `Initialize Project` / `VP:INITIALIZE`
 
-If no project registry/ledger exists, inspect accessible repos/workspace, README/docs, Git history, branches/remotes, files and supplied requirements first. Reuse verified existing goals instead of asking the user to repeat them. Load this universal registry when accessible. Ask only for missing critical information, one question at a time when needed.
+If no project registry/ledger exists, inspect accessible repos/workspace, README/docs, Git history, branches/remotes, files and supplied requirements first. Load this universal registry when accessible.
+
+For a genuinely new project, resolve both the Project Goal and Project Preferences before initialization may be marked complete.
+
+1. Resolve the Project Goal first.
+   - Reuse a verified Goal already supplied by the user when available.
+   - Otherwise ask the user for the Project Goal.
+2. Resolve Project Preferences separately after the Goal.
+   - Reuse verified Preferences already supplied by the user when available.
+   - Otherwise explicitly ask the user for Project Preferences.
+   - The user may explicitly state that there are no additional Preferences, including a short answer such as `None` or `Skip`.
+3. Ask for missing Goal and Preferences one question at a time. Do not require either to be embedded in the initialization command.
+4. Do not create/finalize the canonical Source of Truth, implementation roadmap, status ledger or project registry, and do not mark initialization complete, until both Goal and Preferences have been resolved.
+
+For an existing project, reuse verified existing Goal and Preferences and ask only for genuinely missing critical information.
 
 Establish the minimum durable Git-tracked control system:
 - canonical Source of Truth/requirements;

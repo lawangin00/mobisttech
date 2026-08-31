@@ -2,23 +2,23 @@
 
 Date: 2026-08-31 | Scope: VP:VERIFY, MT-0.1 only
 
-## Verified defect aur correction
+## Verified defect and correction
 
-Original initialization closure `28588c59463e8cf2f3a13be97df49ae3021ec83b` ne approved Preferences collect/register kiye baghair MT-0.1 complete mark kiya tha. Is verification mein user ki complete approved Preferences poori read karke `docs/PROJECT_PREFERENCES.md` mein byte-for-byte preserve ki gayi hain. Original SHA-256: `e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402`.
+Original initialization closure `28588c59463e8cf2f3a13be97df49ae3021ec83b` marked MT-0.1 complete without collecting/registering the approved Preferences. During this verification, the user's complete approved Preferences were read in full and preserved byte-for-byte in `docs/PROJECT_PREFERENCES.md`. Original SHA-256: `e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402`.
 
-Already approved Goal unchanged hai: `7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f`. Goal aur Preferences mein architecture conflict nahi mila. Missing authority pointers, reuse-before-rewrite decision, justified infrastructure, incremental verification aur Control group actions ko initialization/control documentation mein reconcile kiya gaya. Koi source/application migration ya detailed MT-1.1 inventory execute nahi hui.
+The already approved Goal remains unchanged: `7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f`. No architecture conflict was found between Goal and Preferences. Missing authority pointers, the reuse-before-rewrite decision, justified infrastructure, incremental verification and Control group actions were reconciled into initialization/control documentation. No source/application migration or detailed MT-1.1 inventory was executed during this remediation.
 
 ## Initialization decisions comparison
 
-`C:\mobisttech` single Git root, backend/website/tools/mobist-control/brand/docs/.github layout, independent private `lawangin00/mobisttech`, Laravel-only shared backend, one master MySQL, internal Inertia POS aur separate API-consuming Next.js Website approved documents se compatible hain. Private visibility reasonable existing initialization choice hai; Preferences ne isay change nahi kiya. No repointing/recreation required.
+The `C:\mobisttech` single Git root, backend/website/tools/mobist-control/brand/docs/.github layout, independent private `lawangin00/mobisttech` remote, Laravel-only shared backend, one master MySQL database, internal Inertia POS and separate API-consuming Next.js Website are compatible with the approved documents. Private repository visibility was a reasonable existing initialization choice and was not changed by the Preferences. No remote repointing or repository recreation was required.
 
-Read-only preflight ne new local HEAD aur live remote main ko `28588c59463e8cf2f3a13be97df49ae3021ec83b` par equal paya; working tree clean thi. GitHub ne private visibility aur default main confirm kiya. Protected source snapshot comparison passed. Component paths mein sirf original .gitkeep placeholders hain; application runtime abhi nahi hai.
+Read-only preflight verified the new local HEAD and live remote `main` were equal at `28588c59463e8cf2f3a13be97df49ae3021ec83b`; the working tree was clean. GitHub confirmed private visibility and default branch `main`. Protected-source snapshot comparison passed. Component paths contained only the original `.gitkeep` placeholders; no application runtime existed yet.
 
-Current source-logo approval inventory, exact runtime versions, Redis role decisions aur data/API design pending implementation/design tasks hi hain. Preferences mein legacy Control logo older hone ka approved direction record hai; is verification ne logo asset migration ya new approval claim nahi kiya.
+Current source-logo approval inventory, exact runtime versions, Redis role decisions and data/API design remained pending implementation/design work. The Preferences record that the legacy Control logo is older and must not be treated as approved; this verification did not migrate logo assets or claim a new approval.
 
 ## All 39 approved Preferences coverage
 
-Neeche original numbered Preferences ka complete coverage map hai. Represented ka matlab required control/acceptance documented hai, target functionality implemented nahi.
+The table below maps every original numbered Preference. "Represented" means the required control/acceptance condition is documented; it does not mean target functionality has already been implemented.
 
 | Preference | Approved intent | Reconciled control / acceptance |
 |---|---|---|
@@ -64,12 +64,12 @@ Neeche original numbered Preferences ka complete coverage map hai. Represented k
 
 ## Exact reconciliation scope
 
-Canonical Preferences file added with Git byte-preservation attribute. README/AGENTS authority pointers corrected. Source of Truth and roadmap are v1.1; project registry is MT-1.1. Registry universal baseline and VP:VERIFY semantics unchanged; only project authority/initialization collection gate specialized. Goal file and universal reference specification unchanged. Existing session reload rules remain explicit; no unrelated registry refresh or global-repository change performed.
+The canonical Preferences file was added with a Git byte-preservation attribute. README/AGENTS authority pointers were corrected. Source of Truth and roadmap became v1.1; project registry became MT-1.1. Universal baseline and VP:VERIFY semantics were unchanged in that checkpoint; only project authority/initialization-collection behavior was specialized. The Goal file and universal reference specification remained unchanged. Existing session-reload rules remained explicit; no unrelated registry refresh or global-reference-repository change was performed in this historical checkpoint.
 
-All 32 point IDs, exact titles, dependency order and statuses retained: only MT-0.1 complete, 31 pending, first pending MT-1.1. No point added or removed. Roadmap/DOCX changed together for these approved requirements. Source baseline/fingerprint files remain unchanged historical evidence and are rechecked, not overwritten.
+All 32 point IDs, exact titles, dependency order and statuses were retained: only MT-0.1 was complete, 31 points remained pending, and the first pending point was MT-1.1. No point was added or removed. Roadmap and DOCX changed together for the approved requirements. Source baseline/fingerprint files remained unchanged historical evidence and were rechecked rather than overwritten.
 
 ## Verification and stop boundary
 
-Current hash/count/render evidence is `docs/INITIALIZATION_VERIFICATION.json`; status/recovery position is `docs/PROJECT_IMPLEMENTATION_STATUS.md`. Compare all 39 preference numbers, both supplied-file byte hashes, Markdown/Word/PDF content, roadmap IDs/dependencies/statuses and changed-file scope. Final source snapshot, clean new repository and live HEAD-to-remote-main equality are completion gates. No backend/website/brand/Control/CI implementation files may change.
+The hash/count/render evidence for that checkpoint is `docs/INITIALIZATION_VERIFICATION.json`; status/recovery position is `docs/PROJECT_IMPLEMENTATION_STATUS.md`. Verification covered all 39 Preference numbers, both supplied-file byte hashes, Markdown/Word/PDF content, roadmap IDs/dependencies/statuses and changed-file scope. Final source snapshot, clean new repository and live HEAD-to-remote-main equality were completion gates. No backend/website/brand/Control/CI implementation files were allowed to change.
 
-Stop at `MT-1.1 - Source inventory and feature parity register` with Pending status and normal completion output. This verification is remediation of MT-0.1, not authorization to begin MT-1.1.
+The checkpoint stopped at `MT-1.1 - Source inventory and feature parity register` with Pending status and normal completion output. It remediated MT-0.1 and did not authorize MT-1.1 execution.

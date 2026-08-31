@@ -1,6 +1,6 @@
 # mobiST Tech - Project Implementation Roadmap
 
-Version: 1.2 | Date: 2026-08-31
+Version: 1.3 | Date: 2026-08-31
 
 Canonical Goal: docs/PROJECT_GOAL.md
 
@@ -12,15 +12,17 @@ Status ledger: docs/PROJECT_IMPLEMENTATION_STATUS.md
 
 Word mirror: docs/PROJECT_IMPLEMENTATION_ROADMAP.docx
 
-## Scope aur execution rules
+## Scope and execution rules
 
-Yeh controlled migration ka single active roadmap hai. MT-0.1 initialization aur MT-1.1 source inventory complete hain (2/32); application migration pending hai. Har Proceed aik point ko required gates aur intended new-repository commit/push tak complete karega, phir rukega. Dependencies ordered hain; IDs aur exact titles stable rahenge.
+This is the single active roadmap for the controlled migration. MT-0.1 initialization and MT-1.1 source inventory are complete (2/32); application migration remains pending. Each Proceed executes one point through its required gates and intended new-repository commit/push, then stops. Dependencies are ordered; point IDs and exact titles remain stable.
 
-Purane POS/Website folders, remotes aur data immutable references hain. Sab implementation, copied-source tests aur migration rehearsals C:\mobisttech ya isolated approved target resources mein honge. Originals par tests/builds bhi nahi. Single shared Laravel/MySQL authority ko duplicate authoritative databases se replace nahi karna.
+The original POS/Website folders, remotes and data are immutable references. All implementation, copied-source tests and migration rehearsals must run under `C:\mobisttech` or isolated approved target resources. Do not run tests/builds against the originals. Do not replace the single shared Laravel/MySQL authority with duplicate authoritative databases.
 
-Har point mein applicable focused/full tests, parity evidence, secrets review, source-boundary check, ledger update aur roadmap/DOCX parity completion gates hain. MT-1.1 detailed inventory is roadmap ko evidence ke mutabiq refine kar sakti hai; silently functionality drop ya completed IDs renumber nahi karna.
+Every point includes applicable focused/full tests, parity evidence, secrets review, source-boundary checks, ledger updates and roadmap/DOCX parity completion gates. MT-1.1 detailed inventory may refine this roadmap from evidence, but valid functionality must not be silently dropped and completed IDs must not be renumbered.
 
-Goal aur Preferences dono apply hon. Working features ke liye reuse/adapt/refactor/migrate pehle assess hon; rewrite ko verified reason chahiye. Incremental batches mein parity, data consistency, integration aur regression verify hon; big-bang rewrite nahi. Conventional solutions, justified Redis roles aur Laravel-only business backend use hon; Node/Express parallel backend nahi. Stack deviation sirf verified unavoidable blocker par documented ho, Goal conflict silently resolve na ho.
+Both Goal and Preferences apply. For working features, assess reuse/adapt/refactor/migrate before rewrite; rewrite requires a verified reason. Verify parity, data consistency, integration and regression incrementally rather than using a big-bang rewrite. Prefer conventional solutions, justified Redis roles and a Laravel-only business backend; do not introduce a parallel Node/Express business backend. Record stack deviations only for verified unavoidable blockers and never silently resolve a Goal conflict.
+
+Roman Urdu is limited to assistant chat/UI communication. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal/Preferences remain byte-preserved in their original language/content.
 
 ## MT-0 - Project initialization
 
@@ -30,11 +32,11 @@ Stage status: Complete
 
 Status: Completed | Dependencies: None
 
-Scope: Original Goal aur approved Preferences preserve/reconcile karna; protected source baseline, monorepo layout, canonical docs/registry, matching DOCX aur independent private GitHub repository establish karna.
+Scope: Preserve/reconcile the original Goal and approved Preferences; establish the protected source baseline, monorepo layout, canonical docs/registry, matching DOCX and independent private GitHub repository.
 
-Acceptance: Goal/Preferences hashes aur full coverage, docs parity, source unchanged checks, independent Git history aur remote equality verify hon. MT-0.1 re-verification evidence record ho; MT-1.1/application migration start na ho.
+Acceptance: Verify Goal/Preferences hashes and full coverage, documentation parity, source-unchanged checks, independent Git history and remote equality. Record MT-0.1 re-verification evidence; do not start MT-1.1/application migration within this point.
 
-Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence verified hon; partial work Complete mark na ho.
+Stage exit: Verify all acceptance gates and Git-backed evidence for every point in this stage; never mark partial work Complete.
 
 ## MT-1 - Migration inventory and design
 
@@ -44,9 +46,9 @@ Stage status: In Progress
 
 Status: Completed | Dependencies: MT-0.1
 
-Scope: Pinned source code, routes, roles, models, migrations, tests, integrations, Dynamic Platform, branding aur Control inventory; legacy files/folders ke roles/dependencies aur retention value assess karein.
+Scope: Inventory pinned source code, routes, roles, models, migrations, tests, integrations, Dynamic Platform, branding and Control; assess legacy files/folders for role, dependencies and retention value.
 
-Acceptance: Har valid capability ke reuse/adapt/refactor/migrate options aur required rewrite ka verified reason record ho; retirement sirf unnecessary duplication ke liye. Target owner, parity gate aur isolated characterization hon; originals unchanged hon.
+Acceptance: Record reuse/adapt/refactor/migrate options for every valid capability and a verified reason for any required rewrite; retire only unnecessary duplication. Record target owner, parity gate and isolated characterization; originals remain unchanged.
 
 Evidence: docs/migration/FEATURE_PARITY_REGISTER.md; isolated source tests passed, originals unchanged, target parity pending.
 
@@ -54,19 +56,19 @@ Evidence: docs/migration/FEATURE_PARITY_REGISTER.md; isolated source tests passe
 
 Status: Pending | Dependencies: MT-1.1
 
-Scope: Single MySQL schema, identity/record collision maps, customer merge rules, history, transaction boundaries, API versioning aur authorization design karein.
+Scope: Design the single MySQL schema, identity/record collision maps, customer merge rules, history, transaction boundaries, API versioning and authorization model.
 
-Acceptance: Orders, payments, stock reservation, price/currency precision, idempotency, cache invalidation, rollback aur encrypted-data recovery contracts documented hon; two-way database sync target na ho.
+Acceptance: Document contracts for orders, payments, stock reservation, price/currency precision, idempotency, cache invalidation, rollback and encrypted-data recovery; do not use two-way database synchronization as the target.
 
 ### MT-1.3 - Windows toolchain and application foundations
 
 Status: Pending | Dependencies: MT-1.2
 
-Scope: Approved pinned stack par Laravel 13, React/Inertia/TypeScript/Tailwind aur Next.js foundations; isolated MySQL aur concrete justified Redis/storage roles configure karein. Useful source foundations reuse/adapt hon.
+Scope: Establish Laravel 13, React/Inertia/TypeScript/Tailwind and Next.js foundations on the approved pinned stack; configure isolated MySQL plus concrete justified Redis/storage roles. Reuse/adapt useful source foundations where appropriate.
 
-Acceptance: Fresh Windows setup, secret-free examples, lockfiles aur smoke builds pass hon. Ports source servers se conflict na karein; nested .git, real provider calls ya source data connection na ho.
+Acceptance: Fresh Windows setup, secret-free examples, lockfiles and smoke builds pass. Ports do not conflict with source servers; no nested `.git`, real provider calls or source-data connections exist.
 
-Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence verified hon; partial work Complete mark na ho.
+Stage exit: Verify all acceptance gates and Git-backed evidence for every point in this stage; never mark partial work Complete.
 
 ## MT-2 - Shared backend and transactional migration
 
@@ -76,59 +78,59 @@ Stage status: Pending
 
 Status: Pending | Dependencies: MT-1.3
 
-Scope: Reusable Laravel core, migration schema, jobs, MySQL ownership, Redis roles aur S3-compatible storage layer migrate karein.
+Scope: Migrate the reusable Laravel core, migration schema, jobs, MySQL ownership, Redis roles and S3-compatible storage layer.
 
-Acceptance: Disposable MySQL apply/rollback/reapply, storage isolation aur queue/cache failure behavior pass ho; Website ko DB credentials na milein.
+Acceptance: Disposable MySQL apply/rollback/reapply, storage isolation and queue/cache failure behavior pass; the Website does not receive DB credentials.
 
 ### MT-2.2 - Identity, customer and authorization migration
 
 Status: Pending | Dependencies: MT-2.1
 
-Scope: POS roles/guards aur Website customer identity ko shared backend mein map karein; session/password/account recovery aur ownership preserve karein.
+Scope: Map POS roles/guards and Website customer identity into the shared backend; preserve session/password/account recovery and ownership behavior.
 
-Acceptance: Role matrix, user/customer collision cases, session isolation, CSRF, IDOR aur recovery tests pass hon; unauthorized account merging na ho.
+Acceptance: Role matrix, user/customer collision cases, session isolation, CSRF, IDOR and recovery tests pass; no unauthorized account merging occurs.
 
 ### MT-2.3 - Product and master-data migration
 
 Status: Pending | Dependencies: MT-2.2
 
-Scope: Products, variants/units, categories, attributes aur stable master data migrate karein; public/private field separation rakhein.
+Scope: Migrate products, variants/units, categories, attributes and stable master data; preserve public/private field separation.
 
-Acceptance: ID/relationship maps, historical references aur validation parity pass ho; protected category/identifier semantics silently change na hon.
+Acceptance: ID/relationship maps, historical references and validation parity pass; protected category/identifier semantics do not silently change.
 
 ### MT-2.4 - Inventory and stock integrity migration
 
 Status: Pending | Dependencies: MT-2.3
 
-Scope: Acquisition, stock units/IMEIs, availability, movements aur transaction-derived stock rules shared services mein migrate karein.
+Scope: Migrate acquisition, stock units/IMEIs, availability, movements and transaction-derived stock rules into shared services.
 
-Acceptance: Concurrent sale/reservation, uniqueness, rollback aur negative/duplicate stock prevention MySQL par pass hon; snapshots reconcile hon.
+Acceptance: Concurrent sale/reservation, uniqueness, rollback and negative/duplicate-stock prevention pass on MySQL; snapshots reconcile.
 
 ### MT-2.5 - Sales, invoices and returns migration
 
 Status: Pending | Dependencies: MT-2.4
 
-Scope: Sales, invoice totals/discounts, operational customer records aur returns ke verified behavior migrate karein.
+Scope: Migrate sales, invoice totals/discounts, operational customer records and verified return behavior.
 
-Acceptance: Money precision, identifiers, historical snapshots, return adjustments aur stock/accounting effects legacy acceptance se match hon. MT-1.1 mein stock return mila, full sale-refund route nahi; Goal-required sale returns ka explicit verified contract aur fresh tests required hain.
+Acceptance: Money precision, identifiers, historical snapshots, return adjustments and stock/accounting effects match legacy acceptance. MT-1.1 found stock-return behavior but no full routed sale-refund flow; Goal-required sale returns need an explicit verified contract and fresh tests.
 
 ### MT-2.6 - Warranty and claim migration
 
 Status: Pending | Dependencies: MT-2.5
 
-Scope: Warranty duration, versioned clauses, claim lifecycle aur historical document relationships preserve karein.
+Scope: Preserve warranty duration, versioned clauses, claim lifecycle and historical document relationships.
 
-Acceptance: Sale-time snapshots, permissions, expiry/boundary conditions aur historical warranty/claim output parity pass ho.
+Acceptance: Sale-time snapshots, permissions, expiry/boundary conditions and historical warranty/claim output parity pass.
 
 ### MT-2.7 - Unified orders, reservations and payments
 
 Status: Pending | Dependencies: MT-2.6
 
-Scope: Website order/payment/COD/project-payment services ko shared transactions mein migrate karein; obsolete cross-DB sync ki replacement prove karein.
+Scope: Migrate Website order/payment/COD/project-payment services into shared transactions and prove replacement of obsolete cross-database synchronization.
 
-Acceptance: Price/amount/ownership verification, retry/replay, expiration, confirmation-versus-release, reconciliation aur payment failure recovery tests pass hon. Disabled providers safe rahen.
+Acceptance: Price/amount/ownership verification, retry/replay, expiration, confirmation-versus-release, reconciliation and payment-failure recovery tests pass. Disabled providers remain safe.
 
-Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence verified hon; partial work Complete mark na ho.
+Stage exit: Verify all acceptance gates and Git-backed evidence for every point in this stage; never mark partial work Complete.
 
 ## MT-3 - Administration, content and REST APIs
 
@@ -138,35 +140,35 @@ Stage status: Pending
 
 Status: Pending | Dependencies: MT-2.7
 
-Scope: Verified reports, dashboards, A4/Thermal output, invoice/warranty documents aur safe communication templates migrate karein.
+Scope: Migrate verified reports, dashboards, A4/Thermal output, invoice/warranty documents and safe communication templates.
 
-Acceptance: Role-scoped totals/exports, history, print/download aur protected template placeholders parity tests pass hon; real messages send na hon.
+Acceptance: Role-scoped totals/exports, history, print/download and protected-template-placeholder parity tests pass; no real messages are sent.
 
 ### MT-3.2 - Dynamic CMS, media and presentation services
 
 Status: Pending | Dependencies: MT-3.1
 
-Scope: Website managed pages, navigation, homepage/catalogue, SEO/legal/promotion settings, media, themes aur branding controls backend mein migrate karein.
+Scope: Migrate Website-managed pages, navigation, homepage/catalogue, SEO/legal/promotion settings, media, themes and branding controls into the backend.
 
-Acceptance: Draft/preview/publish, revisions/rollback, safe uploads/content, cache invalidation aur distinct POS/Website settings preserve hon.
+Acceptance: Draft/preview/publish, revisions/rollback, safe uploads/content, cache invalidation and distinct POS/Website settings are preserved.
 
 ### MT-3.3 - Audit, configuration, backups and integrations
 
 Status: Pending | Dependencies: MT-3.2
 
-Scope: Audit/redaction, safe configuration recovery, backup/history/restore guards aur valid external integration contracts migrate karein.
+Scope: Migrate audit/redaction, safe configuration recovery, backup/history/restore guards and valid external-integration contracts.
 
-Acceptance: Secret masking, key-dependent recovery, target-only backup/restore rehearsal aur disabled-by-default external jobs verify hon; no arbitrary commands/endpoints.
+Acceptance: Secret masking, key-dependent recovery, target-only backup/restore rehearsal and disabled-by-default external jobs are verified; no arbitrary commands/endpoints are introduced.
 
 ### MT-3.4 - Versioned REST API and contract acceptance
 
 Status: Pending | Dependencies: MT-3.3
 
-Scope: Next.js ke liye public catalogue/content aur authenticated account/cart/order/payment APIs define aur expose karein.
+Scope: Define and expose public catalogue/content plus authenticated account/cart/order/payment APIs for Next.js.
 
-Acceptance: Documented payload/error/pagination contracts, authorization, rate limits, public data allowlists aur freshness tests pass hon; writes shared services use karein.
+Acceptance: Documented payload/error/pagination contracts, authorization, rate limits, public-data allowlists and freshness tests pass; writes use shared services.
 
-Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence verified hon; partial work Complete mark na ho.
+Stage exit: Verify all acceptance gates and Git-backed evidence for every point in this stage; never mark partial work Complete.
 
 ## MT-4 - React POS and administration
 
@@ -176,35 +178,35 @@ Stage status: Pending
 
 Status: Pending | Dependencies: MT-3.4
 
-Scope: React/TypeScript/Inertia/Tailwind POS shell, role landing pages, authentication aur safe navigation build karein.
+Scope: Build the React/TypeScript/Inertia/Tailwind POS shell, role landing pages, authentication and safe navigation.
 
-Acceptance: Desktop/mobile role journeys aur direct-route permissions Playwright mein pass hon; menu hiding ko authorization na samjhein.
+Acceptance: Desktop/mobile role journeys and direct-route permissions pass in Playwright; menu hiding is not treated as authorization.
 
 ### MT-4.2 - POS inventory and transaction interfaces
 
 Status: Pending | Dependencies: MT-4.1
 
-Scope: Products/units/IMEIs, acquisition, stock, sale aur return workflows verified backend services par migrate karein.
+Scope: Migrate product/unit/IMEI, acquisition, stock, sale and return workflows onto verified backend services.
 
-Acceptance: Keyboard/form validation, pagination, conflict handling, totals aur transaction completion critical journeys pass hon.
+Acceptance: Keyboard/form validation, pagination, conflict handling, totals and critical transaction-completion journeys pass.
 
 ### MT-4.3 - POS customer, warranty and reporting interfaces
 
 Status: Pending | Dependencies: MT-4.2
 
-Scope: Customer/history, invoices, warranties/claims, dashboards, reports aur exports ki existing required UI migrate karein.
+Scope: Migrate required customer/history, invoice, warranty/claim, dashboard, report and export UI.
 
-Acceptance: Role-scoped flows, historical records, Thermal 80mm/A4 preview-download-print aur mobile layouts verify hon.
+Acceptance: Role-scoped flows, historical records, Thermal 80mm/A4 preview-download-print and mobile layouts are verified.
 
 ### MT-4.4 - Website CMS and platform administration interfaces
 
 Status: Pending | Dependencies: MT-4.3
 
-Scope: Website CMS aur POS configuration ke protected React admin screens, revisions/media/branding/payment settings migrate karein.
+Scope: Migrate protected React admin screens for Website CMS and POS configuration, revisions/media/branding/payment settings.
 
-Acceptance: Separate permissions, preview/publish/rollback, safe recovery, secret masking aur Dynamic Platform parity acceptance pass ho.
+Acceptance: Separate permissions, preview/publish/rollback, safe recovery, secret masking and Dynamic Platform parity acceptance pass.
 
-Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence verified hon; partial work Complete mark na ho.
+Stage exit: Verify all acceptance gates and Git-backed evidence for every point in this stage; never mark partial work Complete.
 
 ## MT-5 - Next.js customer Website
 
@@ -214,35 +216,35 @@ Stage status: Pending
 
 Status: Pending | Dependencies: MT-4.4
 
-Scope: Next.js storefront, search/filtering, categories, product pages, variants, availability aur SEO defined APIs par migrate karein.
+Scope: Migrate the Next.js storefront, search/filtering, categories, product pages, variants, availability and SEO onto defined APIs.
 
-Acceptance: Public payload privacy, metadata, responsive layouts, pagination aur POS-write-to-Website freshness verify ho; zero-stock visibility behavior preserve ho.
+Acceptance: Public-payload privacy, metadata, responsive layouts, pagination and POS-write-to-Website freshness are verified; zero-stock visibility behavior is preserved.
 
 ### MT-5.2 - Customer account, cart, orders and reviews
 
 Status: Pending | Dependencies: MT-5.1
 
-Scope: Registration/login/account, multi-line cart, customer order history/access aur review eligibility migrate karein.
+Scope: Migrate registration/login/account, multi-line cart, customer order history/access and review eligibility.
 
-Acceptance: Session boundaries, ownership, guest-to-account behavior, cart recovery aur eligible-review Playwright/API journeys pass hon.
+Acceptance: Session boundaries, ownership, guest-to-account behavior, cart recovery and eligible-review Playwright/API journeys pass.
 
 ### MT-5.3 - Checkout and customer payment flows
 
 Status: Pending | Dependencies: MT-5.2
 
-Scope: Checkout, COD, pending/retry/cancel, invoices/status aur provider-hosted payment boundaries connect karein.
+Scope: Connect checkout, COD, pending/retry/cancel, invoice/status and provider-hosted payment boundaries.
 
-Acceptance: Duplicate submit, price/stock changes, failed payments aur verified confirmation end-to-end pass hon; sandbox claims sirf authentic configured providers ke liye hon.
+Acceptance: Duplicate submit, price/stock changes, failed payments and verified confirmation pass end-to-end; sandbox claims are made only for authentically configured providers.
 
 ### MT-5.4 - Dynamic public content and digital solutions
 
 Status: Pending | Dependencies: MT-5.3
 
-Scope: Managed pages/menu/homepage/themes, promotions, legal content, digital services, service requests aur approved project quote/payment flows migrate karein.
+Scope: Migrate managed pages/menu/homepage/themes, promotions, legal content, digital services, service requests and approved project quote/payment flows.
 
-Acceptance: CMS publication/revision website par reflect ho; safe content/media, protected routes aur digital quote amount/token/ownership parity pass ho.
+Acceptance: CMS publication/revision is reflected on the Website; safe content/media, protected routes and digital quote amount/token/ownership parity pass.
 
-Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence verified hon; partial work Complete mark na ho.
+Stage exit: Verify all acceptance gates and Git-backed evidence for every point in this stage; never mark partial work Complete.
 
 ## MT-6 - Shared brand and Windows Control
 
@@ -252,27 +254,27 @@ Stage status: Pending
 
 Status: Pending | Dependencies: MT-5.4
 
-Scope: Approved assets deduplicate karke root brand ko single master banayein; runtime copies/derivatives ke manifests banayein.
+Scope: Deduplicate approved assets so the root `brand` directory is the single master; create manifests for runtime copies/derivatives.
 
-Acceptance: Logo/icon/favicon/watermark/font references, build output aur fallbacks verify hon; duplicate Brand Kit masters na hon; source artwork unchanged rahe.
+Acceptance: Logo/icon/favicon/watermark/font references, build output and fallbacks are verified; no duplicate master Brand Kits remain; source artwork stays unchanged.
 
 ### MT-6.2 - Canonical mobiST Control migration
 
 Status: Pending | Dependencies: MT-6.1
 
-Scope: Useful legacy Control implementation aik canonical app mein adapt karein; current approved logo lagayein, old logo carry forward na ho. New backend/website paths aur development processes manage hon.
+Scope: Adapt useful legacy Control implementation into one canonical app; apply the current approved logo and do not carry the old logo forward. Manage the new backend/website paths and development processes.
 
-Acceptance: Start, Stop, Restart, Open, Status, Start All aur Stop All jahan applicable hon verify hon; exclusions justified hon. PID ownership, already-running/occupied-port handling aur duplicate/orphan safety pass ho; unrelated/source processes terminate na hon.
+Acceptance: Start, Stop, Restart, Open, Status, Start All and Stop All are verified where applicable; exclusions are justified. PID ownership, already-running/occupied-port handling and duplicate/orphan safety pass; unrelated/source processes are not terminated.
 
 ### MT-6.3 - Windows operator and local integration acceptance
 
 Status: Pending | Dependencies: MT-6.2
 
-Scope: Clean Windows setup se both apps, queues/cache/storage aur Control ke real lifecycle journeys rehearse karein.
+Scope: Rehearse real lifecycle journeys for both apps, queues/cache/storage and Control from a clean Windows setup.
 
-Acceptance: Online/Offline accuracy, repeated Start All/Stop All, partial-start failure, stale PID, browser deduplication, runtime errors aur reboot recovery verify hon; source environments unaffected hon.
+Acceptance: Online/Offline accuracy, repeated Start All/Stop All, partial-start failure, stale PID, browser deduplication, runtime errors and reboot recovery are verified; source environments remain unaffected.
 
-Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence verified hon; partial work Complete mark na ho.
+Stage exit: Verify all acceptance gates and Git-backed evidence for every point in this stage; never mark partial work Complete.
 
 ## MT-7 - Migration rehearsal and release readiness
 
@@ -282,43 +284,43 @@ Stage status: Pending
 
 Status: Pending | Dependencies: MT-6.3
 
-Scope: Protected exports/sanitized fixtures se isolated MySQL migration dry-run karein; ID maps, history, media aur keys ka recovery design verify karein.
+Scope: Perform an isolated MySQL migration dry-run from protected exports/sanitized fixtures; verify recovery design for ID maps, history, media and keys.
 
-Acceptance: Record/relation/control-total reconciliation, rerun/idempotency, rollback aur verified restore pass hon. Real export/cutover authorization alag rahe; originals par writes na hon.
+Acceptance: Record/relation/control-total reconciliation, rerun/idempotency, rollback and verified restore pass. Real export/cutover authorization remains separate; originals are never written.
 
 ### MT-7.2 - Security, performance and resilience audit
 
 Status: Pending | Dependencies: MT-7.1
 
-Scope: Authentication/authorization, upload/content, secrets, payments, stock concurrency, queues, API/cache performance aur recovery audit karein.
+Scope: Audit authentication/authorization, uploads/content, secrets, payments, stock concurrency, queues, API/cache performance and recovery.
 
-Acceptance: MySQL concurrency, cache outages/stale data, worker retries, negative paths, dependency audits aur focused/full regression pass hon; verified gaps remediate hon.
+Acceptance: MySQL concurrency, cache outage/stale-data behavior, worker retries, negative paths, dependency audits and focused/full regression pass; verified gaps are remediated.
 
 ### MT-7.3 - Monorepo CI and reproducible build gates
 
 Status: Pending | Dependencies: MT-7.2
 
-Scope: GitHub Actions mein backend tests, MySQL/Redis services, TypeScript/frontend checks, builds aur Playwright automate karein.
+Scope: Automate backend tests, MySQL/Redis services, TypeScript/frontend checks, builds and Playwright in GitHub Actions.
 
-Acceptance: New private remote par clean checkout CI pass ho; lockfiles/caches/artifacts secret-safe hon aur original repos workflows untouched hon.
+Acceptance: Clean-checkout CI passes on the new private remote; lockfiles/caches/artifacts remain secret-safe and original-repository workflows are untouched.
 
 ### MT-7.4 - Linux deployment and backup readiness
 
 Status: Pending | Dependencies: MT-7.3
 
-Scope: Linux/Nginx/TLS configuration, queues/scheduler, S3, environment separation, automated backup/restore aur rollback runbooks banayein.
+Scope: Create Linux/Nginx/TLS configuration, queue/scheduler, S3, environment-separation, automated backup/restore and rollback runbooks.
 
-Acceptance: Non-production configuration/recovery rehearsal aur backup integrity pass ho. Live provisioning/domain/provider changes tab tak HOLD rahen jab tak separately authorized na hon.
+Acceptance: Non-production configuration/recovery rehearsal and backup integrity pass. Live provisioning/domain/provider changes remain HOLD until separately authorized.
 
 ### MT-7.5 - Full functional parity and acceptance
 
 Status: Pending | Dependencies: MT-7.4
 
-Scope: Complete source-to-target register ka har valid requirement fresh target evidence se close karein; operational journeys independently run karein.
+Scope: Close every valid requirement in the complete source-to-target register with fresh target evidence and independently run operational journeys.
 
-Acceptance: Pest/PHPUnit, MySQL, builds, Playwright, POS/Website/Control, docs and recovery gates pass hon; no silent feature loss or unreviewed duplicate master ho.
+Acceptance: Pest/PHPUnit, MySQL, builds, Playwright, POS/Website/Control, documentation and recovery gates pass; no silent feature loss or unreviewed duplicate master remains.
 
-Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence verified hon; partial work Complete mark na ho.
+Stage exit: Verify all acceptance gates and Git-backed evidence for every point in this stage; never mark partial work Complete.
 
 ## MT-8 - Final sign-off
 
@@ -328,20 +330,20 @@ Stage status: Pending
 
 Status: Pending | Dependencies: MT-7.5
 
-Scope: Complete Goal aur Preferences, requirements map, all completed-point claims, Git/code/data, migration/recovery, security, integrations, CI, docs, HOLD register aur source immutability independently audit karein.
+Scope: Independently audit the complete Goal and Preferences, requirement map, all completed-point claims, Git/code/data, migration/recovery, security, integrations, CI, documentation, HOLD register and source immutability.
 
-Acceptance: Required gaps reopen hon; new repo clean aur remote-aligned ho. Sirf clean final audit par Project complete: 100% report ho; Deferred required work ko completion ka substitute na banayein.
+Acceptance: Reopen required gaps; the new repository must be clean and remote-aligned. Report `Project complete: 100%` only after a clean final audit; Deferred required work cannot substitute for completion.
 
-Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence verified hon; partial work Complete mark na ho.
+Stage exit: Verify all acceptance gates and Git-backed evidence for every point in this stage; never mark partial work Complete.
 
 ## HOLD / Deferred register
 
-H-01 - Live production deployment, domains, TLS activation aur real customer-data cutover: separate explicit authorization aur target access required. MT-7.1/MT-7.4 ki isolated rehearsal/readiness in scope rahegi.
+H-01 - Live production deployment, domains, TLS activation and real customer-data cutover require separate explicit authorization and target access. MT-7.1/MT-7.4 isolated rehearsal/readiness remains in scope.
 
-H-02 - JazzCash/Easypaisa authentic sandbox acceptance: verified official contracts aur valid sandbox credentials required. Card: approved hosted/tokenized processor required. Live activation alag HOLD hai. Existing safe disabled-provider behavior aur COD migration required hain; fake acceptance mana hai.
+H-02 - JazzCash/Easypaisa authentic sandbox acceptance requires verified official contracts and valid sandbox credentials. Card requires an approved hosted/tokenized processor. Live activation is a separate HOLD. Existing safe disabled-provider behavior and COD migration remain required; fake acceptance is prohibited.
 
-H-03 - Source business-data export aur destructive restore: sensitive datasets aur exact target ka authorization before access/use. Synthetic/sanitized isolated migration tests continue ho sakte hain. Source repository/database writes is project mein prohibited hain.
+H-03 - Source business-data export and destructive restore require authorization for the sensitive dataset and exact target before access/use. Synthetic/sanitized isolated migration tests may continue. Source repository/database writes are prohibited in this project.
 
-H-04 - Arbitrary new top-level category semantics aur unrelated new features: approved Goal se bahar jab tak separately scoped na hon. Existing protected IDs/business rules preserve honge.
+H-04 - Arbitrary new top-level category semantics and unrelated new features are outside the approved Goal unless separately scoped. Existing protected IDs/business rules must be preserved.
 
-HOLD/dependency evidence final audit mein explicitly review hogi. Koi required capability implement na hone par use sirf Deferred label de kar project complete nahi kehna.
+HOLD/dependency evidence is explicitly reviewed in FINAL-AUDIT. A required capability cannot be left unimplemented and then relabeled Deferred merely to complete the project.

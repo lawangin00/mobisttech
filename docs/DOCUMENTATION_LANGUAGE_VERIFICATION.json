@@ -1,0 +1,64 @@
+{
+  "date": "2026-08-31",
+  "scope": "Documentation/control language reconciliation only; no roadmap implementation point advanced",
+  "preflight_head_and_upstream": "26a26c68dd5f13caba92556ac3b0da6b2b227590",
+  "post_commit_resolution": "git log -1 -- docs/DOCUMENTATION_LANGUAGE_VERIFICATION.json",
+  "post_commit_gate": "Require clean working tree and HEAD == upstream == live refs/heads/main before completion response",
+  "language_policy": {
+    "chat_ui_default": "Roman Urdu in Latin/English letters unless explicitly overridden for the current scope",
+    "git_tracked_project_documentation": "Standard English unless explicitly overridden for a specific artifact",
+    "user_supplied_goal_preferences": "Preserved in original language/content and byte-identical",
+    "generated_language_scan_hit_files": 0,
+    "scan_method": "Roman-Urdu lexical scan across generated Markdown/JSON artifacts; user-supplied Goal/Preferences excluded"
+  },
+  "approved_input_sha256": {
+    "Goal": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "Preferences": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402"
+  },
+  "roadmap": {
+    "version": "1.3",
+    "points": 32,
+    "completed": 2,
+    "pending": 30,
+    "next": "MT-1.2 - Unified data, API and security design",
+    "content_blocks": 175,
+    "docx_text_parity": true,
+    "pages_visually_inspected": 13,
+    "renderer": "Microsoft Word page render to EMF/PNG"
+  },
+  "project_registry": {
+    "version": "MT-1.1-r2",
+    "universal_registry": "1.8",
+    "system": "7.2",
+    "global_registry_blob": "5b1ce3cc888e34ebe7038c63262f8b32f9a77eae"
+  },
+  "global_reference": {
+    "commit": "b151602848bebc763c45657bf49f12531ca03a1f",
+    "custom_instructions_characters": 4987,
+    "docx_pages_visually_inspected": 15
+  },
+  "source_boundary": "tools/docs/snapshot_sources.py --check passed; originals unchanged",
+  "inventory_gate": "tools/migration/verify_inventory.py passed: 1224 files, 316 routes, valid family/roadmap mapping, 438 fresh source characterization test cases, target placeholders intact",
+  "translated_project_generated_files": [
+    "AGENTS.md",
+    "README.md",
+    "docs/AI_PROJECT_COMMAND_REGISTRY.md",
+    "docs/INITIALIZATION_PREFERENCES_RECONCILIATION.md",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md",
+    "docs/PROJECT_IMPLEMENTATION_STATUS.md",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md",
+    "docs/SOURCE_BASELINE.md"
+  ],
+  "artifact_sha256": {
+    "AGENTS.md": "59c7b1868e22e6a15b00eee5561a76f3f9d0e637651478d744c80108919cf43a",
+    "README.md": "ef501e452cff29e66b32a921deadb4f5ee2503d109ff974f89d1389215e4d6fc",
+    "docs/AI_PROJECT_COMMAND_REGISTRY.md": "e875a7213eb0d148a9da6dad63878e662b3fcebfbb7310abc6a4787bfb3f5b89",
+    "docs/INITIALIZATION_PREFERENCES_RECONCILIATION.md": "d2f991fbb77d1410610ac7bc25edbab49acd94a36f9d2c18e44ee199ed6dc34a",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "aea7511d88e680de4424b23724664de500d2339799dbbf854b4379984c45289b",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "7264c980222d10547352f1dc1625a958f1f17aac4e05ea0bacf464cd09ef5958",
+    "docs/PROJECT_IMPLEMENTATION_STATUS.md": "d8fda08923b52814f923b1f38a3c55618933bbb0d693ed58d6833fcb0985adce",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "62b43b1197fee37bfdfa8bab57e491a2de1e56886336b7a592260b020a5c9de8",
+    "docs/SOURCE_BASELINE.md": "4a8643e42c055ac5ec967595d7df57f6151779c7ea051d0e94102af0487c767a"
+  }
+}
