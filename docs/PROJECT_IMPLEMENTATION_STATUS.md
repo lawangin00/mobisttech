@@ -20,17 +20,19 @@ Last reconciled: 2026-08-31
 
 ## Verified position
 
-Active stage: MT-1 - Migration inventory and design (In Progress)
+Active stage: MT-2 - Shared backend and transactional migration (Pending)
+
+Last completed stage: MT-1 - Migration inventory and design
 
 Current In Progress point: None
 
-Status: MT-0 complete; MT-1.1 and MT-1.2 complete. 3/32 complete, 29 pending. MT-1 remains In Progress; MT-1.3/application foundations have not started.
+Status: MT-0 and MT-1 complete. 4/32 complete, 28 pending. MT-2.1 is not started.
 
-Last completed point: MT-1.2 - Unified data, API and security design
+Last completed point: MT-1.3 - Windows toolchain and application foundations
 
-Next pending point: MT-1.3 - Windows toolchain and application foundations
+Next pending point: MT-2.1 - Shared backend schema and infrastructure
 
-Execution boundary: Application migration has not started. Backend/Website/brand/Control directories remain placeholders. Completion of the source projects does not constitute completion of the new target.
+Execution boundary: Backend and Website application foundations exist with framework runtime tables only. Shared business schema, identity/data/feature migration, brand, Control and CI remain pending. Completion of source projects or foundation tests does not constitute full target acceptance.
 
 ## Documentation language policy
 
@@ -92,12 +94,24 @@ OpenAPI 3.1.1 validates 36 operations. Design verification passes 18 positive/ne
 
 Source of Truth and roadmap are v1.4; only MT-1.2 changes to Completed, with all 32 IDs/titles/dependencies retained. The same-basename DOCX is regenerated and verified in this checkpoint; detailed parity, render and boundary evidence is in `docs/design/CHECKPOINT_VERIFICATION.json`. Original repositories remain unchanged. Intended synchronization is only the new repository main branch and its private origin; closure requires clean HEAD/upstream/live-main equality.
 
+## MT-1.3 Windows foundation closure
+
+On user Proceed, only MT-1.3 executed. The target backend selectively reuses the standard Laravel foundation and adds React/TypeScript/Inertia/Tailwind; the separate Next.js/React/TypeScript/Tailwind Website consumes the fixed loopback Laravel API. Exact runtime/package versions, reuse decisions, ports, setup and maintenance boundaries are in `docs/foundation/WINDOWS_SETUP.md` and `MT_1_3_VERIFICATION.json`.
+
+A checksum-verified portable MySQL 8.4.11 instance uses a new target-only data directory, loopback port 13306 and independently generated credentials. Only framework cache/jobs/sessions tables exist in the local/test schemas. Source database/URL/socket/identity overrides and external Laravel HTTP calls are rejected by local/test guards. No source environment, secret, business-data export or existing service was used. Redis has an isolated reserved derived-cache/throttling role but is not running; file cache is the explicit foundation default. The S3 adapter is configured but disabled with blank credentials and private local storage selected.
+
+Fresh target verification passed: 15 tests/44 assertions, real MySQL identity/runtime schema and database session checks, private storage/cache probe, optimize/clear, PHP format/platform/lock checks, clean npm lockfile installs, POS TypeScript/Vite build, Website lint/typecheck/Next.js build and fixed API proxy health. No business or legacy integration route is exposed. MySQL duplicate-start, owned status, graceful stop and restart were verified. Dependency audits reported no known vulnerabilities. The compatible ESLint 9 lock has an upstream deprecation notice; ESLint 10 was rejected after confirmed plugin incompatibility, documented for pre-release re-evaluation.
+
+Visual/browser smoke was blocked by Browser Use URL policy; no bypass or browser acceptance claim was made. Required foundation build/configuration/connectivity gates passed; later UI/browser/functional parity gates remain pending. An initial smoke-server directory error, a test helper method error and a Windows file-lock retry were corrected and the affected non-browser gates rerun successfully.
+
+MT-1 is complete (all three points verified). Only this ledger owns live progress. Roadmap Markdown/DOCX, Source of Truth, registry, approved Goal/Preferences and historical checkpoint evidence are unchanged; no Word regeneration is required. Commit/push and final clean HEAD/upstream/live-origin equality are required only for the new monorepo. No MT-2.1 business schema work starts in this checkpoint.
+
 ## Recovery and next action
 
-Do not re-execute MT-0.1, MT-1.1 or MT-1.2. After this checkpoint is committed/pushed and clean live synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-1.3 - Windows toolchain and application foundations`, after verifying the current ledger, Goal/Preferences, Source of Truth/roadmap and Git state. After this control-policy reconciliation, open sessions should run `Refresh` once to load MT-1.1-r3; then the next Y/Proceed executes MT-1.3.
+Do not re-execute MT-0.1 or MT-1.1 through MT-1.3. After this checkpoint is committed/pushed and clean live synchronization is verified, stop before MT-2.1. The next applicable Y/Proceed executes only `MT-2.1 - Shared backend schema and infrastructure`. Reuse the session-loaded MT-1.1-r3 registry unless Refresh is requested. Runtime startup, lockfiles, limitations and checks are documented in `docs/foundation/WINDOWS_SETUP.md`.
 
 ## HOLD / decisions
 
-Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Logical MySQL mappings and auth/API design are complete under MT-1.2. Executed schema/data migrations, target ports, exact frontend/runtime locks and approved branding inventory remain future verified work. These HOLD items do not block design completion.
+Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Logical MySQL mappings and auth/API design are complete under MT-1.2. Business schema/data migrations and approved branding inventory remain future verified work. MT-1.3 establishes target-only runtime ports and locks without real source data/provider/production actions. Redis/S3 activation and actual consuming-feature resilience remain later implementation gates; the foundation uses file cache and private local storage. These HOLD items do not block the verified foundation scope.
 
 No source-repository write, source-data migration, source runtime action, real payment-provider activation, external message or production change is authorized or performed by this reconciliation.

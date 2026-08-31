@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+@source '../views/**/*.blade.php';
+@source '../js/**/*.{ts,tsx}';
+
+body {
+    background: #f8fafc;
+    font-family: Arial, Helvetica, sans-serif;
+}
