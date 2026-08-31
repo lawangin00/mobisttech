@@ -20,19 +20,19 @@ Last reconciled: 2026-08-31
 
 ## Verified position
 
-Active stage: MT-2 - Shared backend and transactional migration (Pending)
+Active stage: MT-2 - Shared backend and transactional migration (In Progress)
 
 Last completed stage: MT-1 - Migration inventory and design
 
 Current In Progress point: None
 
-Status: MT-0 and MT-1 complete. 4/32 complete, 28 pending. MT-2.1 is not started.
+Status: MT-0 and MT-1 complete. MT-2 is in progress. 5/32 complete, 27 pending. MT-2.2 is not started.
 
-Last completed point: MT-1.3 - Windows toolchain and application foundations
+Last completed point: MT-2.1 - Shared backend schema and infrastructure
 
-Next pending point: MT-2.1 - Shared backend schema and infrastructure
+Next pending point: MT-2.2 - Identity, customer and authorization migration
 
-Execution boundary: Backend and Website application foundations exist with framework runtime tables only. Shared business schema, identity/data/feature migration, brand, Control and CI remain pending. Completion of source projects or foundation tests does not constitute full target acceptance.
+Execution boundary: Backend/Website foundations and the shared MySQL schema/infrastructure exist. Identity, business-data/feature migration, brand, Control and CI remain pending. Schema and infrastructure tests do not constitute implemented authentication, transactional feature parity or private-data import acceptance.
 
 ## Documentation language policy
 
@@ -106,12 +106,24 @@ Visual/browser smoke was blocked by Browser Use URL policy; no bypass or browser
 
 MT-1 is complete (all three points verified). Only this ledger owns live progress. Roadmap Markdown/DOCX, Source of Truth, registry, approved Goal/Preferences and historical checkpoint evidence are unchanged; no Word regeneration is required. Commit/push and final clean HEAD/upstream/live-origin equality are required only for the new monorepo. No MT-2.1 business schema work starts in this checkpoint.
 
+## MT-2.1 shared schema and infrastructure closure
+
+On user Y, only MT-2.1 executed. `docs/schema/README.md` records reuse decisions, source-to-target transformations, infrastructure behavior, reproduction and limitations. The 79 pinned source migrations were applied only in isolated in-memory exports, producing schema metadata for 58 source-qualified tables and 735 final columns. Every final column has an explicit destination/disposition; source migration hashes and 116 invalid row-shape rejection cases pass. No source rows, environments, secrets, databases or runtime services were accessed.
+
+Two target Laravel migrations add 62 tables to the existing seven framework tables: 69 tables, 894 columns, 117 foreign keys and 317 indexes. Fresh local and disposable test MySQL 8.4.11 apply succeeds. Test rollback leaves exactly seven framework tables; reapply restores the identical normalized schema hash. Strict SQL, UTC, InnoDB, complete column types/nullability, FK destinations, indexes, exact money, active IMEI/allocation uniqueness, cross-outlet restrictions, payment identity, historical RESTRICT behavior and migration identity constraints pass. Synthetic business rows are cleaned; actual source-data import remains pending.
+
+Database queue dispatch waits for commit; real workers demonstrate rollback discard, success, retry and terminal failed-job evidence. The durable event/version schema rolls back atomically. Versioned public-cache infrastructure consults MySQL first and falls back on Redis failure without retrying the business callback. Private object checks cover integrity, namespace/path rejection, public-route isolation and overwrite rejection; the actual S3 adapter verifies private bucket/prefix behavior and propagates failure using a network-free SDK handler. No live Redis/S3 or provider activation is claimed, and business event consumers, object authorization/content validation and recovery remain their later feature gates.
+
+Fresh target gates pass: 33 backend tests / 3,714 assertions; POS TypeScript/Vite build; Website lint/typecheck/Next.js build; PHP syntax, Pint, Composer validation/platform requirements, optimize/clear and MySQL/cache/private-storage probe. Current Composer and both npm audits report zero known advisories. `docs/schema/MT_2_1_VERIFICATION.json` records detailed evidence and artifact hashes. A schema-inspection harness initially enumerated both allowed target databases; it was corrected to the exact disposable schema, made to exit nonzero on failure, and rollback/reapply gates were rerun successfully. No business route, credential/customer migration or MT-2.2 implementation was introduced.
+
+Original source Git/file fingerprints remain unchanged. Goal/Preferences, Source of Truth, registry and roadmap Markdown/DOCX are unchanged; this routine progress checkpoint does not require Word regeneration. The intended checkpoint is only the new monorepo main branch/private origin, with clean local/upstream/live-main equality verified after commit/push.
+
 ## Recovery and next action
 
-Do not re-execute MT-0.1 or MT-1.1 through MT-1.3. After this checkpoint is committed/pushed and clean live synchronization is verified, stop before MT-2.1. The next applicable Y/Proceed executes only `MT-2.1 - Shared backend schema and infrastructure`. Reuse the session-loaded MT-1.1-r3 registry unless Refresh is requested. Runtime startup, lockfiles, limitations and checks are documented in `docs/foundation/WINDOWS_SETUP.md`.
+Do not re-execute MT-0.1, MT-1.1 through MT-1.3, or MT-2.1. After this checkpoint is committed/pushed and clean live synchronization is verified, stop before MT-2.2. The next applicable Y/Proceed executes only `MT-2.2 - Identity, customer and authorization migration`. Reuse the session-loaded MT-1.1-r3 registry unless Refresh is requested. Runtime startup/locks are documented in `docs/foundation/WINDOWS_SETUP.md`; schema/infrastructure reproduction and limitations are in `docs/schema/README.md`.
 
 ## HOLD / decisions
 
-Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Logical MySQL mappings and auth/API design are complete under MT-1.2. Business schema/data migrations and approved branding inventory remain future verified work. MT-1.3 establishes target-only runtime ports and locks without real source data/provider/production actions. Redis/S3 activation and actual consuming-feature resilience remain later implementation gates; the foundation uses file cache and private local storage. These HOLD items do not block the verified foundation scope.
+Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure now exists under MT-2.1; identity, business-data and feature migrations and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. Live Redis/S3 activation, consuming-feature resilience, scoped object authorization and provider/backup recovery remain later implementation gates; the local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block the verified MT-2.1 scope.
 
 No source-repository write, source-data migration, source runtime action, real payment-provider activation, external message or production change is authorized or performed by this reconciliation.

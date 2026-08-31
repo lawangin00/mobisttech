@@ -16,6 +16,7 @@ A new, independent mobiST Technologies monorepo. This is a controlled architectu
 - [Isolated source characterization evidence](docs/migration/CHARACTERIZATION.md)
 - [Unified data, API and security design](docs/design/README.md)
 - [Windows foundation setup and verification](docs/foundation/WINDOWS_SETUP.md)
+- [Shared schema, column lineage and infrastructure verification](docs/schema/README.md)
 
 ## Target structure
 

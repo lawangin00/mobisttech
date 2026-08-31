@@ -34,7 +34,7 @@ return [
             'driver' => 'local',
             'root' => storage_path('app/private'),
             'serve' => false,
-            'throw' => false,
+            'throw' => true,
             'report' => false,
         ],
 
@@ -56,7 +56,9 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-            'throw' => false,
+            'root' => env('AWS_ROOT', 'mobisttech/private'),
+            'visibility' => 'private',
+            'throw' => true,
             'report' => false,
         ],
 

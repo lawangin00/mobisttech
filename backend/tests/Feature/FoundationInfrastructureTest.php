@@ -17,8 +17,8 @@ class FoundationInfrastructureTest extends TestCase
         foreach (['sessions', 'jobs', 'job_batches', 'failed_jobs', 'cache', 'cache_locks'] as $table) {
             $this->assertTrue(Schema::hasTable($table));
         }
-        $this->assertFalse(Schema::hasTable('orders'));
-        $this->assertFalse(Schema::hasTable('products'));
+        $this->assertTrue(Schema::hasTable('orders'));
+        $this->assertTrue(Schema::hasTable('products'));
     }
 
     public function test_foundation_request_persists_a_database_session(): void
