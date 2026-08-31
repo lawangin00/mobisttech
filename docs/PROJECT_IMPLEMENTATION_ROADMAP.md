@@ -1,8 +1,10 @@
 # mobiST Tech - Project Implementation Roadmap
 
-Version: 1.0 | Date: 2026-08-31
+Version: 1.1 | Date: 2026-08-31
 
 Canonical Goal: docs/PROJECT_GOAL.md
+
+Binding Preferences: docs/PROJECT_PREFERENCES.md
 
 Source of Truth: docs/PROJECT_SOURCE_OF_TRUTH.md
 
@@ -18,6 +20,8 @@ Purane POS/Website folders, remotes aur data immutable references hain. Sab impl
 
 Har point mein applicable focused/full tests, parity evidence, secrets review, source-boundary check, ledger update aur roadmap/DOCX parity completion gates hain. MT-1.1 detailed inventory is roadmap ko evidence ke mutabiq refine kar sakti hai; silently functionality drop ya completed IDs renumber nahi karna.
 
+Goal aur Preferences dono apply hon. Working features ke liye reuse/adapt/refactor/migrate pehle assess hon; rewrite ko verified reason chahiye. Incremental batches mein parity, data consistency, integration aur regression verify hon; big-bang rewrite nahi. Conventional solutions, justified Redis roles aur Laravel-only business backend use hon; Node/Express parallel backend nahi. Stack deviation sirf verified unavoidable blocker par documented ho, Goal conflict silently resolve na ho.
+
 ## MT-0 - Project initialization
 
 Stage status: Complete
@@ -26,9 +30,9 @@ Stage status: Complete
 
 Status: Completed | Dependencies: None
 
-Scope: Original Goal preserve karna; protected source baseline, monorepo layout, canonical docs/registry, matching DOCX aur independent private GitHub repository establish karna.
+Scope: Original Goal aur approved Preferences preserve/reconcile karna; protected source baseline, monorepo layout, canonical docs/registry, matching DOCX aur independent private GitHub repository establish karna.
 
-Acceptance: Goal hash, docs parity, source unchanged checks, new root commit aur remote equality verify hon. Is point par application migration shuru na ho.
+Acceptance: Goal/Preferences hashes aur full coverage, docs parity, source unchanged checks, independent Git history aur remote equality verify hon. MT-0.1 re-verification evidence record ho; MT-1.1/application migration start na ho.
 
 Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence verified hon; partial work Complete mark na ho.
 
@@ -40,9 +44,9 @@ Stage status: Pending
 
 Status: Pending | Dependencies: MT-0.1
 
-Scope: Pinned source code, routes, roles, models, migrations, tests, integrations, Dynamic Platform, branding aur Control ki full inventory banayein.
+Scope: Pinned source code, routes, roles, models, migrations, tests, integrations, Dynamic Platform, branding aur Control inventory; legacy files/folders ke roles/dependencies aur retention value assess karein.
 
-Acceptance: Har valid capability ko target owner, source evidence, keep/adapt/retire decision aur acceptance gate mile. Isolated source-copy characterization run ho; originals unchanged hon.
+Acceptance: Har valid capability ke reuse/adapt/refactor/migrate options aur required rewrite ka verified reason record ho; retirement sirf unnecessary duplication ke liye. Target owner, parity gate aur isolated characterization hon; originals unchanged hon.
 
 ### MT-1.2 - Unified data, API and security design
 
@@ -56,7 +60,7 @@ Acceptance: Orders, payments, stock reservation, price/currency precision, idemp
 
 Status: Pending | Dependencies: MT-1.2
 
-Scope: Compatible pinned runtimes/dependencies ke saath Laravel 13, React/Inertia/TypeScript/Tailwind aur Next.js foundations new folders mein tayyar karein; isolated MySQL/Redis/storage configure karein.
+Scope: Approved pinned stack par Laravel 13, React/Inertia/TypeScript/Tailwind aur Next.js foundations; isolated MySQL aur concrete justified Redis/storage roles configure karein. Useful source foundations reuse/adapt hon.
 
 Acceptance: Fresh Windows setup, secret-free examples, lockfiles aur smoke builds pass hon. Ports source servers se conflict na karein; nested .git, real provider calls ya source data connection na ho.
 
@@ -254,9 +258,9 @@ Acceptance: Logo/icon/favicon/watermark/font references, build output aur fallba
 
 Status: Pending | Dependencies: MT-6.1
 
-Scope: Aik Control app new backend/website paths aur approved branding par adapt karein; Laravel/Vite/Next.js processes manage karein.
+Scope: Useful legacy Control implementation aik canonical app mein adapt karein; current approved logo lagayein, old logo carry forward na ho. New backend/website paths aur development processes manage hon.
 
-Acceptance: Start/stop/restart/open/status, already-running detection, PID ownership, occupied ports, duplicate starts aur orphan process handling verify hon; unrelated/source processes terminate na hon.
+Acceptance: Start, Stop, Restart, Open, Status, Start All aur Stop All jahan applicable hon verify hon; exclusions justified hon. PID ownership, already-running/occupied-port handling aur duplicate/orphan safety pass ho; unrelated/source processes terminate na hon.
 
 ### MT-6.3 - Windows operator and local integration acceptance
 
@@ -264,7 +268,7 @@ Status: Pending | Dependencies: MT-6.2
 
 Scope: Clean Windows setup se both apps, queues/cache/storage aur Control ke real lifecycle journeys rehearse karein.
 
-Acceptance: Online/Offline accuracy, repeated start-stop, stale PID, browser deduplication, runtime errors aur reboot recovery documented hon; source environments unaffected hon.
+Acceptance: Online/Offline accuracy, repeated Start All/Stop All, partial-start failure, stale PID, browser deduplication, runtime errors aur reboot recovery verify hon; source environments unaffected hon.
 
 Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence verified hon; partial work Complete mark na ho.
 
@@ -322,7 +326,7 @@ Stage status: Pending
 
 Status: Pending | Dependencies: MT-7.5
 
-Scope: Complete Goal, requirements map, all completed-point claims, Git/code/data, migration/recovery, security, integrations, CI, docs, HOLD register aur source immutability independently audit karein.
+Scope: Complete Goal aur Preferences, requirements map, all completed-point claims, Git/code/data, migration/recovery, security, integrations, CI, docs, HOLD register aur source immutability independently audit karein.
 
 Acceptance: Required gaps reopen hon; new repo clean aur remote-aligned ho. Sirf clean final audit par Project complete: 100% report ho; Deferred required work ko completion ka substitute na banayein.
 

@@ -1,11 +1,12 @@
 # mobiST Tech - AI Project Command Registry
 
-**Registry version:** MT-1.0
+**Registry version:** MT-1.1
 **Universal baseline:** Registry 1.6 / System 7.2
 **Date:** 2026-08-31
 **Repository root:** `C:\mobisttech`
 **Remote:** `lawangin00/mobisttech` (independent, private)
 **Canonical Goal:** `docs/PROJECT_GOAL.md`
+**Binding Preferences:** `docs/PROJECT_PREFERENCES.md`
 **Source of Truth:** `docs/PROJECT_SOURCE_OF_TRUTH.md`
 **Roadmap:** `docs/PROJECT_IMPLEMENTATION_ROADMAP.md`
 **Word mirror:** `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
@@ -15,8 +16,9 @@
 
 - Yeh naya project hai; old DP-* task position ko resume/advance nahi karna. Protected source paths `C:\mobiST\mobiST-POS` aur `C:\mobiST\mobiST-Website` hain. Unki files/Git metadata/remotes/databases/services ko mutate nahi karna; read-only source inspection only. Source tests/builds bhi sirf isolated exported copies mein hon.
 - Audit/Verify/Sync/Checkpoint aur handoffs ka mutation scope sirf new monorepo hai. Old source ledger synchronization, push, pull/fetch, bug fixes ya remote repointing forbidden hai, chahe inherited legacy docs kuch aur kahein.
-- Current user instruction highest authority hai. Project Goal required functionality define karta hai. Source legacy docs technical evidence hain; old two-database architecture aur old command semantics new project par inherit nahi hote.
+- Current user instruction highest authority hai. Project Goal required functionality aur approved Preferences implementation boundaries define karte hain; dono read/apply karein. Source legacy docs technical evidence hain; old two-database architecture aur old command semantics new project par inherit nahi hote.
 - Initialize sirf MT-0.1 complete karta hai. Y/Proceed verified current In Progress point continue kare, warna first Pending point execute kare. Aik point fully complete/verified/committed/pushed hone par stop; next point automatic start nahi.
+- Initialization completion se pehle approved Goal aur Preferences collect/read, canonical files mein preserve aur Source of Truth/roadmap/ledger/registry/decisions se reconcile karein. Existing approved input repeat na maangein; sirf missing critical information poochein. Account-level instructions aur current Git-backed global initialization/roadmap rules apply hon; unki copies Goal/Preferences mein add na karein.
 - Authorized local implementation aur intended new-repository commit/push point scope mein hain. Destructive operations, live production/customer-data cutover, real external messaging aur provider activation separately authorized hon; readiness aur safe isolated tests ke liye unnecessary permission na maangein.
 - New remote ko kisi existing repository se replace/repoint/overwrite nahi karna. Creation pehle existence check ke baad independent private repository mein ho. Never force-push.
 - Every completed point records focused/full applicable gates, exact pending state, source-boundary verification and Git evidence. Partial work Complete mark nahi karna.
@@ -25,6 +27,8 @@
 - User-facing general language Roman Urdu hai; minimal completion labels aur exact technical/task identifiers unchanged rahenge. Detailed evidence docs mein ho.
 
 ## Adopted universal definitions
+
+MT-1.1 reconciliation ne sirf binding Preferences authority aur initialization collection gate add kiya. Universal 1.6/System 7.2 baseline, VP:VERIFY boundary aur point order unchanged hain. Session registry reload ab bhi explicit Refresh Registry/Refresh/VP:REFRESH-REGISTRY se hota hai.
 
 Neeche canonical universal registry ka verified content snapshot hai; sirf Markdown hard-break trailing spaces normalize kiye gaye hain. Project rules above explicit specialization hain; baqi semantics unchanged hain. Baseline Git blob: `fb0e0e5e516ecc570e46e949277768202892e9d5`. Roadmap specification v1.0 Git blob: `004ff996e0e691941369ce2b7f6e505ab8533312`.
 

@@ -5,11 +5,13 @@ mobiST Technologies ka naya, independent monorepo. Yeh completed mobiST POS aur 
 ## Project control
 
 - [Canonical project Goal](docs/PROJECT_GOAL.md) - user ki original file, byte-for-byte preserved.
+- [Binding project Preferences](docs/PROJECT_PREFERENCES.md) - approved implementation preferences, byte-for-byte preserved; Goal ke saath apply hon.
 - [Architecture aur execution boundaries](docs/PROJECT_SOURCE_OF_TRUTH.md)
 - [Active roadmap](docs/PROJECT_IMPLEMENTATION_ROADMAP.md) / [Word mirror](docs/PROJECT_IMPLEMENTATION_ROADMAP.docx)
 - [Verified implementation status](docs/PROJECT_IMPLEMENTATION_STATUS.md)
 - [Project command registry](docs/AI_PROJECT_COMMAND_REGISTRY.md)
 - [Source baseline aur migration risks](docs/SOURCE_BASELINE.md)
+- [MT-0.1 Preferences reconciliation](docs/INITIALIZATION_PREFERENCES_RECONCILIATION.md)
 
 ## Target structure
 

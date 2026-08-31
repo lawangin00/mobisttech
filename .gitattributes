@@ -9,3 +9,5 @@
 *.ico binary
 # Canonical supplied Goal must keep its original bytes.
 docs/PROJECT_GOAL.md -text
+# Canonical supplied Preferences must also keep their original bytes.
+docs/PROJECT_PREFERENCES.md -text

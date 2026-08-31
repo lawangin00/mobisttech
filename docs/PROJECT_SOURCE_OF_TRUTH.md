@@ -1,12 +1,14 @@
 # mobiST Tech - Project Source of Truth
 
-Version: 1.0 | Date: 2026-08-31
+Version: 1.1 | Date: 2026-08-31
 
-## Authority aur Goal
+## Authority, Goal aur Preferences
 
 `docs/PROJECT_GOAL.md` user ka approved complete Goal hai. Original source: `C:\Users\msaee\OneDrive\Desktop\mobisttech-goal.md`. Original SHA-256: `7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f`.
 
-Goal ke tamam requirements binding hain. Yeh document unka execution map hai, replacement ya scope reduction nahi. User ki current instructions sab se upar hain; project Goal/Source of Truth required outcome, roadmap required work, ledger position aur Git/code implementation evidence define karte hain. Purani application documents sirf migration evidence hain; unki two-database architecture naye project par apply nahi hoti.
+`docs/PROJECT_PREFERENCES.md` approved binding implementation Preferences hain, Goal ke saath apply hongi. Original source: `C:\Users\msaee\OneDrive\Desktop\mobisttech-preferences.md`; SHA-256: `e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402`. Tamam 39 numbered preferences unchanged preserve ki gayi hain.
+
+Goal aur Preferences dono binding hain. Yeh document unka execution map hai, replacement ya scope reduction nahi. User ki current instructions sab se upar hain; Goal outcome, Preferences implementation boundaries, Source of Truth/roadmap required work, ledger position aur Git/code evidence define karte hain. Purani application documents sirf migration evidence hain; unki two-database architecture naye project par apply nahi hoti. Global project-control specifications registry/reference docs mein rahengi; Goal ya Preferences mein duplicate nahi hongi.
 
 ## Non-negotiable boundaries
 
@@ -18,11 +20,22 @@ Goal ke tamam requirements binding hain. Yeh document unka execution map hai, re
 6. Authentication/authorization, transaction arithmetic, stock integrity, payment verification aur immutable history application-controlled rahenge. UI visibility security boundary nahi.
 7. Existing source completion naye target ki completion nahi. Fresh target gates required hain; source test results historical evidence ke label ke saath hi use hon.
 
+## Binding implementation preferences
+
+- Har working feature ko replace karne se pehle reuse, adapt, refactor aur migrate options verify karein. Rewrite sirf documented technical necessity par; architecture/frontend change khud sufficient reason nahi. Legacy folders/files ko actual role/dependencies aur useful/required/authoritative/historical value assess kiye baghair copy nahi karna. Valid payment, auth/customer, CMS/catalogue/reviews/checkout, POS/inventory/warranty/report/backup aur Dynamic Platform behavior preserve hoga.
+- Approved target stack conventional aur maintainable rahe. Node/Express ya koi parallel business backend nahi; Next.js framework/server rendering Laravel ki shared business authority replace nahi karegi. Unnecessary microservices ya infrastructure add nahi karna. Stack deviation sirf verified unavoidable technical blocker aur minimum justified change ke saath record ho; binding Goal se conflict ho to user se resolve karein, silent replacement nahi.
+- Redis cache, queue, session, lock ya background processing mein sirf concrete justified role ke liye use ho; har proposed role aur operational cost document ho. S3-compatible storage jahan appropriate ho; har available infrastructure feature enable karna requirement nahi.
+- Migration incremental, independently verifiable batches mein ho. Har affected feature par parity, data consistency, backend/Website integration aur regression evidence collect ho; tests sirf final stage tak defer nahi hon. MySQL migration valid relationships, constraints, IDs aur business rules preserve kare. Separate authoritative POS/Website databases ya big-bang rewrite nahi.
+- Backend/Website logically separate components hain, lekin coordinated commits, shared tooling/docs/brand/CI project-level resources ho sakte hain. Aik canonical brand aur aik canonical Control hi rahenge. Runtime-derived asset copies allowed hain, duplicate master Brand Kits nahi.
+- Control current approved logo use kare, legacy older logo ko approved samajh kar carry forward nahi karna. New paths ke liye Start, Stop, Restart, Open, Status, Start All aur Stop All jahan applicable hon verify karein; inapplicable control ka concrete reason record ho. Already-running services, duplicate processes aur browser tabs ko safely handle karein. Windows local hai; Linux/Nginx future production ke liye hain.
+
+MT-0.1 re-verification aur all-39-preference coverage: `docs/INITIALIZATION_PREFERENCES_RECONCILIATION.md`. Yeh implementation inventory nahi; MT-1.1 pending rahega.
+
 ## Requirement map
 
 | Requirement | Target owner | Roadmap coverage |
 |---|---|---|
-| Independent monorepo aur naya remote | Root | MT-0.1 |
+| Independent monorepo, naya remote, Goal + Preferences registration | Root | MT-0.1 |
 | Valid legacy functionality ki inventory/parity | docs + migrated tests | MT-1.1, MT-7.5, FINAL-AUDIT |
 | Laravel 13 shared backend | backend | MT-1.3, MT-2.1 |
 | Master MySQL; merged schema/data; Redis; S3 | backend | MT-1.2, MT-1.3, MT-2.1, MT-7.1 |
@@ -37,7 +50,7 @@ Goal ke tamam requirements binding hain. Yeh document unka execution map hai, re
 | Digital solutions/public content | backend CMS + website | MT-3.2, MT-5.4 |
 | Completed Dynamic Platform, Website Admin/CMS | backend + both UIs | MT-3.2, MT-3.3, MT-4.4, MT-5.4 |
 | One canonical brand directory; runtime placement | brand + both UIs | MT-6.1 |
-| One canonical branded mobiST Control | tools/mobist-control | MT-6.2, MT-6.3 |
+| One canonical Control; current logo; Start All/Stop All | tools/mobist-control | MT-6.2, MT-6.3 |
 | Windows local development | entire monorepo | MT-1.3, MT-6.3 |
 | Linux/Nginx/TLS/backups/S3 production target | deployment configuration/docs | MT-7.4 |
 | Pest/PHPUnit, Playwright, GitHub Actions | backend + website + CI | All applicable points, MT-7.2, MT-7.3, MT-7.5 |
@@ -62,4 +75,4 @@ Production infrastructure design and reproducible deployment/recovery verificati
 
 ## Completion
 
-Each point needs source-to-target traceability, applicable focused/full tests and documentation, then a clean intended Git checkpoint in the new repository. Roadmap changes regenerate the same-basename DOCX. FINAL-AUDIT independently checks the entire Goal, feature parity, security, migration/recovery, Windows Control, production readiness, CI and remote sync. Only a clean audit permits `Project complete: 100%`; unresolved required work cannot be relabeled Deferred merely to close the project.
+Each point needs source-to-target traceability, Goal/Preferences compliance, applicable focused/full tests and documentation, then a clean intended Git checkpoint in the new repository. Roadmap changes regenerate the same-basename DOCX. FINAL-AUDIT independently checks the entire Goal and Preferences, feature parity, security, migration/recovery, Windows Control, production readiness, CI and remote sync. Only a clean audit permits `Project complete: 100%`; unresolved required work cannot be relabeled Deferred merely to close the project.
