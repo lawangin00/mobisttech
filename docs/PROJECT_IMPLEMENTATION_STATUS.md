@@ -1,6 +1,6 @@
 # mobiST Tech - Project Implementation Status
 
-Last reconciled: 2026-08-31
+Last reconciled: 2026-09-01
 
 ## Identity and authority
 
@@ -12,10 +12,13 @@ Last reconciled: 2026-08-31
 - Goal SHA-256: `7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f`
 - Binding Preferences: `docs/PROJECT_PREFERENCES.md` (all 39 approved numbered Preferences)
 - Preferences SHA-256: `e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402`
-- Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.5
-- Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.5
+- Approved addendum: `docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md` v1.1
+- Addendum SHA-256: `ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5`
+- Addendum traceability: `docs/REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md`
+- Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.6
+- Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.6
 - Roadmap Word mirror: `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
-- Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r3 (universal 1.9 / system 7.2)
+- Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r4 (universal 1.9 / system 7.2)
 - FINAL-AUDIT: `FINAL-AUDIT - Independent final project audit`
 
 ## Verified position
@@ -26,13 +29,15 @@ Last completed stage: MT-1 - Migration inventory and design
 
 Current In Progress point: None
 
-Status: MT-0 and MT-1 complete. MT-2 is in progress. 8/32 complete, 24 pending. MT-2.5 is not started.
+Status: MT-0 and MT-1 complete. MT-2 is in progress. 8/52 complete, 44 pending. Addendum adoption is documentation-only; MT-2.8 and MT-2.5 are not started.
 
 Last completed point: MT-2.4 - Inventory and stock integrity migration
 
-Next pending point: MT-2.5 - Sales, invoices and returns migration
+Next pending point: MT-2.8 - Addendum foundations and capability contracts
 
 Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, identity/customer/authorization, product/master-data and inventory/acquisition/stock transaction services exist. Identity/product/stock mapping uses synthetic rows only. Real MySQL stock concurrency is verified. Actual private-data migration, full sales/invoice/return/payment processors, POS/Website interfaces, brand, Control and CI remain pending. Backend tests do not constitute UI, live provider, financial transaction or private-data import acceptance.
+
+Approved addendum v1.1 expands required work; it does not change the last completed point or establish a new initialization. New mode/reset/retail/digital requirements are planned, not implemented.
 
 ## Documentation language policy
 
@@ -156,12 +161,79 @@ Fresh target gates pass: 89 tests / 4,511 assertions, including seventeen new ca
 
 MySQL remains exactly the MT-2.2 schema/hash with 73 tables and zero synthetic business rows. The initial Windows sandbox worker-output wait was replaced with bounded polling and rerun in approved process context; only owned test workers/fixtures were cleaned. Original source Git/file fingerprints and approved inputs remain unchanged. No browser denial was bypassed; no UI/provider/private-data acceptance is claimed. Source of Truth, registry, structural roadmap/DOCX and historical evidence remain unchanged; no Word regeneration is required. Intended synchronization is only the new monorepo main/private origin, followed by clean HEAD/upstream/live-main equality and artifact checks.
 
+## Approved addendum v1.1 reconciliation - 2026-09-01
+
+Applied the approved supplemental source without changing Goal/Preferences, rerunning initialization, implementing MT-2.8/MT-2.5 or reopening completed checkpoints. Source of Truth and roadmap are v1.6; registry MT-1.1-r4 adds authority/traceability pointers only, with unchanged universal alias semantics. The full 41-leaf-clause map, current schema/code dependency evidence, reuse decisions, optional-feature boundaries and exclusions are in `docs/REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md`.
+
+All 32 original roadmap IDs/titles survive and the first eight completed point blocks remain unchanged. Twenty new points create 52 total / 8 completed / 44 pending. New MT-2.8 precedes MT-2.5 to resolve additive capability/custody/procurement/money/milestone/reset-preservation contracts against current code. Later retail, digital, mode publication, safe reset and interface work stays in dependency-appropriate stages. Explicit roadmap order, not numeric sorting, governs execution. P1/P2/P3 and optional disablement never imply unapproved deferral.
+
+This is one structural roadmap update and one same-basename DOCX generation. Markdown/Word parity passes for 52 points and 249 content blocks; Microsoft Word rendered 21 pages, all visually inspected without clipping or overlap. Dependency/coverage checks, rendered-page QA, original-input hashes, unchanged application/source fingerprints and committed control-artifact hashes are recorded in `docs/REQUIREMENTS_ADDENDUM_v1.1_VERIFICATION.json`. No application tests/builds or database/services were run; prior target acceptance remains historical evidence. Commit/push synchronization is only the new monorepo main/private origin; no source runtime or remote mutation is permitted.
+
+## Roadmap point state - v1.6
+
+This is the live status list. Completed counts are preserved from verified Git checkpoints; every newly inserted point is Pending. The structural roadmap defines scopes and acceptance.
+
+| Point | Title | State |
+|---|---|---|
+| MT-0.1 | Project initialization | Completed |
+| MT-1.1 | Source inventory and feature parity register | Completed |
+| MT-1.2 | Unified data, API and security design | Completed |
+| MT-1.3 | Windows toolchain and application foundations | Completed |
+| MT-2.1 | Shared backend schema and infrastructure | Completed |
+| MT-2.2 | Identity, customer and authorization migration | Completed |
+| MT-2.3 | Product and master-data migration | Completed |
+| MT-2.4 | Inventory and stock integrity migration | Completed |
+| MT-2.8 | Addendum foundations and capability contracts | Pending |
+| MT-2.5 | Sales, invoices and returns migration | Pending |
+| MT-2.6 | Warranty and claim migration | Pending |
+| MT-2.7 | Unified orders, reservations and payments | Pending |
+| MT-2.9 | Supplier and procurement services | Pending |
+| MT-2.10 | Stocktake and cycle-count services | Pending |
+| MT-2.11 | Inter-outlet stock transfer services | Pending |
+| MT-2.12 | Cash sessions and operational expense services | Pending |
+| MT-2.13 | Trade-in and buyback services | Pending |
+| MT-2.14 | Promotion and coupon services | Pending |
+| MT-2.17 | Validated bulk data workflows | Pending |
+| MT-2.15 | Customer loyalty services | Pending |
+| MT-2.16 | Paid repair job services | Pending |
+| MT-3.1 | Reports, documents and communication services | Pending |
+| MT-3.2 | Dynamic CMS, media and presentation services | Pending |
+| MT-3.7 | Website operating mode publication | Pending |
+| MT-3.5 | Digital service catalogue and lead services | Pending |
+| MT-3.6 | Client projects, proposals and milestone services | Pending |
+| MT-3.9 | Customer engagement and notification services | Pending |
+| MT-3.3 | Audit, configuration, backups and integrations | Pending |
+| MT-3.8 | Guarded data reset services | Pending |
+| MT-3.4 | Versioned REST API and contract acceptance | Pending |
+| MT-4.1 | POS shell, authentication and navigation | Pending |
+| MT-4.2 | POS inventory and transaction interfaces | Pending |
+| MT-4.5 | Procurement and stock control interfaces | Pending |
+| MT-4.6 | Cash, trade-in and repair interfaces | Pending |
+| MT-4.3 | POS customer, warranty and reporting interfaces | Pending |
+| MT-4.4 | Website CMS and platform administration interfaces | Pending |
+| MT-4.8 | Digital operations administration interfaces | Pending |
+| MT-4.7 | Data reset administration interface | Pending |
+| MT-5.1 | Storefront, catalogue and SEO migration | Pending |
+| MT-5.2 | Customer account, cart, orders and reviews | Pending |
+| MT-5.3 | Checkout and customer payment flows | Pending |
+| MT-5.4 | Dynamic public content and digital solutions | Pending |
+| MT-5.5 | Client project portal and digital conversion journeys | Pending |
+| MT-6.1 | Canonical branding and runtime assets | Pending |
+| MT-6.2 | Canonical mobiST Control migration | Pending |
+| MT-6.3 | Windows operator and local integration acceptance | Pending |
+| MT-7.1 | Data migration and rollback rehearsal | Pending |
+| MT-7.2 | Security, performance and resilience audit | Pending |
+| MT-7.3 | Monorepo CI and reproducible build gates | Pending |
+| MT-7.4 | Linux deployment and backup readiness | Pending |
+| MT-7.5 | Full functional parity and acceptance | Pending |
+| FINAL-AUDIT | Independent final project audit | Pending |
+
 ## Recovery and next action
 
-Do not re-execute MT-0.1, MT-1.1 through MT-1.3, or MT-2.1 through MT-2.4. After this checkpoint is committed/pushed and clean live synchronization is verified, stop before MT-2.5. The next applicable Y/Proceed executes only `MT-2.5 - Sales, invoices and returns migration`. Reuse the session-loaded MT-1.1-r3 registry unless Refresh is requested. Runtime setup is in `docs/foundation/WINDOWS_SETUP.md`; inventory contracts, transaction boundaries and reproduction are in `docs/inventory/README.md`. Earlier schema/identity/product evidence remains in its existing directories.
+Do not re-execute the eight completed points or addendum reconciliation. After this documentation checkpoint is committed/pushed and clean synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-2.8 - Addendum foundations and capability contracts`; MT-2.5 waits for it. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r4 adds scope pointers only; existing session alias definitions remain unchanged and do not need a semantic refresh for this checkpoint. The addendum traceability and verification records explain the new dependency and remaining scope.
 
 ## HOLD / decisions
 
-Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure, backend identity, product/master-data and stock/acquisition services now exist; private business-data migration, full financial/order transaction processing, later interfaces and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. Live email/Redis/S3 activation, broader consuming-feature resilience and provider/backup recovery remain later implementation gates; the local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block the verified MT-2.4 backend/synthetic-rehearsal scope.
+Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure, backend identity, product/master-data and stock/acquisition services now exist; private business-data migration, full financial/order transaction processing, later interfaces and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. Live email/Redis/S3 activation, broader consuming-feature resilience and provider/backup recovery remain later implementation gates; the local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block the verified MT-2.4 scope or documentation-only addendum reconciliation. Addendum features are approved planned work, not H-04 exclusions; production destructive resets remain separately authorized under H-01/H-03.
 
 No source-repository write, source-data migration, source runtime action, real payment-provider activation, external message or production change is authorized or performed by this reconciliation.

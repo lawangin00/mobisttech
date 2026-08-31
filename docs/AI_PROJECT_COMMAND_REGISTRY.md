@@ -1,12 +1,14 @@
 # mobiST Tech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r3
+**Registry version:** MT-1.1-r4
 **Universal baseline:** Registry 1.9 / System 7.2
-**Date:** 2026-08-31
+**Date:** 2026-09-01
 **Repository root:** `C:\mobisttech`
 **Remote:** `lawangin00/mobisttech` (independent, private)
 **Canonical Goal:** `docs/PROJECT_GOAL.md`
 **Binding Preferences:** `docs/PROJECT_PREFERENCES.md`
+**Approved addendum:** `docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md`
+**Addendum traceability:** `docs/REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md`
 **Source of Truth:** `docs/PROJECT_SOURCE_OF_TRUTH.md`
 **Roadmap:** `docs/PROJECT_IMPLEMENTATION_ROADMAP.md`
 **Word mirror:** `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
@@ -16,7 +18,7 @@
 
 - This is a new project; do not resume or advance the old DP-* task position. Protected source paths are `C:\mobiST\mobiST-POS` and `C:\mobiST\mobiST-Website`. Their files, Git metadata, remotes, databases and services must not be mutated; source inspection is read-only. Source tests/builds may run only in isolated exported copies.
 - Audit/Verify/Sync/Checkpoint and handoff mutation scope is limited to the new monorepo. Source-ledger synchronization, push, pull/fetch, bug fixes or remote repointing are forbidden even if inherited legacy documents say otherwise.
-- Current user instruction has highest authority. Project Goal defines required functionality and approved Preferences define implementation boundaries; read and apply both. Legacy source documents are technical evidence only; old two-database architecture and old command semantics do not carry into the new project.
+- Current user instruction has highest authority. Project Goal defines required functionality and approved Preferences define implementation boundaries; read and apply both plus the approved requirements addendum. Addendum adoption does not rerun initialization; explicit roadmap dependencies/document order resolve the next point. Legacy source documents are technical evidence only; old two-database architecture and old command semantics do not carry into the new project.
 - Initialize completes only MT-0.1. Y/Proceed continues a verified current In Progress point, otherwise executes the first Pending point. After one point is fully completed, verified, committed and pushed, stop; do not automatically start the next point.
 - Before initialization can complete, collect/read the approved Goal and Preferences, preserve them in canonical files and reconcile them with Source of Truth/roadmap/ledger/registry/decisions. Reuse existing approved input and ask only for genuinely missing critical information. Account-level instructions and the current Git-backed global initialization/roadmap rules apply; do not duplicate those global rules into Goal or Preferences.
 - Authorized local implementation and intended new-repository commit/push are within point scope. Destructive operations, live production/customer-data cutover, real external messaging and provider activation require separate authorization; do not request unnecessary permission for readiness or safe isolated tests.
@@ -26,6 +28,8 @@
 - Load the registry once on the first alias in a session and reuse it. Refresh Registry/Refresh/VP:REFRESH-REGISTRY forces a fresh reload and must not advance roadmap implementation.
 - Roman Urdu is the default only for assistant chat/UI communication. Git-tracked project documentation and technical artifacts must use standard English unless the user explicitly requests another language for a specific artifact. Preserve user-supplied source documents in their original language/content unless transformation is explicitly authorized. Minimal completion labels and exact technical/task identifiers remain unchanged.
 - Detailed evidence belongs in Git-tracked documentation; normal user-facing completion/status output remains concise.
+
+Documentation revision MT-1.1-r4 registers addendum v1.1 and traceability only. Universal definitions and alias behavior remain unchanged from MT-1.1-r3; this is not an implicit Refresh command or an implementation advance.
 
 ## Adopted universal definitions
 

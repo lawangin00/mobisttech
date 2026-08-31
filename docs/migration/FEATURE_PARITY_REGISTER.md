@@ -272,3 +272,9 @@ Source coverage: 45 tracked files; 0 resolved routes. Target owner: docs migrati
 Every source file is traceable by source commit, Git blob and SHA-256. A file may serve more than one family; every assigned family gate must pass before retirement. File classification is a migration decision aid, not permission to bulk-copy. Dependencies and generated assets must be reinstalled/regenerated, licenses retained as applicable, and sensitive/runtime material must come from target-only secret/data procedures.
 
 Target parity remains Pending for every family. During later points, evidence must update the register by stable family ID and source path, linking target services/routes/tests and recording migrated, retired-with-proof or blocked status. MT-7.5 and FINAL-AUDIT must show no valid capability silently dropped.
+
+## Approved scope expansion overlay - 2026-09-01
+
+`../PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md` adds approved requirements beyond source parity. `../REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md` maps every leaf clause to the v1.6 roadmap and fresh acceptance gates. P02/P03 acquisition/inventory, P04 sales, P05 claims, P06 reporting, P08 operations, W02/W03/W04 commerce, W05 digital and W06/W07 CMS families are reuse anchors, not proof that added stocktake/transfer/procurement/reset/mode/digital functionality exists. Completed backend component evidence remains in the ledger; full family parity still includes pending interfaces and integration.
+
+New features are approved extensions, not retroactive source capabilities or source completion claims. Original source family IDs, source inventories/counts, characterization and retirement decisions remain unchanged. MT-7.5 and FINAL-AUDIT must close both this source register and the addendum clause register; no new priority/optional feature may be silently relabeled Deferred.

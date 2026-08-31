@@ -1,0 +1,519 @@
+{
+  "date": "2026-09-01",
+  "checkpoint": "Approved requirements addendum v1.1 documentation reconciliation",
+  "baseline_head": "d2b2408797324528cff5160ef8b0485740f451e0",
+  "baseline_state": "main = origin/main = live origin main; only approved addendum was untracked",
+  "approved_inputs_preserved_raw_and_git_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5"
+  },
+  "roadmap": {
+    "version": "1.6",
+    "original_ids_and_titles_retained": 32,
+    "added_points": 20,
+    "total_points": 52,
+    "completed": 8,
+    "pending": 44,
+    "in_progress_points": 0,
+    "acyclic_dependencies_in_document_order": true,
+    "completed_block_sha256_normalized_utf8": {
+      "MT-0.1": "b735fee8dc96c618e0cfc4d0095f7a0eef04d7fe2c39079831d0f95449ea010b",
+      "MT-1.1": "0dc5b968a4e00aba1ee40e6d69e70c13b7828a09f78a0619b7884c4b9ae172dd",
+      "MT-1.2": "7708ab3caff2962a34e33f980b0093b08f189a3e020a945f257509f9b91cd248",
+      "MT-1.3": "29e0860884ff7c139eb220d3a50c4af84aff0a6a8fdc4ed9a73b085c20bb025a",
+      "MT-2.1": "911df94d83b1b984b30501e1ac637362ce63e658928706bf19f810b239135a96",
+      "MT-2.2": "19ed32be4e1ce19faa5ffd085f6e21a641870e30ada646af260e28f4bca63afa",
+      "MT-2.3": "93b3b28f0caf4df6d49f77208c4a36f970ff5e666fd905126e9947a34c725bad",
+      "MT-2.4": "cb19f3d14feb33b7fe41fdfb2caa4b79201a1e80c118c37ee58f74e8b5a6569b"
+    },
+    "next": "MT-2.8 - Addendum foundations and capability contracts",
+    "next_implementation_started": false,
+    "clauses_covered": 41,
+    "clause_mappings": [
+      {
+        "clause": "1",
+        "requirement": "Supplemental authority",
+        "gates": "Control pointers, preserved inputs",
+        "acceptance": "No replacement/translation of Goal or Preferences; no completed ID renumbering."
+      },
+      {
+        "clause": "2",
+        "requirement": "Incremental execution",
+        "gates": "MT-2.8; all added points",
+        "acceptance": "Documentation-only adoption now; one verified implementation point per later command."
+      },
+      {
+        "clause": "3.1",
+        "requirement": "Transactional Data Reset",
+        "gates": "MT-2.8, MT-3.8, MT-4.7, MT-7.1",
+        "acceptance": "Selected sales/invoices/returns/refunds/warranties/claims/orders/carts/payments/service/quote history and dependent documents; preserve products/inventory, identities, permissions, configuration, branding, master data and infrastructure. Stop on legal/operational retention or integrity conflicts."
+      },
+      {
+        "clause": "3.2",
+        "requirement": "Business Data Reset",
+        "gates": "MT-2.8, MT-3.8, MT-4.7, MT-7.1",
+        "acceptance": "Transactional plus selected products/units/inventory/acquisitions/customers/suppliers/procurement/business content; retain minimum bootstrap, authorized admin/superadmin/outlet identities, permissions, configuration, branding and required system/master data."
+      },
+      {
+        "clause": "3.3",
+        "requirement": "Factory Reset",
+        "gates": "MT-3.8, MT-4.7, MT-7.1",
+        "acceptance": "Document the clean operational baseline and retain only the minimum authorized access/configuration bootstrap."
+      },
+      {
+        "clause": "3.4",
+        "requirement": "Reset safeguards",
+        "gates": "MT-2.8, MT-3.3, MT-3.8, MT-4.7, MT-7.1, MT-7.2",
+        "acceptance": "Permission, recent re-authentication, domain record/file dry-run counts, dependency-safe deletion/integrity, automatic verified backup or stop, typed level confirmation, preserved actor/scope/time/backup/result audit and DB-matched private object cleanup. No migrate:fresh, raw indiscriminate truncation or schema destruction; production authorization is separate."
+      },
+      {
+        "clause": "4.1",
+        "requirement": "P1 stocktake/cycle counting",
+        "gates": "MT-2.10, MT-4.5",
+        "acceptance": "Quantity and serialized/IMEI sessions, expected/counted variance, reason codes, approvals, recounts and auditable adjustments; no fabricated history."
+      },
+      {
+        "clause": "4.2",
+        "requirement": "P1 inter-outlet transfers",
+        "gates": "MT-2.8, MT-2.11, MT-4.5",
+        "acceptance": "Dispatch/in-transit/receive/reject/partial receive, quantity and serialized identity/custody, immutable history, role control, IMEI uniqueness, race/rollback checks."
+      },
+      {
+        "clause": "4.3",
+        "requirement": "P1 suppliers and purchase orders",
+        "gates": "MT-2.9, MT-4.5",
+        "acceptance": "Supplier contacts/profiles, PO lines/status/expected dates, partial receiving, landed/unit cost, supplier history and acquisition traceability."
+      },
+      {
+        "clause": "4.4",
+        "requirement": "P1 cash drawer, daily close, expenses",
+        "gates": "MT-2.12, MT-3.1, MT-4.6",
+        "acceptance": "Opening/receipts/authorized payouts/expenses/closing counts, variance/reconciliation, operator/outlet ownership, audit and reports; not ERP accounting."
+      },
+      {
+        "clause": "4.5",
+        "requirement": "P1 scanner entry and retail labels",
+        "gates": "MT-3.1, MT-4.2, MT-4.5",
+        "acceptance": "Barcode/QR/IMEI lookup/entry and authorized identifier label printing; scanner input never bypasses validation."
+      },
+      {
+        "clause": "4.6",
+        "requirement": "P2 low-stock/reorder",
+        "gates": "MT-2.9, MT-4.5",
+        "acceptance": "Product/outlet thresholds, low/out-of-stock alerts, recommendations and procurement links preserve existing reports."
+      },
+      {
+        "clause": "4.7",
+        "requirement": "P2 trade-in/buyback",
+        "gates": "MT-2.13, MT-4.6",
+        "acceptance": "Device identity/condition/diagnostics/valuation/source ownership, exact purchase or sale credit, intake/audit and active-identifier safeguards."
+      },
+      {
+        "clause": "4.8",
+        "requirement": "P2 promotions/coupons",
+        "gates": "MT-2.8, MT-2.14, MT-4.2, MT-4.4, MT-5.3",
+        "acceptance": "Fixed/percentage, validity, min/max, product/category applicability, usage limits, customer/order restrictions and stacking; one server calculation across POS/Website."
+      },
+      {
+        "clause": "4.9",
+        "requirement": "P2 bulk import/export",
+        "gates": "MT-2.17, MT-4.5",
+        "acceptance": "CSV/XLSX-style preview, row validation/errors, permission, replay/idempotency and rollback/recovery; private-field minimization and safe exports."
+      },
+      {
+        "clause": "4.10",
+        "requirement": "P2 availability/price notifications",
+        "gates": "MT-3.9, MT-5.2",
+        "acceptance": "Verified product/customer links, opt-in/consent/preferences, rate limits, deduplication, unsubscribe and disabled external delivery."
+      },
+      {
+        "clause": "4.11",
+        "requirement": "P3 wishlist/save for later",
+        "gates": "MT-3.9, MT-5.2",
+        "acceptance": "Customer ownership, appropriate guest/account transition, unavailable products and mode awareness."
+      },
+      {
+        "clause": "4.12",
+        "requirement": "P3 optional loyalty/rewards",
+        "gates": "MT-2.8, MT-2.15, MT-4.2, MT-4.4, MT-5.2, MT-5.3",
+        "acceptance": "Earning/redemption/expiry/cancellation/return reversal, abuse prevention, audit/configuration and disablement; separate from authoritative money."
+      },
+      {
+        "clause": "4.13",
+        "requirement": "P3 optional paid repair jobs",
+        "gates": "MT-2.16, MT-4.6",
+        "acceptance": "Intake/device/diagnosis/estimate approval/parts/labor/lifecycle/collection/payment/history; disableable and distinct from warranty claims."
+      },
+      {
+        "clause": "5.1",
+        "requirement": "Three Website modes",
+        "gates": "MT-2.8, MT-3.7, MT-4.4, MT-5.1",
+        "acceptance": "Digital Solutions Only=digital_only; Digital Solutions + E-commerce=hybrid; E-commerce Only=commerce_only. One codebase/repo/database, no duplicated full page trees."
+      },
+      {
+        "clause": "5.2",
+        "requirement": "Central capability authority",
+        "gates": "MT-2.8, MT-2.7, MT-3.7, MT-3.4, MT-5.1, MT-5.3, MT-5.4",
+        "acceptance": "Published Laravel profile governs home/navigation/footer/CTAs, product/category/compare/cart/checkout, digital discovery/enquiries, About/Contact, promotions, sitemap/indexability, SEO/canonicals/structured/social data, public API allowlists and Next cache revalidation. Never CSS-only."
+      },
+      {
+        "clause": "5.3",
+        "requirement": "Common and variant content",
+        "gates": "MT-3.2, MT-3.7, MT-4.4, MT-5.1, MT-5.4",
+        "acceptance": "Evolve modular home content: common/digital/commerce plus digital_only/hybrid/commerce_only hero/About/Contact/CTA variants where needed."
+      },
+      {
+        "clause": "5.4",
+        "requirement": "Safe switching and historical access",
+        "gates": "MT-2.8, MT-2.7, MT-3.6, MT-3.7, MT-3.4, MT-5.2, MT-5.3, MT-5.5",
+        "acceptance": "Never delete products/services/orders/quotes/customers/content/history on mode switch. Explicitly test owned status/invoices, approved project-payment links and completed records despite disabled marketing; deny new inactive-capability creation."
+      },
+      {
+        "clause": "5.5",
+        "requirement": "Preview/publish/rollback",
+        "gates": "MT-3.7, MT-4.4",
+        "acceptance": "Three-way selector, per-mode preview, section/route/CTA impact validation, separate publish permission, audit/revisions, one-click valid rollback and cache/sitemap/SEO revalidation."
+      },
+      {
+        "clause": "5.6",
+        "requirement": "Mode-aware performance/loading",
+        "gates": "MT-3.4, MT-5.1, MT-5.3, MT-5.4, MT-5.5, MT-7.2, MT-7.3",
+        "acceptance": "Prefer Server Components and freshness/security-appropriate SSR/SSG/ISR; interaction-only client components, route/feature splitting/lazy loading, mode-aware queries/cache/data fetching, indexed pagination (never full inventory), responsive optimized/lazy media/cache/CDN, minimal JS/third parties/duplicate libraries/fonts and deferred noncritical assets. Invalidate affected caches only. Measure all modes using production builds; targets LCP<=2.5s, INP<=200ms, CLS<=0.1, stable representative mobile Lighthouse90+. Exceptions need cause, measured impact and remediation/acceptance, not hidden instability or wholesale final-stage deferral."
+      },
+      {
+        "clause": "6.1",
+        "requirement": "P1 rich digital service landing pages",
+        "gates": "MT-3.2, MT-3.5, MT-4.4, MT-5.4",
+        "acceptance": "Hero/summary/problem/outcome/features/deliverables/process/technologies/FAQ/related cases/testimonials/CTA, SEO/social metadata and publication."
+      },
+      {
+        "clause": "6.2",
+        "requirement": "P1 portfolio/case studies",
+        "gates": "MT-3.2, MT-4.4, MT-5.4",
+        "acceptance": "Title/service/category, client/industry disclosure, problem/solution/technology/media/outcomes/testimonial links, visibility/order, SEO and draft/preview/publish/revision."
+      },
+      {
+        "clause": "6.3",
+        "requirement": "P1 progressive project enquiry",
+        "gates": "MT-3.5, MT-4.8, MT-5.4",
+        "acceptance": "Service/project type/existing URL/budget/timeline/requirements/contact and safe reference attachments; unnecessary fields optional, low-friction entry retained."
+      },
+      {
+        "clause": "6.4",
+        "requirement": "P1 client project portal",
+        "gates": "MT-3.6, MT-4.8, MT-5.5",
+        "acceptance": "Owned request/quote/payment/delivery lifecycle Request, Discussion, Proposal, Approved, In Progress, Review, Delivered, Completed with privacy-safe history."
+      },
+      {
+        "clause": "6.5",
+        "requirement": "P1 proposals and milestone payments",
+        "gates": "MT-2.8, MT-2.7, MT-3.6, MT-4.8, MT-5.5",
+        "acceptance": "Approved scope/deliverables/validity/ownership and optional deposit/milestone/final schedules; exact historical amounts, replay protection, immutable paid milestones."
+      },
+      {
+        "clause": "6.6",
+        "requirement": "P2 service packages/add-ons",
+        "gates": "MT-3.5, MT-4.8, MT-5.4",
+        "acceptance": "Quote-based/fixed/starting-from/package tiers, optional add-ons, clear authoritative price semantics and no client tampering."
+      },
+      {
+        "clause": "6.7",
+        "requirement": "P2 optional consultation/callback",
+        "gates": "MT-3.5, MT-4.8, MT-5.4, MT-5.5",
+        "acceptance": "Configured availability or preferred windows, contact method, timezone-safe persistence, confirmation/admin/spam/rate controls; external calendar optional."
+      },
+      {
+        "clause": "6.8",
+        "requirement": "P2 digital testimonials",
+        "gates": "MT-3.2, MT-4.4, MT-5.4",
+        "acceptance": "Separate from retail reviews; consent/display controls, service/case association, moderation/order/publication."
+      },
+      {
+        "clause": "6.9",
+        "requirement": "P2 FAQ/insights/blog/knowledge",
+        "gates": "MT-3.2, MT-4.4, MT-5.4",
+        "acceptance": "Reusable FAQs, articles/guides, useful categories/tags, service associations, SEO, draft/preview/publish/revisions and safe media/content."
+      },
+      {
+        "clause": "6.10",
+        "requirement": "P2 lead/project pipeline",
+        "gates": "MT-3.5, MT-3.6, MT-4.8",
+        "acceptance": "New, Contacted, Qualified, Proposal, Approved, In Progress, Completed, Lost/Closed; assigned owner/internal notes/follow-up/history/filters/permissions, not a general CRM."
+      },
+      {
+        "clause": "6.11",
+        "requirement": "P2 private client file exchange",
+        "gates": "MT-3.6, MT-4.8, MT-5.5",
+        "acceptance": "Private requirement/reference uploads and deliveries with authorization, content/size/type checks, immutable audited refs/retention; no public bucket/path exposure."
+      },
+      {
+        "clause": "6.12",
+        "requirement": "P2 digital conversion analytics",
+        "gates": "MT-3.6, MT-4.8, MT-5.5",
+        "acceptance": "Privacy-conscious service/CTA-enquiry-qualification-proposal-approval-payment/completion events; reliable aggregate service/source/campaign reports with minimal sensitive data."
+      },
+      {
+        "clause": "7",
+        "requirement": "Cross-cutting gates",
+        "gates": "All affected points; MT-7.1, MT-7.2, MT-7.3, MT-7.5, FINAL-AUDIT",
+        "acceptance": "Single Laravel/MySQL authority, defined REST without DB credentials, justified Redis/private storage, server permissions/exact money, idempotency/concurrency/rollback/audit, safe disabled integrations, responsive UI, production-build per-mode budgets, MySQL/frontend/Playwright/security/CI before completion."
+      },
+      {
+        "clause": "8",
+        "requirement": "Explicit non-goals",
+        "gates": "Source of Truth; H-04; FINAL-AUDIT",
+        "acceptance": "No marketplace, consumer financing/lending, general subscription billing, arbitrary multi-currency accounting, full ERP/general ledger, unnecessary microservices or parallel Node/Express backend absent separate approval."
+      },
+      {
+        "clause": "9",
+        "requirement": "Reconciliation lifecycle",
+        "gates": "This documentation checkpoint; MT-2.8 next",
+        "acceptance": "Read all authorities/code, preserve completed IDs/status, map dependencies and performance continuously, update controls, generate/QA Word once, commit/push clean and stop without implementation."
+      },
+      {
+        "clause": "10",
+        "requirement": "Approved scope, controlled execution",
+        "gates": "All later point commands",
+        "acceptance": "Approval incorporates scope; existing permissions, HOLD and one-point verification govern implementation and live actions."
+      }
+    ]
+  },
+  "registry": {
+    "version": "MT-1.1-r4",
+    "change": "Local approved-scope/traceability pointers only; universal alias definitions unchanged",
+    "universal_snapshot_normalized_utf8_sha256": "be1840379555ff6cea4ca03fbf970caee286e81541c50abdd0180a3098417aa0"
+  },
+  "docx": {
+    "path": "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx",
+    "generator": "tools/docs/build_roadmap_docx.py (unchanged)",
+    "generation_count": 1,
+    "content_blocks": 249,
+    "markdown_worktree_sha256": "7a4d94ce4b7244fb81abdf599cc69928a675b076faefe37ff1083cfcbf03be1f",
+    "markdown_git_blob_sha256": "ea971d9c2d1d2b3e1ab4e18d56f4c59949e1238faf4279c4b385b1fa4fcd3828",
+    "line_ending_note": "Git normalizes generated Markdown to LF. DOCX metadata records the generation-time working-file bytes; staged LF text has identical parsed content. Approved source inputs use -text and preserve raw bytes.",
+    "docx_sha256": "bc87cf8f1e4a4879a71ba459105c52b685a8110bcb2a9b9f64f6760239f2efab",
+    "parity_against_worktree_and_git_markdown": "PASS",
+    "style_audit": "PASS: retained Letter, one-inch margins, Calibri sizes and existing heading/page-furniture preset",
+    "renderer": "Owned hidden Microsoft Word instance; open read-only, export PDF, close without saving, quit owned instance",
+    "renderer_fallback": "Skill render_docx.py could not locate LibreOffice/soffice; Microsoft Word PDF export used instead",
+    "rasterizer": "Bundled pypdfium2, scale 1.4; pdfplumber text bounds verification",
+    "pdf_sha256": "fb0560775559f6883e85e85f17927b8614eb5f399451a4d09824e942862d3dab",
+    "pages": [
+      {
+        "page": 1,
+        "text_characters": 2152,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "f4ab74a3f60df15912e79531644831f2c0c304e598e7caab9acbc9ea189d0c04"
+      },
+      {
+        "page": 2,
+        "text_characters": 1634,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "6eab09476ecde69fb1ffcd5c5da63237f8f95cf35117839a5f332d798a86e3a0"
+      },
+      {
+        "page": 3,
+        "text_characters": 1950,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "a913992e55aaf915c94f632be6354e8590c8b17b2c7d9f4499dc287c9833da71"
+      },
+      {
+        "page": 4,
+        "text_characters": 1504,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "8629f85a327040ca1306acfa7160cb8936ac5c4d996d5121806aab939871bd59"
+      },
+      {
+        "page": 5,
+        "text_characters": 2146,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "2419f1e7d4b13658cdc4b749cb5564673285c121b22c244d31b4c6924491bc3a"
+      },
+      {
+        "page": 6,
+        "text_characters": 2110,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "90648b7f618ff318d665583e2069bfdb942b8d057e908c80bfaeb1aeec7263a3"
+      },
+      {
+        "page": 7,
+        "text_characters": 1979,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "b2b8a15b247455e3b401fa4d4e4a7ca9052374529b1b42cf40e0c8c31460ca46"
+      },
+      {
+        "page": 8,
+        "text_characters": 1099,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "4c3a3d30b10756922825ca7c1c5c83a54bf5f7b1e776a1e49b9e4eb130d87a63"
+      },
+      {
+        "page": 9,
+        "text_characters": 2123,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "000915c80c9a7fbb220ce208a88ac84f82d66bf39287aa446e0710d9ef5521d6"
+      },
+      {
+        "page": 10,
+        "text_characters": 2204,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "4ffbc78ca3557e1b718932afd293ee0a867ed40293a8cd5084df1b7e57bf9f63"
+      },
+      {
+        "page": 11,
+        "text_characters": 1585,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "08f5c0455edfbf94cec2d4c7796a268403fa88251aaea7656fbdb673b815ddfa"
+      },
+      {
+        "page": 12,
+        "text_characters": 1777,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "7edd9b98097b3522007feedcb7a18e5d594fe1c56fc2d0e8096a7aa4ff3661f9"
+      },
+      {
+        "page": 13,
+        "text_characters": 2014,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "0b7266d1e18903d0184d2764bea54d513524f167bff92ae4e9bc6dffdd1f6b65"
+      },
+      {
+        "page": 14,
+        "text_characters": 398,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "f360aff49d52e6c451a83a02a5a1142782a9bbf2aa7ebee8899d33a530f362f5"
+      },
+      {
+        "page": 15,
+        "text_characters": 2371,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "d7c41971465e37111dbdb7fbf92a648e37e9d792f07f4dd011dfb344c08a3360"
+      },
+      {
+        "page": 16,
+        "text_characters": 1731,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "2e54df9c92d193ccc15295c4a0e95d69d93c7750b4f49ea9bd63dc093a4264e3"
+      },
+      {
+        "page": 17,
+        "text_characters": 1530,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "1a080d281d43d16ac562f552ec9cb8c40828b10a85f64a0dce0ebeda76a680fe"
+      },
+      {
+        "page": 18,
+        "text_characters": 2175,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "1f604a982a0c98cd67d7ea0387e14567c1ac578ba0d4288025e96f92b6d17ca7"
+      },
+      {
+        "page": 19,
+        "text_characters": 1250,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "99a5a4bb86415140e141b27ff55b501f19c0d24ad26ed91bf8dfa2faeb48aa8e"
+      },
+      {
+        "page": 20,
+        "text_characters": 962,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "c796cec4422ee4d374f389b7f1aa797eabc95cdc9e2535bd5624fa1c076167ec"
+      },
+      {
+        "page": 21,
+        "text_characters": 1486,
+        "text_bounds_clear": true,
+        "visual_review": "PASS: no clipping, overlap, missing text or broken page furniture; retained stage page breaks",
+        "png_sha256": "19413bbbc8cb81a5c7aa85bf9122970a135d815cfd87735bf89c0f5dd85b4940"
+      }
+    ],
+    "all_pages_visually_reviewed": true
+  },
+  "documentation_artifacts_git_blob_sha256": {
+    ".gitattributes": "5d88d7875ef2882bd31484607b2ae1c7f4b16ff06f7a52ce82aa631da8f4c0d2",
+    "AGENTS.md": "f50636e40c6031e8cc88745876b6b747d5bc8abe52b30276b071e0c07dd1a5bc",
+    "README.md": "6f7cc0caa8d3025612787780c1d47958eda7a4df8bdcbe0568492090312f036a",
+    "docs/AI_PROJECT_COMMAND_REGISTRY.md": "1e0d5cf5e8b9cfe8339c3d6eeb57dbfae90eaae56d752787a3dc6dabe2645338",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "bc87cf8f1e4a4879a71ba459105c52b685a8110bcb2a9b9f64f6760239f2efab",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "ea971d9c2d1d2b3e1ab4e18d56f4c59949e1238faf4279c4b385b1fa4fcd3828",
+    "docs/PROJECT_IMPLEMENTATION_STATUS.md": "a92eea7866b3895e37d045174d0a408f8168d1c2a0f8f0210000a28fadada109",
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "c25c29c6ccff71fecfad9c53efdb4b02cb3a4802f75b552c534d97e7978dc6b5",
+    "docs/REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md": "536fbf24ac9eaf78053f0229eb200aa05fac3a3d46e4b8cbeabbcf1916452139",
+    "docs/migration/FEATURE_PARITY_REGISTER.md": "aa16024dba49c8dcac67e2719581d77642b15064a8f862655ea5ca09ad9407be"
+  },
+  "unchanged_dependency_evidence_git_blob_sha256": {
+    "docs/schema/TARGET_SCHEMA.json": "2d05eec73c7a3134be5e9223e6e8992356f4dedbbc9402b17562c76c9a008cf3",
+    "backend/app/Models/Product.php": "a273e0fe685effbd335a1e26320dfbf88f0aec2d3f3faf92b865c0148a926a93",
+    "backend/app/Models/StockUnit.php": "e472ef1a4e5962b8c5501adf350e04579f568ae568ed69244fd9ce332f29ecd2",
+    "backend/app/Inventory/StockLedger.php": "955e056ac8396b27d01cfa64d6f298925ea8720898bb7794a535c5ce0d93f349",
+    "backend/app/Inventory/TransactionalStock.php": "04998c7a1811b0d45682d2222e8fc093dc991c8041d30d8a942fc8f240462fcb",
+    "backend/app/Inventory/AcquisitionDocuments.php": "74667833677e1e182ed3a6e9bb7763502ab9a73280e253eb4eba89962d0259ca",
+    "backend/app/Infrastructure/PrivateObjects.php": "e31bd5fba39ee6ead297afc68c8d57acfc6d320def54a6f8f949fd892adddf8e"
+  },
+  "protected_sources": {
+    "check": "tools/docs/snapshot_sources.py --check",
+    "result": "PASS: refs, branch, origin, status, missing-file list and tracked-file byte fingerprints unchanged",
+    "sources": [
+      {
+        "path": "C:\\mobiST\\mobiST-POS",
+        "head": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+        "branch": "main",
+        "origin": "https://github.com/lawangin00/mobiST-POS.git",
+        "status": "",
+        "tracked_files": 824,
+        "tracked_worktree_sha256": "3586bd2b72331b3d2941412548f72ca82f5d15aba73d158a3d0a6d88bcef57f3",
+        "missing_files": []
+      },
+      {
+        "path": "C:\\mobiST\\mobiST-Website",
+        "head": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+        "branch": "main",
+        "origin": "https://github.com/lawangin00/mobiST-Website.git",
+        "status": "",
+        "tracked_files": 400,
+        "tracked_worktree_sha256": "9ce009e0e746659c690287724fc301bca0d374d60603390f2e70f1ff33573a3d",
+        "missing_files": []
+      }
+    ],
+    "scope": "Read-only Git and tracked files; no database/runtime access"
+  },
+  "scope_gates": {
+    "only_documentation_changed": true,
+    "initialization_rerun": false,
+    "application_tests_builds_run": false,
+    "schema_migrations_or_dependencies_changed": false,
+    "source_writes_or_runtime_actions": false,
+    "historical_evidence_changed": false,
+    "private_data_or_secrets_copied": false,
+    "real_provider_production_or_reset_actions": false,
+    "diff_check": "Generated/edited controls PASS. Approved input has four existing two-space Markdown hard breaks at lines 3-6; preserved byte-for-byte, with no other whitespace findings."
+  },
+  "git_closure": {
+    "branch": "main",
+    "origin": "https://github.com/lawangin00/mobisttech.git",
+    "staged_artifacts_exclude_this_self_referential_evidence": true,
+    "required_final_gate": "Commit only these documentation artifacts and this evidence; push without force; verify clean HEAD = origin/main = live refs/heads/main and committed artifact/input hashes. Final commit hash is reported in task output to avoid recursive evidence hashes."
+  }
+}
