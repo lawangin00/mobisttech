@@ -36,7 +36,7 @@ final class SourceRow
             }
             if ($value !== null) {
                 switch ($type['type']) {
-                    case 'string': case 'char': case 'text': case 'longText':
+                    case 'enum': case 'string': case 'char': case 'text': case 'longText':
                         if (! is_string($value) || mb_strlen($value) > ($type['length'] ?? 65535)) {
                             throw new InvalidArgumentException('Invalid source string.');
                         }
@@ -46,7 +46,7 @@ final class SourceRow
                             throw new InvalidArgumentException('Invalid source boolean.');
                         }
                         break;
-                    case 'smallInteger': case 'integer': case 'bigInteger':
+                    case 'tinyInteger': case 'smallInteger': case 'integer': case 'bigInteger':
                         if (! is_int($value) || (($type['unsigned'] ?? false) && $value < 0)) {
                             throw new InvalidArgumentException('Invalid source integer.');
                         }

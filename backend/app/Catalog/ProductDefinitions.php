@@ -153,7 +153,7 @@ final class ProductDefinitions
 
     private function held(int $id): bool
     {
-        return DB::table('reservation_allocations')->where('product_id', $id)->whereNull('released_at')->exists();
+        return DB::table('reservation_allocations')->where('product_id', $id)->whereNull('released_at')->lockForUpdate()->first() !== null;
     }
 
     private function fields(array $input, array $allowed): void

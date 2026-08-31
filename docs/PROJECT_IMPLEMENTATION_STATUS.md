@@ -26,13 +26,13 @@ Last completed stage: MT-1 - Migration inventory and design
 
 Current In Progress point: None
 
-Status: MT-0 and MT-1 complete. MT-2 is in progress. 7/32 complete, 25 pending. MT-2.4 is not started.
+Status: MT-0 and MT-1 complete. MT-2 is in progress. 8/32 complete, 24 pending. MT-2.5 is not started.
 
-Last completed point: MT-2.3 - Product and master-data migration
+Last completed point: MT-2.4 - Inventory and stock integrity migration
 
-Next pending point: MT-2.4 - Inventory and stock integrity migration
+Next pending point: MT-2.5 - Sales, invoices and returns migration
 
-Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, identity/customer/authorization and product/master-data definition services exist. Identity/product mapping is verified with synthetic rows only. Actual private-data migration, stock/acquisition/transaction processors, POS/Website interfaces, brand, Control and CI remain pending. Backend tests do not constitute UI, live provider, inventory concurrency or private-data import acceptance.
+Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, identity/customer/authorization, product/master-data and inventory/acquisition/stock transaction services exist. Identity/product/stock mapping uses synthetic rows only. Real MySQL stock concurrency is verified. Actual private-data migration, full sales/invoice/return/payment processors, POS/Website interfaces, brand, Control and CI remain pending. Backend tests do not constitute UI, live provider, financial transaction or private-data import acceptance.
 
 ## Documentation language policy
 
@@ -142,12 +142,26 @@ Fresh target gates pass: 72 tests / 4,270 assertions, including seventeen new pr
 
 Original source Git/file fingerprints and approved Goal/Preferences remain unchanged. No Browser Use denial was bypassed and no UI/provider/private-data acceptance is claimed. Source of Truth, registry, roadmap Markdown/DOCX and historical evidence remain unchanged; routine progress does not require Word regeneration. Intended synchronization is only the new monorepo main/private origin, verified by clean local/upstream/live-main equality after commit/push. MT-2.4 is not started.
 
+## MT-2.4 inventory and stock integrity closure
+
+On user Y, only MT-2.4 executed. `docs/inventory/README.md` records source reuse, application boundaries, current locking reads, stock/IMEI/hold invariants, acquisition evidence privacy and offline migration/reconciliation. Source acquisition validation and normalization, managed buying-source usages, physical unit identifiers, variant grouping, adjustments, active allocations and stock movements are adapted into shared services. No source controller/runtime or cross-repository stock HTTP transport is activated.
+
+Authorized inventory operations enforce fresh outlet/grant checks, strict input fields, exact cost strings, receipt/unit creation, global active IMEI claims, unit versions, hold-aware corrections/retirement/archive, actor-derived audit and durable idempotency. Stock, history, audit and publication changes roll back together. Private acquisition images use scoped authorization, content/size checks and immutable private storage outside stock transactions; source paths and public URLs are rejected. Unattached private objects require later audited retention handling.
+
+Internal sale/reservation stock adapters require the owning business transaction and validate persisted relationships. Current product/unit/claim/allocation locks remain correct after earlier repeatable-read queries. Complete unheld units or available aggregate quantity can be allocated/consumed once; expiry and COD states differ, and release after consumption never restores stock. Full invoice creation, financial returns/refunds, payment acceptance, checkout orchestration and customer-facing endpoints remain their later points. MT-2.5 has not started.
+
+The stock importer maps three additional source-qualified tables, rebuilds active claims without erasing historical occurrences, preserves exact costs/timestamps and quarantines unresolved references, duplicate claims, changed replay, invalid arithmetic and private source paths. Reconciliation checks physical quantity/claims/holds and movement continuity/final balance, explicitly requiring baseline approval for missing history. No source data was imported and no historical balance was fabricated.
+
+Fresh target gates pass: 89 tests / 4,511 assertions, including seventeen new cases and three independent-process MySQL races. Sale versus reservation, duplicate physical allocation and competing cross-product IMEI claims each permit one winner and roll back the loser. Other checks cover exact money/replay, authorization/input injection, incomplete units, versions/claims, reserved-unit consumption, expiry/COD, release-after-consumption, historical duplicates, outer rollback, document privacy and import/reconciliation. POS TypeScript/Vite, Website lint/typecheck/Next.js, Pint, Composer validation/platform checks, optimize/clear, source schema contracts and current Composer/npm audits pass. Details and checked artifacts are in `docs/inventory/MT_2_4_VERIFICATION.json`.
+
+MySQL remains exactly the MT-2.2 schema/hash with 73 tables and zero synthetic business rows. The initial Windows sandbox worker-output wait was replaced with bounded polling and rerun in approved process context; only owned test workers/fixtures were cleaned. Original source Git/file fingerprints and approved inputs remain unchanged. No browser denial was bypassed; no UI/provider/private-data acceptance is claimed. Source of Truth, registry, structural roadmap/DOCX and historical evidence remain unchanged; no Word regeneration is required. Intended synchronization is only the new monorepo main/private origin, followed by clean HEAD/upstream/live-main equality and artifact checks.
+
 ## Recovery and next action
 
-Do not re-execute MT-0.1, MT-1.1 through MT-1.3, or MT-2.1 through MT-2.3. After this checkpoint is committed/pushed and clean live synchronization is verified, stop before MT-2.4. The next applicable Y/Proceed executes only `MT-2.4 - Inventory and stock integrity migration`. Reuse the session-loaded MT-1.1-r3 registry unless Refresh is requested. Runtime startup/locks are documented in `docs/foundation/WINDOWS_SETUP.md`; schema/identity verification is in `docs/schema/README.md` and `docs/identity/README.md`; current product/master-data contracts and reproduction are in `docs/catalog/README.md`.
+Do not re-execute MT-0.1, MT-1.1 through MT-1.3, or MT-2.1 through MT-2.4. After this checkpoint is committed/pushed and clean live synchronization is verified, stop before MT-2.5. The next applicable Y/Proceed executes only `MT-2.5 - Sales, invoices and returns migration`. Reuse the session-loaded MT-1.1-r3 registry unless Refresh is requested. Runtime setup is in `docs/foundation/WINDOWS_SETUP.md`; inventory contracts, transaction boundaries and reproduction are in `docs/inventory/README.md`. Earlier schema/identity/product evidence remains in its existing directories.
 
 ## HOLD / decisions
 
-Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure, backend identity and product/master-data definitions now exist; private business-data migration, stock/transaction processing, later interfaces and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. Live email/Redis/S3 activation, consuming-feature resilience, scoped object authorization and provider/backup recovery remain later implementation gates; the local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block the verified MT-2.3 backend/synthetic-rehearsal scope.
+Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure, backend identity, product/master-data and stock/acquisition services now exist; private business-data migration, full financial/order transaction processing, later interfaces and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. Live email/Redis/S3 activation, broader consuming-feature resilience and provider/backup recovery remain later implementation gates; the local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block the verified MT-2.4 backend/synthetic-rehearsal scope.
 
 No source-repository write, source-data migration, source runtime action, real payment-provider activation, external message or production change is authorized or performed by this reconciliation.

@@ -1,0 +1,686 @@
+{
+  "point": "MT-2.4 - Inventory and stock integrity migration",
+  "date": "2026-08-31",
+  "result": "PASS - shared stock services, real MySQL concurrency and synthetic migration scope",
+  "preflight_head": "5853e0bac74e8ca59e9a7da6f6a6582bedb0c98f",
+  "preflight_clean": true,
+  "precommit_head_upstream_live_main_equal": true,
+  "schema": {
+    "mode": "identity",
+    "result": "PASS",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "mysql": "8.4.11",
+    "timezone": "+00:00",
+    "strict": true,
+    "counts": {
+      "tables": 73,
+      "columns": 916,
+      "foreign_keys": 117,
+      "indexes": 326
+    },
+    "schema_sha256": "2de954e11845e1dc844586d8a406813116fa0925282b9f626e1c99b65329e9ae",
+    "business_rows": 0
+  },
+  "schema_unchanged_from_mt22": true,
+  "ddl_changes": false,
+  "isolation": {
+    "db": "mobisttech_test",
+    "port": 13306,
+    "isolation_level": "REPEATABLE-READ"
+  },
+  "mapping_contracts": [
+    {
+      "source": "pos",
+      "table": "product_imeis",
+      "target": "product_imeis",
+      "columns": 12
+    },
+    {
+      "source": "pos",
+      "table": "stock_acquisitions",
+      "target": "stock_acquisitions",
+      "columns": 17
+    },
+    {
+      "source": "pos",
+      "table": "stock_movements",
+      "target": "stock_movements",
+      "columns": 13
+    }
+  ],
+  "mapped_source_columns": 42,
+  "gates": {
+    "backend_tests": {
+      "tests": 89,
+      "assertions": 4511,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "new_inventory_cases": 17,
+      "junit_sha256": "3fff8d6278a1e3364e24f7b76af27d2e0a93826715800b3a1416dedd746edef9",
+      "cases": [
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_isolated_target_is_accepted",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"source port\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"remote host\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"source database\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"root account\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"URL override\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"SQLite source path\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"socket override\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_external_integrations_cannot_be_enabled_locally",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\FoundationInfrastructureTest",
+          "name": "test_runtime_tables_use_the_isolated_mysql_test_database",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\FoundationInfrastructureTest",
+          "name": "test_foundation_request_persists_a_database_session",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_public_health_contract_exposes_no_configuration",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_inertia_foundation_renders_without_business_authentication",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_business_and_legacy_transport_routes_are_not_prematurely_exposed",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_external_http_is_disabled_in_isolated_environment",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_same_source_ids_and_emails_remain_separate_outlet_and_credential_identities",
+          "assertions": 18
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_identity_replay_is_idempotent_and_changed_input_or_email_collision_is_quarantined",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_proven_legacy_owner_is_explicitly_mapped_and_audited_without_customer_identity",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_invalid_privilege_values_are_quarantined_without_partial_accounts",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_unknown_source_fields_fail_before_any_import_and_membership_uses_source_maps",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_timestamps_hashes_and_unsupported_date_values_have_explicit_dispositions",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_matching_unverified_contact_does_not_merge_a_customer_observation",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_registration_rejects_role_injection_and_rotates_the_session",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_csrf_is_enforced_even_with_same_origin_fetch_header",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_customer_and_cms_sessions_and_equal_email_pos_accounts_are_isolated",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_customer_ownership_does_not_follow_email_or_guest_order_contact",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_complete_website_role_matrix_and_pos_default_grants",
+          "assertions": 181
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_reset_tokens_are_scoped_single_use_and_revoke_existing_sessions",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_recovery_is_non_enumerating_and_does_not_log_tokens_when_delivery_is_disabled",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_login_is_rate_limited_and_disabled_accounts_cannot_authenticate",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_pos_device_limits_replacement_and_logout_keep_other_realms_alive",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_outlet_assignment_and_permissions_are_rechecked_and_cannot_be_injected",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_password_change_revokes_other_devices_and_remember_cookie_cannot_restore_access",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_cross_realm_cookie_renaming_and_csrf_replay_do_not_authenticate",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_production_session_cookies_are_secure_host_only_and_admin_host_is_separate",
+          "assertions": 21
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_logout_does_not_sign_out_another_realm_in_the_same_cookie_jar",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_existing_argon_hash_can_authenticate_without_requiring_a_password_reset",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\InventoryConcurrencyTest",
+          "name": "test_separate_mysql_connections_arbitrate_quantity_sale_versus_reservation",
+          "assertions": 34
+        },
+        {
+          "class": "Tests\\Feature\\InventoryConcurrencyTest",
+          "name": "test_separate_mysql_connections_cannot_reserve_the_same_physical_unit_twice",
+          "assertions": 35
+        },
+        {
+          "class": "Tests\\Feature\\InventoryConcurrencyTest",
+          "name": "test_separate_products_competing_for_global_imei_claim_roll_back_loser",
+          "assertions": 36
+        },
+        {
+          "class": "Tests\\Feature\\InventoryConcurrencyTest",
+          "name": "test_private_acquisition_evidence_is_scoped_and_never_a_client_selected_path",
+          "assertions": 29
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "name": "test_acquisition_is_atomic_exact_idempotent_and_derives_physical_units",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "name": "test_unauthorized_actor_and_injected_fields_do_not_change_stock",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "name": "test_imei_slots_versions_global_uniqueness_and_rollback",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "name": "test_quantity_holds_block_sale_adjustment_and_archive_until_release",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "name": "test_tracked_reserved_sale_uses_held_units_preserves_history_and_release_cannot_restore_stock",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "name": "test_expiration_boundary_and_cod_holds_are_distinct",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "name": "test_adjustment_retires_incomplete_unit_and_prevents_negative_stock",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "name": "test_enclosing_transaction_rollback_undoes_stock_claims_holds_events_and_retry_key",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\InventoryTest",
+          "name": "test_snapshot_and_movement_discrepancies_block_operations_without_repair",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_source_registry_defaults_and_reseeding_preserve_managed_customization",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_protected_codes_and_canonical_status_deletion_are_rejected",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_master_data_requires_configuration_grant_and_rejects_actor_or_code_injection",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_option_validation_lifecycle_and_existing_inactive_reference_are_preserved",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_product_definition_preserves_identifiers_usage_history_and_exact_money",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_definition_rejects_duplicate_names_invalid_category_money_and_stock_actor_injection",
+          "assertions": 14
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_accessory_subcategory_semantics_and_outlet_boundaries_are_enforced",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_unit_variant_keys_and_private_metadata_remain_separate_from_display_labels",
+          "assertions": 22
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_definition_transaction_rollback_does_not_publish_or_leave_a_product",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_pinned_source_constants_and_variant_name_characterization_match_target",
+          "assertions": 20
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_existing_holds_block_definition_and_unit_changes_without_rewriting_history",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_products_and_master_data_use_source_qualified_ids_with_unchanged_codes_and_replay",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_listing_candidate_must_match_product_outlet_category_and_contract_without_importing_cached_stock",
+          "assertions": 16
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_unit_metadata_and_usage_relationships_preserve_history_and_wait_for_unresolved_parents",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_invalid_source_values_and_field_shapes_quarantine_without_partial_products",
+          "assertions": 15
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_wrong_option_lists_and_protected_category_or_metadata_changes_are_not_guessed",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_import_is_atomic_with_outer_rollback_and_preserves_deleted_snapshot_and_timezone",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_database_queue_dispatches_after_commit_and_discards_rolled_back_jobs",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_worker_failure_retries_then_preserves_terminal_failure_evidence",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_redis_outage_uses_master_without_replaying_callback",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_master_version_change_bypasses_old_cache_and_rollback_preserves_version",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_private_object_roundtrip_stays_outside_public_storage",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_private_object_rejects_paths_and_bad_digests_before_writing",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_s3_network_access_is_disabled_in_isolated_application",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_real_s3_adapter_scopes_private_requests_and_propagates_failures_without_network",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_website_configuration_has_no_database_or_object_store_credentials",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_every_manifest_column_and_foreign_key_exists_on_mysql",
+          "assertions": 2798
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_source_manifest_accounts_for_every_final_column_and_preserves_namespaces",
+          "assertions": 803
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_money_keeps_exact_large_values_and_rejects_overflow_and_negative_stock",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_cross_outlet_references_and_financial_history_deletion_are_rejected",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_active_imei_is_unique_but_historical_reentry_is_allowed",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_payment_replay_and_multiple_current_holds_are_database_conflicts",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_source_qualified_identity_and_one_canonical_listing_constraints",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_active_unit_allocation_is_unique_and_cannot_switch_products",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_publication_version_and_durable_event_roll_back_together",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\StockMigrationTest",
+          "name": "test_stock_acquisition_and_movements_preserve_money_source_identity_timezone_and_replay",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\StockMigrationTest",
+          "name": "test_active_imei_claims_rebuild_from_mapped_history_and_duplicate_or_unmapped_rows_quarantine",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\StockMigrationTest",
+          "name": "test_source_private_paths_bad_arithmetic_unknown_columns_and_unresolved_references_are_not_guessed",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\StockMigrationTest",
+          "name": "test_historical_imei_occurrences_remain_separate_from_current_global_claim",
+          "assertions": 6
+        }
+      ]
+    },
+    "mysql_concurrency": {
+      "independent_process_cases": 3,
+      "connections_per_case": 2,
+      "synchronization": "Both workers establish an old snapshot and attempt stock work while the parent holds product locks; parent then commits. Distinct MySQL connection IDs and exactly one winner are asserted.",
+      "cases": [
+        "aggregate sale versus reservation",
+        "same physical unit reservation versus reservation",
+        "cross-product global IMEI claim versus claim"
+      ],
+      "rollback_and_cleanup": "PASS; zero business rows after full suite"
+    },
+    "backend_typecheck_vite_build": "PASS",
+    "website_lint_typecheck_next_build": "PASS",
+    "pint": "PASS",
+    "composer_validate_strict_platform_requirements": "PASS",
+    "optimize_clear": "PASS",
+    "composer_audit": {
+      "advisories": 0,
+      "abandoned": 0
+    },
+    "backend_npm_audit": {
+      "vulnerabilities": 0
+    },
+    "website_npm_audit": {
+      "vulnerabilities": 0
+    },
+    "source_schema_contract": {
+      "migration_hashes": 79,
+      "source_tables": 58,
+      "source_columns": 735,
+      "rejected_invalid_shapes": 116
+    },
+    "protected_sources": {
+      "result": "PASS",
+      "pos_files": 824,
+      "website_files": 400
+    },
+    "owned_target_mysql_initial_and_final_state": "stopped",
+    "browser": "Not run; prior Browser Use denial was not retried or bypassed. No UI acceptance claimed.",
+    "private_import_providers_source_runtime": "Not run; isolated synthetic target fixtures only."
+  },
+  "acceptance_trace": {
+    "acquisition": "Source normalization, exact money, buying-source identity, usages, unit numbering, scoped document content/path checks, actor audit and durable retry keys.",
+    "availability": "Physical/current-claim/hold snapshot and aggregate availability; incomplete units excluded; current locking reads; negative and duplicate stock rejected.",
+    "history": "Sold/retired IMEI occurrences remain separate from current active claim; mapped source references, timestamps, movement arithmetic/chain and explicit missing-history baseline approval.",
+    "transactions": "Owning-transaction stock adapters only; hold consumption, release-after-consumption, expiry/COD and outer rollback verified.",
+    "scope_boundary": "No invoice creation, financial return/refund/payment workflow, checkout endpoint, inventory UI, real dataset or production operation. MT-2.5 not started."
+  },
+  "source_lineage": [
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Http/Controllers/Shop/InventoryController.php",
+      "git_blob": "491e0c871413dfcc1470e55c5aeb88f7ea1df70f",
+      "sha256": "0b6f44ad61f92813d57ac36875917c73754d1b0642cfca03ffbf01f4638a7a95"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Http/Controllers/Shop/StockAcquisitionController.php",
+      "git_blob": "719f3857fc4dc18d54e38f76d32195d145cbbcb0",
+      "sha256": "abdf3b5f49aef03cc8410e970b280f49d30c3b9ff276f317f5b5242fb5d44b19"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Http/Controllers/Shop/StockAcquisitionInputController.php",
+      "git_blob": "89b8777ccc8e4e45af4614a39d996fbc39a872b8",
+      "sha256": "02cc1a396df7c959400b51abe2adc7a8b720740c7b3290d3f67a0f50be0876a4"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Services/WebsiteOrderReservationService.php",
+      "git_blob": "5d7edd0ec84b058fa11337c3966e0c42cfc613cb",
+      "sha256": "edafb49646d84d93e09a053f64b7ad27ee581a6b720525943b195260ca7f22c0"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Services/WebsiteOrderConfirmationService.php",
+      "git_blob": "f94cb220e6084d09e977da75156d1aab1e3121bd",
+      "sha256": "f46ec7598ded48ef29f9cd2f93699e698a95ee328600f37341b25d22e1650db8"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Support/ReservedInventory.php",
+      "git_blob": "d3c7b73ac7ae1988fd97d81128de55b32e471efd",
+      "sha256": "f40415158545730716095257bd5c8c194cb3f997d253a8b8bd9fbc294be49b9a"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/StockAcquisition.php",
+      "git_blob": "a0528867d9d7ca499e9c25cb462b78c004cc570e",
+      "sha256": "7c7778362ab6bef7dca5e8e0275818256e50b0739712eab00f19de26c9a1d4c5"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/StockMovement.php",
+      "git_blob": "5265ea9afc81a434cbcf6f43ab4f2d053ca2353d",
+      "sha256": "aa69b629d6f3273bc439ef63b21d96711dbb9d1611a2d95335231041654ff665"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/ProductImei.php",
+      "git_blob": "9a5fb961a48c9f1d517968d9976e680033441c11",
+      "sha256": "90896a4c85bab43a938d34365f1deca75e8f53a89513834657b61a72787fdd36"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/StockUnit.php",
+      "git_blob": "0a7a425d0f4a5c914b65e14fb46f9b0173d88529",
+      "sha256": "784d819a6b2e69d8ef74e7cd05395f937c5510309ddc57c18bd576ebf6af88d8"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/Product.php",
+      "git_blob": "05164aadd7b462b9e2821d34c00d74d5a0a78bff",
+      "sha256": "36a077260f515040a7ed8dc07bb3042d545fade3902657b30d3a2f468fcd338b"
+    }
+  ],
+  "source_characterization": "Pinned code inspection and adaptation; no new original-source runtime tests. Current acceptance comes from the target suite.",
+  "authority_unchanged_git_blob_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "0b8453184f3fa6a3753d7158b29053614c95741f97a98a5faf04f4ec03f19745",
+    "docs/AI_PROJECT_COMMAND_REGISTRY.md": "2a87e9fca0ea8560fd0bdff6df56e2bfa9a5a36c8a4d23c4a3c0efd2be603abe",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "d63a2dcdced94e89c6bfe30659cbc5aaf3d5aeb5cbf2fa488d9f2ec0ab1cdd96",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "65b5e27d8ed29642c459051b4af994e697b382bdb14ede321b9803e51970636d"
+  },
+  "approved_input_raw_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402"
+  },
+  "artifact_staged_blob_sha256": {
+    "backend/app/Catalog/ProductDefinitions.php": "353b967465b5f2e9f3bb55422fb5da375d9a23875c5b2a49b0eb5b7c4df363a1",
+    "backend/app/Inventory/AcquisitionDocuments.php": "74667833677e1e182ed3a6e9bb7763502ab9a73280e253eb4eba89962d0259ca",
+    "backend/app/Inventory/InventoryOperations.php": "0fe4a45d6fbd456bcd10e13e0187a840670b53cc2302bbb58d8b4f5c6e939a7b",
+    "backend/app/Inventory/StockLedger.php": "955e056ac8396b27d01cfa64d6f298925ea8720898bb7794a535c5ce0d93f349",
+    "backend/app/Inventory/TransactionalStock.php": "04998c7a1811b0d45682d2222e8fc093dc991c8041d30d8a942fc8f240462fcb",
+    "backend/app/Migration/SourceRow.php": "69663fa63c348eb7e5471f13ec7d01b023248f292dbcfde5ef415b757c38caf5",
+    "backend/app/Migration/StockImporter.php": "7f7388708ca2e834a03afe9b3731092a4046cc65fcd3c7095b2b345b893505d8",
+    "backend/tests/Feature/InventoryConcurrencyTest.php": "8b2b6bf1881c32f919419a3ff267cc53ea527d5d3d07f3a42c29f1e07dfcf2e0",
+    "backend/tests/Feature/InventoryTest.php": "0712f0fa56c61b60a03e5a549fb68c88a9e08977b5b69d22f32b42253ecd1515",
+    "backend/tests/Feature/StockMigrationTest.php": "77ac3714628baf0ac5f3a4d1889efae11b68389eaf76b637e4e468afbf7c4fd0",
+    "backend/tests/Support/InventoryFixture.php": "5f4e9dddba8d001c37cf89a5d6df55ccc12b8d53e73eced312416fc8762b6680",
+    "backend/tests/Support/stock_worker.php": "475640539e67aa7ba5552076ed6d2cd7944543564b4f7705f932fe163cc7ec7a",
+    "docs/PROJECT_IMPLEMENTATION_STATUS.md": "393bb09ef85903ce95bbb37c9fc18f9a9279bef37652308198e80a45757a2e76",
+    "docs/inventory/README.md": "c44843151c5d45103604edcdfbaa4d90000f2bb2bd05433f615604ed378771ed"
+  },
+  "local_gate_log_sha256": {
+    "backend-tests.xml": "3fff8d6278a1e3364e24f7b76af27d2e0a93826715800b3a1416dedd746edef9",
+    "backend-tests.log": "b9b7e8d00467907fdfce4117fba853ea4e5090b72cd1160e11578e99ac1f239a",
+    "pos-build.log": "88d7bebd8489f194a90494ed0c205e12f85329a0311dd40e410b36a4c5daac88",
+    "website-lint.log": "57121c3421a473c2ed9f4593e1bd6cb257dd455a2b35b37d40cdd83e40966ce3",
+    "website-types.log": "2df736d4bd0f51252fbd2682d949c700edc505922c689ed39cc1054d14006b18",
+    "website-build.log": "5a930a0319f94d214b30245a5dad712422515c4f06f53c3564cc3409471de70f",
+    "composer-audit.json": "65cb74de105d312fddccfe4c7b15692394b4e5384bf703dd8c1b60be023a1831",
+    "pos-audit.json": "02989acbf656eb96064b215c93de9a72bbb480200989a8ea9f93ac86c3cecae2",
+    "website-audit.json": "242cd1c980b5fafbfeca140d492d09e476c76e7b44f727de2d6d5ab8d03ded0b",
+    "schema-final.json": "8c96a4c1bfbaeabd1c26112550af968cc0caa11bf7a9199f28876917833e92e1",
+    "isolation.json": "1960711e166b6bacc6c6b6aea0f8e0f9e1e735cac6d47c45aa399528e986a122"
+  },
+  "git_checkpoint": {
+    "intended_remote": "https://github.com/lawangin00/mobisttech.git",
+    "intended_branch": "main",
+    "force_push": false,
+    "closure_gate": "Commit/push only this checkpoint, then verify clean HEAD/upstream/live-main equality and committed artifact hashes. Git history supplies commit identity."
+  },
+  "next": "MT-2.5 - Sales, invoices and returns migration"
+}
