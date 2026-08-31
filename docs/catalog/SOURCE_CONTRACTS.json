@@ -1,0 +1,290 @@
+{
+    "source": "pos",
+    "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+    "scope": "Pure isolated source constants and formatting; no source database/bootstrap or target acceptance claim.",
+    "registry": {
+        "product_brand": {
+            "label": "Brands",
+            "allow_create": true,
+            "allow_archive": true,
+            "allow_delete": true
+        },
+        "product_category": {
+            "label": "Product Categories",
+            "allow_create": false,
+            "allow_archive": false,
+            "allow_delete": false
+        },
+        "product_subcategory": {
+            "label": "Product Subcategories",
+            "allow_create": true,
+            "allow_archive": true,
+            "allow_delete": true
+        },
+        "unit_color": {
+            "label": "Colors",
+            "allow_create": true,
+            "allow_archive": true,
+            "allow_delete": true
+        },
+        "device_ram_gb": {
+            "label": "RAM Options",
+            "allow_create": true,
+            "allow_archive": true,
+            "allow_delete": true
+        },
+        "device_storage_gb": {
+            "label": "Storage Options",
+            "allow_create": true,
+            "allow_archive": true,
+            "allow_delete": true
+        },
+        "device_sim_configuration": {
+            "label": "SIM Configurations",
+            "allow_create": true,
+            "allow_archive": true,
+            "allow_delete": true
+        },
+        "unit_condition": {
+            "label": "Conditions",
+            "allow_create": true,
+            "allow_archive": true,
+            "allow_delete": true
+        },
+        "unit_pta_status": {
+            "label": "PTA Statuses",
+            "allow_create": true,
+            "allow_archive": true,
+            "allow_delete": true
+        },
+        "unit_carrier_lock_status": {
+            "label": "Carrier Lock Statuses",
+            "allow_create": true,
+            "allow_archive": true,
+            "allow_delete": true
+        },
+        "unit_mdm_status": {
+            "label": "MDM Statuses",
+            "allow_create": true,
+            "allow_archive": true,
+            "allow_delete": true
+        },
+        "acquisition_source_type": {
+            "label": "Buying Source Types",
+            "allow_create": true,
+            "allow_archive": true,
+            "allow_delete": true
+        }
+    },
+    "categories": {
+        "mobile_phone": "Mobiles",
+        "tablet": "Tablets",
+        "accessory": "Accessories"
+    },
+    "sim_labels": {
+        "single_physical": "Single SIM",
+        "dual_physical": "Dual SIM",
+        "physical_esim": "SIM + eSIM",
+        "dual_physical_esim": "Dual SIM + eSIM",
+        "esim_only": "eSIM Only",
+        "not_applicable": "N/A",
+        "unknown": "Unknown SIM"
+    },
+    "colors": {
+        "Black": "#111111",
+        "White": "#F8FAFC",
+        "Blue": "#2563EB",
+        "Light Blue": "#9CCAF0",
+        "Dark Blue": "#1E3A8A",
+        "Sky Blue": "#7DD3FC",
+        "Navy": "#172554",
+        "Green": "#16A34A",
+        "Mint Green": "#A7F3D0",
+        "Dark Green": "#166534",
+        "Teal": "#0F766E",
+        "Red": "#DC2626",
+        "Product Red": "#C8102E",
+        "Pink": "#EC4899",
+        "Rose": "#F43F5E",
+        "Purple": "#7C3AED",
+        "Violet": "#8B5CF6",
+        "Lavender": "#C4B5FD",
+        "Yellow": "#EAB308",
+        "Orange": "#F97316",
+        "Gold": "#D4A72C",
+        "Silver": "#CBD5E1",
+        "Gray": "#94A3B8",
+        "Grey": "#94A3B8",
+        "Graphite": "#374151",
+        "Space Gray": "#6B7280",
+        "Midnight": "#1F2937",
+        "Starlight": "#E8E2D7",
+        "Cream": "#F5F0DF",
+        "Beige": "#D6C7AD",
+        "Brown": "#92400E",
+        "Bronze": "#A16207",
+        "Titanium": "#A79C8E",
+        "Natural Titanium": "#B9B2A7",
+        "Desert Titanium": "#C2B39D",
+        "Black Titanium": "#353535",
+        "White Titanium": "#D7D4CF",
+        "Blue Titanium": "#6E8394",
+        "Deep Purple": "#5B4B8A",
+        "Sierra Blue": "#9BB5CE",
+        "Pacific Blue": "#2F5D78",
+        "Alpine Green": "#4F6457",
+        "Ultramarine": "#5167C9",
+        "Coral": "#FF7F6A",
+        "Aqua": "#22D3EE",
+        "Cyan": "#0891B2",
+        "Lime": "#84CC16"
+    },
+    "conditions": {
+        "unknown": "Unknown",
+        "brand_new": "Brand New",
+        "open_box": "Open Box",
+        "used": "Used / Kit",
+        "refurbished": "Refurbished"
+    },
+    "pta_statuses": {
+        "pta_approved": "PTA Approved",
+        "non_pta": "Non-PTA",
+        "patch_approved": "Patch Approved",
+        "cpid_server_approved": "CPID / Server Approved",
+        "not_applicable": "N/A",
+        "unknown": "Unknown"
+    },
+    "carrier_lock_statuses": {
+        "factory_unlocked": "Factory Unlocked",
+        "jv_carrier_locked": "JV / Carrier Locked",
+        "not_applicable": "N/A",
+        "unknown": "Unknown"
+    },
+    "mdm_statuses": {
+        "no_mdm": "No MDM",
+        "mdm": "MDM",
+        "not_applicable": "N/A",
+        "unknown": "Unknown"
+    },
+    "stock_statuses": {
+        "in_stock": "In Stock",
+        "sold": "Sold",
+        "damaged": "Damaged",
+        "lost": "Lost",
+        "adjusted_out": "Adjusted Out"
+    },
+    "variants": [
+        {
+            "input": [
+                "Black",
+                "used",
+                "pta_approved",
+                "factory_unlocked",
+                "no_mdm"
+            ],
+            "key": "bd86bd22bca80a05"
+        },
+        {
+            "input": [
+                " BLACK ",
+                "used",
+                null,
+                null,
+                null
+            ],
+            "key": "4895db802e1612f4"
+        },
+        {
+            "input": [
+                "black",
+                "used",
+                null,
+                null,
+                null
+            ],
+            "key": "4895db802e1612f4"
+        },
+        {
+            "input": [
+                null,
+                null,
+                null,
+                null,
+                null
+            ],
+            "key": "45ca31c3315a5978"
+        },
+        {
+            "input": [
+                "",
+                "",
+                "",
+                "",
+                ""
+            ],
+            "key": "45ca31c3315a5978"
+        },
+        {
+            "input": [
+                null,
+                "unknown",
+                null,
+                null,
+                null
+            ],
+            "key": "2b8952aa9f55b7fe"
+        },
+        {
+            "input": [
+                "Blue",
+                "used",
+                "non_pta",
+                "jv_carrier_locked",
+                "mdm"
+            ],
+            "key": "16862605c2975f9b"
+        },
+        {
+            "input": [
+                "Black",
+                "brand_new",
+                "unknown",
+                "unknown",
+                "unknown"
+            ],
+            "key": "0a0bd3b8ecf1b383"
+        }
+    ],
+    "device_names": [
+        {
+            "input": [
+                "Brand",
+                "Model",
+                8,
+                128,
+                "dual_physical"
+            ],
+            "name": "Brand Model | 8/128 | Dual SIM"
+        },
+        {
+            "input": [
+                null,
+                "Tablet",
+                null,
+                256,
+                null
+            ],
+            "name": "Tablet | Unknown SIM"
+        },
+        {
+            "input": [
+                " Brand ",
+                " Model ",
+                8,
+                128,
+                "single_physical"
+            ],
+            "name": "Brand Model | 8/128 | Single SIM"
+        }
+    ]
+}

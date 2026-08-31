@@ -26,13 +26,13 @@ Last completed stage: MT-1 - Migration inventory and design
 
 Current In Progress point: None
 
-Status: MT-0 and MT-1 complete. MT-2 is in progress. 6/32 complete, 26 pending. MT-2.3 is not started.
+Status: MT-0 and MT-1 complete. MT-2 is in progress. 7/32 complete, 25 pending. MT-2.4 is not started.
 
-Last completed point: MT-2.2 - Identity, customer and authorization migration
+Last completed point: MT-2.3 - Product and master-data migration
 
-Next pending point: MT-2.3 - Product and master-data migration
+Next pending point: MT-2.4 - Inventory and stock integrity migration
 
-Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure and backend identity/customer/authorization services exist. Identity mapping is verified with synthetic rows only. Actual private-data migration, POS/Website interfaces, transactional features, brand, Control and CI remain pending. Backend identity tests do not constitute UI, live email/provider, transactional feature or private-data import acceptance.
+Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, identity/customer/authorization and product/master-data definition services exist. Identity/product mapping is verified with synthetic rows only. Actual private-data migration, stock/acquisition/transaction processors, POS/Website interfaces, brand, Control and CI remain pending. Backend tests do not constitute UI, live provider, inventory concurrency or private-data import acceptance.
 
 ## Documentation language policy
 
@@ -130,12 +130,24 @@ The identity migration yields 73 tables, 916 columns, 117 foreign keys and 326 i
 
 HTTP-kernel tests enforce real CSRF and cookie isolation; browser/UI acceptance is not claimed, and the earlier Browser Use URL denial was not retried or bypassed. Original Git/file fingerprints remain unchanged. Goal/Preferences, Source of Truth, registry and roadmap Markdown/DOCX remain unchanged, with no Word regeneration required. The checkpoint synchronizes only the new monorepo main/private origin, followed by clean local/upstream/live-main verification. MT-2.3 is not started.
 
+## MT-2.3 product and master-data closure
+
+On user Y, only MT-2.3 executed. `docs/catalog/README.md` records source-to-target reuse, definition/attribute/permission contracts, strict source mapping, public/private field separation and remaining boundaries. Source registries, master-data lifecycle/usages, category/SIM/unit constants, stable business identifiers and variant grouping were adapted. Protected category codes and canonical status/source options remain protected; label edits preserve raw historical values and existing inactive references while blocking new inactive selections.
+
+Authorized backend services create zero-stock product definitions and edit managed unit attributes with fresh outlet/grant checks, explicit input allowlists, exact decimal prices, option locks, usage maintenance and atomic publication events. Clients cannot supply stock counters, business identifiers or actor/outlet identity. Existing holds block definition/attribute edits; category/tracking changes cannot silently invalidate stock/unit history. No acquisition, active-IMEI, sale/reservation or stock-movement processor is introduced.
+
+The controlled importer supports five source-qualified product/master-data tables, preserves complete mapped columns and remaps option/actor/outlet/product/historical references. Invalid shapes/types/money/timezones, unresolved parents, changed replay and identity collisions quarantine atomically. Website candidate links require matching canonical product/outlet/category/contract; cached Website stock/price is retained only as legacy listing metadata and never becomes inventory authority. Only synthetic data was used; historical dependencies without a mapped parent remain explicit reconciliation work, not silently cleared references.
+
+Fresh target gates pass: 72 tests / 4,270 assertions, including seventeen new product/master-data/migration cases and DCASE-07 coverage; nine source constant groups and eleven isolated source formatting examples; POS TypeScript/Vite; Website lint/typecheck/Next.js; Pint; Composer validation/platform checks; optimize/clear; current Composer/npm audits with zero known advisories. MySQL remains exactly the MT-2.2 73-table schema/hash with zero synthetic business rows. Product/import/publication transaction rollback passes. Detailed source lineage, cases and artifact hashes are in `docs/catalog/MT_2_3_VERIFICATION.json`.
+
+Original source Git/file fingerprints and approved Goal/Preferences remain unchanged. No Browser Use denial was bypassed and no UI/provider/private-data acceptance is claimed. Source of Truth, registry, roadmap Markdown/DOCX and historical evidence remain unchanged; routine progress does not require Word regeneration. Intended synchronization is only the new monorepo main/private origin, verified by clean local/upstream/live-main equality after commit/push. MT-2.4 is not started.
+
 ## Recovery and next action
 
-Do not re-execute MT-0.1, MT-1.1 through MT-1.3, or MT-2.1 through MT-2.2. After this checkpoint is committed/pushed and clean live synchronization is verified, stop before MT-2.3. The next applicable Y/Proceed executes only `MT-2.3 - Product and master-data migration`. Reuse the session-loaded MT-1.1-r3 registry unless Refresh is requested. Runtime startup/locks are documented in `docs/foundation/WINDOWS_SETUP.md`; schema/infrastructure reproduction is in `docs/schema/README.md`, and current identity/schema verification is in `docs/identity/README.md`.
+Do not re-execute MT-0.1, MT-1.1 through MT-1.3, or MT-2.1 through MT-2.3. After this checkpoint is committed/pushed and clean live synchronization is verified, stop before MT-2.4. The next applicable Y/Proceed executes only `MT-2.4 - Inventory and stock integrity migration`. Reuse the session-loaded MT-1.1-r3 registry unless Refresh is requested. Runtime startup/locks are documented in `docs/foundation/WINDOWS_SETUP.md`; schema/identity verification is in `docs/schema/README.md` and `docs/identity/README.md`; current product/master-data contracts and reproduction are in `docs/catalog/README.md`.
 
 ## HOLD / decisions
 
-Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure and backend identity now exist; private business-data migration, later features/interfaces and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. Live email/Redis/S3 activation, consuming-feature resilience, scoped object authorization and provider/backup recovery remain later implementation gates; the local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block the verified MT-2.2 backend/synthetic-rehearsal scope.
+Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure, backend identity and product/master-data definitions now exist; private business-data migration, stock/transaction processing, later interfaces and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. Live email/Redis/S3 activation, consuming-feature resilience, scoped object authorization and provider/backup recovery remain later implementation gates; the local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block the verified MT-2.3 backend/synthetic-rehearsal scope.
 
 No source-repository write, source-data migration, source runtime action, real payment-provider activation, external message or production change is authorized or performed by this reconciliation.

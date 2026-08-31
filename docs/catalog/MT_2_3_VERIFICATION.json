@@ -1,0 +1,644 @@
+{
+  "point": "MT-2.3 - Product and master-data migration",
+  "date": "2026-08-31",
+  "result": "PASS - backend product/master-data and synthetic migration scope",
+  "preflight_head": "64a60ad5e74d893c7347e9aaedad07dc3dffffb7",
+  "preflight_clean": true,
+  "precommit_head_upstream_live_main_equal": true,
+  "schema": {
+    "mode": "identity",
+    "result": "PASS",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "mysql": "8.4.11",
+    "timezone": "+00:00",
+    "strict": true,
+    "counts": {
+      "tables": 73,
+      "columns": 916,
+      "foreign_keys": 117,
+      "indexes": 326
+    },
+    "schema_sha256": "2de954e11845e1dc844586d8a406813116fa0925282b9f626e1c99b65329e9ae",
+    "business_rows": 0
+  },
+  "schema_unchanged_from_mt22": true,
+  "ddl_changes": false,
+  "mapping_contracts": [
+    {
+      "source": "pos",
+      "table": "pos_master_data_options",
+      "target": "pos_master_data_options",
+      "columns": 14
+    },
+    {
+      "source": "pos",
+      "table": "pos_master_data_usages",
+      "target": "pos_master_data_usages",
+      "columns": 7
+    },
+    {
+      "source": "pos",
+      "table": "products",
+      "target": "products",
+      "columns": 31
+    },
+    {
+      "source": "pos",
+      "table": "stock_units",
+      "target": "stock_units",
+      "columns": 23
+    },
+    {
+      "source": "website",
+      "table": "products",
+      "target": "product_listings",
+      "columns": 22
+    }
+  ],
+  "mapped_source_columns": 97,
+  "gates": {
+    "backend_tests": {
+      "tests": 72,
+      "assertions": 4270,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "new_product_cases": 17,
+      "junit_sha256": "1697ba0ae023da4fbfd25697b80e9d67b4982bf6da8f1e693d98976305f590ed",
+      "cases": [
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_isolated_target_is_accepted",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"source port\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"remote host\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"source database\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"root account\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"URL override\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"SQLite source path\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"socket override\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_external_integrations_cannot_be_enabled_locally",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\FoundationInfrastructureTest",
+          "name": "test_runtime_tables_use_the_isolated_mysql_test_database",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\FoundationInfrastructureTest",
+          "name": "test_foundation_request_persists_a_database_session",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_public_health_contract_exposes_no_configuration",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_inertia_foundation_renders_without_business_authentication",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_business_and_legacy_transport_routes_are_not_prematurely_exposed",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_external_http_is_disabled_in_isolated_environment",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_same_source_ids_and_emails_remain_separate_outlet_and_credential_identities",
+          "assertions": 18
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_identity_replay_is_idempotent_and_changed_input_or_email_collision_is_quarantined",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_proven_legacy_owner_is_explicitly_mapped_and_audited_without_customer_identity",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_invalid_privilege_values_are_quarantined_without_partial_accounts",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_unknown_source_fields_fail_before_any_import_and_membership_uses_source_maps",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_timestamps_hashes_and_unsupported_date_values_have_explicit_dispositions",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_matching_unverified_contact_does_not_merge_a_customer_observation",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_registration_rejects_role_injection_and_rotates_the_session",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_csrf_is_enforced_even_with_same_origin_fetch_header",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_customer_and_cms_sessions_and_equal_email_pos_accounts_are_isolated",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_customer_ownership_does_not_follow_email_or_guest_order_contact",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_complete_website_role_matrix_and_pos_default_grants",
+          "assertions": 181
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_reset_tokens_are_scoped_single_use_and_revoke_existing_sessions",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_recovery_is_non_enumerating_and_does_not_log_tokens_when_delivery_is_disabled",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_login_is_rate_limited_and_disabled_accounts_cannot_authenticate",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_pos_device_limits_replacement_and_logout_keep_other_realms_alive",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_outlet_assignment_and_permissions_are_rechecked_and_cannot_be_injected",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_password_change_revokes_other_devices_and_remember_cookie_cannot_restore_access",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_cross_realm_cookie_renaming_and_csrf_replay_do_not_authenticate",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_production_session_cookies_are_secure_host_only_and_admin_host_is_separate",
+          "assertions": 21
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_logout_does_not_sign_out_another_realm_in_the_same_cookie_jar",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_existing_argon_hash_can_authenticate_without_requiring_a_password_reset",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_source_registry_defaults_and_reseeding_preserve_managed_customization",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_protected_codes_and_canonical_status_deletion_are_rejected",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_master_data_requires_configuration_grant_and_rejects_actor_or_code_injection",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_option_validation_lifecycle_and_existing_inactive_reference_are_preserved",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_product_definition_preserves_identifiers_usage_history_and_exact_money",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_definition_rejects_duplicate_names_invalid_category_money_and_stock_actor_injection",
+          "assertions": 14
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_accessory_subcategory_semantics_and_outlet_boundaries_are_enforced",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_unit_variant_keys_and_private_metadata_remain_separate_from_display_labels",
+          "assertions": 22
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_definition_transaction_rollback_does_not_publish_or_leave_a_product",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_pinned_source_constants_and_variant_name_characterization_match_target",
+          "assertions": 20
+        },
+        {
+          "class": "Tests\\Feature\\ProductMasterDataTest",
+          "name": "test_existing_holds_block_definition_and_unit_changes_without_rewriting_history",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_products_and_master_data_use_source_qualified_ids_with_unchanged_codes_and_replay",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_listing_candidate_must_match_product_outlet_category_and_contract_without_importing_cached_stock",
+          "assertions": 16
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_unit_metadata_and_usage_relationships_preserve_history_and_wait_for_unresolved_parents",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_invalid_source_values_and_field_shapes_quarantine_without_partial_products",
+          "assertions": 15
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_wrong_option_lists_and_protected_category_or_metadata_changes_are_not_guessed",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\ProductMigrationTest",
+          "name": "test_import_is_atomic_with_outer_rollback_and_preserves_deleted_snapshot_and_timezone",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_database_queue_dispatches_after_commit_and_discards_rolled_back_jobs",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_worker_failure_retries_then_preserves_terminal_failure_evidence",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_redis_outage_uses_master_without_replaying_callback",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_master_version_change_bypasses_old_cache_and_rollback_preserves_version",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_private_object_roundtrip_stays_outside_public_storage",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_private_object_rejects_paths_and_bad_digests_before_writing",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_s3_network_access_is_disabled_in_isolated_application",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_real_s3_adapter_scopes_private_requests_and_propagates_failures_without_network",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_website_configuration_has_no_database_or_object_store_credentials",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_every_manifest_column_and_foreign_key_exists_on_mysql",
+          "assertions": 2798
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_source_manifest_accounts_for_every_final_column_and_preserves_namespaces",
+          "assertions": 803
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_money_keeps_exact_large_values_and_rejects_overflow_and_negative_stock",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_cross_outlet_references_and_financial_history_deletion_are_rejected",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_active_imei_is_unique_but_historical_reentry_is_allowed",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_payment_replay_and_multiple_current_holds_are_database_conflicts",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_source_qualified_identity_and_one_canonical_listing_constraints",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_active_unit_allocation_is_unique_and_cannot_switch_products",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_publication_version_and_durable_event_roll_back_together",
+          "assertions": 6
+        }
+      ]
+    },
+    "source_pure_characterization": {
+      "constants_groups": 9,
+      "variant_examples": 8,
+      "device_name_examples": 3,
+      "application_bootstrap": false,
+      "database_or_http": false
+    },
+    "backend_typecheck_vite_build": "PASS",
+    "website_lint_typecheck_next_build": "PASS",
+    "pint": "PASS",
+    "composer_validate_strict_platform_requirements": "PASS",
+    "optimize_clear": "PASS",
+    "composer_audit": {
+      "advisories": 0,
+      "abandoned": 0
+    },
+    "backend_npm_audit": {
+      "vulnerabilities": 0
+    },
+    "website_npm_audit": {
+      "vulnerabilities": 0
+    },
+    "source_schema_contract": {
+      "migration_hashes": 79,
+      "source_tables": 58,
+      "source_columns": 735,
+      "rejected_invalid_shapes": 116
+    },
+    "protected_sources": {
+      "result": "PASS",
+      "pos_files": 824,
+      "website_files": 400
+    },
+    "browser": "No UI change/acceptance claim. Prior Browser Use URL policy denial was not retried or bypassed.",
+    "private_import_live_providers_source_runtime": "Not run; synthetic target transactions only."
+  },
+  "acceptance_trace": {
+    "DCASE-07": "Verified target positive and negative product/outlet/category/SKU listing matches; no cached-stock import.",
+    "history": "Mapped source identifiers, option raw snapshots, existing inactive selections, unresolved parent quarantine and immutable order-item title tests pass.",
+    "scope_boundary": "Metadata and zero-stock definitions only; MT-2.4 acquisition/active IMEI/concurrent stock workflows are not implemented or claimed."
+  },
+  "source_lineage": [
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/Product.php",
+      "git_blob": "05164aadd7b462b9e2821d34c00d74d5a0a78bff",
+      "sha256": "36a077260f515040a7ed8dc07bb3042d545fade3902657b30d3a2f468fcd338b"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/StockUnit.php",
+      "git_blob": "0a7a425d0f4a5c914b65e14fb46f9b0173d88529",
+      "sha256": "784d819a6b2e69d8ef74e7cd05395f937c5510309ddc57c18bd576ebf6af88d8"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/PosMasterDataOption.php",
+      "git_blob": "19d868123dfc412ecf1fc20d74db4f4688f46e44",
+      "sha256": "3d39f5c98c5a7f368a04dfd1cd0ceed294744398fb0f74fb718b916dd4788020"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/PosMasterDataUsage.php",
+      "git_blob": "e408d120999c624f26f3b46b08833a0421d7e282",
+      "sha256": "f1e1399c20f8983ca716464a103faefbe00ddefffa37ff066d88489293e445a2"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Services/PosMasterData.php",
+      "git_blob": "7ee942b76cb0adf09f834b858d8bf53f930429ee",
+      "sha256": "2a3c7173c4c0a45b90fa57af16b551d4f38310ece843c8fe8a903e346d4b8fef"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Services/PosInventoryMasterData.php",
+      "git_blob": "c47809bc0d16bc61fd199d815a8962b21098e0a4",
+      "sha256": "979a4b01f4b764280060e1021015ebb75dbc9ef70e79c5cfa39fa93eeac03c22"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Support/PosMasterDataRegistry.php",
+      "git_blob": "2c5cebb54fe4a515c2b21127589a51328e6859dc",
+      "sha256": "1b7ac46c36930df993c0b292000ede5972a9b6417873e2701a1a7b1dcb5e46ee"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Support/ProductVariantKey.php",
+      "git_blob": "68642d32cbe735b32e1dc1ae5e12d987065e537f",
+      "sha256": "16d50f5ce23326b9cbda9b88a8442279f7f17b5e6189314b3327ffd54260859b"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Support/BusinessIdentifier.php",
+      "git_blob": "d11f38ca21f68f966508c441dc55a25c8c04ccee",
+      "sha256": "f106f941d4b5e3f2125cce01113681add7e8d3101d6cf1a6d7c54c4dbfdefe90"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Http/Controllers/Shop/InventoryController.php",
+      "git_blob": "491e0c871413dfcc1470e55c5aeb88f7ea1df70f",
+      "sha256": "0b6f44ad61f92813d57ac36875917c73754d1b0642cfca03ffbf01f4638a7a95"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Http/Controllers/Shop/InventoryInputController.php",
+      "git_blob": "0c0fb0dee659b488dbe129a8238a05fbd44638d1",
+      "sha256": "51e7dcd2a2cf6f8ac8dc2211e37853df77aad7985ff8f7e68aaf7576d88b0b41"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "tests/Feature/PosP3MasterDataAcceptanceTest.php",
+      "git_blob": "3f203fe10871d9e87b489988db09bab7d1c45235",
+      "sha256": "c394dc5649c8072d5fc61525306e4508d8262990a94d5d634d60e829707db6e9"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "database/migrations/2026_08_30_041500_extend_pos_master_data_for_device_options.php",
+      "git_blob": "1fe56dbde8e72663b88b3ac700537e239b049b6f",
+      "sha256": "a66f523ff126a1ab2884a786606d654548b7b50e86bb48912ee55f62ed8a0ea6"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "database/migrations/2026_08_30_090000_extend_pos_master_data_for_unit_status_options.php",
+      "git_blob": "efed909676b9e9ad431223f77e8d981a495c6ce5",
+      "sha256": "7a7416e57a74e281d80122ff2eb5f99075f8b4dd8b67cb20bc741b4b4209092b"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "database/migrations/2026_08_30_111000_extend_pos_master_data_for_acquisition_sources.php",
+      "git_blob": "2e3744028844a9fad6df549b4070ed568209b7a5",
+      "sha256": "da648b2002028affdfbc0f893ceff3ae8c2b397d8a0e6211c62f31ac683f27c9"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "database/migrations/2026_08_30_122000_extend_pos_master_data_for_categories.php",
+      "git_blob": "f6c0871de5f3b21feb43de1af5c24fcd3eabd42d",
+      "sha256": "d31b973871209e8ab806f8826a1740da03e90fedcbad541e8dcb9f6106faf892"
+    },
+    {
+      "source": "website",
+      "commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "path": "app/Models/Product.php",
+      "git_blob": "e5e2c614bdd56ef68dbf7f5c5c762a6725df5921",
+      "sha256": "bf0bc8169fade724ebcbef469d07ea82c0f69e141c207ed575ae96e2b0a3df17"
+    },
+    {
+      "source": "website",
+      "commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "path": "app/Services/PosCatalogSyncService.php",
+      "git_blob": "35b6cbb4d545361afec453d476eab06f39b797ee",
+      "sha256": "c5ed47505990d9db616d5b2c7d3237fccbf684f7da25907f5fb602011e855fe9"
+    }
+  ],
+  "authority_unchanged_git_blob_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "0b8453184f3fa6a3753d7158b29053614c95741f97a98a5faf04f4ec03f19745",
+    "docs/AI_PROJECT_COMMAND_REGISTRY.md": "2a87e9fca0ea8560fd0bdff6df56e2bfa9a5a36c8a4d23c4a3c0efd2be603abe",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "d63a2dcdced94e89c6bfe30659cbc5aaf3d5aeb5cbf2fa488d9f2ec0ab1cdd96",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "65b5e27d8ed29642c459051b4af994e697b382bdb14ede321b9803e51970636d"
+  },
+  "approved_input_raw_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402"
+  },
+  "artifact_staged_blob_sha256": {
+    "README.md": "355c6ff4def1eb6d08019773d67f208c056751c028d7d99c6298fa90347193fd",
+    "backend/app/Catalog/CatalogChanged.php": "ca282f95004d469c31f9728ca394b9f73a09be25ea331bebfe95c7c46a4d9f53",
+    "backend/app/Catalog/MasterDataAdministration.php": "563f2047828ade1db4f278f6fd6105fcda9d7e12185021155f2e514159c4bfbf",
+    "backend/app/Catalog/ProductDefinitions.php": "5047f2d9395479f67c379f2326c0bf12895510880600a314dd9f75f68afd8f43",
+    "backend/app/Catalog/ProductProjection.php": "56eb7baf42b0f0d28b9b6e830ead7f5855242891630e50b5efee5dd22d048a1e",
+    "backend/app/Migration/ProductImporter.php": "7b65bba7e0d9bacfff38ee55feab87cb19adf2d14abf9ed57ca643d46965fe6b",
+    "backend/app/Migration/SourceRow.php": "863d9963e936c3ff74c3bf72451165dad486ad4525155169eb11ca146d57a057",
+    "backend/app/Models/PosMasterDataOption.php": "3d39f5c98c5a7f368a04dfd1cd0ceed294744398fb0f74fb718b916dd4788020",
+    "backend/app/Models/PosMasterDataUsage.php": "f1e1399c20f8983ca716464a103faefbe00ddefffa37ff066d88489293e445a2",
+    "backend/app/Models/Product.php": "a273e0fe685effbd335a1e26320dfbf88f0aec2d3f3faf92b865c0148a926a93",
+    "backend/app/Models/StockUnit.php": "e472ef1a4e5962b8c5501adf350e04579f568ae568ed69244fd9ce332f29ecd2",
+    "backend/app/Services/PosInventoryMasterData.php": "979a4b01f4b764280060e1021015ebb75dbc9ef70e79c5cfa39fa93eeac03c22",
+    "backend/app/Services/PosMasterData.php": "2a3c7173c4c0a45b90fa57af16b551d4f38310ece843c8fe8a903e346d4b8fef",
+    "backend/app/Support/BusinessIdentifier.php": "f49020bfed00d5f4edf4fa1a5a3971e37fba4e61af428dd50c1c991083004a5b",
+    "backend/app/Support/PosMasterDataRegistry.php": "1b7ac46c36930df993c0b292000ede5972a9b6417873e2701a1a7b1dcb5e46ee",
+    "backend/app/Support/ProductVariantKey.php": "16d50f5ce23326b9cbda9b88a8442279f7f17b5e6189314b3327ffd54260859b",
+    "backend/database/seeders/PosMasterDataSeeder.php": "c6e322b80fdc529aaac0cd0144759618e158b76e0efc5d20ddc0823863e25bf7",
+    "backend/tests/Feature/ProductMasterDataTest.php": "22619b72e87e616562bb74acfb9cf75c35bc386d62f31c1b9c47f61ef2135208",
+    "backend/tests/Feature/ProductMigrationTest.php": "162b0be08c7dc35331e8877e194394ca1e80ba5b2390c5fde315d5b6322b8b72",
+    "docs/PROJECT_IMPLEMENTATION_STATUS.md": "95925204f7835fc4d6b6134ce5647e6e91510617029870d11c80023efd63b10b",
+    "docs/catalog/README.md": "8ed75d8494041a4099039d5868398962de63c4b3377188cdc0ce2c3949b47743",
+    "docs/catalog/SOURCE_CONTRACTS.json": "a844affdb1c512838615ccfc0dcbd05015331078ba6775bc05187ca442aef4dc"
+  },
+  "git_checkpoint": {
+    "intended_remote": "https://github.com/lawangin00/mobisttech.git",
+    "intended_branch": "main",
+    "force_push": false,
+    "closure_gate": "Commit/push this checkpoint only, then verify clean HEAD/upstream/live-main equality and committed artifact hashes. Commit identity is supplied by Git history."
+  },
+  "next": "MT-2.4 - Inventory and stock integrity migration"
+}
