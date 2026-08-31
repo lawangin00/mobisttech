@@ -10,7 +10,7 @@ Use `git --no-optional-locks` for source inspection. Do not copy secrets, privat
 
 Run one verified roadmap point at a time. Finish its applicable gates, documentation, clean intended commit/push to the new remote, then stop. Do not advance a second point without the applicable user command. Initialization only establishes MT-0.1.
 
-Roadmap Markdown and same-basename DOCX must remain synchronized. Use `tools/docs/build_roadmap_docx.py`, compare content and visually verify the rendered document whenever roadmap changes. Never edit Word as an independent source.
+Roadmap Markdown is the structural plan; the ledger owns live Completed/In Progress/Pending state and progress counts. Routine point/stage progress updates only the ledger and must not regenerate the DOCX. When roadmap structure/content materially changes, use `tools/docs/build_roadmap_docx.py`, compare content and visually verify the same-basename DOCX. Never edit Word as an independent source.
 
 The target is a shared Laravel 13/MySQL authority, React/TypeScript/Inertia/Tailwind POS, and Next.js/React/TypeScript/Tailwind Website consuming REST APIs. Preserve verified behavior, security, data/history and payment/stock integrity; retire duplication only with parity evidence.
 

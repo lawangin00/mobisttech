@@ -1,0 +1,54 @@
+{
+  "date": "2026-08-31",
+  "scope": "Roadmap lifecycle/control optimization only; no executable roadmap point advanced",
+  "preflight_head": "2b862d480e808a593a867dd79e745b644f3ba626",
+  "project_position": {
+    "completed": 3,
+    "total": 32,
+    "pending": 29,
+    "last": "MT-1.2 - Unified data, API and security design",
+    "next": "MT-1.3 - Windows toolchain and application foundations"
+  },
+  "roadmap": {
+    "version": "1.5",
+    "point_ids": 32,
+    "dependency_lines": 32,
+    "live_status_markers": 0,
+    "content_blocks": 166,
+    "docx_text_parity": true,
+    "docx_pages_visually_inspected": 13
+  },
+  "policy": {
+    "routine_progress": "ledger-only",
+    "docx_regeneration": "only for structural/material roadmap changes"
+  },
+  "project_registry": {
+    "version": "MT-1.1-r3",
+    "universal_registry": "1.9",
+    "system": "7.2"
+  },
+  "global_reference": {
+    "commit": "5466f3804e05325b75f63100f4539479a6250dde",
+    "registry": "1.9",
+    "roadmap_spec": "1.1",
+    "docx_pages_visually_inspected": 15
+  },
+  "approved_input_sha256": {
+    "Goal": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "Preferences": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402"
+  },
+  "source_boundary": "snapshot_sources.py --check passed; protected originals unchanged",
+  "inventory_gate": "verify_inventory.py passed: 1224 files, 316 routes, 438 characterization cases, target placeholders intact",
+  "artifact_sha256": {
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "d63a2dcdced94e89c6bfe30659cbc5aaf3d5aeb5cbf2fa488d9f2ec0ab1cdd96",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "65b5e27d8ed29642c459051b4af994e697b382bdb14ede321b9803e51970636d",
+    "docs/PROJECT_IMPLEMENTATION_STATUS.md": "839910190b241fb4a60ab7aa7ee511fa04bcc4b1752389ccb7bc0d991bc9428d",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "0b8453184f3fa6a3753d7158b29053614c95741f97a98a5faf04f4ec03f19745",
+    "docs/AI_PROJECT_COMMAND_REGISTRY.md": "2a87e9fca0ea8560fd0bdff6df56e2bfa9a5a36c8a4d23c4a3c0efd2be603abe",
+    "docs/reference/UNIVERSAL_PROJECT_ROADMAP_SPEC.md": "bbe80c287303aee90bf11f44cc74f1fba8bc253954eeec107fc86f38383ab5c6",
+    "tools/docs/build_roadmap_docx.py": "fb4257fba6a0cea77930f6aa1d4bc5dd429d0d32962ee1e828a1244b7df87755",
+    "tools/docs/README.md": "8c027fc5c3c4f21a7a02b771ce1f0fc552be2873282d9ffba2e1d92a09a40565",
+    "AGENTS.md": "b9d2500a6f613fae5f08f2fc4d04e813b2707ca9d99473286987668b7073fda2"
+  },
+  "post_commit_gate": "Require clean working tree and HEAD == upstream == live main before completion response"
+}

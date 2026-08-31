@@ -1,6 +1,6 @@
 # mobiST Tech - Project Source of Truth
 
-Version: 1.4 | Date: 2026-08-31
+Version: 1.5 | Date: 2026-08-31
 
 ## Authority, Goal and Preferences
 
@@ -79,4 +79,4 @@ Production-infrastructure design and reproducible deployment/recovery verificati
 
 ## Completion
 
-Every point requires source-to-target traceability, Goal/Preferences compliance, applicable focused/full tests and documentation, then a clean intended Git checkpoint in the new repository. Any roadmap change regenerates the same-basename DOCX. FINAL-AUDIT independently checks the entire Goal and Preferences, feature parity, security, migration/recovery, Windows Control, production readiness, CI and remote synchronization. Only a clean audit permits `Project complete: 100%`; unresolved required work cannot be relabeled Deferred merely to close the project.
+Every point requires source-to-target traceability, Goal/Preferences compliance, applicable focused/full tests and documentation, then a clean intended Git checkpoint in the new repository. Routine completion/progress updates only the implementation ledger. Regenerate the same-basename DOCX only when the roadmap structure/content materially changes. FINAL-AUDIT independently checks the entire Goal and Preferences, feature parity, security, migration/recovery, Windows Control, production readiness, CI and remote synchronization. Only a clean audit permits `Project complete: 100%`; unresolved required work cannot be relabeled Deferred merely to close the project.

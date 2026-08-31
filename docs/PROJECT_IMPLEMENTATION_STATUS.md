@@ -12,10 +12,10 @@ Last reconciled: 2026-08-31
 - Goal SHA-256: `7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f`
 - Binding Preferences: `docs/PROJECT_PREFERENCES.md` (all 39 approved numbered Preferences)
 - Preferences SHA-256: `e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402`
-- Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.4
-- Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.4
+- Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.5
+- Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.5
 - Roadmap Word mirror: `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
-- Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r2 (universal 1.8 / system 7.2)
+- Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r3 (universal 1.9 / system 7.2)
 - FINAL-AUDIT: `FINAL-AUDIT - Independent final project audit`
 
 ## Verified position
@@ -34,7 +34,15 @@ Execution boundary: Application migration has not started. Backend/Website/brand
 
 ## Documentation language policy
 
-Roman Urdu is the default only for assistant chat/UI communication with the user. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal and Preferences remain byte-preserved in their original language/content unless transformation is explicitly authorized. This boundary is recorded in Source of Truth, roadmap, AGENTS, project registry and the synchronized Universal Registry 1.8 baseline.
+Roman Urdu is the default only for assistant chat/UI communication with the user. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal and Preferences remain byte-preserved in their original language/content unless transformation is explicitly authorized. This boundary is recorded in Source of Truth, roadmap, AGENTS, project registry and the synchronized Universal Registry 1.9 baseline.
+
+## Roadmap lifecycle policy
+
+The canonical roadmap is a structural execution plan, not the live progress tracker. This implementation ledger is authoritative for Completed/In Progress/Pending state, last/current/next point and progress counts. Routine point or stage progress must update this ledger only and must not edit the roadmap or regenerate its Word mirror.
+
+The roadmap Markdown and same-basename DOCX are regenerated/verified only when the roadmap itself changes structurally or materially, such as approved scope/requirement changes, dependencies, acceptance intent, HOLD/Deferred constraints, remediation points or stage restructuring. This one-time v1.5 normalization removed live point/stage status markers from the roadmap while preserving all 32 point IDs, exact titles, dependencies, scopes, acceptance criteria and HOLD items.
+
+The one-time normalized Word mirror contains 32 points, 32 dependency lines and 166 visible content blocks. Microsoft Word rendered 13 pages and all 13 were visually inspected cleanly. Global Registry 1.9 / Roadmap Specification 1.1 is committed in `lawangin00/references` at `5466f3804e05325b75f63100f4539479a6250dde`; its v7.2 reference DOCX rendered 15 pages and all 15 were visually inspected cleanly. Evidence is recorded in `docs/ROADMAP_LIFECYCLE_OPTIMIZATION_VERIFICATION.json`.
 
 ## Initialization evidence
 
@@ -86,7 +94,7 @@ Source of Truth and roadmap are v1.4; only MT-1.2 changes to Completed, with all
 
 ## Recovery and next action
 
-Do not re-execute MT-0.1, MT-1.1 or MT-1.2. After this checkpoint is committed/pushed and clean live synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-1.3 - Windows toolchain and application foundations`, after verifying the current ledger, Goal/Preferences, Source of Truth/roadmap and Git state. Reuse the session-loaded MT-1.1-r2 registry unless Refresh is requested.
+Do not re-execute MT-0.1, MT-1.1 or MT-1.2. After this checkpoint is committed/pushed and clean live synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-1.3 - Windows toolchain and application foundations`, after verifying the current ledger, Goal/Preferences, Source of Truth/roadmap and Git state. After this control-policy reconciliation, open sessions should run `Refresh` once to load MT-1.1-r3; then the next Y/Proceed executes MT-1.3.
 
 ## HOLD / decisions
 

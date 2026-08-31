@@ -1,6 +1,6 @@
 # mobiST Tech - Project Implementation Roadmap
 
-Version: 1.4 | Date: 2026-08-31
+Version: 1.5 | Date: 2026-08-31
 
 Canonical Goal: docs/PROJECT_GOAL.md
 
@@ -14,11 +14,11 @@ Word mirror: docs/PROJECT_IMPLEMENTATION_ROADMAP.docx
 
 ## Scope and execution rules
 
-This is the single active roadmap for the controlled migration. MT-0.1 initialization, MT-1.1 inventory and MT-1.2 design are complete (3/32); application migration remains pending. Each Proceed executes one point through its required gates and intended new-repository commit/push, then stops. Dependencies are ordered; point IDs and exact titles remain stable.
+This is the single active structural roadmap for the controlled migration. Live Completed/In Progress/Pending state, last/current/next position and progress counts are recorded only in `docs/PROJECT_IMPLEMENTATION_STATUS.md`. Each Proceed executes one point through its required gates and intended new-repository commit/push, then stops. Dependencies are ordered; point IDs and exact titles remain stable.
 
 The original POS/Website folders, remotes and data are immutable references. All implementation, copied-source tests and migration rehearsals must run under `C:\mobisttech` or isolated approved target resources. Do not run tests/builds against the originals. Do not replace the single shared Laravel/MySQL authority with duplicate authoritative databases.
 
-Every point includes applicable focused/full tests, parity evidence, secrets review, source-boundary checks, ledger updates and roadmap/DOCX parity completion gates. MT-1.1 detailed inventory may refine this roadmap from evidence, but valid functionality must not be silently dropped and completed IDs must not be renumbered.
+Every point includes applicable focused/full tests, parity evidence, secrets review, source-boundary checks and ledger updates. Routine execution progress updates the ledger only and must not edit this roadmap or regenerate its DOCX. Regenerate/verify the DOCX only when roadmap structure/content materially changes. MT-1.1 detailed inventory may refine this roadmap from evidence, but valid functionality must not be silently dropped and completed IDs must not be renumbered.
 
 Both Goal and Preferences apply. For working features, assess reuse/adapt/refactor/migrate before rewrite; rewrite requires a verified reason. Verify parity, data consistency, integration and regression incrementally rather than using a big-bang rewrite. Prefer conventional solutions, justified Redis roles and a Laravel-only business backend; do not introduce a parallel Node/Express business backend. Record stack deviations only for verified unavoidable blockers and never silently resolve a Goal conflict.
 
@@ -26,11 +26,10 @@ Roman Urdu is limited to assistant chat/UI communication. Git-tracked project do
 
 ## MT-0 - Project initialization
 
-Stage status: Complete
 
 ### MT-0.1 - Project initialization
 
-Status: Completed | Dependencies: None
+Dependencies: None
 
 Scope: Preserve/reconcile the original Goal and approved Preferences; establish the protected source baseline, monorepo layout, canonical docs/registry, matching DOCX and independent private GitHub repository.
 
@@ -40,11 +39,10 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 ## MT-1 - Migration inventory and design
 
-Stage status: In Progress
 
 ### MT-1.1 - Source inventory and feature parity register
 
-Status: Completed | Dependencies: MT-0.1
+Dependencies: MT-0.1
 
 Scope: Inventory pinned source code, routes, roles, models, migrations, tests, integrations, Dynamic Platform, branding and Control; assess legacy files/folders for role, dependencies and retention value.
 
@@ -54,7 +52,7 @@ Evidence: docs/migration/FEATURE_PARITY_REGISTER.md; isolated source tests passe
 
 ### MT-1.2 - Unified data, API and security design
 
-Status: Completed | Dependencies: MT-1.1
+Dependencies: MT-1.1
 
 Scope: Design the single MySQL schema, identity/record collision maps, customer merge rules, history, transaction boundaries, API versioning and authorization model.
 
@@ -62,7 +60,7 @@ Acceptance: Document contracts for orders, payments, stock reservation, price/cu
 
 ### MT-1.3 - Windows toolchain and application foundations
 
-Status: Pending | Dependencies: MT-1.2
+Dependencies: MT-1.2
 
 Scope: Establish Laravel 13, React/Inertia/TypeScript/Tailwind and Next.js foundations on the approved pinned stack; configure isolated MySQL plus concrete justified Redis/storage roles. Reuse/adapt useful source foundations where appropriate.
 
@@ -72,11 +70,10 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 ## MT-2 - Shared backend and transactional migration
 
-Stage status: Pending
 
 ### MT-2.1 - Shared backend schema and infrastructure
 
-Status: Pending | Dependencies: MT-1.3
+Dependencies: MT-1.3
 
 Scope: Migrate the reusable Laravel core, migration schema, jobs, MySQL ownership, Redis roles and S3-compatible storage layer.
 
@@ -84,7 +81,7 @@ Acceptance: Disposable MySQL apply/rollback/reapply, storage isolation and queue
 
 ### MT-2.2 - Identity, customer and authorization migration
 
-Status: Pending | Dependencies: MT-2.1
+Dependencies: MT-2.1
 
 Scope: Map POS roles/guards and Website customer identity into the shared backend; preserve session/password/account recovery and ownership behavior.
 
@@ -92,7 +89,7 @@ Acceptance: Role matrix, user/customer collision cases, session isolation, CSRF,
 
 ### MT-2.3 - Product and master-data migration
 
-Status: Pending | Dependencies: MT-2.2
+Dependencies: MT-2.2
 
 Scope: Migrate products, variants/units, categories, attributes and stable master data; preserve public/private field separation.
 
@@ -100,7 +97,7 @@ Acceptance: ID/relationship maps, historical references and validation parity pa
 
 ### MT-2.4 - Inventory and stock integrity migration
 
-Status: Pending | Dependencies: MT-2.3
+Dependencies: MT-2.3
 
 Scope: Migrate acquisition, stock units/IMEIs, availability, movements and transaction-derived stock rules into shared services.
 
@@ -108,7 +105,7 @@ Acceptance: Concurrent sale/reservation, uniqueness, rollback and negative/dupli
 
 ### MT-2.5 - Sales, invoices and returns migration
 
-Status: Pending | Dependencies: MT-2.4
+Dependencies: MT-2.4
 
 Scope: Migrate sales, invoice totals/discounts, operational customer records and verified return behavior.
 
@@ -116,7 +113,7 @@ Acceptance: Money precision, identifiers, historical snapshots, return adjustmen
 
 ### MT-2.6 - Warranty and claim migration
 
-Status: Pending | Dependencies: MT-2.5
+Dependencies: MT-2.5
 
 Scope: Preserve warranty duration, versioned clauses, claim lifecycle and historical document relationships.
 
@@ -124,7 +121,7 @@ Acceptance: Sale-time snapshots, permissions, expiry/boundary conditions and his
 
 ### MT-2.7 - Unified orders, reservations and payments
 
-Status: Pending | Dependencies: MT-2.6
+Dependencies: MT-2.6
 
 Scope: Migrate Website order/payment/COD/project-payment services into shared transactions and prove replacement of obsolete cross-database synchronization.
 
@@ -134,11 +131,10 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 ## MT-3 - Administration, content and REST APIs
 
-Stage status: Pending
 
 ### MT-3.1 - Reports, documents and communication services
 
-Status: Pending | Dependencies: MT-2.7
+Dependencies: MT-2.7
 
 Scope: Migrate verified reports, dashboards, A4/Thermal output, invoice/warranty documents and safe communication templates.
 
@@ -146,7 +142,7 @@ Acceptance: Role-scoped totals/exports, history, print/download and protected-te
 
 ### MT-3.2 - Dynamic CMS, media and presentation services
 
-Status: Pending | Dependencies: MT-3.1
+Dependencies: MT-3.1
 
 Scope: Migrate Website-managed pages, navigation, homepage/catalogue, SEO/legal/promotion settings, media, themes and branding controls into the backend.
 
@@ -154,7 +150,7 @@ Acceptance: Draft/preview/publish, revisions/rollback, safe uploads/content, cac
 
 ### MT-3.3 - Audit, configuration, backups and integrations
 
-Status: Pending | Dependencies: MT-3.2
+Dependencies: MT-3.2
 
 Scope: Migrate audit/redaction, safe configuration recovery, backup/history/restore guards and valid external-integration contracts.
 
@@ -162,7 +158,7 @@ Acceptance: Secret masking, key-dependent recovery, target-only backup/restore r
 
 ### MT-3.4 - Versioned REST API and contract acceptance
 
-Status: Pending | Dependencies: MT-3.3
+Dependencies: MT-3.3
 
 Scope: Define and expose public catalogue/content plus authenticated account/cart/order/payment APIs for Next.js.
 
@@ -172,11 +168,10 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 ## MT-4 - React POS and administration
 
-Stage status: Pending
 
 ### MT-4.1 - POS shell, authentication and navigation
 
-Status: Pending | Dependencies: MT-3.4
+Dependencies: MT-3.4
 
 Scope: Build the React/TypeScript/Inertia/Tailwind POS shell, role landing pages, authentication and safe navigation.
 
@@ -184,7 +179,7 @@ Acceptance: Desktop/mobile role journeys and direct-route permissions pass in Pl
 
 ### MT-4.2 - POS inventory and transaction interfaces
 
-Status: Pending | Dependencies: MT-4.1
+Dependencies: MT-4.1
 
 Scope: Migrate product/unit/IMEI, acquisition, stock, sale and return workflows onto verified backend services.
 
@@ -192,7 +187,7 @@ Acceptance: Keyboard/form validation, pagination, conflict handling, totals and 
 
 ### MT-4.3 - POS customer, warranty and reporting interfaces
 
-Status: Pending | Dependencies: MT-4.2
+Dependencies: MT-4.2
 
 Scope: Migrate required customer/history, invoice, warranty/claim, dashboard, report and export UI.
 
@@ -200,7 +195,7 @@ Acceptance: Role-scoped flows, historical records, Thermal 80mm/A4 preview-downl
 
 ### MT-4.4 - Website CMS and platform administration interfaces
 
-Status: Pending | Dependencies: MT-4.3
+Dependencies: MT-4.3
 
 Scope: Migrate protected React admin screens for Website CMS and POS configuration, revisions/media/branding/payment settings.
 
@@ -210,11 +205,10 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 ## MT-5 - Next.js customer Website
 
-Stage status: Pending
 
 ### MT-5.1 - Storefront, catalogue and SEO migration
 
-Status: Pending | Dependencies: MT-4.4
+Dependencies: MT-4.4
 
 Scope: Migrate the Next.js storefront, search/filtering, categories, product pages, variants, availability and SEO onto defined APIs.
 
@@ -222,7 +216,7 @@ Acceptance: Public-payload privacy, metadata, responsive layouts, pagination and
 
 ### MT-5.2 - Customer account, cart, orders and reviews
 
-Status: Pending | Dependencies: MT-5.1
+Dependencies: MT-5.1
 
 Scope: Migrate registration/login/account, multi-line cart, customer order history/access and review eligibility.
 
@@ -230,7 +224,7 @@ Acceptance: Session boundaries, ownership, guest-to-account behavior, cart recov
 
 ### MT-5.3 - Checkout and customer payment flows
 
-Status: Pending | Dependencies: MT-5.2
+Dependencies: MT-5.2
 
 Scope: Connect checkout, COD, pending/retry/cancel, invoice/status and provider-hosted payment boundaries.
 
@@ -238,7 +232,7 @@ Acceptance: Duplicate submit, price/stock changes, failed payments and verified 
 
 ### MT-5.4 - Dynamic public content and digital solutions
 
-Status: Pending | Dependencies: MT-5.3
+Dependencies: MT-5.3
 
 Scope: Migrate managed pages/menu/homepage/themes, promotions, legal content, digital services, service requests and approved project quote/payment flows.
 
@@ -248,11 +242,10 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 ## MT-6 - Shared brand and Windows Control
 
-Stage status: Pending
 
 ### MT-6.1 - Canonical branding and runtime assets
 
-Status: Pending | Dependencies: MT-5.4
+Dependencies: MT-5.4
 
 Scope: Deduplicate approved assets so the root `brand` directory is the single master; create manifests for runtime copies/derivatives.
 
@@ -260,7 +253,7 @@ Acceptance: Logo/icon/favicon/watermark/font references, build output and fallba
 
 ### MT-6.2 - Canonical mobiST Control migration
 
-Status: Pending | Dependencies: MT-6.1
+Dependencies: MT-6.1
 
 Scope: Adapt useful legacy Control implementation into one canonical app; apply the current approved logo and do not carry the old logo forward. Manage the new backend/website paths and development processes.
 
@@ -268,7 +261,7 @@ Acceptance: Start, Stop, Restart, Open, Status, Start All and Stop All are verif
 
 ### MT-6.3 - Windows operator and local integration acceptance
 
-Status: Pending | Dependencies: MT-6.2
+Dependencies: MT-6.2
 
 Scope: Rehearse real lifecycle journeys for both apps, queues/cache/storage and Control from a clean Windows setup.
 
@@ -278,11 +271,10 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 ## MT-7 - Migration rehearsal and release readiness
 
-Stage status: Pending
 
 ### MT-7.1 - Data migration and rollback rehearsal
 
-Status: Pending | Dependencies: MT-6.3
+Dependencies: MT-6.3
 
 Scope: Perform an isolated MySQL migration dry-run from protected exports/sanitized fixtures; verify recovery design for ID maps, history, media and keys.
 
@@ -290,7 +282,7 @@ Acceptance: Record/relation/control-total reconciliation, rerun/idempotency, rol
 
 ### MT-7.2 - Security, performance and resilience audit
 
-Status: Pending | Dependencies: MT-7.1
+Dependencies: MT-7.1
 
 Scope: Audit authentication/authorization, uploads/content, secrets, payments, stock concurrency, queues, API/cache performance and recovery.
 
@@ -298,7 +290,7 @@ Acceptance: MySQL concurrency, cache outage/stale-data behavior, worker retries,
 
 ### MT-7.3 - Monorepo CI and reproducible build gates
 
-Status: Pending | Dependencies: MT-7.2
+Dependencies: MT-7.2
 
 Scope: Automate backend tests, MySQL/Redis services, TypeScript/frontend checks, builds and Playwright in GitHub Actions.
 
@@ -306,7 +298,7 @@ Acceptance: Clean-checkout CI passes on the new private remote; lockfiles/caches
 
 ### MT-7.4 - Linux deployment and backup readiness
 
-Status: Pending | Dependencies: MT-7.3
+Dependencies: MT-7.3
 
 Scope: Create Linux/Nginx/TLS configuration, queue/scheduler, S3, environment-separation, automated backup/restore and rollback runbooks.
 
@@ -314,7 +306,7 @@ Acceptance: Non-production configuration/recovery rehearsal and backup integrity
 
 ### MT-7.5 - Full functional parity and acceptance
 
-Status: Pending | Dependencies: MT-7.4
+Dependencies: MT-7.4
 
 Scope: Close every valid requirement in the complete source-to-target register with fresh target evidence and independently run operational journeys.
 
@@ -324,11 +316,10 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 ## MT-8 - Final sign-off
 
-Stage status: Pending
 
 ### FINAL-AUDIT - Independent final project audit
 
-Status: Pending | Dependencies: MT-7.5
+Dependencies: MT-7.5
 
 Scope: Independently audit the complete Goal and Preferences, requirement map, all completed-point claims, Git/code/data, migration/recovery, security, integrations, CI, documentation, HOLD register and source immutability.
 

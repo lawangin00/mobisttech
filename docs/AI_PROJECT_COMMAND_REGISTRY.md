@@ -1,7 +1,7 @@
 # mobiST Tech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r2
-**Universal baseline:** Registry 1.8 / System 7.2
+**Registry version:** MT-1.1-r3
+**Universal baseline:** Registry 1.9 / System 7.2
 **Date:** 2026-08-31
 **Repository root:** `C:\mobisttech`
 **Remote:** `lawangin00/mobisttech` (independent, private)
@@ -22,22 +22,22 @@
 - Authorized local implementation and intended new-repository commit/push are within point scope. Destructive operations, live production/customer-data cutover, real external messaging and provider activation require separate authorization; do not request unnecessary permission for readiness or safe isolated tests.
 - Never replace/repoint/overwrite the new remote with an existing repository. Creation must follow an existence check and use an independent private repository. Never force-push.
 - Every completed point records applicable focused/full gates, exact pending state, source-boundary verification and Git evidence. Never mark partial work Complete.
-- Roadmap Markdown is authoritative. Regenerate, content-check and render-verify the same-basename DOCX in the same checkpoint. Regeneration helper: `tools/docs/build_roadmap_docx.py`.
+- Roadmap Markdown is the authoritative structural plan. Live Completed/In Progress/Pending state, last/current/next position and progress counts belong only in `docs/PROJECT_IMPLEMENTATION_STATUS.md`. Routine point/stage progress must not edit the roadmap or regenerate the DOCX. Regenerate, content-check and render-verify the same-basename DOCX only when roadmap structure/content materially changes. Helper: `tools/docs/build_roadmap_docx.py`.
 - Load the registry once on the first alias in a session and reuse it. Refresh Registry/Refresh/VP:REFRESH-REGISTRY forces a fresh reload and must not advance roadmap implementation.
 - Roman Urdu is the default only for assistant chat/UI communication. Git-tracked project documentation and technical artifacts must use standard English unless the user explicitly requests another language for a specific artifact. Preserve user-supplied source documents in their original language/content unless transformation is explicitly authorized. Minimal completion labels and exact technical/task identifiers remain unchanged.
 - Detailed evidence belongs in Git-tracked documentation; normal user-facing completion/status output remains concise.
 
 ## Adopted universal definitions
 
-This revision deliberately synchronizes the project registry to Universal Registry 1.8 / System 7.2 and adds the clarified language boundary: Roman Urdu for assistant chat/UI communication, standard English for Git-tracked project documentation/technical artifacts. The existing project-specific Goal/Preferences initialization gate, VP:VERIFY boundary, point order and session-refresh model remain in force. No roadmap task position is advanced by this registry revision.
+This revision deliberately synchronizes the project registry to Universal Registry 1.9 / System 7.2 and adopts the optimized roadmap lifecycle: the roadmap is structural, the ledger owns live execution status, and routine progress does not regenerate the Word mirror. The existing language boundary, project-specific Goal/Preferences initialization gate, VP:VERIFY boundary, point order, session-refresh model and project position remain in force. No roadmap implementation point is advanced by this registry revision.
 
-The canonical universal registry snapshot below is copied from `lawangin00/references/UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`. Project-specific rules above are explicit specializations; all other semantics remain unchanged. Baseline Git blob: `5b1ce3cc888e34ebe7038c63262f8b32f9a77eae`. Roadmap specification v1.0 Git blob: `004ff996e0e691941369ce2b7f6e505ab8533312`.
+The canonical universal registry snapshot below is copied from `lawangin00/references/UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`. Project-specific rules above are explicit specializations; all other semantics remain unchanged. Baseline Git blob: `73347e8cad30672093707a96496271d9e1dfceba`. Roadmap specification v1.1 Git blob: `dc94355694365235e2294224b31a8bd8b2974003`.
 
 ---
 
 # Universal Verified Project Command Registry
 
-**Registry version:** 1.8
+**Registry version:** 1.9
 **System version:** 7.2
 **Canonical remote:** `lawangin00/references`
 **Canonical path:** `UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`
@@ -224,5 +224,5 @@ Every new project roadmap must end with `FINAL-AUDIT` or explicitly designate an
 - Existing project registries do not magically update when this file changes. They must be deliberately synchronized when the new universal behavior is intended for that project.
 - Project-specific aliases belong in the project registry; they do not require account-level Custom Instructions when invoked through an explicit `VP:` form that the project's registry defines.
 - Common plain-language aliases intended to work in fresh contexts should also be listed in the account-level Custom Instructions bootstrap.
-- Roadmap creation/maintenance must follow `UNIVERSAL_PROJECT_ROADMAP_SPEC.md`: canonical Markdown remains authoritative and its same-basename DOCX mirror must be regenerated/verified in the same checkpoint whenever the roadmap changes.
+- Roadmap creation/maintenance must follow `UNIVERSAL_PROJECT_ROADMAP_SPEC.md`: canonical Markdown remains authoritative; routine execution status/progress is ledger-only and must not edit the roadmap or regenerate its DOCX. Regenerate/verify the same-basename DOCX only when the roadmap itself changes structurally or materially.
 - Keep this file Git-backed. A local clone is a convenience; the GitHub remote is the durable master.

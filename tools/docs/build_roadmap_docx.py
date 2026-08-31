@@ -1,4 +1,4 @@
-"""Render the canonical roadmap to Word; verify all visible text stays identical."""
+"""Render the canonical structural roadmap to Word; verify all visible text stays identical."""
 from pathlib import Path
 import hashlib
 import re
@@ -79,9 +79,9 @@ def main():
     for level, value in blocks:
         style = {0: 'Normal', 1: 'Title', 2: 'Heading 1', 3: 'Heading 2'}[level]
         paragraph = doc.add_paragraph(value, style)
-        if level == 2 and (re.match(r'MT-\d+ - ', value) or value == 'HOLD / Deferred register'):
+        if level == 2 and ((re.match(r'MT-\d+ - ', value) and value != 'MT-0 - Project initialization') or value == 'HOLD / Deferred register'):
             paragraph.paragraph_format.page_break_before = True
-        if value.startswith('Status:'):
+        if value.startswith('Dependencies:'):
             paragraph.paragraph_format.keep_with_next = True
         if value.startswith(('Scope:', 'Acceptance:', 'Stage exit:')):
             label, rest = value.split(':', 1)
@@ -101,7 +101,8 @@ def main():
     ids = re.findall(r'^### ((?:MT-\d+\.\d+|FINAL-AUDIT)) - ', text, re.M)
     assert len(ids) == len(set(ids)), 'Duplicate roadmap IDs'
     assert ids[-1] == 'FINAL-AUDIT'
-    assert sum(value.startswith('Status:') for _, value in blocks) == len(ids)
+    assert sum(value.startswith('Dependencies:') for _, value in blocks) == len(ids), 'Each roadmap point must retain one Dependencies line'
+    assert not any(value.startswith(('Status:', 'Stage status:')) for _, value in blocks), 'Live status belongs in PROJECT_IMPLEMENTATION_STATUS.md, not the roadmap'
     print(f'Word parity verified: {len(ids)} points, {len(blocks)} content blocks')
     print('Roadmap SHA-256: ' + hashlib.sha256(SOURCE.read_bytes()).hexdigest())
 
