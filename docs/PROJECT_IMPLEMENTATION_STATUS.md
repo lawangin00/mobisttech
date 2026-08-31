@@ -18,15 +18,15 @@ Last reconciled: 2026-08-31
 
 ## Verified position
 
-Active stage: MT-0 - Project initialization
+Active stage: MT-1 - Migration inventory and design (Pending; execution not started)
 
-Current point: MT-0.1 - Project initialization
+Current In Progress point: None
 
-Status: In Progress - final source-boundary checks, Word visual QA, independent remote creation and new Git checkpoint/push pending.
+Status: MT-0 - Project initialization complete. 1/32 roadmap points complete; 31/32 pending.
 
-Last completed point: None in this new project.
+Last completed point: MT-0.1 - Project initialization
 
-Next pending point after initialization: MT-1.1 - Source inventory and feature parity register
+Next pending point: MT-1.1 - Source inventory and feature parity register
 
 Execution boundary: Application migration abhi start nahi hui. Backend/Website/brand/Control directories placeholders hain. Existing source project completion naye target ki completion nahi hai.
 
@@ -36,13 +36,17 @@ Original supplied Goal poora read hua aur unchanged bytes ke saath `docs/PROJECT
 
 Protected source refs, files/status aur live remote `main` equality `docs/SOURCE_BASELINE.md` mein recorded hain; tracked source fingerprints `docs/SOURCE_SNAPSHOT.json` mein hain. Source tests/builds intentionally run nahi kiye gaye, kyun ke woh original working directories mutate kar sakte hain.
 
-Word helper ne 32 unique point IDs, final FINAL-AUDIT, 32 status blocks aur all 171 visible content blocks ki Markdown/DOCX equality verify ki. Supplied Goal SHA-256 unchanged hai. Standard LibreOffice renderer unavailable tha; installed Microsoft Word se read-only PDF export successful hua. Visual QA evidence final checkpoint mein record hogi.
+Word helper ne 32 unique point IDs, final FINAL-AUDIT, 32 status blocks aur all 171 visible content blocks ki Markdown/DOCX equality verify ki. Supplied Goal SHA-256 unchanged hai. Standard LibreOffice renderer unavailable tha; installed Microsoft Word se read-only PDF export aur bundled Poppler se rasterization successful hua. Tamam 13 final pages visually inspect hue; all body content PDF mein bhi verified hai. Exact Goal/roadmap/DOCX hashes aur QA summary `docs/INITIALIZATION_VERIFICATION.json` mein hain.
+
+Independent private GitHub repository `lawangin00/mobisttech` create hua; default branch `main` hai. New root commit `a53aa1ce2747e3571ce0804b4be556589d9e8425` push hua aur live remote `main` se exact match verify hua; working tree clean thi. Yeh ledger-closing checkpoint us root commit ke baad hai; current exact closure hash `git log -1 -- docs/PROJECT_IMPLEMENTATION_STATUS.md` se resolve karein aur live `origin/main` equality dobara verify karein. No force-push or source remote change hua.
+
+Final source snapshot comparison passed: original source HEADs, branches, remotes, clean status aur tamam 824 POS + 400 Website tracked-file byte fingerprints unchanged hain. Canonical Goal Git mein byte-preserving attribute se protected hai. Diff integrity, relative document links, all roadmap dependency IDs aur nested-repository absence verify hue. Generated QA files `.local/` ignored hain; source secrets/databases/dependencies copy nahi hue.
 
 Application tests/builds: Not applicable to this documentation-only initialization; no runtime application exists yet. Fresh migrated backend/frontend/data/Control gates pending roadmap points mein required hain.
 
-## Recovery aur pending actions
+## Recovery aur next action
 
-Same MT-0.1 continue karein; final QA/source checks complete karke independent private remote aur new-root Git commit/push verify karein. Uske baad MT-0.1 Complete aur MT-1.1 Pending mark rahe; next implementation automatic start nahi honi chahiye.
+Initialization dobara na karein. Next applicable Y/Proceed par MT-1.1 - Source inventory and feature parity register execute karein, after verifying current ledger, source/roadmap and Git state. Is completed initialization turn mein application migration ya MT-1.1 execution start nahi hui.
 
 ## HOLD / decisions
 
