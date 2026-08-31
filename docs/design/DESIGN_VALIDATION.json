@@ -1,0 +1,28 @@
+{
+  "point": "MT-1.2",
+  "result": "PASS",
+  "scope": "Specification validation only; no target runtime, MySQL concurrency, provider or migration acceptance claimed",
+  "gates": {
+    "openapi_specification": "OpenAPI 3.1.1 validated by openapi-spec-validator 0.7.2",
+    "source_tables": 58,
+    "source_models": 42,
+    "source_migrations": 79,
+    "source_routes": 316,
+    "api_operations": 36,
+    "positive_negative_schema_examples": 18,
+    "reservation_event_traces": 486,
+    "pending_implementation_cases": 34,
+    "source_qualified_identity_mapping": true,
+    "unsafe_operation_security_metadata": true,
+    "target_placeholders_unchanged": true,
+    "approved_inputs_unchanged": true
+  },
+  "artifact_sha256": {
+    "docs/design/DESIGN_ACCEPTANCE_CASES.json": "759b952b283ad6e8e1000f97add343659d8a4d53bcdd14122241a8d7474cfbb9",
+    "docs/design/openapi.json": "42a5129b0387addd5bde61209d757550803317257ef167819c30dc816297900b",
+    "docs/design/README.md": "8510818bb92a5a6eb517d8fa3a2291ec3af762337bfa68b7d851d04ccb4b6214",
+    "docs/design/SCHEMA_MAPPING.json": "d7627bc7e9c35e3a5cbe78cdd2e55b9ae271fad6fdd272086b40c2fd2cbeccb0",
+    "docs/design/TRANSACTIONS_API_SECURITY.md": "df3c501be3362460df49ab63beb3054f05669151ac24d1bb3930f5f5bfeb6377",
+    "docs/design/UNIFIED_DATA_DESIGN.md": "19b60123233e826fbaa38dfcd46e0482385ed5b6b719662ed21dbe4a1ce68015"
+  }
+}

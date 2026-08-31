@@ -1,0 +1,292 @@
+{
+  "point": "MT-1.2",
+  "scope": "Design scenarios, not executed target tests",
+  "reservation_transitions": {
+    "active": {
+      "confirm": "consumed",
+      "expire": "expired",
+      "release": "released"
+    },
+    "held_cod": {
+      "collect": "consumed",
+      "cancel": "released"
+    },
+    "consumed": {},
+    "expired": {},
+    "released": {}
+  },
+  "cases": [
+    {
+      "id": "DCASE-01",
+      "name": "identity_collision",
+      "implementation_gate": "MT-2.2",
+      "given": "POS User 7 and Website User 7 share an email",
+      "expected": "Map to outlet and Website account separately; no credentials/roles merged",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-02",
+      "name": "customer_contact_match",
+      "implementation_gate": "MT-2.2",
+      "given": "POS invoice and guest order have a registered customer email",
+      "expected": "No ownership link without verified source/account proof",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-03",
+      "name": "role_boundary",
+      "implementation_gate": "MT-2.2",
+      "given": "Website manager attempts credential replacement or POS super-admin acts as Website owner",
+      "expected": "Deny without exact independent grant",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-04",
+      "name": "reset_realm",
+      "implementation_gate": "MT-2.2",
+      "given": "Same email exists in POS admin and Website users; reset token is swapped",
+      "expected": "Only original broker/realm account may reset",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-05",
+      "name": "csrf_session",
+      "implementation_gate": "MT-4.1",
+      "given": "Missing/expired CSRF, forged origin, reused session after password change",
+      "expected": "Reject; rotate/invalidate sessions and preserve realm isolation",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-06",
+      "name": "public_privacy",
+      "implementation_gate": "MT-3.4",
+      "given": "Catalogue/account DTO includes cost,CNIC,secret or another customer data",
+      "expected": "Reject projection; public/private cache separation enforced",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-07",
+      "name": "product_link_collision",
+      "implementation_gate": "MT-2.3",
+      "given": "Website external ID matches wrong outlet/category or no POS product",
+      "expected": "Quarantine/unpublish; never synthesize stock",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-08",
+      "name": "imei_reentry",
+      "implementation_gate": "MT-2.4",
+      "given": "An IMEI sold historically is bought back; another active unit already claims it",
+      "expected": "Allow historical reuse only when no active owner; conflicting active claim fails",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-09",
+      "name": "last_quantity_race",
+      "implementation_gate": "MT-2.4",
+      "given": "POS sale and Website checkout race for last quantity",
+      "expected": "Exactly one succeeds; no negative stock",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-10",
+      "name": "last_unit_race",
+      "implementation_gate": "MT-2.4",
+      "given": "Two variants/requests reference one physical unit",
+      "expected": "One active allocation; complete IMEI slots and correct variant required",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-11",
+      "name": "price_change",
+      "implementation_gate": "MT-2.7",
+      "given": "Price changes after cart display before checkout",
+      "expected": "Conflict with safe current price; no silent charge change",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-12",
+      "name": "mixed_outlet",
+      "implementation_gate": "MT-2.7",
+      "given": "Physical checkout contains two outlets",
+      "expected": "422; no partial reservations or orders",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-13",
+      "name": "idempotency_replay",
+      "implementation_gate": "MT-2.7",
+      "given": "Same actor/key/payload repeated before/after response expiry",
+      "expected": "One durable operation and same resource, no duplicate sale/payment",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-14",
+      "name": "idempotency_conflict",
+      "implementation_gate": "MT-2.7",
+      "given": "Same key with changed amount/lines or actor accesses another response",
+      "expected": "409 or denied; no leaked replay",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-15",
+      "name": "confirm_expire_race",
+      "implementation_gate": "MT-2.7",
+      "given": "Payment confirmation and expiry/release at deadline",
+      "expected": "One terminal reservation transition; late money preserved as reconciliation incident",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-16",
+      "name": "duplicate_callback",
+      "implementation_gate": "MT-2.7",
+      "given": "Provider replays event or changes transaction/order/amount/currency",
+      "expected": "Matching replay harmless; mismatches rejected and audited",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-17",
+      "name": "late_payment",
+      "implementation_gate": "MT-2.7",
+      "given": "Valid money receipt arrives after reservation release/cancellation",
+      "expected": "Preserve paid receipt, flag stock_exception, no unallocated sale",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-18",
+      "name": "unknown_provider_result",
+      "implementation_gate": "MT-2.7",
+      "given": "Provider times out after receiving charge request",
+      "expected": "Reconcile persisted intent before new charge; no automatic duplicate",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-19",
+      "name": "cod_hold",
+      "implementation_gate": "MT-2.7",
+      "given": "COD dispatch exceeds online TTL; another sale competes",
+      "expected": "Held COD stays unavailable; collection once; no unpaid completion",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-20",
+      "name": "disabled_provider",
+      "implementation_gate": "MT-5.3",
+      "given": "Unconfigured gateway or browser paid=true payload",
+      "expected": "503/422; no invented verification or card data storage",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-21",
+      "name": "quote_tampering",
+      "implementation_gate": "MT-5.4",
+      "given": "Client supplies changed approved quote amount or stolen/expired token",
+      "expected": "Deny; server quote/version/ownership are authoritative",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-22",
+      "name": "return_duplicate",
+      "implementation_gate": "MT-2.5",
+      "given": "Repeated receipt or quantity beyond original sale",
+      "expected": "At most one accepted return per unit; remaining-quantity cap",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-23",
+      "name": "refund_cap",
+      "implementation_gate": "MT-2.7",
+      "given": "Concurrent refunds or unknown provider results exceed verified collected balance",
+      "expected": "Locked limit subtracts completed and pending/unknown refund intents; release only after verified failure; status alone never proves refund",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-24",
+      "name": "history_snapshot",
+      "implementation_gate": "MT-3.1",
+      "given": "Business/theme/product/warranty/customer changes after sale",
+      "expected": "Original invoice/claim snapshot and identifiers remain unchanged",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-25",
+      "name": "revision_conflict",
+      "implementation_gate": "MT-3.2",
+      "given": "Two editors publish same old revision; secret rotated before rollback",
+      "expected": "Stale publish rejected; no secret resurrection",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-26",
+      "name": "cache_after_commit",
+      "implementation_gate": "MT-3.4",
+      "given": "Commit then crash before invalidation; Redis unavailable",
+      "expected": "Versioned master reads see committed state; checkout never trusts stale cache",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-27",
+      "name": "worker_retry",
+      "implementation_gate": "MT-3.3",
+      "given": "Lease expires and same event is delivered twice/out of order",
+      "expected": "Deduplicate effects, reclaim safely, expose terminal failures",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-28",
+      "name": "decimal_rounding",
+      "implementation_gate": "MT-2.5",
+      "given": "0.10+0.20, residual discount allocation, overflow/exponent/more than 2 decimals",
+      "expected": "Exact 0.30 and deterministic totals; reject invalid representations",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-29",
+      "name": "source_import_rerun",
+      "implementation_gate": "MT-7.1",
+      "given": "Same manifest rerun then changed source digest",
+      "expected": "No duplicate; changed input blocked pending reviewed run",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-30",
+      "name": "relationship_quarantine",
+      "implementation_gate": "MT-7.1",
+      "given": "Missing FK/unknown column/invalid date/duplicate source alias",
+      "expected": "Quarantine with reconciled count; active obligations block promotion",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-31",
+      "name": "encrypted_recovery",
+      "implementation_gate": "MT-3.3",
+      "given": "Missing/wrong/rotated key or tampered cipher/media manifest",
+      "expected": "Fail safely; providers disabled; no plaintext logging or empty-secret success",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-32",
+      "name": "post_write_rollback",
+      "implementation_gate": "MT-7.1",
+      "given": "Failure after target accepted writes/provider receipt",
+      "expected": "Recover target journal; never redirect to stale source or sync writes back",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-33",
+      "name": "capability_scope",
+      "implementation_gate": "MT-3.4",
+      "given": "Order-read token used to pay another quote or after revocation",
+      "expected": "Deny operation/resource mismatch and stale token; no referrer/log leak",
+      "status": "Pending implementation test"
+    },
+    {
+      "id": "DCASE-34",
+      "name": "private_storage",
+      "implementation_gate": "MT-3.3",
+      "given": "Traversal/SVG executable/upload or direct CNIC/backup URL",
+      "expected": "Reject unsafe upload; object-specific authorization required",
+      "status": "Pending implementation test"
+    }
+  ]
+}

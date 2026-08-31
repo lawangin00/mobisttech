@@ -1,6 +1,6 @@
 # mobiST Tech - Project Source of Truth
 
-Version: 1.3 | Date: 2026-08-31
+Version: 1.4 | Date: 2026-08-31
 
 ## Authority, Goal and Preferences
 
@@ -67,7 +67,7 @@ Website order -> Laravel validates authenticated ownership, prices and availabil
 
 ## Migration design decisions to verify
 
-MT-1.1 inventories 1,224 tracked files, 316 application routes, 42 models, 79 migrations, source methods/settings/commands and 438 fresh isolated test cases. `docs/migration/FEATURE_PARITY_REGISTER.md` records reuse/adapt/refactor/migrate decisions, target gates and gaps. MT-1.2 remains pending and must resolve overlapping `User`, `Product`, order/payment and setting concepts with ID mappings, relationship preservation, historical snapshots and public/private data separation. POS `User` represents an outlet, not Website customer identity; inventory confirms stock-return behavior but no routed full sale-refund flow. Goal-required returns remain open under MT-2.5. Detailed entity/API design is not completed by inventory.
+MT-1.1 inventories 1,224 tracked files, 316 application routes, 42 models, 79 migrations, source methods/settings/commands and 438 fresh isolated test cases. `docs/migration/FEATURE_PARITY_REGISTER.md` records reuse/adapt/refactor/migrate decisions, target gates and gaps. MT-1.2 design is complete: `docs/design/README.md` indexes the shared schema, source-qualified mappings, versioned API, authorization, transaction and recovery contracts. POS users map to outlets; separate credential providers preserve guard semantics; Website products become listings over canonical inventory; customer linking requires verified ownership. The mapping covers 58 source-qualified tables, all 42 models, 79 migration files and 316 routes, with 36 designed API operations and 34 pending implementation cases. POS `User` represents an outlet, not Website customer identity; inventory confirms stock-return behavior but no routed full sale-refund flow. Goal-required returns remain open under MT-2.5. The design preserves immutable history and exact money, defines active IMEI uniqueness, idempotent stock/payment/return transactions, COD holds, cache publication versions and full-schema/key recovery. Specification validation does not prove runtime behavior: MT-2.1 must complete the column manifest and disposable MySQL gates; implementation and parity remain pending. No application foundation or data migration has run.
 
 Website Admin/CMS moves into the shared backend's protected administration area, with separate permissions for POS and Website configuration. Shared branding has one master directory while controlled runtime copies/derivatives may live in application public/storage paths. Website and POS presentation settings may remain logically distinct within the single database.
 

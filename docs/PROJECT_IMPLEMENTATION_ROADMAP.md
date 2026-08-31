@@ -1,6 +1,6 @@
 # mobiST Tech - Project Implementation Roadmap
 
-Version: 1.3 | Date: 2026-08-31
+Version: 1.4 | Date: 2026-08-31
 
 Canonical Goal: docs/PROJECT_GOAL.md
 
@@ -14,7 +14,7 @@ Word mirror: docs/PROJECT_IMPLEMENTATION_ROADMAP.docx
 
 ## Scope and execution rules
 
-This is the single active roadmap for the controlled migration. MT-0.1 initialization and MT-1.1 source inventory are complete (2/32); application migration remains pending. Each Proceed executes one point through its required gates and intended new-repository commit/push, then stops. Dependencies are ordered; point IDs and exact titles remain stable.
+This is the single active roadmap for the controlled migration. MT-0.1 initialization, MT-1.1 inventory and MT-1.2 design are complete (3/32); application migration remains pending. Each Proceed executes one point through its required gates and intended new-repository commit/push, then stops. Dependencies are ordered; point IDs and exact titles remain stable.
 
 The original POS/Website folders, remotes and data are immutable references. All implementation, copied-source tests and migration rehearsals must run under `C:\mobisttech` or isolated approved target resources. Do not run tests/builds against the originals. Do not replace the single shared Laravel/MySQL authority with duplicate authoritative databases.
 
@@ -54,11 +54,11 @@ Evidence: docs/migration/FEATURE_PARITY_REGISTER.md; isolated source tests passe
 
 ### MT-1.2 - Unified data, API and security design
 
-Status: Pending | Dependencies: MT-1.1
+Status: Completed | Dependencies: MT-1.1
 
 Scope: Design the single MySQL schema, identity/record collision maps, customer merge rules, history, transaction boundaries, API versioning and authorization model.
 
-Acceptance: Document contracts for orders, payments, stock reservation, price/currency precision, idempotency, cache invalidation, rollback and encrypted-data recovery; do not use two-way database synchronization as the target.
+Acceptance: Document contracts for orders, payments, stock reservation, price/currency precision, idempotency, cache invalidation, rollback and encrypted-data recovery; do not use two-way database synchronization as the target. Evidence: docs/design/README.md; specification checks pass, runtime acceptance pending.
 
 ### MT-1.3 - Windows toolchain and application foundations
 

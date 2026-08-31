@@ -1,0 +1,69 @@
+{
+  "point": "MT-1.2 - Unified data, API and security design",
+  "date": "2026-08-31",
+  "result": "PASS - design and documentation gates",
+  "preflight_head": "f3c2e0fcb021ad6c30cf214d3ad706dbe549a75a",
+  "preflight_clean_and_live_origin_equal": true,
+  "scope": "Design only; no application foundations, schema execution, source data access or provider activation",
+  "roadmap": {
+    "version": "1.4",
+    "ids_titles_dependencies_unchanged": true,
+    "point_count": 32,
+    "completed": 3,
+    "pending": 29,
+    "next": "MT-1.3 - Windows toolchain and application foundations",
+    "visible_blocks": 175,
+    "docx_exact_parity": true,
+    "pdf_all_blocks_present": true,
+    "rendered_pages": 13,
+    "visual_review": "All 13 rasterized pages inspected: readable layout, no clipping/overlap or missing content",
+    "renderer": "Microsoft Word read-only PDF export + Poppler 100 dpi; render_docx.py attempted but LibreOffice executable unavailable",
+    "local_pdf_sha256": "f63685e44dcd9c9d591533a483ec0e8fa2a867614aa02aba33bcd8ecb078aec3"
+  },
+  "design_gates": {
+    "openapi_specification": "OpenAPI 3.1.1 validated by openapi-spec-validator 0.7.2",
+    "source_tables": 58,
+    "source_models": 42,
+    "source_migrations": 79,
+    "source_routes": 316,
+    "api_operations": 36,
+    "positive_negative_schema_examples": 18,
+    "reservation_event_traces": 486,
+    "pending_implementation_cases": 34,
+    "source_qualified_identity_mapping": true,
+    "unsafe_operation_security_metadata": true,
+    "target_placeholders_unchanged": true,
+    "approved_inputs_unchanged": true
+  },
+  "source_boundary": {
+    "snapshot_check": "PASS: original source HEADs, branches, remotes, status and all 1224 tracked-file fingerprints unchanged",
+    "inventory_verification": "PASS: 316 routes, 438 historical isolated test cases and export hashes retained; no source tests rerun",
+    "runtime_placeholders_unchanged": true,
+    "approved_goal_preferences_unchanged": true,
+    "registry_unchanged": "MT-1.1-r2 session-loaded; no refresh or edits in this point"
+  },
+  "secret_review": "No source environment, private business records, keys, dependencies or source Git metadata included; new artifacts contain code/schema declarations, contracts and synthetic examples only",
+  "hash_representation": "Exact file bytes; new/modified text artifacts use canonical LF; DOCX is binary",
+  "artifact_sha256": {
+    "README.md": "6d7d98d96d6705defc54c81ac0c101754f7a7391a24d9f4fc03c006544e621ca",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "fb6ce918ef54dc96788e7e290d2c9aafd7a0229b9662bfd61b2f639c00282e7f",
+    "docs/PROJECT_IMPLEMENTATION_STATUS.md": "14911e328a6c0b45c87f0ea3ea800a7ba37f3ff5548a4863632b04b218c40df6",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "fa342724753bffb986debeeb330c56e661a5839bda739064ffd43b9804c49dc2",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "fd06d9461520426bca84b76b7a732c2325e6caaf6b082d860b23848cf2835f64",
+    "docs/design/DESIGN_ACCEPTANCE_CASES.json": "759b952b283ad6e8e1000f97add343659d8a4d53bcdd14122241a8d7474cfbb9",
+    "docs/design/DESIGN_VALIDATION.json": "7013f1bac6ad1b59a53ec34e7d319884c5ad3638af06687c2096dc9fc7b0f25b",
+    "docs/design/openapi.json": "42a5129b0387addd5bde61209d757550803317257ef167819c30dc816297900b",
+    "docs/design/README.md": "8510818bb92a5a6eb517d8fa3a2291ec3af762337bfa68b7d851d04ccb4b6214",
+    "docs/design/SCHEMA_MAPPING.json": "d7627bc7e9c35e3a5cbe78cdd2e55b9ae271fad6fdd272086b40c2fd2cbeccb0",
+    "docs/design/TRANSACTIONS_API_SECURITY.md": "df3c501be3362460df49ab63beb3054f05669151ac24d1bb3930f5f5bfeb6377",
+    "docs/design/UNIFIED_DATA_DESIGN.md": "19b60123233e826fbaa38dfcd46e0482385ed5b6b719662ed21dbe4a1ce68015",
+    "tools/design/build_design_contracts.py": "51bf67226904c39567bdbece588565f86364b726c93b65533918ffa92d831a9c",
+    "tools/design/verify_design.py": "5a75d2c5e152747033b7452b26bafde322a4aba3e9c4837d2738d1dd7033deb0"
+  },
+  "git_closure": {
+    "intended_remote": "https://github.com/lawangin00/mobisttech.git",
+    "branch": "main",
+    "commit_resolution": "git log --diff-filter=A -- docs/design/CHECKPOINT_VERIFICATION.json",
+    "required_after_commit": "Push only origin main without force; verify clean working tree and HEAD = origin/main = live refs/heads/main; rerun source snapshot check. This record does not self-attest a future commit hash."
+  }
+}

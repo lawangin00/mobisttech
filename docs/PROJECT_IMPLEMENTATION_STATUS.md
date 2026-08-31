@@ -12,8 +12,8 @@ Last reconciled: 2026-08-31
 - Goal SHA-256: `7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f`
 - Binding Preferences: `docs/PROJECT_PREFERENCES.md` (all 39 approved numbered Preferences)
 - Preferences SHA-256: `e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402`
-- Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.3
-- Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.3
+- Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.4
+- Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.4
 - Roadmap Word mirror: `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
 - Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r2 (universal 1.8 / system 7.2)
 - FINAL-AUDIT: `FINAL-AUDIT - Independent final project audit`
@@ -24,11 +24,11 @@ Active stage: MT-1 - Migration inventory and design (In Progress)
 
 Current In Progress point: None
 
-Status: MT-0 complete; MT-1.1 complete. 2/32 complete; 30/32 pending. MT-1 stage remains In Progress. No MT-1.2 execution has been authorized within this reconciliation.
+Status: MT-0 complete; MT-1.1 and MT-1.2 complete. 3/32 complete, 29 pending. MT-1 remains In Progress; MT-1.3/application foundations have not started.
 
-Last completed point: MT-1.1 - Source inventory and feature parity register
+Last completed point: MT-1.2 - Unified data, API and security design
 
-Next pending point: MT-1.2 - Unified data, API and security design
+Next pending point: MT-1.3 - Windows toolchain and application foundations
 
 Execution boundary: Application migration has not started. Backend/Website/brand/Control directories remain placeholders. Completion of the source projects does not constitute completion of the new target.
 
@@ -64,7 +64,7 @@ On user Proceed, only MT-1.1 executed. `docs/migration/SOURCE_FILE_INVENTORY.jso
 
 No runtime command was executed against the originals. Fresh locked dependencies were installed only in ignored isolated pinned exports. With synthetic environment, in-memory SQLite, fake storage/mail/HTTP, disabled integrations and Vite bypass, POS 202 tests/2,695 assertions and Website 236 tests/2,806 assertions passed with zero errors/failures/skips. `CHARACTERIZATION.md` records exact boundaries, the corrected initial harness-key error, commands and limitations. `MT_1_1_VERIFICATION.json` records all 438 test cases and evidence hashes. This is source characterization, not target test/build acceptance.
 
-Verified inventory risks include: POS outlet `User` versus Website customer/admin `User` collision; copied catalogue/order transport retirement requires transaction parity; source stock-return behavior exists but no routed full sale-refund flow was found; Control port-based taskkill needs target process ownership; duplicate brand/Control copies and unrelated unreferenced school-template partials are selective-retention candidates. No valid capability was retired in MT-1.1. Required return acceptance remains explicit under MT-2.5; detailed schema/API design remains pending MT-1.2.
+Verified inventory risks include: POS outlet `User` versus Website customer/admin `User` collision; copied catalogue/order transport retirement requires transaction parity; source stock-return behavior exists but no routed full sale-refund flow was found; Control port-based taskkill needs target process ownership; duplicate brand/Control copies and unrelated unreferenced school-template partials are selective-retention candidates. No valid capability was retired in MT-1.1. Required return acceptance remains explicit under MT-2.5; detailed schema/API design was pending at that checkpoint and is now recorded in the MT-1.2 closure below.
 
 ## Documentation language reconciliation
 
@@ -72,16 +72,24 @@ The user clarified that Roman Urdu applies only to assistant chat/UI communicati
 
 Project-generated narrative documentation was converted to standard English: `README.md`, `AGENTS.md`, `docs/PROJECT_SOURCE_OF_TRUTH.md`, `docs/PROJECT_IMPLEMENTATION_ROADMAP.md`, its synchronized DOCX mirror, `docs/PROJECT_IMPLEMENTATION_STATUS.md`, `docs/AI_PROJECT_COMMAND_REGISTRY.md`, `docs/SOURCE_BASELINE.md` and `docs/INITIALIZATION_PREFERENCES_RECONCILIATION.md`. Existing English migration evidence remained unchanged unless control metadata required reconciliation. The approved Goal and Preferences remain byte-identical and were not translated.
 
-Source of Truth and roadmap are now v1.3. The project registry is MT-1.1-r2 and deliberately synchronizes Universal Registry 1.8 / System 7.2. Roadmap task IDs, exact titles, dependencies and statuses remain unchanged: 2/32 complete, 30 pending, next `MT-1.2 - Unified data, API and security design`. No application/runtime point was executed.
+At that checkpoint, Source of Truth and roadmap became v1.3. The project registry is MT-1.1-r2 and deliberately synchronizes Universal Registry 1.8 / System 7.2. Roadmap task IDs, exact titles, dependencies and statuses remain unchanged: 2/32 complete, 30 pending, next `MT-1.2 - Unified data, API and security design`. No application/runtime point was executed.
 
-The regenerated roadmap Word mirror verifies 32 stable point IDs and 175 visible content blocks. Microsoft Word rendered 13 pages; all 13 pages were visually inspected with no clipping, overlap, broken tables or missing content. Current reconciliation hashes and language-scan results are recorded in `docs/DOCUMENTATION_LANGUAGE_VERIFICATION.json`.
+The regenerated roadmap Word mirror verifies 32 stable point IDs and 175 visible content blocks. Microsoft Word rendered 13 pages; all 13 pages were visually inspected with no clipping, overlap, broken tables or missing content. Historical reconciliation hashes and language-scan results are recorded in `docs/DOCUMENTATION_LANGUAGE_VERIFICATION.json`.
+
+## MT-1.2 unified design closure
+
+On user Proceed, only MT-1.2 executed. `docs/design/README.md` indexes the unified schema, identity/product/order mappings, customer merge rules, immutable history, exact money, transaction/return/refund contracts, REST/auth boundaries, cache invalidation and rollback/encrypted recovery. Source mappings cover 58 source-qualified tables, 42 models, 79 migrations and 316 route dispositions. All target implementations remain Pending.
+
+OpenAPI 3.1.1 validates 36 operations. Design verification passes 18 positive/negative schema examples and 486 specification event traces, plus inventory coverage, security metadata, unchanged target placeholders and approved-input hashes. The 34 assigned implementation acceptance cases remain pending; no MySQL concurrency, application migration, runtime build or provider acceptance is claimed. Source tests were not rerun.
+
+Source of Truth and roadmap are v1.4; only MT-1.2 changes to Completed, with all 32 IDs/titles/dependencies retained. The same-basename DOCX is regenerated and verified in this checkpoint; detailed parity, render and boundary evidence is in `docs/design/CHECKPOINT_VERIFICATION.json`. Original repositories remain unchanged. Intended synchronization is only the new repository main branch and its private origin; closure requires clean HEAD/upstream/live-main equality.
 
 ## Recovery and next action
 
-Do not re-execute MT-0.1 or MT-1.1. After this documentation/control reconciliation is committed/pushed and the open Local Work session refreshes the project registry, the next applicable Y/Proceed must execute only `MT-1.2 - Unified data, API and security design`, after verifying the current ledger, Goal/Preferences, Source of Truth/roadmap and Git state.
+Do not re-execute MT-0.1, MT-1.1 or MT-1.2. After this checkpoint is committed/pushed and clean live synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-1.3 - Windows toolchain and application foundations`, after verifying the current ledger, Goal/Preferences, Source of Truth/roadmap and Git state. Reuse the session-loaded MT-1.1-r2 registry unless Refresh is requested.
 
 ## HOLD / decisions
 
-Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Detailed MySQL mappings, auth/API design, target ports, exact frontend/runtime locks and approved branding inventory remain future verified work under MT-1.* and later points. These HOLD items do not block this documentation reconciliation.
+Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Logical MySQL mappings and auth/API design are complete under MT-1.2. Executed schema/data migrations, target ports, exact frontend/runtime locks and approved branding inventory remain future verified work. These HOLD items do not block design completion.
 
 No source-repository write, source-data migration, source runtime action, real payment-provider activation, external message or production change is authorized or performed by this reconciliation.
