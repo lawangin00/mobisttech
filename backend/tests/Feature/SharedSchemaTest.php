@@ -18,7 +18,12 @@ class SharedSchemaTest extends TestCase
         $spec = json_decode(file_get_contents(base_path('../docs/schema/TARGET_SCHEMA.json')), true, flags: JSON_THROW_ON_ERROR);
         foreach ($spec['tables'] as $name => $table) {
             $columns = collect(Schema::getColumns($name))->keyBy('name');
-            $this->assertSame(array_column($table['columns'], 'name'), $columns->keys()->all(), $name);
+            $identityColumns = match ($name) {
+                'users', 'admins', 'super_admins' => ['public_id', 'auth_version'],
+                'account_sessions' => ['revoked_at'],
+                default => [],
+            };
+            $this->assertSame([...array_column($table['columns'], 'name'), ...$identityColumns], $columns->keys()->all(), $name);
             foreach ($table['columns'] as $c) {
                 $actual = $columns[$c['name']];
                 $expectedType = match ($c['type']) {

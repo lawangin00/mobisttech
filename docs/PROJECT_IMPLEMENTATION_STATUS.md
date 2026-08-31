@@ -26,13 +26,13 @@ Last completed stage: MT-1 - Migration inventory and design
 
 Current In Progress point: None
 
-Status: MT-0 and MT-1 complete. MT-2 is in progress. 5/32 complete, 27 pending. MT-2.2 is not started.
+Status: MT-0 and MT-1 complete. MT-2 is in progress. 6/32 complete, 26 pending. MT-2.3 is not started.
 
-Last completed point: MT-2.1 - Shared backend schema and infrastructure
+Last completed point: MT-2.2 - Identity, customer and authorization migration
 
-Next pending point: MT-2.2 - Identity, customer and authorization migration
+Next pending point: MT-2.3 - Product and master-data migration
 
-Execution boundary: Backend/Website foundations and the shared MySQL schema/infrastructure exist. Identity, business-data/feature migration, brand, Control and CI remain pending. Schema and infrastructure tests do not constitute implemented authentication, transactional feature parity or private-data import acceptance.
+Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure and backend identity/customer/authorization services exist. Identity mapping is verified with synthetic rows only. Actual private-data migration, POS/Website interfaces, transactional features, brand, Control and CI remain pending. Backend identity tests do not constitute UI, live email/provider, transactional feature or private-data import acceptance.
 
 ## Documentation language policy
 
@@ -118,12 +118,24 @@ Fresh target gates pass: 33 backend tests / 3,714 assertions; POS TypeScript/Vit
 
 Original source Git/file fingerprints remain unchanged. Goal/Preferences, Source of Truth, registry and roadmap Markdown/DOCX are unchanged; this routine progress checkpoint does not require Word regeneration. The intended checkpoint is only the new monorepo main branch/private origin, with clean local/upstream/live-main equality verified after commit/push.
 
+## MT-2.2 identity, customer and authorization closure
+
+On user Y, only MT-2.2 executed. `docs/identity/README.md` records source reuse, exact identity dispositions, HTTP/session/recovery contracts, import boundaries and reproduction. Four scoped credential realms isolate customer, POS admin, POS superadmin and Website administration. POS outlet users remain outlets with server-selected operator context, never customer credentials. Source permission defaults and Website role matrices are preserved; runtime null/unknown roles deny, while a proven imported legacy admin receives an explicit audited owner mapping.
+
+Laravel session/CSRF/password-broker components provide encrypted, distinct realm cookies, explicit origin/host checks, session rotation, safe DTOs/errors and rate limits. POS device/network limits and session replacement are adapted with account-row locking. Password reset/change rotates remembered credentials and auth versions; old sessions and reset-token replays are rejected. Recovery is non-enumerating and defaults to disabled delivery; notification-fake tests send no real email. Login/reset interfaces and live transport acceptance remain later gates.
+
+The target-only identity importer validates complete known column contracts, password hashes, roles, permissions, parent identities and timezone conversion. Source-qualified IDs prevent outlet/credential collisions; changed replay, duplicate identities, invalid data and unresolved membership quarantine without partial accounts. Customer ownership uses explicit Website account identity, never matching email/mobile or guest contact. DCASE-01 through DCASE-04 have fresh target tests; no source data or source browser/remembered credentials were imported.
+
+The identity migration yields 73 tables, 916 columns, 117 foreign keys and 326 indexes. One-step rollback on the empty disposable test database restores the exact MT-2.1 normalized schema hash; reapply restores the identical identity hash. Local/test migrations apply successfully; zero synthetic business rows remain. Fresh target verification passes 55 backend tests / 4,080 assertions, POS TypeScript/Vite build, Website lint/typecheck/Next.js build, Pint, Composer validation/platform checks, optimize/clear, source schema lineage checks and current Composer/npm audits with zero known advisories. Detailed cases, schema hashes and checked artifacts are in `docs/identity/MT_2_2_VERIFICATION.json`.
+
+HTTP-kernel tests enforce real CSRF and cookie isolation; browser/UI acceptance is not claimed, and the earlier Browser Use URL denial was not retried or bypassed. Original Git/file fingerprints remain unchanged. Goal/Preferences, Source of Truth, registry and roadmap Markdown/DOCX remain unchanged, with no Word regeneration required. The checkpoint synchronizes only the new monorepo main/private origin, followed by clean local/upstream/live-main verification. MT-2.3 is not started.
+
 ## Recovery and next action
 
-Do not re-execute MT-0.1, MT-1.1 through MT-1.3, or MT-2.1. After this checkpoint is committed/pushed and clean live synchronization is verified, stop before MT-2.2. The next applicable Y/Proceed executes only `MT-2.2 - Identity, customer and authorization migration`. Reuse the session-loaded MT-1.1-r3 registry unless Refresh is requested. Runtime startup/locks are documented in `docs/foundation/WINDOWS_SETUP.md`; schema/infrastructure reproduction and limitations are in `docs/schema/README.md`.
+Do not re-execute MT-0.1, MT-1.1 through MT-1.3, or MT-2.1 through MT-2.2. After this checkpoint is committed/pushed and clean live synchronization is verified, stop before MT-2.3. The next applicable Y/Proceed executes only `MT-2.3 - Product and master-data migration`. Reuse the session-loaded MT-1.1-r3 registry unless Refresh is requested. Runtime startup/locks are documented in `docs/foundation/WINDOWS_SETUP.md`; schema/infrastructure reproduction is in `docs/schema/README.md`, and current identity/schema verification is in `docs/identity/README.md`.
 
 ## HOLD / decisions
 
-Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure now exists under MT-2.1; identity, business-data and feature migrations and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. Live Redis/S3 activation, consuming-feature resilience, scoped object authorization and provider/backup recovery remain later implementation gates; the local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block the verified MT-2.1 scope.
+Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure and backend identity now exist; private business-data migration, later features/interfaces and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. Live email/Redis/S3 activation, consuming-feature resilience, scoped object authorization and provider/backup recovery remain later implementation gates; the local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block the verified MT-2.2 backend/synthetic-rehearsal scope.
 
 No source-repository write, source-data migration, source runtime action, real payment-provider activation, external message or production change is authorized or performed by this reconciliation.

@@ -17,6 +17,7 @@ A new, independent mobiST Technologies monorepo. This is a controlled architectu
 - [Unified data, API and security design](docs/design/README.md)
 - [Windows foundation setup and verification](docs/foundation/WINDOWS_SETUP.md)
 - [Shared schema, column lineage and infrastructure verification](docs/schema/README.md)
+- [Identity, customer mapping and authorization verification](docs/identity/README.md)
 
 ## Target structure
 

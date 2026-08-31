@@ -1,0 +1,561 @@
+{
+  "point": "MT-2.2 - Identity, customer and authorization migration",
+  "date": "2026-08-31",
+  "result": "PASS - shared backend identity and synthetic migration rehearsal scope",
+  "preflight_head": "f3a57d2ee4d0eccaba31f86556645fb0157b1e87",
+  "preflight_clean": true,
+  "precommit_head_upstream_live_main_equal": true,
+  "scope": "Headless identity/authentication/authorization, customer ownership primitives and synthetic target-only identity import. No private source rows, UI migration, real delivery, product work or production action.",
+  "schema": {
+    "mode": "identity",
+    "result": "PASS",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "mysql": "8.4.11",
+    "timezone": "+00:00",
+    "strict": true,
+    "counts": {
+      "tables": 73,
+      "columns": 916,
+      "foreign_keys": 117,
+      "indexes": 326
+    },
+    "schema_sha256": "2de954e11845e1dc844586d8a406813116fa0925282b9f626e1c99b65329e9ae",
+    "business_rows": 0
+  },
+  "rollback": {
+    "mode": "shared",
+    "result": "PASS",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "mysql": "8.4.11",
+    "timezone": "+00:00",
+    "strict": true,
+    "counts": {
+      "tables": 69,
+      "columns": 894,
+      "foreign_keys": 117,
+      "indexes": 317
+    },
+    "schema_sha256": "19b81f6bef84f41f9d84da24fd27097e208576ea1dbb40fd4a237e0a0a2a4a85",
+    "business_rows": 0
+  },
+  "rollback_reapply_hash_equal": true,
+  "rollback_matches_mt21": true,
+  "local_migration_applied": true,
+  "gates": {
+    "backend_tests": {
+      "tests": 55,
+      "assertions": 4080,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "junit_sha256": "9f291c3fabc340ce1ca77bbaf5abd1fc9533ac9f42a4173d49e62ac5efdbbca6",
+      "cases": [
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_isolated_target_is_accepted",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"source port\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"remote host\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"source database\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"root account\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"URL override\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"SQLite source path\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_unsafe_database_configuration_fails_before_connection with data set \"socket override\"",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Unit\\LocalEnvironmentGuardTest",
+          "name": "test_external_integrations_cannot_be_enabled_locally",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\FoundationInfrastructureTest",
+          "name": "test_runtime_tables_use_the_isolated_mysql_test_database",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\FoundationInfrastructureTest",
+          "name": "test_foundation_request_persists_a_database_session",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_public_health_contract_exposes_no_configuration",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_inertia_foundation_renders_without_business_authentication",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_business_and_legacy_transport_routes_are_not_prematurely_exposed",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\FoundationTest",
+          "name": "test_external_http_is_disabled_in_isolated_environment",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_same_source_ids_and_emails_remain_separate_outlet_and_credential_identities",
+          "assertions": 18
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_identity_replay_is_idempotent_and_changed_input_or_email_collision_is_quarantined",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_proven_legacy_owner_is_explicitly_mapped_and_audited_without_customer_identity",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_invalid_privilege_values_are_quarantined_without_partial_accounts",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_unknown_source_fields_fail_before_any_import_and_membership_uses_source_maps",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_timestamps_hashes_and_unsupported_date_values_have_explicit_dispositions",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\IdentityMigrationTest",
+          "name": "test_matching_unverified_contact_does_not_merge_a_customer_observation",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_registration_rejects_role_injection_and_rotates_the_session",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_csrf_is_enforced_even_with_same_origin_fetch_header",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_customer_and_cms_sessions_and_equal_email_pos_accounts_are_isolated",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_customer_ownership_does_not_follow_email_or_guest_order_contact",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_complete_website_role_matrix_and_pos_default_grants",
+          "assertions": 181
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_reset_tokens_are_scoped_single_use_and_revoke_existing_sessions",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_recovery_is_non_enumerating_and_does_not_log_tokens_when_delivery_is_disabled",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_login_is_rate_limited_and_disabled_accounts_cannot_authenticate",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_pos_device_limits_replacement_and_logout_keep_other_realms_alive",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_outlet_assignment_and_permissions_are_rechecked_and_cannot_be_injected",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_password_change_revokes_other_devices_and_remember_cookie_cannot_restore_access",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_cross_realm_cookie_renaming_and_csrf_replay_do_not_authenticate",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_production_session_cookies_are_secure_host_only_and_admin_host_is_separate",
+          "assertions": 21
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_logout_does_not_sign_out_another_realm_in_the_same_cookie_jar",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\IdentitySecurityTest",
+          "name": "test_existing_argon_hash_can_authenticate_without_requiring_a_password_reset",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_database_queue_dispatches_after_commit_and_discards_rolled_back_jobs",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_worker_failure_retries_then_preserves_terminal_failure_evidence",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_redis_outage_uses_master_without_replaying_callback",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_master_version_change_bypasses_old_cache_and_rollback_preserves_version",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_private_object_roundtrip_stays_outside_public_storage",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_private_object_rejects_paths_and_bad_digests_before_writing",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_s3_network_access_is_disabled_in_isolated_application",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_real_s3_adapter_scopes_private_requests_and_propagates_failures_without_network",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\SharedInfrastructureTest",
+          "name": "test_website_configuration_has_no_database_or_object_store_credentials",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_every_manifest_column_and_foreign_key_exists_on_mysql",
+          "assertions": 2798
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_source_manifest_accounts_for_every_final_column_and_preserves_namespaces",
+          "assertions": 803
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_money_keeps_exact_large_values_and_rejects_overflow_and_negative_stock",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_cross_outlet_references_and_financial_history_deletion_are_rejected",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_active_imei_is_unique_but_historical_reentry_is_allowed",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_payment_replay_and_multiple_current_holds_are_database_conflicts",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_source_qualified_identity_and_one_canonical_listing_constraints",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_active_unit_allocation_is_unique_and_cannot_switch_products",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\SharedSchemaTest",
+          "name": "test_publication_version_and_durable_event_roll_back_together",
+          "assertions": 6
+        }
+      ]
+    },
+    "backend_typecheck_vite_build": "PASS",
+    "website_lint_typecheck_next_build": "PASS",
+    "pint": "PASS",
+    "composer_validate_strict_and_platform_requirements": "PASS",
+    "optimize_and_clear": "PASS",
+    "composer_audit": {
+      "advisories": 0,
+      "abandoned": 0
+    },
+    "backend_npm_audit": {
+      "vulnerabilities": 0
+    },
+    "website_npm_audit": {
+      "vulnerabilities": 0
+    },
+    "source_schema_contract": {
+      "migration_hashes": 79,
+      "source_tables": 58,
+      "source_columns": 735,
+      "rejected_invalid_shapes": 116
+    },
+    "protected_source_git_and_fingerprints": {
+      "result": "PASS",
+      "pos_files": 824,
+      "website_files": 400
+    },
+    "browser": "Not claimed: previous URL policy denial respected; actual Laravel HTTP-kernel tests enforce CSRF/cookies, UI acceptance remains later.",
+    "live_email_provider": "Not run: disabled delivery; only notification-fake contract tests."
+  },
+  "acceptance_trace": {
+    "DCASE-01": [
+      "test_same_source_ids_and_emails_remain_separate_outlet_and_credential_identities",
+      "test_identity_replay_is_idempotent_and_changed_input_or_email_collision_is_quarantined"
+    ],
+    "DCASE-02": [
+      "test_matching_unverified_contact_does_not_merge_a_customer_observation",
+      "test_customer_ownership_does_not_follow_email_or_guest_order_contact"
+    ],
+    "DCASE-03": [
+      "test_complete_website_role_matrix_and_pos_default_grants",
+      "test_outlet_assignment_and_permissions_are_rechecked_and_cannot_be_injected"
+    ],
+    "DCASE-04": [
+      "test_reset_tokens_are_scoped_single_use_and_revoke_existing_sessions"
+    ],
+    "DCASE-05": "Backend prerequisites covered; the owning MT-4.1 UI gate is not closed."
+  },
+  "source_lineage": [
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/Admin.php",
+      "git_blob": "a92a5a798d70441ced25c3f34ec0dcd16141a6da",
+      "sha256": "61472347100fd00f874b71e4126cb56bd38f49ae1a78d5034027e25f6931ff19"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/SuperAdmin.php",
+      "git_blob": "db14797d5a2b71b76c9ef8aa67dfb98e8b9e42dd",
+      "sha256": "a129ad357ff449a0ad777fcef3de3d974fa43adc2e7fa6d526d3bb861ff3f2dc"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Models/User.php",
+      "git_blob": "71fd240c3dcab5bcf0e37dc119ef501eb9c13445",
+      "sha256": "f51238305b6071b80e4a7f946b1959f82a47d1933e110ea88eb36db116b27f5f"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "config/auth.php",
+      "git_blob": "87ac134e8830b00c43d821f5e0ae5453442d6c67",
+      "sha256": "61e91a3ba5f422f357198ee373ccdafd56d5a6ececf5ee4655bac00903b1ab46"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Services/AccountSessionService.php",
+      "git_blob": "857aef5d97baf86fed5f37df196903ac29128329",
+      "sha256": "ffe7e6d1365b50f330767a1258bfe836289606ce6b8ad0d305b28fd69731c279"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Http/Controllers/Auth/PasswordResetController.php",
+      "git_blob": "cf4d6139295564fe2252239ede04f391f1f63f82",
+      "sha256": "2e79ebc7ece551d1134d371204d141951f54f7dd73a54994e3b249ee0bf0b56e"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Http/Controllers/Shop/LoginController.php",
+      "git_blob": "40f6ef16619155a3f203c56f1315cca6c3938e78",
+      "sha256": "2d1e1e263d5ffd8d62e69961125bfbf957dce101a8f313a310ed193f79b885fc"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Http/Controllers/Admin/LoginController.php",
+      "git_blob": "f63e477db75200601f5bbc7b23bbdd91b62b3140",
+      "sha256": "edc75a81e118875075b96a1e2fb82746c8f5c05a758427fb01332595e604432e"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Http/Controllers/SuperAdmin/LoginController.php",
+      "git_blob": "4f3a0ac76ecd0edae8166cbe24814bab51c44b3c",
+      "sha256": "199d8b210f30d6f7d4529e84395d3901d4277e57eba45f2d3644f988e360d998"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Http/Middleware/RequirePosConfigurationPermission.php",
+      "git_blob": "1ff286f710be61e73d4f0523a9e78b1d0ba0a462",
+      "sha256": "765ab12734b8b988aa9dc24245260dcd48724ce4812df6043c9b4faa78b77c3c"
+    },
+    {
+      "source": "pos",
+      "commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "path": "app/Http/Middleware/RequireReportAccess.php",
+      "git_blob": "77c761e8380b9587fc5a1bd2942e09a8513d11e0",
+      "sha256": "dcae7b4a825781ff6b916d0641bdf239fc554fe6a1551578aff71925616208ea"
+    },
+    {
+      "source": "website",
+      "commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "path": "app/Models/User.php",
+      "git_blob": "cbfa6442f09372ff5850222743238ad53d75d339",
+      "sha256": "5bd0bd5bf013f41e9900b1ed233a2d78a4890c81b030a2a7fccb1884b62f117f"
+    },
+    {
+      "source": "website",
+      "commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "path": "config/auth.php",
+      "git_blob": "d7568ff194267ec424aa84e2e9c0d2cbea42b8f8",
+      "sha256": "c7e204e9785c9f596d66fb884b493f658f2327f157646bdb4088efd6b3a7773f"
+    },
+    {
+      "source": "website",
+      "commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "path": "app/Http/Controllers/CustomerAuthController.php",
+      "git_blob": "96dab8f99d1c4bc6e7026ffc9f847ad7edde943d",
+      "sha256": "036a5a75de2a7a3fb74c6a40e3f60f818e53d1bce0ea978908a203d0b68d491d"
+    },
+    {
+      "source": "website",
+      "commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "path": "app/Http/Controllers/CustomerAccountController.php",
+      "git_blob": "c9d17e190dd74162d7ce515e0b6f0862c43adf7c",
+      "sha256": "f18bae3d3a16f10b3e4faa7b51d2676959ab4f1eeea95103e5eb79af25d0502a"
+    },
+    {
+      "source": "website",
+      "commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "path": "app/Http/Controllers/WebsitePasswordController.php",
+      "git_blob": "310b794d28c3085639e4ee24bd9689728aa99613",
+      "sha256": "201a009fa3b3e3e3cc6887e0843006358a81e265ffb308ae4061cb9d144f3952"
+    },
+    {
+      "source": "website",
+      "commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "path": "app/Http/Controllers/Admin/WebsiteAdminAuthController.php",
+      "git_blob": "1b92a4c770b8e9d7e32fdf1ce80d130fb2db2a36",
+      "sha256": "15f6796692bfca3217c3f88012dd67db128832b501eda1c29905727d9bb878fd"
+    },
+    {
+      "source": "website",
+      "commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "path": "app/Http/Middleware/EnsureCustomerAccount.php",
+      "git_blob": "1482b53c607004b548ac4228af0d57566e65d074",
+      "sha256": "a30e977b8c0a76c9325e3cc93410f6145fa768b7c8b81dcda65ceb95941381f8"
+    }
+  ],
+  "authority_unchanged_git_blob_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "0b8453184f3fa6a3753d7158b29053614c95741f97a98a5faf04f4ec03f19745",
+    "docs/AI_PROJECT_COMMAND_REGISTRY.md": "2a87e9fca0ea8560fd0bdff6df56e2bfa9a5a36c8a4d23c4a3c0efd2be603abe",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "d63a2dcdced94e89c6bfe30659cbc5aaf3d5aeb5cbf2fa488d9f2ec0ab1cdd96",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "65b5e27d8ed29642c459051b4af994e697b382bdb14ede321b9803e51970636d"
+  },
+  "approved_input_raw_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402"
+  },
+  "artifact_staged_blob_sha256": {
+    "README.md": "cb619e95a6bd3f1b928c401e7955f068badedc7f0709fb9fc64c4c1bba62f0f6",
+    "backend/.env.example": "db2e8002cb51d1a6f9789459a26d774c037f3a1edc27d60ab18211b86f616c12",
+    "backend/app/Http/Controllers/IdentityController.php": "576a8afbb50156c41fad07f08a4d58ef20ce5ff4df0ec270f0891d261f914363",
+    "backend/app/Http/Middleware/IdentityAuthenticated.php": "e11547141d83da4de034fa6f72aa307997378cbb0c1823dc8246e2fbb06bcbd6",
+    "backend/app/Http/Middleware/IdentityContext.php": "accd921a6b1c78c46fadd7659b4adce8f7ba65dd3db98204d87164dd5e2a8c8d",
+    "backend/app/Http/Middleware/IdentityCsrf.php": "97c672fb63b6780d6918f92eca471612d621aebceabc6fcd7bab574ee6d7501d",
+    "backend/app/Identity/Access.php": "cc95c2a29c57b7f4d8ccd76909d354d3c7dffa9cba2b387f9f277adde9f23505",
+    "backend/app/Identity/CustomerIdentity.php": "26d5cee62ddcca6ce342af6319661a0d0cffc0cd675e5e9a05ba61a4160ce1e6",
+    "backend/app/Identity/IdentityAccount.php": "cdd83df343f49769067109a925fffd85c509f801a5640b41618c30009738a9e3",
+    "backend/app/Identity/IdentityAudit.php": "1fd0817de04a33aea1cc494390313a6a8f634de0d443fe4ee7187a40c4fb23d6",
+    "backend/app/Identity/IdentityImporter.php": "28239cbfedb274ecf3255be99af00aaee548c386525b9ecd04229cc9619febf6",
+    "backend/app/Identity/IdentityUserProvider.php": "c44444bc04cb9bff2e2dac3818c6487002f773065afb992fe6e49f536a711721",
+    "backend/app/Identity/PosSessions.php": "67ade01ce3d10e27d56a5773af5e1bc5b8b973de35d54ef6da58abbd53129cb4",
+    "backend/app/Identity/RecoveryNotification.php": "3475b7d0aeca27a8db9d7f94ab38c4847c243da36047fac5543ef5a171fca43e",
+    "backend/app/Models/Admin.php": "101529f4e39359d8c1e84c311183e23fbc0ae516364c0a4bcfd946cd6737a3de",
+    "backend/app/Models/CustomerAccount.php": "51504c0b39456a8b9189db393c24eb98d8fa2d67d8d6cdafd7c03be8eedf10b9",
+    "backend/app/Models/Outlet.php": "7a128ef3989d5d149af1d3877f3fddace1f27fd4280936d3c7c80002f9824306",
+    "backend/app/Models/SuperAdmin.php": "58ba8521895e8b026d8bbb4e1e632179411ad5c5e442dfb9d6525031088f978a",
+    "backend/app/Models/User.php": "0d32cf02399ef731b8560faee7a889598d09bc35fb043bc9045241bb702f8935",
+    "backend/app/Models/WebsiteAdmin.php": "a52e28af42b58b93fe2d994e54a4b3cbc87ef0a9b835000fb05f0fb5c6a02449",
+    "backend/app/Providers/AppServiceProvider.php": "46d5cc0f958ea2d89260f0565a093218318362e551ae627396cba32c9b1aa3c2",
+    "backend/bootstrap/app.php": "fb7e906ca6567b5319236c56733657a5b1a7bd669df2669dd40ca6c944a7a5f7",
+    "backend/config/auth.php": "bb84ea3f73d1e0a061b7117e593adfa07021ec445a286ce0cb59f66196df28ff",
+    "backend/config/identity.php": "f1a99f2d9a9b3b3e5f1cbcb8110ffa83ffec5e3cb41faa008e2362a1d3a9226c",
+    "backend/database/migrations/2026_08_31_110000_isolate_identity_security.php": "4b5cf53e95aeabd71143a50f442c5fb2bfdcf6215b643fd73a42e378a5fe6df2",
+    "backend/routes/identity.php": "4c5a351fb07755403532fe7c625ee9feb82d02c2153ae26b89d24544c5653e86",
+    "backend/tests/Feature/IdentityMigrationTest.php": "1e8db56fde6a9b085a6d87d8229cfa533190e257abc504cc969274d987d5b139",
+    "backend/tests/Feature/IdentitySecurityTest.php": "6365cb57a780cc31d0a8438ca3822a0c04f2672053b6d8471bf4753c722ab087",
+    "backend/tests/Feature/SharedSchemaTest.php": "d60d8500a08947b584f14c8227e7095bc98e834e1c9ef2009944e2838fd681c0",
+    "docs/PROJECT_IMPLEMENTATION_STATUS.md": "d3959d313d70713163c05398064d31f6c4d92290541b59b3211bcbcb587557a9",
+    "docs/identity/README.md": "e27920269be48549800b6f57b2b20cc3e6668f54a903c191afe76e54ba6e7129",
+    "tools/migration/verify_mysql_schema.php": "ba2332102a29d665222dfda8222463e32ebff51121f1bdd70c3f6d36466bb442",
+    "website/next.config.ts": "ec34baa56cefd843aa1f2a054ad072b4888adcf936c39518051ebefe447b0a0f"
+  },
+  "git_checkpoint": {
+    "intended_remote": "https://github.com/lawangin00/mobisttech.git",
+    "intended_branch": "main",
+    "force_push": false,
+    "closure_gate": "Commit/push this checkpoint only, then verify clean working tree and exact HEAD/upstream/live-main equality. Commit identity comes from Git history, not recursive evidence content."
+  },
+  "next": "MT-2.3 - Product and master-data migration"
+}
