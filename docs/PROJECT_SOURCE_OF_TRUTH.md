@@ -1,6 +1,6 @@
 # mobiST Tech - Project Source of Truth
 
-Version: 1.1 | Date: 2026-08-31
+Version: 1.2 | Date: 2026-08-31
 
 ## Authority, Goal aur Preferences
 
@@ -29,7 +29,7 @@ Goal aur Preferences dono binding hain. Yeh document unka execution map hai, rep
 - Backend/Website logically separate components hain, lekin coordinated commits, shared tooling/docs/brand/CI project-level resources ho sakte hain. Aik canonical brand aur aik canonical Control hi rahenge. Runtime-derived asset copies allowed hain, duplicate master Brand Kits nahi.
 - Control current approved logo use kare, legacy older logo ko approved samajh kar carry forward nahi karna. New paths ke liye Start, Stop, Restart, Open, Status, Start All aur Stop All jahan applicable hon verify karein; inapplicable control ka concrete reason record ho. Already-running services, duplicate processes aur browser tabs ko safely handle karein. Windows local hai; Linux/Nginx future production ke liye hain.
 
-MT-0.1 re-verification aur all-39-preference coverage: `docs/INITIALIZATION_PREFERENCES_RECONCILIATION.md`. Yeh implementation inventory nahi; MT-1.1 pending rahega.
+MT-0.1 re-verification aur all-39-preference coverage: `docs/INITIALIZATION_PREFERENCES_RECONCILIATION.md`. MT-1.1 source inventory aur target-pending parity gates: `docs/migration/FEATURE_PARITY_REGISTER.md` aur machine inventories. Fresh isolated source characterization implementation completion nahi hai.
 
 ## Requirement map
 
@@ -63,7 +63,7 @@ Website order -> Laravel validates authenticated ownership, prices and availabil
 
 ## Migration design decisions to verify
 
-MT-1.1 will inventory every required source route, role, model, integration, screen, job, report, print surface and test. MT-1.2 will resolve overlapping `User`, `Product`, order/payment and setting concepts with ID mappings, relationship preservation, historical snapshots and public/private data separation. Detailed entity and API design must come from source code; this initialization does not invent a completed schema.
+MT-1.1 inventories 1,224 tracked files, 316 application routes, 42 models, 79 migrations, source methods/settings/commands aur 438 fresh isolated test cases. `docs/migration/FEATURE_PARITY_REGISTER.md` records reuse/adapt/refactor/migrate decisions, target gates aur gaps. MT-1.2 remains pending and will resolve overlapping `User`, `Product`, order/payment and setting concepts with ID mappings, relationship preservation, historical snapshots and public/private data separation. POS `User` is an outlet, not Website customer identity; inventory confirms stock return but no routed full sale-refund flow. Goal-required returns stay open under MT-2.5. Detailed entity/API design is not completed by inventory.
 
 Website Admin/CMS moves into the shared backend's protected administration area, with separate permissions for POS and Website configuration. Shared branding has one master directory while controlled runtime copies/derivatives can live in application public/storage paths. Website and POS presentation settings may remain logically distinct in the single database.
 

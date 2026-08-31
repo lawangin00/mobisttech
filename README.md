@@ -12,6 +12,8 @@ mobiST Technologies ka naya, independent monorepo. Yeh completed mobiST POS aur 
 - [Project command registry](docs/AI_PROJECT_COMMAND_REGISTRY.md)
 - [Source baseline aur migration risks](docs/SOURCE_BASELINE.md)
 - [MT-0.1 Preferences reconciliation](docs/INITIALIZATION_PREFERENCES_RECONCILIATION.md)
+- [Source inventory aur feature parity register](docs/migration/FEATURE_PARITY_REGISTER.md)
+- [Isolated source characterization evidence](docs/migration/CHARACTERIZATION.md)
 
 ## Target structure
 
@@ -26,7 +28,7 @@ docs/                  Goal, roadmap, registry aur verified evidence
 
 Backend aur MySQL shared business data ke authoritative owners honge. Website REST APIs use karegi. Redis aur S3-compatible storage munasib roles mein use honge. Local development Windows par; production target Linux, Nginx aur TLS hai.
 
-Is checkpoint par sirf project initialization hai. Application code, data migration aur runnable development servers abhi implement nahi hue. Khali component directories ko application completion na samjhein.
+Initialization aur MT-1.1 source inventory complete hain. Application code, data migration aur runnable development servers abhi implement nahi hue. Fresh isolated source tests ko target completion aur khali component directories ko applications na samjhein. Next pending point MT-1.2 - Unified data, API and security design hai.
 
 Purane `C:\mobiST\mobiST-POS` aur `C:\mobiST\mobiST-Website` aur unke GitHub remotes protected read-only references hain. Un par edit, install, build, migration, commit, push ya remote changes mana hain.
 

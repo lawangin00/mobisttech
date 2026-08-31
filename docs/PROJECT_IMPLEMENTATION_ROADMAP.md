@@ -1,6 +1,6 @@
 # mobiST Tech - Project Implementation Roadmap
 
-Version: 1.1 | Date: 2026-08-31
+Version: 1.2 | Date: 2026-08-31
 
 Canonical Goal: docs/PROJECT_GOAL.md
 
@@ -14,7 +14,7 @@ Word mirror: docs/PROJECT_IMPLEMENTATION_ROADMAP.docx
 
 ## Scope aur execution rules
 
-Yeh controlled migration ka single active roadmap hai. Sirf MT-0.1 initialization complete hai; application migration pending hai. Har Proceed aik point ko required gates aur intended new-repository commit/push tak complete karega, phir rukega. Dependencies ordered hain; IDs aur exact titles stable rahenge.
+Yeh controlled migration ka single active roadmap hai. MT-0.1 initialization aur MT-1.1 source inventory complete hain (2/32); application migration pending hai. Har Proceed aik point ko required gates aur intended new-repository commit/push tak complete karega, phir rukega. Dependencies ordered hain; IDs aur exact titles stable rahenge.
 
 Purane POS/Website folders, remotes aur data immutable references hain. Sab implementation, copied-source tests aur migration rehearsals C:\mobisttech ya isolated approved target resources mein honge. Originals par tests/builds bhi nahi. Single shared Laravel/MySQL authority ko duplicate authoritative databases se replace nahi karna.
 
@@ -38,15 +38,17 @@ Stage exit: Is stage ke tamam points ke acceptance gates aur Git-backed evidence
 
 ## MT-1 - Migration inventory and design
 
-Stage status: Pending
+Stage status: In Progress
 
 ### MT-1.1 - Source inventory and feature parity register
 
-Status: Pending | Dependencies: MT-0.1
+Status: Completed | Dependencies: MT-0.1
 
 Scope: Pinned source code, routes, roles, models, migrations, tests, integrations, Dynamic Platform, branding aur Control inventory; legacy files/folders ke roles/dependencies aur retention value assess karein.
 
 Acceptance: Har valid capability ke reuse/adapt/refactor/migrate options aur required rewrite ka verified reason record ho; retirement sirf unnecessary duplication ke liye. Target owner, parity gate aur isolated characterization hon; originals unchanged hon.
+
+Evidence: docs/migration/FEATURE_PARITY_REGISTER.md; isolated source tests passed, originals unchanged, target parity pending.
 
 ### MT-1.2 - Unified data, API and security design
 
@@ -108,7 +110,7 @@ Status: Pending | Dependencies: MT-2.4
 
 Scope: Sales, invoice totals/discounts, operational customer records aur returns ke verified behavior migrate karein.
 
-Acceptance: Money precision, identifiers, historical snapshots, return adjustments aur stock/accounting effects legacy acceptance se match hon.
+Acceptance: Money precision, identifiers, historical snapshots, return adjustments aur stock/accounting effects legacy acceptance se match hon. MT-1.1 mein stock return mila, full sale-refund route nahi; Goal-required sale returns ka explicit verified contract aur fresh tests required hain.
 
 ### MT-2.6 - Warranty and claim migration
 

@@ -1,0 +1,2267 @@
+{
+  "schema": 1,
+  "point": "MT-1.1",
+  "status": "completed",
+  "source_commits": {
+    "pos": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+    "website": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066"
+  },
+  "counts": {
+    "pos": {
+      "files": 824,
+      "routes": 167,
+      "methods": 1211,
+      "models": 24,
+      "migrations": 50
+    },
+    "website": {
+      "files": 400,
+      "routes": 149,
+      "methods": 1157,
+      "models": 18,
+      "migrations": 29
+    }
+  },
+  "resolved_routes": 316,
+  "unmapped_files": 0,
+  "source_tests": {
+    "pos": {
+      "tests": "202",
+      "assertions": "2695",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "time": "9.135533",
+      "cases": [
+        {
+          "class": "Tests\\Unit\\ExampleTest",
+          "name": "test_that_true_is_true",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\AuthenticatedAcceptanceTest",
+          "name": "test_guest_access_is_redirected_from_each_portal",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\AuthenticatedAcceptanceTest",
+          "name": "test_super_admin_and_admin_control_pages_render",
+          "assertions": 24
+        },
+        {
+          "class": "Tests\\Feature\\AuthenticatedAcceptanceTest",
+          "name": "test_assigned_shop_critical_journey_renders_on_desktop_and_mobile",
+          "assertions": 20
+        },
+        {
+          "class": "Tests\\Feature\\AuthenticatedAcceptanceTest",
+          "name": "test_shop_dashboard_category_filter_keeps_kpis_accurate",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\BrandAssetConsistencyTest",
+          "name": "test_runtime_vectors_match_the_approved_brandkit_sources",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\BrandAssetConsistencyTest",
+          "name": "test_required_runtime_derivatives_are_present_and_usable",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\BrandAssetConsistencyTest",
+          "name": "test_runtime_sources_do_not_reference_canva_or_obsolete_brand_assets",
+          "assertions": 691
+        },
+        {
+          "class": "Tests\\Feature\\BrandAssetConsistencyTest",
+          "name": "test_shared_tokens_and_logo_size_guard_are_active",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\BusinessIdentifierTest",
+          "name": "test_new_records_receive_immutable_category_aware_business_identifiers",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\BusinessIdentifierTest",
+          "name": "test_explicit_legacy_claim_number_is_preserved",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\BusinessProfileReceiptTest",
+          "name": "test_shop_receipt_profile_uses_global_identity_and_branch_details",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\BusinessProfileReceiptTest",
+          "name": "test_invoice_keeps_the_business_profile_snapshot_from_sale_time",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\CategoryAwareInventoryTest",
+          "name": "test_add_product_uses_clear_name_and_creates_blank_device_attributes",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\CategoryAwareInventoryTest",
+          "name": "test_device_configuration_moves_to_manage_units_and_product_edit_preserves_it",
+          "assertions": 30
+        },
+        {
+          "class": "Tests\\Feature\\CategoryAwareInventoryTest",
+          "name": "test_unit_placeholders_accept_blank_values_without_rewriting_legacy_unknowns",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\CategoryAwareInventoryTest",
+          "name": "test_manage_units_uses_bounded_server_pages_at_representative_volume",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\CategoryAwareInventoryTest",
+          "name": "test_visible_unit_batch_accepts_pkr_format_and_rejects_stale_updates",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\ExampleTest",
+          "name": "test_the_application_returns_a_successful_response",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ExtendedBusinessIdentityTest",
+          "name": "test_global_profile_persists_display_legal_hours_and_extensible_identifiers",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\ExtendedBusinessIdentityTest",
+          "name": "test_identifier_keys_are_generic_unique_and_future_safe",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ExtendedBusinessIdentityTest",
+          "name": "test_branch_overrides_merge_into_new_invoice_snapshot_without_changing_global_identity",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\ExtendedBusinessIdentityTest",
+          "name": "test_legacy_invoice_snapshot_does_not_leak_current_extended_identity",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingPublishAcceptanceTest",
+          "name": "test_branding_routes_keep_manage_publish_and_audit_boundaries",
+          "assertions": 40
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingPublishAcceptanceTest",
+          "name": "test_superadmin_surface_shows_context_guidance_and_staged_upload_does_not_publish",
+          "assertions": 14
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingPublishAcceptanceTest",
+          "name": "test_invalid_branding_uploads_fail_role_validation_and_cleanup_staged_media",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingPublishAcceptanceTest",
+          "name": "test_preview_is_non_persistent_and_uses_submitted_asset_selection",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingPublishAcceptanceTest",
+          "name": "test_admin_manage_permission_does_not_imply_publish_permission",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingPublishAcceptanceTest",
+          "name": "test_publish_versions_branding_and_protects_selected_media_usage",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingPublishAcceptanceTest",
+          "name": "test_cross_domain_media_assignment_is_rejected_and_corrupt_selection_falls_back",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingPublishAcceptanceTest",
+          "name": "test_publish_is_atomic_when_media_usage_reconciliation_fails",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingPublishAcceptanceTest",
+          "name": "test_history_rollback_restores_lineage_and_missing_media_falls_back_safely",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingResolverTest",
+          "name": "test_registry_and_resolver_define_the_supported_branding_roles_with_current_defaults",
+          "assertions": 74
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingResolverTest",
+          "name": "test_published_media_selection_resolves_and_missing_file_returns_to_brandkit_fallback",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingResolverTest",
+          "name": "test_invalid_selected_media_and_unknown_role_fail_safely",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\PosBrandingResolverTest",
+          "name": "test_covered_runtime_surfaces_use_the_central_resolver",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\PosConfigurationPermissionAuditTest",
+          "name": "test_new_configuration_permissions_are_not_implicit_legacy_defaults",
+          "assertions": 22
+        },
+        {
+          "class": "Tests\\Feature\\PosConfigurationPermissionAuditTest",
+          "name": "test_explicit_configuration_permission_and_denial_are_audited_with_redaction",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\PosConfigurationRevisionTest",
+          "name": "test_documents_draft_does_not_change_live_receipt_settings",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosConfigurationRevisionTest",
+          "name": "test_publish_supersede_and_rollback_preserve_actor_history",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\PosConfigurationRevisionTest",
+          "name": "test_only_approved_low_risk_groups_are_allowed_on_immediate_path",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosConfigurationRevisionTest",
+          "name": "test_revision_domain_rejects_cross_domain_keys",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\PosConfigurationRevisionTest",
+          "name": "test_unpublished_draft_cannot_be_used_as_a_rollback_source",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\PosConfigurationRevisionTest",
+          "name": "test_super_admin_presentation_save_publishes_documents_revision",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosMediaFoundationTest",
+          "name": "test_foundation_migration_is_additive_and_reversible",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosMediaFoundationTest",
+          "name": "test_media_storage_uses_content_validation_random_names_and_actor_metadata",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\PosMediaFoundationTest",
+          "name": "test_svg_and_spoofed_uploads_are_rejected_without_persistence",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\PosMediaFoundationTest",
+          "name": "test_unreferenced_media_can_be_removed_from_storage_and_database",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\PosP1PropagationAcceptanceTest",
+          "name": "test_identity_branding_and_theme_propagate_across_required_runtime_contexts",
+          "assertions": 34
+        },
+        {
+          "class": "Tests\\Feature\\PosP1PropagationAcceptanceTest",
+          "name": "test_missing_assets_and_corrupt_theme_recover_to_static_fallbacks",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\PosP1PropagationAcceptanceTest",
+          "name": "test_sources_cover_required_branding_app_and_responsive_contexts",
+          "assertions": 28
+        },
+        {
+          "class": "Tests\\Feature\\PosP1PropagationAcceptanceTest",
+          "name": "test_branding_and_theme_keep_manage_publish_role_separation",
+          "assertions": 19
+        },
+        {
+          "class": "Tests\\Feature\\PosP1PropagationAcceptanceTest",
+          "name": "test_historical_invoice_identity_stays_fixed_when_live_identity_changes",
+          "assertions": 14
+        },
+        {
+          "class": "Tests\\Feature\\PosP2CustomerCommunicationTemplateTest",
+          "name": "test_registry_exposes_revision_controlled_invoice_whatsapp_template",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosP2CustomerCommunicationTemplateTest",
+          "name": "test_template_validation_protects_required_and_rejects_unknown_or_executable_placeholders",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosP2CustomerCommunicationTemplateTest",
+          "name": "test_sample_preview_renders_final_message_with_no_placeholders_left",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosP2CustomerCommunicationTemplateTest",
+          "name": "test_document_admin_can_preview_and_publish_valid_template_but_missing_variable_does_not_persist",
+          "assertions": 15
+        },
+        {
+          "class": "Tests\\Feature\\PosP2CustomerCommunicationTemplateTest",
+          "name": "test_template_history_is_revisioned_and_corrupt_storage_falls_back_safely",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosP2CustomerCommunicationTemplateTest",
+          "name": "test_runtime_views_use_configured_template_while_phone_normalization_contract_stays_intact",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosP2DocumentCommunicationHistoryAcceptanceTest",
+          "name": "test_invoice_and_warranty_surfaces_keep_shared_thermal_and_a4_preview_download_print_contract",
+          "assertions": 26
+        },
+        {
+          "class": "Tests\\Feature\\PosP2DocumentCommunicationHistoryAcceptanceTest",
+          "name": "test_sale_time_business_and_warranty_snapshots_remain_stable_through_later_claim_history",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\PosP2DocumentCommunicationHistoryAcceptanceTest",
+          "name": "test_document_and_communication_publish_rollback_is_versioned_audited_and_recoverable",
+          "assertions": 22
+        },
+        {
+          "class": "Tests\\Feature\\PosP2DocumentCommunicationHistoryAcceptanceTest",
+          "name": "test_placeholder_and_business_identity_guards_fail_closed_across_customer_actions",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\PosP2InvoiceTemplateAcceptanceTest",
+          "name": "test_invoice_template_registry_exposes_only_approved_extension_controls",
+          "assertions": 23
+        },
+        {
+          "class": "Tests\\Feature\\PosP2InvoiceTemplateAcceptanceTest",
+          "name": "test_unsupported_or_malformed_template_values_are_rejected",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosP2InvoiceTemplateAcceptanceTest",
+          "name": "test_corrupt_output_preferences_fall_back_to_supported_defaults",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\PosP2InvoiceTemplateAcceptanceTest",
+          "name": "test_document_routes_preserve_manage_publish_and_audit_boundaries",
+          "assertions": 32
+        },
+        {
+          "class": "Tests\\Feature\\PosP2InvoiceTemplateAcceptanceTest",
+          "name": "test_preview_is_non_persistent_and_admin_publish_requires_explicit_permission",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\PosP2InvoiceTemplateAcceptanceTest",
+          "name": "test_publish_and_compatible_rollback_preserve_history_across_added_settings",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosP2InvoiceTemplateAcceptanceTest",
+          "name": "test_invoice_runtime_consumes_safe_options_and_historical_identity_fields",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\PosP2WarrantyClauseManagementTest",
+          "name": "test_registry_replaces_fixed_editing_with_ordered_json_clause_contract",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosP2WarrantyClauseManagementTest",
+          "name": "test_clause_normalization_supports_order_enable_and_plain_text_guardrails",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosP2WarrantyClauseManagementTest",
+          "name": "test_existing_customized_legacy_terms_are_preserved_until_first_clause_publish",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosP2WarrantyClauseManagementTest",
+          "name": "test_document_admin_surface_previews_and_publishes_nested_clause_rows",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\PosP2WarrantyClauseManagementTest",
+          "name": "test_publish_keeps_clause_versions_and_only_enabled_clauses_are_live",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosP2WarrantyClauseManagementTest",
+          "name": "test_new_invoice_snapshots_clause_version_and_history_does_not_drift",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosP2WarrantyClauseManagementTest",
+          "name": "test_legacy_invoice_without_snapshot_fails_safe_and_runtime_views_use_dynamic_clause_lists",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedAcquisitionSourceTest",
+          "name": "test_p3_4_migration_seeds_sources_backfills_references_and_preserves_raw_history",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedAcquisitionSourceTest",
+          "name": "test_p3_4_migration_preserves_preexisting_matching_option_through_rollback",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedAcquisitionSourceTest",
+          "name": "test_source_master_lifecycle_preserves_party_semantics_and_canonical_codes",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedAcquisitionSourceTest",
+          "name": "test_opening_stock_uses_managed_source_reference_and_keeps_raw_code_stable",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedAcquisitionSourceTest",
+          "name": "test_market_customer_restock_uses_individual_profile_and_managed_history_label",
+          "assertions": 14
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedAcquisitionSourceTest",
+          "name": "test_custom_managed_business_source_is_usable_in_restock_workflow",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedAcquisitionSourceTest",
+          "name": "test_inactive_source_cannot_be_used_for_new_restock",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedAcquisitionSourceTest",
+          "name": "test_inventory_ui_consumes_server_managed_source_options_without_hardcoded_dropdowns",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedCategoryTest",
+          "name": "test_p3_5_migration_is_additive_reversible_and_preserves_preexisting_category_presentation",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedCategoryTest",
+          "name": "test_top_level_category_codes_are_protected_while_label_order_and_visibility_are_managed",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedCategoryTest",
+          "name": "test_subcategories_have_stable_parent_scoped_identity_and_editable_presentation",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedCategoryTest",
+          "name": "test_product_workflow_writes_category_and_subcategory_references_and_preserves_inactive_current_selection",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedCategoryTest",
+          "name": "test_public_catalog_uses_managed_category_presentation_without_changing_raw_contract_or_identifier",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedCategoryTest",
+          "name": "test_inventory_master_ui_and_category_report_use_managed_labels",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedDeviceOptionsTest",
+          "name": "test_p3_2_migration_seeds_stable_options_backfills_references_and_preserves_raw_values",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedDeviceOptionsTest",
+          "name": "test_p3_2_migration_preserves_preexisting_matching_options_through_rollback",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedDeviceOptionsTest",
+          "name": "test_master_data_admin_surface_is_permission_controlled_and_preserves_stable_semantics",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedDeviceOptionsTest",
+          "name": "test_product_and_device_configuration_use_managed_options_without_rewriting_label_history",
+          "assertions": 18
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedDeviceOptionsTest",
+          "name": "test_managed_color_keeps_variant_key_stable_and_catalog_uses_current_display_values",
+          "assertions": 15
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedDeviceOptionsTest",
+          "name": "test_referenced_managed_options_cannot_be_deleted_and_custom_unreferenced_options_can",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedUnitStatusTest",
+          "name": "test_p3_3_migration_seeds_status_masters_and_preserves_raw_codes",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedUnitStatusTest",
+          "name": "test_p3_3_migration_preserves_preexisting_matching_option_through_rollback",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedUnitStatusTest",
+          "name": "test_status_master_lifecycle_changes_labels_without_weakening_codes_or_stock_rules",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedUnitStatusTest",
+          "name": "test_manage_units_persists_master_references_and_keeps_variant_identity_stable",
+          "assertions": 14
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedUnitStatusTest",
+          "name": "test_catalog_uses_current_managed_status_labels_without_changing_variant_key",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedUnitStatusTest",
+          "name": "test_restock_created_units_bind_inactive_unknown_system_options_without_exposing_manual_stock_status",
+          "assertions": 23
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedUnitStatusTest",
+          "name": "test_unmatched_legacy_status_survives_unrelated_unit_edit",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosP3ManagedUnitStatusTest",
+          "name": "test_invoice_snapshot_freezes_managed_status_labels_at_sale_time",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosP3MasterDataAcceptanceTest",
+          "name": "test_inventory_master_scope_is_seeded_and_excludes_transaction_controlled_stock_fields",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\PosP3MasterDataAcceptanceTest",
+          "name": "test_stage_acceptance_preserves_history_identifiers_imei_rules_and_catalog_contract",
+          "assertions": 33
+        },
+        {
+          "class": "Tests\\Feature\\PosP3MasterDataFoundationTest",
+          "name": "test_foundation_migration_is_additive_reversible_and_does_not_rewrite_inventory_values",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\PosP3MasterDataFoundationTest",
+          "name": "test_registry_is_allowlisted_and_excludes_transaction_controlled_stock_states",
+          "assertions": 19
+        },
+        {
+          "class": "Tests\\Feature\\PosP3MasterDataFoundationTest",
+          "name": "test_options_have_stable_identity_ordering_and_actor_metadata",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\PosP3MasterDataFoundationTest",
+          "name": "test_internal_code_and_list_identity_are_immutable_after_creation",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosP3MasterDataFoundationTest",
+          "name": "test_active_archive_and_restore_lifecycle_preserves_the_option_identity",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\PosP3MasterDataFoundationTest",
+          "name": "test_referenced_options_cannot_be_deleted_but_unreferenced_options_can",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosP3MasterDataFoundationTest",
+          "name": "test_validation_and_protected_list_policy_fail_closed",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\PosP4DashboardPresentationTest",
+          "name": "test_registry_defaults_keep_live_outlet_widgets_and_application_owned_boundaries",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosP4DashboardPresentationTest",
+          "name": "test_only_visibility_and_order_are_persisted_and_protected_metadata_fails_closed",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosP4DashboardPresentationTest",
+          "name": "test_visibility_and_order_never_bypass_operator_permissions",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\PosP4DashboardPresentationTest",
+          "name": "test_configuration_surface_requires_dashboard_report_permission_and_superadmin_is_allowed",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\PosP4DashboardPresentationTest",
+          "name": "test_http_update_changes_widget_presentation_without_changing_dashboard_metrics",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\PosP4DashboardPresentationTest",
+          "name": "test_outlet_dashboard_role_visibility_follows_operational_permissions",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\PosP4FormTablePresentationTest",
+          "name": "test_defaults_preserve_existing_operational_table_behaviour",
+          "assertions": 15
+        },
+        {
+          "class": "Tests\\Feature\\PosP4FormTablePresentationTest",
+          "name": "test_allowlisted_presentation_persists_without_storing_query_or_permission_metadata",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\PosP4FormTablePresentationTest",
+          "name": "test_protected_and_unknown_table_metadata_fail_closed",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosP4FormTablePresentationTest",
+          "name": "test_configuration_surface_requires_explicit_admin_permission_and_superadmin_is_authorized",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\PosP4FormTablePresentationTest",
+          "name": "test_http_update_and_operational_pages_use_the_safe_runtime_profiles",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\PosP4FormTablePresentationTest",
+          "name": "test_legacy_superadmin_preferences_continue_to_write_registered_inventory_defaults",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosP4PortalPresentationAcceptanceTest",
+          "name": "test_navigation_visibility_remains_independent_from_backend_authorization",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosP4PortalPresentationAcceptanceTest",
+          "name": "test_operational_tables_render_responsive_safe_profiles_on_desktop_and_mobile",
+          "assertions": 27
+        },
+        {
+          "class": "Tests\\Feature\\PosP4PortalPresentationAcceptanceTest",
+          "name": "test_dashboard_presentation_does_not_change_kpis_or_permission_scoped_widgets",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosP4PortalPresentationAcceptanceTest",
+          "name": "test_report_presentation_does_not_change_authoritative_calculations_or_rows",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosP4ReportPresentationTest",
+          "name": "test_registry_centralizes_report_types_presets_and_auditable_export_boundaries",
+          "assertions": 23
+        },
+        {
+          "class": "Tests\\Feature\\PosP4ReportPresentationTest",
+          "name": "test_saved_views_and_export_columns_persist_only_allowlisted_presentation_metadata",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\PosP4ReportPresentationTest",
+          "name": "test_invalid_saved_views_and_unsafe_export_columns_fail_closed",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosP4ReportPresentationTest",
+          "name": "test_configuration_surface_requires_dashboard_report_permission_and_superadmin_is_allowed",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosP4ReportPresentationTest",
+          "name": "test_report_api_keeps_authoritative_payload_unchanged_when_export_columns_change",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\PosP4ReportPresentationTest",
+          "name": "test_saved_views_render_across_admin_superadmin_and_outlet_report_surfaces",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\PosP4SafePortalNavigationTest",
+          "name": "test_registry_keeps_destinations_permissions_and_core_modules_application_controlled",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\PosP4SafePortalNavigationTest",
+          "name": "test_configuration_surface_requires_explicit_admin_permission_and_superadmin_is_authorized",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosP4SafePortalNavigationTest",
+          "name": "test_hidden_admin_menu_does_not_change_backend_authorization",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosP4SafePortalNavigationTest",
+          "name": "test_outlet_navigation_respects_visibility_and_permission_independently",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosP4SafePortalNavigationTest",
+          "name": "test_update_persists_only_safe_presentation_fields_and_rejects_markup",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosP4SafePortalNavigationTest",
+          "name": "test_protected_core_navigation_cannot_be_changed_through_http_surface",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosP5BackupOperationsTest",
+          "name": "test_registry_and_resolver_keep_backup_execution_metadata_application_controlled",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\PosP5BackupOperationsTest",
+          "name": "test_configuration_surface_requires_integration_backup_permission_and_audits_update",
+          "assertions": 18
+        },
+        {
+          "class": "Tests\\Feature\\PosP5BackupOperationsTest",
+          "name": "test_superadmin_can_manage_backup_operations_without_admin_operational_permission",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\PosP5BackupOperationsTest",
+          "name": "test_backup_history_surfaces_safe_scheduled_and_remote_status",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosP5BackupOperationsTest",
+          "name": "test_dynamic_local_retention_is_used_by_existing_backup_cleanup",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosP5BackupOperationsTest",
+          "name": "test_scheduled_remote_preference_cannot_enable_missing_remote_infrastructure",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\PosP5IntegrationHealthTest",
+          "name": "test_catalog_health_is_read_only_authenticated_and_secret_free",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosP5IntegrationHealthTest",
+          "name": "test_catalog_health_is_hidden_when_catalog_api_is_disabled",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\PosP5IntegrationHealthTest",
+          "name": "test_order_health_is_read_only_authenticated_and_contract_bounded",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\PosP5IntegrationHealthTest",
+          "name": "test_order_health_is_hidden_when_order_api_is_disabled",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\PosP5IntegrationStatusSurfaceTest",
+          "name": "test_summary_reports_bounded_read_only_contract_state_without_secrets",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\PosP5IntegrationStatusSurfaceTest",
+          "name": "test_admin_surface_requires_integration_backup_configuration_permission",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosP5IntegrationStatusSurfaceTest",
+          "name": "test_superadmin_can_view_integration_status_without_admin_operational_permissions",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\PosP5SecretSafeIntegrationAuditAcceptanceTest",
+          "name": "test_configuration_status_and_backup_execution_permissions_remain_separate",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosP5SecretSafeIntegrationAuditAcceptanceTest",
+          "name": "test_backup_and_integration_surfaces_never_render_secret_or_diagnostic_details",
+          "assertions": 15
+        },
+        {
+          "class": "Tests\\Feature\\PosP5SecretSafeIntegrationAuditAcceptanceTest",
+          "name": "test_backup_configuration_audit_redacts_nested_sensitive_input_on_rejection",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosP5SecretSafeIntegrationAuditAcceptanceTest",
+          "name": "test_backup_status_summary_exposes_only_bounded_operational_state",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosP5SecretSafeIntegrationAuditAcceptanceTest",
+          "name": "test_guarded_verify_only_validates_backup_without_mutating_business_state",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosSettingsTest",
+          "name": "test_registry_covers_existing_settings_with_typed_defaults",
+          "assertions": 38
+        },
+        {
+          "class": "Tests\\Feature\\PosSettingsTest",
+          "name": "test_cached_values_refresh_after_service_and_model_writes",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosSettingsTest",
+          "name": "test_defaults_survive_missing_settings_storage",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\PosSettingsTest",
+          "name": "test_cache_failure_falls_through_to_persisted_database_values",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\PosSettingsTest",
+          "name": "test_super_admin_updates_registered_presentation_and_portal_settings",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\PosThemeAcceptanceTest",
+          "name": "test_theme_defaults_match_static_pos_palette_and_generate_safe_runtime_variables",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\PosThemeAcceptanceTest",
+          "name": "test_invalid_hex_and_unreadable_text_contrast_are_rejected",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\PosThemeAcceptanceTest",
+          "name": "test_corrupt_runtime_values_fall_back_without_breaking_readability",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\PosThemeAcceptanceTest",
+          "name": "test_valid_but_unsafe_persisted_palette_falls_back_to_complete_static_theme",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\PosThemeAcceptanceTest",
+          "name": "test_theme_routes_keep_manage_publish_and_audit_boundaries",
+          "assertions": 32
+        },
+        {
+          "class": "Tests\\Feature\\PosThemeAcceptanceTest",
+          "name": "test_preview_is_non_persistent_and_renders_submitted_runtime_theme",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosThemeAcceptanceTest",
+          "name": "test_admin_manage_permission_does_not_imply_theme_publish_permission",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosThemeAcceptanceTest",
+          "name": "test_publish_and_rollback_preserve_theme_revision_lineage",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosThemeAcceptanceTest",
+          "name": "test_supported_portal_surfaces_load_the_central_runtime_theme_layer",
+          "assertions": 19
+        },
+        {
+          "class": "Tests\\Feature\\PosX1MigrationRollbackTest",
+          "name": "test_superadmin_username_migration_rolls_back_and_reapplies_on_sqlite",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\PosX2SecurityReviewTest",
+          "name": "test_cross_shop_product_binding_cannot_bypass_outlet_scope",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\PosX2SecurityReviewTest",
+          "name": "test_pos_web_routes_keep_default_csrf_protection",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\PosX2SecurityReviewTest",
+          "name": "test_website_order_health_endpoints_fail_closed_without_api_credentials",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\PosX2SecurityReviewTest",
+          "name": "test_backup_failure_never_exposes_infrastructure_exception_details",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosX3PerformanceCacheReviewTest",
+          "name": "test_branding_media_selector_is_bounded_and_preserves_preferred_asset",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosX3PerformanceCacheReviewTest",
+          "name": "test_warm_pos_settings_reads_are_query_free_and_model_write_invalidates_cache",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosX4ResponsivePrintDocumentRegressionTest",
+          "name": "test_invoice_and_warranty_surfaces_keep_shared_a4_and_thermal_document_actions",
+          "assertions": 20
+        },
+        {
+          "class": "Tests\\Feature\\PosX4ResponsivePrintDocumentRegressionTest",
+          "name": "test_print_styles_keep_thermal_geometry_and_a4_clone_geometry_controlled",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosX4ResponsivePrintDocumentRegressionTest",
+          "name": "test_document_routes_keep_operational_authorization_separate_from_document_presentation",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PosX4ResponsivePrintDocumentRegressionTest",
+          "name": "test_document_views_keep_central_branding_identity_history_and_responsive_preview_hooks",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\VisualSystemConsistencyTest",
+          "name": "test_custom_pos_layers_match_the_website_brand_system",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\VisualSystemConsistencyTest",
+          "name": "test_portal_login_copy_and_viewport_rules_match_pos_operations",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\VisualSystemConsistencyTest",
+          "name": "test_portal_labels_and_dashboard_hierarchy_are_source_stable",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\VisualSystemConsistencyTest",
+          "name": "test_invoice_and_warranty_workflows_share_controlled_thermal_and_a4_formats",
+          "assertions": 23
+        },
+        {
+          "class": "Tests\\Feature\\VisualSystemConsistencyTest",
+          "name": "test_business_identifiers_are_presented_across_operator_workflows_and_reports",
+          "assertions": 25
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderConfirmationApiTest",
+          "name": "test_confirmation_creates_one_invoice_and_sale_and_replays_exactly_once",
+          "assertions": 15
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderConfirmationApiTest",
+          "name": "test_amount_mismatch_creates_no_invoice_or_stock_movement",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderContractFoundationTest",
+          "name": "test_foundation_is_disabled_and_persists_idempotent_contract_records",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderContractFoundationTest",
+          "name": "test_contract_hash_is_order_independent_and_invalid_variant_is_rejected",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderContractFoundationTest",
+          "name": "test_confirmation_contract_accepts_jazzcash",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderContractFoundationTest",
+          "name": "test_confirmation_contract_accepts_cash_on_delivery_collection",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderReleaseApiTest",
+          "name": "test_release_restores_reserved_stock_and_replays_idempotently",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderReleaseApiTest",
+          "name": "test_confirmation_wins_and_cannot_be_released",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderReservationApiTest",
+          "name": "test_write_api_is_hidden_when_disabled_and_rejects_bad_token",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderReservationApiTest",
+          "name": "test_aggregate_reservation_is_idempotent_adjusts_catalog_and_expires",
+          "assertions": 15
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderReservationApiTest",
+          "name": "test_variant_reservation_allocates_the_correct_unit_without_exposing_it",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteOrderReservationApiTest",
+          "name": "test_cross_outlet_cart_is_rejected_before_reservation",
+          "assertions": 3
+        }
+      ],
+      "junit_sha256": "796a6350d547eeaf904b63294bcafbc372f3fa2c847a4eadb5e54d01c883db0a",
+      "log_sha256": "2f860512f0c2b3ccaabe68392c7e14c32434f2b0f885aacc3702f235ad0035db",
+      "harness_sha256": "40cc1b31dd070f554b91ed57d67b501dad5add25796c70b9312d405c4ac53488"
+    },
+    "website": {
+      "tests": "236",
+      "assertions": "2806",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "time": "9.956296",
+      "cases": [
+        {
+          "class": "Tests\\Unit\\ExampleTest",
+          "name": "test_that_true_is_true",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\AuthenticatedAcceptanceTest",
+          "name": "test_guest_and_cross_role_boundaries_are_enforced",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\AuthenticatedAcceptanceTest",
+          "name": "test_customer_account_renders_for_desktop_and_mobile_sessions",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\AuthenticatedAcceptanceTest",
+          "name": "test_customer_auth_shell_renders_on_desktop_and_mobile",
+          "assertions": 24
+        },
+        {
+          "class": "Tests\\Feature\\AuthenticatedAcceptanceTest",
+          "name": "test_owner_control_panel_critical_pages_render",
+          "assertions": 56
+        },
+        {
+          "class": "Tests\\Feature\\BrandAssetConsistencyTest",
+          "name": "test_runtime_vectors_match_the_approved_brandkit_sources",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\BrandAssetConsistencyTest",
+          "name": "test_required_runtime_derivatives_are_present_and_usable",
+          "assertions": 16
+        },
+        {
+          "class": "Tests\\Feature\\BrandAssetConsistencyTest",
+          "name": "test_runtime_sources_do_not_reference_canva_or_stale_brand_assets",
+          "assertions": 423
+        },
+        {
+          "class": "Tests\\Feature\\BrandAssetConsistencyTest",
+          "name": "test_shared_tokens_and_logo_size_guard_are_active",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\BusinessMessagingTest",
+          "name": "test_storefront_leads_with_digital_solutions_and_keeps_tech_products_distinct",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\BusinessMessagingTest",
+          "name": "test_messaging_migration_updates_only_untouched_legacy_defaults",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\CashOnDeliveryProviderTest",
+          "name": "test_cod_is_an_independent_ordered_physical_checkout_option",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\CashOnDeliveryProviderTest",
+          "name": "test_cod_initiation_uses_due_on_delivery_states_without_electronic_verification",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\CashOnDeliveryProviderTest",
+          "name": "test_cod_rejects_disabled_ineligible_and_digital_orders",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\CashOnDeliveryProviderTest",
+          "name": "test_manual_cod_collection_records_cash_without_server_verification",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\CashOnDeliveryProviderTest",
+          "name": "test_product_checkout_creates_cod_order_and_customer_instructions",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\CommerceRecoveryTest",
+          "name": "test_cart_enforces_variant_stock_across_repeated_adds",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\CommerceRecoveryTest",
+          "name": "test_pending_checkout_retry_reuses_order_and_preserves_cart",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\CommerceRecoveryTest",
+          "name": "test_inactive_jazzcash_checkout_fails_closed_without_creating_an_order",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_shared_components_publish_accessible_layout_contracts",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_list_pages_use_shared_filter_and_table_components with data set #0",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_list_pages_use_shared_filter_and_table_components with data set #1",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_list_pages_use_shared_filter_and_table_components with data set #2",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_list_pages_use_shared_filter_and_table_components with data set #3",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_list_pages_use_shared_filter_and_table_components with data set #4",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_list_pages_use_shared_filter_and_table_components with data set #5",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_list_pages_use_shared_filter_and_table_components with data set #6",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #0",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #1",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #2",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #3",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #4",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #5",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #6",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #7",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #8",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #9",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #10",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_edit_pages_use_the_shared_form_panel with data set #11",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_active_control_center_views_do_not_reintroduce_one_off_inline_styles",
+          "assertions": 35
+        },
+        {
+          "class": "Tests\\Feature\\ControlCenterComponentConsistencyTest",
+          "name": "test_shared_navigation_uses_the_teal_state_instead_of_the_legacy_blue_state",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\CustomerAccountReviewTest",
+          "name": "test_customer_can_register_and_future_checkout_is_attached_to_account",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\CustomerAccountReviewTest",
+          "name": "test_only_completed_paid_purchase_can_create_a_pending_review",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\CustomerAccountReviewTest",
+          "name": "test_admin_approval_publishes_verified_review_and_reply",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\CustomerAccountReviewTest",
+          "name": "test_catalog_filters_and_in_stock_out_of_stock_details_are_stable",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\EasypaisaAdapterConfigurationTest",
+          "name": "test_dedicated_adapter_is_fail_closed_with_explicit_callback_interfaces",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\EasypaisaAdapterConfigurationTest",
+          "name": "test_staged_settings_drive_safe_adapter_metadata_but_cannot_activate_runtime",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\EasypaisaAdapterConfigurationTest",
+          "name": "test_manager_can_stage_nonsecret_settings_but_only_owner_can_replace_credentials",
+          "assertions": 19
+        },
+        {
+          "class": "Tests\\Feature\\EasypaisaAdapterConfigurationTest",
+          "name": "test_wrong_reauthentication_cannot_replace_a_working_credential",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\ExampleTest",
+          "name": "test_the_application_returns_a_successful_response",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\HostedCardSecurityTest",
+          "name": "test_card_checkout_stays_fail_closed_without_a_selected_processor",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\HostedCardSecurityTest",
+          "name": "test_checkout_never_renders_local_card_entry_fields",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\HostedCardSecurityTest",
+          "name": "test_crafted_raw_card_submission_fails_before_persisting_checkout_data",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\JazzCashAdapterConfigurationTest",
+          "name": "test_dedicated_adapter_is_fail_closed_with_explicit_callback_interfaces",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\JazzCashAdapterConfigurationTest",
+          "name": "test_staged_settings_drive_safe_adapter_metadata_but_cannot_activate_runtime",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\JazzCashAdapterConfigurationTest",
+          "name": "test_manager_can_stage_nonsecret_settings_but_only_owner_can_replace_credentials",
+          "assertions": 19
+        },
+        {
+          "class": "Tests\\Feature\\JazzCashAdapterConfigurationTest",
+          "name": "test_wrong_reauthentication_cannot_replace_a_working_credential",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PaymentManagerContractTest",
+          "name": "test_manager_exposes_provider_neutral_catalog_and_capabilities",
+          "assertions": 15
+        },
+        {
+          "class": "Tests\\Feature\\PaymentManagerContractTest",
+          "name": "test_pending_initiation_reuses_latest_payment",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PaymentManagerContractTest",
+          "name": "test_wallet_initiation_rejects_an_invalid_account",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\PaymentManagerContractTest",
+          "name": "test_card_initiation_never_persists_raw_card_input",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PaymentManagerContractTest",
+          "name": "test_unsupported_operations_fail_explicitly",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\PaymentManagerContractTest",
+          "name": "test_paid_orders_and_unknown_providers_cannot_be_initiated",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\PaymentsCheckoutAdminTest",
+          "name": "test_admin_surface_lists_exactly_four_methods_without_fake_connection_actions",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\PaymentsCheckoutAdminTest",
+          "name": "test_publishing_all_four_methods_updates_safe_runtime_configuration",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\PaymentsCheckoutAdminTest",
+          "name": "test_permissions_unknown_keys_and_cod_range_are_enforced",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\PosCatalogCategoryPresentationTest",
+          "name": "test_sync_preserves_raw_category_contract_and_managed_presentation_metadata",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\PosCatalogCategoryPresentationTest",
+          "name": "test_catalog_uses_managed_category_order_labels_and_subcategory_filter_without_changing_routes",
+          "assertions": 14
+        },
+        {
+          "class": "Tests\\Feature\\PosCatalogCategoryPresentationTest",
+          "name": "test_empty_managed_category_metadata_does_not_restore_static_category_filters",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosOrderContractFoundationTest",
+          "name": "test_foundation_is_disabled_and_persists_variant_and_outbox_snapshots",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosOrderContractFoundationTest",
+          "name": "test_shared_fixture_hash_is_order_independent_and_jazzcash_is_valid",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\PosOrderOutboxTest",
+          "name": "test_checkout_reserves_stock_and_persists_source_snapshot",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosOrderOutboxTest",
+          "name": "test_transient_failure_stays_pending_and_blocks_payment",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\PosOrderOutboxTest",
+          "name": "test_stock_conflict_is_terminal_and_visible",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosOrderOutboxTest",
+          "name": "test_command_retries_a_due_event",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosOrderReleaseReconciliationTest",
+          "name": "test_unpaid_reserved_order_releases_stock_idempotently",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\PosOrderReleaseReconciliationTest",
+          "name": "test_reconciliation_never_downgrades_paid_expired_order_silently",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\PosOrderReleaseReconciliationTest",
+          "name": "test_reconciliation_recovers_confirmed_response_after_timeout",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\VerifiedPaymentConfirmationTest",
+          "name": "test_verified_payment_confirms_pos_once_and_duplicate_is_idempotent",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\VerifiedPaymentConfirmationTest",
+          "name": "test_terminal_pos_conflict_preserves_paid_order_and_surfaces_stock_exception",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\VerifiedPaymentConfirmationTest",
+          "name": "test_verified_payment_without_reservation_is_paid_but_requires_intervention",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\VerifiedPaymentConfirmationTest",
+          "name": "test_verified_payment_rejects_a_mismatched_gateway_order_reference",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\VerifiedPaymentConfirmationTest",
+          "name": "test_verified_gateway_transaction_cannot_be_replayed_on_another_payment",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\VisualSystemConsistencyTest",
+          "name": "test_custom_visual_layers_use_the_approved_brand_system",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\VisualSystemConsistencyTest",
+          "name": "test_storefront_header_auth_and_filter_geometry_are_source_stable",
+          "assertions": 22
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteAdminProfileTest",
+          "name": "test_every_admin_role_can_open_and_update_its_own_profile",
+          "assertions": 24
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteAdminProfileTest",
+          "name": "test_admin_can_upload_and_remove_a_profile_photo_with_audit_records",
+          "assertions": 16
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteAdminProfileTest",
+          "name": "test_admin_can_change_password_but_must_supply_the_current_password",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteAdminProfileTest",
+          "name": "test_customer_cannot_access_admin_profile_and_admin_can_sign_out_from_menu",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteAdminProfileTest",
+          "name": "test_guest_and_customer_cannot_mutate_profile_or_create_audit_records",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteAdminProfileTest",
+          "name": "test_profile_mutations_cannot_change_another_administrator",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteAdminRolePermissionTest",
+          "name": "test_control_center_role_permissions_and_self_profile_access_are_preserved with data set \"owner\"",
+          "assertions": 18
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteAdminRolePermissionTest",
+          "name": "test_control_center_role_permissions_and_self_profile_access_are_preserved with data set \"manager\"",
+          "assertions": 18
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteAdminRolePermissionTest",
+          "name": "test_control_center_role_permissions_and_self_profile_access_are_preserved with data set \"content editor\"",
+          "assertions": 18
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteAdminRolePermissionTest",
+          "name": "test_control_center_role_permissions_and_self_profile_access_are_preserved with data set \"operations\"",
+          "assertions": 18
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBrandThemeRecoveryAcceptanceTest",
+          "name": "test_branding_preview_publish_history_rollback_and_missing_asset_fallback_are_recoverable",
+          "assertions": 18
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBrandThemeRecoveryAcceptanceTest",
+          "name": "test_theme_history_rollback_invalidates_cache_and_propagates_on_desktop_and_mobile",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBrandThemeRecoveryAcceptanceTest",
+          "name": "test_branding_rollback_is_atomic_with_media_usage_reconciliation",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBrandThemeRecoveryAcceptanceTest",
+          "name": "test_contact_identity_history_is_recoverable_without_code_edits",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBrandThemeRecoveryAcceptanceTest",
+          "name": "test_rollback_routes_enforce_domain_and_permissions",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBrandingTest",
+          "name": "test_unconfigured_branding_roles_use_approved_brandkit_fallbacks",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBrandingTest",
+          "name": "test_owner_can_publish_role_assets_and_runtime_uses_them",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBrandingTest",
+          "name": "test_branding_permissions_are_separate_from_content_editing",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBrandingTest",
+          "name": "test_missing_custom_file_falls_back_without_breaking_runtime",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBrandingTest",
+          "name": "test_square_brand_roles_reject_non_square_assets",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBrandingTest",
+          "name": "test_published_branding_usage_blocks_media_deletion",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBusinessIdentityTest",
+          "name": "test_defaults_keep_business_identity_safe_when_optional_values_are_blank",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBusinessIdentityTest",
+          "name": "test_owner_can_publish_expanded_identity_contact_and_social_settings",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBusinessIdentityTest",
+          "name": "test_disabled_or_empty_social_links_do_not_render",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBusinessIdentityTest",
+          "name": "test_invalid_or_unknown_contact_mutations_are_rejected_without_revision",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteBusinessIdentityTest",
+          "name": "test_corrupt_stored_contact_urls_and_email_fail_to_empty_runtime_fallbacks",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCataloguePresentationTest",
+          "name": "test_defaults_preserve_supported_catalogue_presentation_and_pos_authority",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCataloguePresentationTest",
+          "name": "test_admin_screen_is_permission_controlled_and_exposes_only_supported_controls",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCataloguePresentationTest",
+          "name": "test_published_settings_control_grid_sort_metadata_stock_badges_and_page_size",
+          "assertions": 21
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCataloguePresentationTest",
+          "name": "test_invalid_or_incomplete_contract_and_corrupt_storage_fail_safely",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCataloguePresentationTest",
+          "name": "test_items_per_page_is_applied_as_bounded_server_pagination",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCataloguePresentationTest",
+          "name": "test_superseded_catalogue_revision_can_be_restored_with_lineage",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteConfigurationPermissionAuditTest",
+          "name": "test_configuration_permissions_are_separate_by_role",
+          "assertions": 35
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteConfigurationPermissionAuditTest",
+          "name": "test_successful_and_rejected_configuration_mutations_are_audited_with_redaction",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteConfigurationRevisionTest",
+          "name": "test_draft_does_not_change_published_runtime_state",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteConfigurationRevisionTest",
+          "name": "test_publish_supersede_and_rollback_are_versioned",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteConfigurationRevisionTest",
+          "name": "test_admin_save_publishes_a_revision_with_actor_identity",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteConfigurationRevisionTest",
+          "name": "test_revision_domain_rejects_unregistered_or_cross_domain_keys",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteConfigurationRevisionTest",
+          "name": "test_unpublished_draft_cannot_be_used_as_a_rollback_source",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteConfigurationSecurityTest",
+          "name": "test_every_configuration_route_keeps_admin_audit_and_granular_authorization_middleware",
+          "assertions": 341
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteConfigurationSecurityTest",
+          "name": "test_csrf_exceptions_never_include_admin_or_configuration_routes",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteConfigurationSecurityTest",
+          "name": "test_payment_configuration_pages_never_expose_plaintext_or_ciphertext_credentials",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCredentialMediaFoundationTest",
+          "name": "test_foundation_migration_is_additive_and_reversible",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCredentialMediaFoundationTest",
+          "name": "test_credentials_are_encrypted_masked_whitelisted_and_replaceable",
+          "assertions": 14
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCredentialMediaFoundationTest",
+          "name": "test_media_storage_uses_content_validation_random_names_and_reference_protection",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCredentialMediaFoundationTest",
+          "name": "test_blank_replacement_is_rejected_and_corrupt_ciphertext_fails_closed",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCredentialMediaFoundationTest",
+          "name": "test_svg_and_spoofed_uploads_are_rejected_without_persistence",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteCredentialMediaFoundationTest",
+          "name": "test_unreferenced_media_can_be_removed_from_storage_and_database",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHeaderFooterTest",
+          "name": "test_defaults_preserve_the_compact_global_header_and_footer",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHeaderFooterTest",
+          "name": "test_all_storefront_templates_use_the_shared_header_and_footer",
+          "assertions": 65
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHeaderFooterTest",
+          "name": "test_admin_access_and_supported_controls_are_permission_protected",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHeaderFooterTest",
+          "name": "test_published_header_footer_controls_propagate_without_replacing_central_sources",
+          "assertions": 24
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHeaderFooterTest",
+          "name": "test_unsupported_duplicate_draft_policy_and_corrupt_values_fail_closed",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHeaderFooterTest",
+          "name": "test_superseded_header_footer_revision_restores_with_lineage",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHomepageSectionRegistryTest",
+          "name": "test_registry_is_controlled_and_defaults_preserve_current_homepage",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHomepageSectionRegistryTest",
+          "name": "test_homepage_builder_is_permission_controlled_and_exposes_supported_controls",
+          "assertions": 15
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHomepageSectionRegistryTest",
+          "name": "test_admin_can_publish_visibility_order_copy_cta_and_bounded_item_counts",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHomepageSectionRegistryTest",
+          "name": "test_unsafe_or_out_of_contract_layout_changes_fail_closed",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHomepageSectionRegistryTest",
+          "name": "test_legacy_homepage_revision_contract_stays_separate_from_layout_contract",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHomepageSectionRegistryTest",
+          "name": "test_published_section_media_is_reference_protected_and_missing_file_fails_safely",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteHomepageSectionRegistryTest",
+          "name": "test_corrupt_stored_cta_destination_uses_the_registered_default",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteLegalContentTest",
+          "name": "test_legal_content_admin_surface_is_permission_controlled_and_prepresets_purpose",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteLegalContentTest",
+          "name": "test_footer_policy_links_accept_only_published_legal_pages",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteLegalContentTest",
+          "name": "test_legal_page_purpose_is_revisioned_and_restored",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteLegalContentTest",
+          "name": "test_legal_page_cannot_claim_protected_application_route",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteLegalContentTest",
+          "name": "test_migration_preserves_existing_live_footer_policy_classification",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteLegalContentTest",
+          "name": "test_published_legal_page_remains_safe_managed_content_and_navigation_destination",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageContentSeoTest",
+          "name": "test_content_and_seo_migration_is_additive_and_reversible",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageContentSeoTest",
+          "name": "test_controlled_rich_content_is_sanitized_and_unsafe_markup_is_rejected",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageContentSeoTest",
+          "name": "test_executable_markup_and_unsafe_links_fail_closed",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageContentSeoTest",
+          "name": "test_page_seo_is_separately_permissioned_and_renders_safe_metadata",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageContentSeoTest",
+          "name": "test_blank_seo_uses_defaults_and_invalid_seo_inputs_are_rejected",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageContentSeoTest",
+          "name": "test_seo_permission_is_not_implied_by_operational_access",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageContentSeoTest",
+          "name": "test_corrupt_stored_rich_content_is_escaped_at_runtime",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageFoundationTest",
+          "name": "test_managed_page_migration_is_additive_and_reversible",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageFoundationTest",
+          "name": "test_managed_page_admin_access_and_draft_creation_are_permission_controlled",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageFoundationTest",
+          "name": "test_reserved_slugs_and_unapproved_templates_fail_closed",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageFoundationTest",
+          "name": "test_publish_update_template_and_unpublish_control_public_routing",
+          "assertions": 25
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteManagedPageFoundationTest",
+          "name": "test_protected_single_segment_routes_are_not_shadowed_by_managed_page_route",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteMediaLibraryTest",
+          "name": "test_media_permission_controls_library_access",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteMediaLibraryTest",
+          "name": "test_admin_can_upload_search_and_update_alt_text",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteMediaLibraryTest",
+          "name": "test_safe_replacement_preserves_asset_id_and_usage_references",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteMediaLibraryTest",
+          "name": "test_referenced_delete_is_blocked_and_unreferenced_delete_succeeds",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationAdminBuilderTest",
+          "name": "test_navigation_builder_access_is_permission_controlled",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationAdminBuilderTest",
+          "name": "test_admin_can_create_edit_parent_toggle_and_reorder_items",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationAdminBuilderTest",
+          "name": "test_unsafe_destinations_nested_groups_and_invalid_reorder_fail_closed",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationAdminBuilderTest",
+          "name": "test_permanent_delete_requires_hidden_disabled_and_dependency_free_item",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationAdminBuilderTest",
+          "name": "test_builder_exposes_drag_ordering_and_storefront_uses_published_runtime",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationFoundationTest",
+          "name": "test_navigation_migration_is_reversible_and_seeds_current_configurable_menu_shape",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationFoundationTest",
+          "name": "test_destination_registry_resolves_only_approved_routes_and_safe_external_urls",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationFoundationTest",
+          "name": "test_core_application_routes_are_protected_and_never_exposed_as_configurable_destinations",
+          "assertions": 30
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationPagePublishAcceptanceTest",
+          "name": "test_navigation_draft_preview_publish_and_mobile_runtime_are_isolated",
+          "assertions": 18
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationPagePublishAcceptanceTest",
+          "name": "test_navigation_history_rolls_back_workspace_and_public_state_with_lineage",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationPagePublishAcceptanceTest",
+          "name": "test_managed_page_draft_preview_publish_and_rollback_keep_live_snapshot_stable",
+          "assertions": 23
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationPagePublishAcceptanceTest",
+          "name": "test_page_seo_draft_and_unpublish_do_not_bypass_publish_boundary",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationPagePublishAcceptanceTest",
+          "name": "test_cross_domain_recovery_and_protected_application_routes_fail_closed",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationPagePublishAcceptanceTest",
+          "name": "test_managed_page_navigation_links_require_a_live_page_and_follow_published_slug",
+          "assertions": 16
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationPagePublishAcceptanceTest",
+          "name": "test_managed_page_navigation_eligibility_draft_does_not_change_live_link",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationPagePublishAcceptanceTest",
+          "name": "test_published_slug_remains_reserved_while_its_page_has_a_new_draft_slug",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteNavigationPagePublishAcceptanceTest",
+          "name": "test_corrupt_published_canonical_url_falls_back_and_unsafe_navigation_history_is_rejected",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteP5PosIntegrationHealthTest",
+          "name": "test_integration_status_requires_explicit_role_permission",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteP5PosIntegrationHealthTest",
+          "name": "test_status_page_never_displays_pos_endpoint_or_api_credentials",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteP5PosIntegrationHealthTest",
+          "name": "test_read_only_check_uses_only_configured_health_routes_and_is_audited",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteP5PosIntegrationHealthTest",
+          "name": "test_connection_failures_are_clear_without_returning_remote_bodies",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteP5PosIntegrationHealthTest",
+          "name": "test_invalid_check_target_never_sends_network_request",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteP5SecretSafeIntegrationAuditAcceptanceTest",
+          "name": "test_integration_permission_does_not_grant_payment_credential_management",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteP5SecretSafeIntegrationAuditAcceptanceTest",
+          "name": "test_existing_payment_credentials_remain_masked_outside_secret_storage",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteP5SecretSafeIntegrationAuditAcceptanceTest",
+          "name": "test_rejected_integration_check_redacts_nested_sensitive_audit_input",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsitePasswordResetTest",
+          "name": "test_customer_can_request_and_complete_password_reset",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsitePasswordResetTest",
+          "name": "test_admin_reset_returns_to_control_center_login",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsitePasswordResetTest",
+          "name": "test_reset_notification_can_generate_the_reset_url",
+          "assertions": 1
+        },
+        {
+          "class": "Tests\\Feature\\WebsitePromotionsTest",
+          "name": "test_registry_defaults_are_controlled_and_empty",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsitePromotionsTest",
+          "name": "test_builder_access_follows_existing_content_permissions",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsitePromotionsTest",
+          "name": "test_draft_preview_publish_isolated_and_output_is_escaped",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\WebsitePromotionsTest",
+          "name": "test_schedule_priority_expiry_and_static_announcement_fallback",
+          "assertions": 10
+        },
+        {
+          "class": "Tests\\Feature\\WebsitePromotionsTest",
+          "name": "test_invalid_contract_fails_closed_and_published_media_is_protected",
+          "assertions": 14
+        },
+        {
+          "class": "Tests\\Feature\\WebsitePromotionsTest",
+          "name": "test_published_history_can_roll_back_with_lineage",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteSeoTest",
+          "name": "test_existing_public_pages_render_centralized_safe_defaults",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteSeoTest",
+          "name": "test_seo_admin_preview_publish_permissions_and_escaped_overrides",
+          "assertions": 17
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteSeoTest",
+          "name": "test_unsafe_canonical_unknown_page_and_missing_media_fail_closed",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteSeoTest",
+          "name": "test_social_media_assets_are_reference_protected_and_missing_files_fall_back",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteSeoTest",
+          "name": "test_managed_product_and_protected_system_metadata_use_correct_authority",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteSeoTest",
+          "name": "test_seo_history_rolls_back_with_lineage_and_publish_invalidates_cache",
+          "assertions": 9
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteSettingsTest",
+          "name": "test_registry_covers_current_home_about_and_contact_settings",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteSettingsTest",
+          "name": "test_cached_reads_refresh_after_service_or_model_writes",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteSettingsTest",
+          "name": "test_service_write_is_registered_trimmed_and_immediately_visible",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteSettingsTest",
+          "name": "test_public_defaults_survive_missing_settings_storage",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteThemeTest",
+          "name": "test_static_fallback_tokens_are_safe_and_rendered_publicly",
+          "assertions": 8
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteThemeTest",
+          "name": "test_authorized_admin_can_preview_without_persisting",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteThemeTest",
+          "name": "test_publish_is_revision_controlled_and_propagates_to_runtime",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteThemeTest",
+          "name": "test_permissions_unknown_keys_and_invalid_css_values_are_rejected",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteThemeTest",
+          "name": "test_corrupt_stored_color_falls_back_without_css_injection",
+          "assertions": 2
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteThemeTest",
+          "name": "test_every_vite_page_includes_the_runtime_theme_partial",
+          "assertions": 31
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteW4PublishAcceptanceTest",
+          "name": "test_homepage_preview_is_non_persistent_and_content_and_layout_can_roll_back",
+          "assertions": 19
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteW4PublishAcceptanceTest",
+          "name": "test_catalogue_and_header_footer_previews_use_submitted_values_without_publishing",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteW4PublishAcceptanceTest",
+          "name": "test_presentation_changes_keep_pos_catalog_product_detail_and_cart_behavior_stable",
+          "assertions": 13
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteW4PublishAcceptanceTest",
+          "name": "test_w4_runtime_is_responsive_cache_invalidating_and_query_bounded",
+          "assertions": 11
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteW5PerformanceRollbackAcceptanceTest",
+          "name": "test_settings_cache_invalidates_and_rollbacks_restore_homepage_promotions_and_seo",
+          "assertions": 12
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteW5PerformanceRollbackAcceptanceTest",
+          "name": "test_navigation_and_page_cache_recovery_is_query_bounded_after_warmup",
+          "assertions": 16
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteW5PerformanceRollbackAcceptanceTest",
+          "name": "test_homepage_media_rollback_is_atomic_when_usage_reconciliation_fails",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteW5PerformanceRollbackAcceptanceTest",
+          "name": "test_promotions_media_rollback_is_atomic_when_usage_reconciliation_fails",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteW5PerformanceRollbackAcceptanceTest",
+          "name": "test_seo_media_rollback_is_atomic_when_usage_reconciliation_fails",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteX1MigrationRollbackTest",
+          "name": "test_project_quote_service_request_migration_rolls_back_and_reapplies_on_sqlite",
+          "assertions": 3
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteX1MigrationRollbackTest",
+          "name": "test_pos_order_integration_migration_rolls_back_and_reapplies_on_sqlite",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteX2SecurityReviewTest",
+          "name": "test_public_order_details_require_owner_session_or_signed_capability",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteX2SecurityReviewTest",
+          "name": "test_signed_order_capability_covers_status_payment_and_invoice",
+          "assertions": 7
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteX2SecurityReviewTest",
+          "name": "test_service_request_status_requires_signed_capability",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteX3PerformanceCacheReviewTest",
+          "name": "test_media_selector_is_bounded_and_preserves_old_selected_asset",
+          "assertions": 6
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteX3PerformanceCacheReviewTest",
+          "name": "test_warm_settings_reads_are_query_free_and_model_write_invalidates_cache",
+          "assertions": 4
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteX3PerformanceCacheReviewTest",
+          "name": "test_fifty_product_catalog_sync_keeps_database_queries_bounded",
+          "assertions": 5
+        },
+        {
+          "class": "Tests\\Feature\\WebsiteX3PerformanceCacheReviewTest",
+          "name": "test_catalog_sync_batches_historical_outlet_backfill_without_overwriting_snapshot",
+          "assertions": 4
+        }
+      ],
+      "junit_sha256": "02bd61ace5fea028f9f66ee6994cc28d91abd386a5a2366197da78f8e9f63a9d",
+      "log_sha256": "f80bc2c5ac75fecb27d27e5dffdfec086b81398c7e2edab2f50161060bbef157",
+      "harness_sha256": "40cc1b31dd070f554b91ed57d67b501dad5add25796c70b9312d405c4ac53488"
+    }
+  },
+  "harness": [
+    "isolated pinned-blob export",
+    "Composer install --no-scripts --no-plugins",
+    "SQLite :memory:",
+    "array cache/session/mail",
+    "sync queue",
+    "external integrations disabled",
+    "synthetic APP_KEY",
+    "Http::preventStrayRequests",
+    "withoutVite"
+  ],
+  "limitations": [
+    "source characterization is not target parity",
+    "SQLite source regression is not MySQL migration/concurrency acceptance",
+    "Vite bypass excludes built frontend asset acceptance",
+    "no real provider/network/source data/source storage calls"
+  ],
+  "artifact_sha256": {
+    "file_inventory": "a5d0067ef24261987c9927212842d6b6ad3b90d9cb7b6e89a6b2b9c3cf4a3073",
+    "symbol_inventory": "c5368e4121eaaac727efe72b87064ae8367ed1231419b6159642115d2bcbb17e",
+    "register": "a875824de8e7bfc97851fdfa24a42d0a2a04e99dab09be9e47cbc7d53ac90331"
+  }
+}

@@ -12,23 +12,23 @@ Last reconciled: 2026-08-31
 - Goal SHA-256: `7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f`
 - Binding Preferences: `docs/PROJECT_PREFERENCES.md` (all 39 approved numbered preferences)
 - Preferences SHA-256: `e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402`
-- Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.1
-- Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.1
+- Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.2
+- Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.2
 - Roadmap Word mirror: `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
 - Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1 (universal 1.6 / system 7.2)
 - FINAL-AUDIT: `FINAL-AUDIT - Independent final project audit`
 
 ## Verified position
 
-Active stage: MT-1 - Migration inventory and design (Pending; execution not started)
+Active stage: MT-1 - Migration inventory and design (In Progress)
 
 Current In Progress point: None
 
-Status: MT-0 - Project initialization complete after MT-0.1 Preferences reconciliation. 1/32 roadmap points complete; 31/32 pending.
+Status: MT-0 complete; MT-1.1 complete. 2/32 complete; 30/32 pending. MT-1 stage In Progress. No MT-1.2 execution authorized in this point.
 
-Last completed point: MT-0.1 - Project initialization
+Last completed point: MT-1.1 - Source inventory and feature parity register
 
-Next pending point: MT-1.1 - Source inventory and feature parity register
+Next pending point: MT-1.2 - Unified data, API and security design
 
 Execution boundary: Application migration abhi start nahi hui. Backend/Website/brand/Control directories placeholders hain. Existing source project completion naye target ki completion nahi hai.
 
@@ -54,12 +54,24 @@ Missing controls corrected: joint Goal/Preferences authority, initialization col
 
 No new roadmap point ya dependency/status/title change hua. Backend, Website, brand, Control aur .github runtime/CI placeholders unchanged hain. Goal, source snapshots, universal reference spec aur existing documentation helpers unchanged hain. Preflight new HEAD/live main equality `28588c59463e8cf2f3a13be97df49ae3021ec83b` par verified thi; final reconciliation commit/push sirf independent new remote par hoga. Closure ki exact commit identity Git history se resolve karein; completion response se pehle clean working tree aur live HEAD-to-main equality mandatory hain.
 
+## MT-1.1 source inventory closure
+
+User ke Proceed par sirf MT-1.1 execute hua. `docs/migration/SOURCE_FILE_INVENTORY.json` tamam 824 POS + 400 Website tracked paths/blob hashes/retention decisions record karta hai. `SOURCE_SYMBOL_INVENTORY.json` 316 application routes, 42 models, 79 migrations, 2,368 source method declarations, registry keys, command declarations aur family traceability record karta hai; unmapped files zero hain. `FEATURE_PARITY_REGISTER.md` 22 families ke reuse/adapt/refactor/migrate decisions aur target-pending gates deta hai.
+
+Originals par koi runtime command nahi chala. Ignored isolated pinned exports mein fresh locked dependencies install hue; synthetic environment, in-memory SQLite, fake storage/mail/HTTP, disabled integrations aur Vite bypass ke saath POS 202 tests/2,695 assertions aur Website 236 tests/2,806 assertions pass hue, zero errors/failures/skips. `CHARACTERIZATION.md` exact boundaries, initial corrected harness-key error, commands aur limits deta hai. `MT_1_1_VERIFICATION.json` individual 438 test cases aur evidence hashes rakhta hai. Yeh source characterization hai, target test/build acceptance nahi.
+
+Verified inventory risks: POS outlet User versus Website customer/admin User collision; copied catalogue/order transport retirement needs transaction parity; source stock return exists but full sale-refund route absent; Control port-based taskkill needs target process ownership; duplicate brand/Control copies aur unrelated unreferenced school-template partials selective-retention candidates hain. No valid capability retired in this point. Required returns acceptance MT-2.5 mein explicit ki gayi hai; detailed schema/API design MT-1.2 pending hai.
+
+Roadmap/SOT v1.2, same-basename DOCX aur README pointers reconciled hain. Word mirror ke 32 stable IDs/status blocks aur 174 visible content blocks equal hain. LibreOffice unavailable tha; installed Word ki hidden read-only PDF export aur Poppler rasterization se 13 pages visually verified hue. Goal/Preferences bytes, original snapshots, target component placeholders aur project registry unchanged hain. Checkpoint-specific authority/artifact hashes `docs/migration/CHECKPOINT_VERIFICATION.json` mein hain; initialization verification remains historical.
+
+Preflight new repository HEAD/live main `f9c1f8d0a6b226e6abce818fc775f5d4898583cc` par equal aur clean the. Intended checkpoint sirf new private `lawangin00/mobisttech` ke `main` par commit/push hai; no force-push. Exact closure commit `git log -1 -- docs/migration/CHECKPOINT_VERIFICATION.json` se resolve karein. Completion response ke liye clean working tree, local HEAD/upstream/live main equality aur final original-source snapshot check required hain.
+
 ## Recovery aur next action
 
-Initialization ya completed Preferences reconciliation dobara na karein. Next applicable Y/Proceed par MT-1.1 - Source inventory and feature parity register execute karein, after verifying current ledger, approved Goal/Preferences, source/roadmap and Git state. Is MT-0.1-only verification mein application migration ya MT-1.1 execution start nahi hui.
+MT-0.1 aur MT-1.1 dobara execute na karein. Next applicable Y/Proceed par sirf MT-1.2 - Unified data, API and security design execute karein, after current ledger, Goal/Preferences, source/roadmap aur Git verification. Abhi stop; application migration start nahi hui.
 
 ## HOLD / decisions
 
 Roadmap H-01 through H-04 authoritative register hai: live production/cutover, authentic provider contracts/credentials, sensitive data export/destructive restore aur unrelated category/feature expansion boundaries. MySQL detailed mappings, auth/API design, target ports, exact frontend/runtime locks aur approved branding inventory MT-1.* mein verify honge. Yeh initialization ko block nahi karte.
 
-No source-repository write, source-data migration, source runtime action, real payment-provider activation, external message or production change authorized/performed in this checkpoint.
+No source-repository write, source-data migration, source runtime action, real payment-provider activation, external message or production change performed in this checkpoint. Only isolated synthetic source characterization ran; application migration and MT-1.2 are pending.
