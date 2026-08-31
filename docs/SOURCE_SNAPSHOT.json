@@ -1,0 +1,26 @@
+{
+  "captured_date": "2026-08-31",
+  "scope": "Git refs, status, origin and tracked-file bytes only; ignored runtime data not accessed",
+  "sources": [
+    {
+      "path": "C:\\mobiST\\mobiST-POS",
+      "head": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "branch": "main",
+      "origin": "https://github.com/lawangin00/mobiST-POS.git",
+      "status": "",
+      "tracked_files": 824,
+      "tracked_worktree_sha256": "3586bd2b72331b3d2941412548f72ca82f5d15aba73d158a3d0a6d88bcef57f3",
+      "missing_files": []
+    },
+    {
+      "path": "C:\\mobiST\\mobiST-Website",
+      "head": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "branch": "main",
+      "origin": "https://github.com/lawangin00/mobiST-Website.git",
+      "status": "",
+      "tracked_files": 400,
+      "tracked_worktree_sha256": "9ce009e0e746659c690287724fc301bca0d374d60603390f2e70f1ff33573a3d",
+      "missing_files": []
+    }
+  ]
+}

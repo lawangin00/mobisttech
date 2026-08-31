@@ -1,0 +1,46 @@
+# Secrets and local runtime state
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.key
+*.pem
+*.pfx
+*.p12
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.sql
+*.sql.gz
+*.dump
+*.log
+*.pid
+*.cache
+.phpunit.cache/
+.phpunit.result.cache
+.DS_Store
+Thumbs.db
+
+# Dependencies and builds
+**/node_modules/
+**/vendor/
+**/.next/
+**/dist/
+**/coverage/
+**/playwright-report/
+**/test-results/
+**/__pycache__/
+**/bin/
+**/obj/
+backend/public/build/
+backend/public/hot
+backend/storage/
+backend/bootstrap/cache/*.php
+
+# Local evidence, exports and private migration input
+.local/
+backups/
+migration-input/
+uploads/
+~$*.docx
