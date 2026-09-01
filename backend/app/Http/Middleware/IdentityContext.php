@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Identity\RealmSessionPolicy;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +14,7 @@ class IdentityContext
         $realm = $request->route()->defaults['identity_realm'];
         abort_unless(in_array($realm, ['customer', 'admin'], true), 404);
         $request->attributes->set('identity_realm', $realm);
+        app(RealmSessionPolicy::class)->configureRequest($realm);
         if (! $request->isMethodSafe() && $request->isJson()) {
             try {
                 json_decode($request->getContent(), flags: JSON_THROW_ON_ERROR);

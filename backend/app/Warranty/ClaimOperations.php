@@ -178,7 +178,7 @@ final class ClaimOperations
             }
             $response = $callback();
             IdentityAudit::record('admin', $actor->id,
-                str_starts_with($operation, 'open') ? 'warranty_claim_opened' : 'warranty_claim_updated', 'claim:'.$response['claim_id']);
+                str_starts_with($operation, 'open') ? 'warranty_claim_opened' : 'warranty_claim_updated', 'claim:'.$response['claim_id'], $outlet->id);
             DB::table('idempotency_requests')->where('id', $request->id)->update(['status' => 'completed',
                 'response' => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
                 'resource_type' => 'claim', 'updated_at' => now()]);

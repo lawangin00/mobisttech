@@ -1,0 +1,115 @@
+{
+  "checkpoint": "MT-2.19 - Team member roles, delegated access and session security remediation",
+  "date": "2026-09-01",
+  "starting_commit": "8f5d607c4777b095abf7e8b3fd26ab8bd7f5833e",
+  "approved_requirement": {
+    "path": "docs/PROJECT_REQUIREMENTS_TEAM_MEMBERS_SESSION_POLICY_v1.0.md",
+    "sha256": "94b42b6462b8e0e70a85991a3609d3de0ef21bd8f3e87ddea600744b8803b472",
+    "preservation": "PASS: byte-for-byte copy of the approved supplied requirement"
+  },
+  "scope": {
+    "implemented": [
+      "named default and Custom Role permission snapshots over the existing Admin credential realm",
+      "protected Full Access and delegation ceilings for permissions and outlets",
+      "individual Team Member records with optional non-authoritative Job Title",
+      "historical actor, Role and outlet audit snapshots",
+      "central 30-minute Admin and 120-minute Customer true-human-inactivity policies",
+      "Admin browser-close and no-remember policy plus optional Customer remember capped at 30 days",
+      "central Admin warning and continue-session contract",
+      "ten-minute recent-authentication gate for classified sensitive Admin operations",
+      "password-change session and remember-token revocation regression coverage"
+    ],
+    "excluded": [
+      "MT-2.9 supplier and procurement implementation",
+      "later POS, Website and administration interface completion",
+      "private source-data migration or source runtime/database activity",
+      "external-provider, message, deployment or production changes"
+    ]
+  },
+  "source_boundary": {
+    "pos_commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+    "website_commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+    "working_trees": "PASS: both protected source working trees clean under read-only git --no-optional-locks inspection with command-local safe.directory",
+    "source_runtime_or_database_used": false,
+    "private_rows_imported": false
+  },
+  "schema": {
+    "mysql": "8.4.11",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "timezone": "+00:00",
+    "strict": true,
+    "tables": 91,
+    "columns": 1089,
+    "foreign_keys": 153,
+    "indexes": 398,
+    "canonical_seed_rows": 287,
+    "business_rows": 0,
+    "sha256": "3906dc0f88ab3180e9887c2b7a06dea8366d419a580ee5ac22c49b36ccbf10ed",
+    "rollback_sha256": "00f9478e641f4d73b5b61e9bb736cf8cffad5f766df7630d80961886c10f7115",
+    "rollback_reapply": "PASS on the empty disposable test schema",
+    "local_clean_apply": "PASS: migrate:fresh applied every migration through MT-2.19 on the isolated target database"
+  },
+  "acceptance": {
+    "focused_team_member_session": "PASS: 8 tests, 54 assertions",
+    "identity_regression": "PASS: 18 tests, 130 assertions",
+    "combined_security_regression": "PASS: 26 tests, 184 assertions",
+    "backend_full": "PASS: 131 tests, 4773 assertions",
+    "schema_verifier": "PASS: MT-2.19 normalized schema and rollback/reapply",
+    "php_format": "PASS: Pint test mode",
+    "composer": "PASS: strict validation and platform requirements",
+    "laravel_runtime": "PASS: optimize and optimize:clear",
+    "backend_build": "PASS: TypeScript and Vite production build, 569 modules",
+    "website": "PASS: ESLint, TypeScript and Next.js production build",
+    "routes": "PASS: Team Member and Role writes are server-authorized and recent-auth protected",
+    "online_advisory_refresh": "NOT CLAIMED: dependency locks are unchanged and no online registry audit was required for this point"
+  },
+  "verified_contracts": [
+    "human credential realms remain Customer and Admin only",
+    "Roles never become guards or credential providers",
+    "existing direct permissions remain explicit compatibility grants and named Role permissions form a server-owned union",
+    "new permission definitions never auto-expand an existing Role or Custom Role snapshot",
+    "delegated administration cannot exceed the actor's own effective permissions or outlet memberships",
+    "Full Access assignment requires a protected permission that Custom Roles cannot contain",
+    "menu hiding is never treated as authorization",
+    "background polling and refresh requests cannot keep a human session alive",
+    "Admin and Customer inactivity and remember behavior remain independent",
+    "sensitive changes fail when recent authentication is absent or stale",
+    "disabled or revoked Admin accounts fail promptly",
+    "audit history retains actor name, Role and outlet snapshots"
+  ],
+  "roadmap_document": {
+    "markdown_version": "1.8",
+    "source_of_truth_version": "1.8",
+    "points": 54,
+    "content_blocks": 261,
+    "docx_pages": 22,
+    "markdown_docx_parity": "PASS",
+    "visual_qa": "PASS: all 22 rendered pages inspected at original detail with no clipping, overlap, broken headings or footer defects",
+    "render_method": "Microsoft Word PDF export followed by Poppler PNG rendering because LibreOffice was unavailable",
+    "rendered_pdf_sha256": "7588e36d55ede464f1432345558daaa16f2a38718915924d92734c6e853ff56d"
+  },
+  "artifact_sha256": {
+    "backend/app/Models/Admin.php": "df50a1a5268a8956b10e759659ca246d5af2a4e01fb9f8612f44aff7cb9cb807",
+    "backend/app/Models/Role.php": "98a5f813b01b8d622a8c5742b734f50acd9dea48e35741b5d2d260376b641e4c",
+    "backend/app/Identity/RealmSessionPolicy.php": "d0dfce3ca51f5b937b979a6a69f630f7cdddb1f0b059d8ce5fa318a710685274",
+    "backend/app/Identity/TeamMemberAdministration.php": "b11a8405f7cf771f8dffa352d7575df446df7af297c7cb687b0e9227db9a4413",
+    "backend/app/Http/Middleware/RecentlyAuthenticated.php": "d84bb1ffbaca43d62d8d8a96f7b1372edcc52979404436942c5198cf107b2d89",
+    "backend/app/Http/Controllers/TeamMemberController.php": "e6fec7df4561f1855dcd10a7899359e49bc4801e491d1851643be06539aafb63",
+    "backend/database/migrations/2026_09_01_150000_add_team_member_roles_and_session_security.php": "5368e4c7c0b6c170cf3669930f12af6b992fe2fae8f964228d7717360134ce36",
+    "backend/resources/js/components/admin-session-boundary.tsx": "a5390cf55d9b9239ae97d98b0969b6dfd2038373b7fa029dbd59094886286371",
+    "backend/tests/Feature/TeamMemberSessionSecurityTest.php": "56c998667fa2a25da6d16269f314c8e5e0060e4db79bea4fbfc2bce773f7c132",
+    "docs/team-members/RECONCILIATION.md": "8a949794dc97a1b695c93f88b6edd7a79d7960221507d1020f2c7bae841c4a97",
+    "docs/PROJECT_IMPLEMENTATION_STATUS.md": "79e038d16235de5a57afbbca9f6abe28136d1040a57c3631971a4aff18b0b966"
+  },
+  "authority_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5",
+    "docs/PROJECT_REQUIREMENTS_TEAM_MEMBERS_SESSION_POLICY_v1.0.md": "94b42b6462b8e0e70a85991a3609d3de0ef21bd8f3e87ddea600744b8803b472",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "c64849e8d43f021eaf63b1ace7a3db1934e1ac1a6d417443dce9f379cb503d27",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "080146c17340d3952cd3fc8f34f5d39dd62e50c6db7b4632f2eedb7a45a29a38",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "64bee280dae4eb8a6c2e703042fcfef0f9a909e1167ac16864a23fe6cdf9a04f"
+  },
+  "next": "MT-2.9 - Supplier and procurement services"
+}

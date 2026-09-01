@@ -3,6 +3,7 @@ import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
 import Foundation from './pages/foundation';
 import Integrations from './pages/integrations';
+import AdminSessionBoundary from './components/admin-session-boundary';
 
 void createInertiaApp({
     title: (title) => `${title} | mobiST Tech`,
@@ -12,6 +13,6 @@ void createInertiaApp({
         throw new Error('Unknown application page');
     },
     setup({ el, App, props }) {
-        createRoot(el).render(<App {...props} />);
+        createRoot(el).render(<AdminSessionBoundary><App {...props} /></AdminSessionBoundary>);
     },
 });

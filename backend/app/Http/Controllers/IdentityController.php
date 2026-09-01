@@ -6,6 +6,7 @@ use App\Identity\Access;
 use App\Identity\CustomerIdentity;
 use App\Identity\IdentityAudit;
 use App\Identity\PosSessions;
+use App\Identity\RealmSessionPolicy;
 use App\Integrations\GmailRecovery;
 use App\Models\Admin;
 use App\Models\CustomerAccount;
@@ -44,6 +45,7 @@ class IdentityController extends Controller
         Auth::guard('customer')->login($user);
         $request->session()->regenerate();
         $request->session()->put('identity_version', $user->auth_version ?? 1);
+        app(RealmSessionPolicy::class)->login($request, 'customer');
 
         return $this->account($request)->setStatusCode(201);
     }
@@ -54,9 +56,15 @@ class IdentityController extends Controller
         $credentials = $request->validate(['email' => ['required', 'email', 'max:255'], 'password' => ['required', 'string', 'max:128'], 'remember' => ['sometimes', 'boolean']]);
         $realm = $request->attributes->get('identity_realm');
         $guard = Auth::guard($realm);
+        $policy = app(RealmSessionPolicy::class);
+        $policy->configureGuard($guard, $realm);
+        if ($realm === 'admin' && $request->boolean('remember')) {
+            throw ValidationException::withMessages(['remember' => 'Remember Me is not available for Team Members.']);
+        }
         $previousId = $guard->id();
         $previousSession = $request->session()->getId();
-        if (! $guard->attempt(['email' => strtolower(trim($credentials['email'])), 'password' => $credentials['password']], $request->boolean('remember'))) {
+        $remember = $realm === 'customer' && $request->boolean('remember');
+        if (! $guard->attempt(['email' => strtolower(trim($credentials['email'])), 'password' => $credentials['password']], $remember)) {
             IdentityAudit::record($realm, null, 'login_failed');
             throw ValidationException::withMessages(['email' => 'The email or password is incorrect.']);
         }
@@ -91,6 +99,7 @@ class IdentityController extends Controller
             }
         }
         $request->session()->put('identity_version', $user->auth_version);
+        $policy->login($request, $realm);
         IdentityAudit::record($realm, $user->id, 'login_succeeded');
 
         return $this->account($request);
@@ -118,7 +127,36 @@ class IdentityController extends Controller
         }
         $user = Auth::guard($request->attributes->get('identity_realm'))->user();
 
-        return response()->json(['data' => ['id' => $user->public_id, 'name' => $user->name, 'email' => $user->email, 'mobile' => $user->mobile]]);
+        $realm = $request->attributes->get('identity_realm');
+        $data = ['id' => $user->public_id, 'name' => $user->name, 'email' => $user->email, 'mobile' => $user->mobile,
+            'session_policy' => app(RealmSessionPolicy::class)->publicContract($realm)];
+        if ($user instanceof Admin) {
+            $data += ['job_title' => $user->job_title, 'roles' => $user->roleNames(), 'permissions' => $user->effectivePermissions()];
+        }
+
+        return response()->json(['data' => $data]);
+    }
+
+    public function activity(Request $request)
+    {
+        $this->only($request, []);
+        $realm = $request->attributes->get('identity_realm');
+        app(RealmSessionPolicy::class)->recordHumanActivity($request, $realm, Auth::guard($realm)->id());
+
+        return response()->json(['data' => ['session_policy' => app(RealmSessionPolicy::class)->publicContract($realm)]]);
+    }
+
+    public function confirmPassword(Request $request)
+    {
+        $this->only($request, ['password']);
+        $data = $request->validate(['password' => ['required', 'string', 'max:128']]);
+        $realm = $request->attributes->get('identity_realm');
+        $user = Auth::guard($realm)->user();
+        abort_unless(Hash::check($data['password'], $user->password), 422, 'Password is incorrect.');
+        app(RealmSessionPolicy::class)->confirmRecentAuthentication($request);
+        IdentityAudit::record($realm, $user->id, 'recent_authentication_confirmed');
+
+        return response()->json(['data' => ['confirmed' => true, 'valid_for_minutes' => config('identity.sessions.'.$realm.'.recent_auth_minutes')]]);
     }
 
     public function outlets(Request $request)

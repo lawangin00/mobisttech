@@ -19,11 +19,13 @@ class SharedSchemaTest extends TestCase
         foreach ($spec['tables'] as $name => $table) {
             $columns = collect(Schema::getColumns($name))->keyBy('name');
             $identityColumns = match ($name) {
-                'users', 'admins', 'super_admins' => ['public_id', 'auth_version'],
-                'account_sessions' => ['revoked_at'],
+                'users', 'super_admins' => ['public_id', 'auth_version'],
+                'admins', 'account_sessions' => [],
                 default => [],
             };
             $expectedColumns = match ($name) {
+                'admins' => [...array_slice(array_column($table['columns'], 'name'), 0, 10), 'job_title', ...array_slice(array_column($table['columns'], 'name'), 10), 'public_id', 'auth_version'],
+                'account_sessions' => [...array_slice(array_column($table['columns'], 'name'), 0, 10), 'last_human_activity', ...array_slice(array_column($table['columns'], 'name'), 10), 'revoked_at'],
                 'sales' => ['id', 'public_id', 'version', 'product_id', 'outlet_id', 'sale_date', 'sale_price', 'invoice_id', 'quantity', 'returned_quantity',
                     'total_price', 'created_at', 'updated_at', 'purchase_price', 'discount_allocated', 'net_total_price', 'profit', 'invoice_detail_options', 'invoice_detail_snapshot'],
                 'return_lines' => ['id', 'public_id', 'return_id', 'invoice_id', 'sale_id', 'stock_unit_id', 'successor_stock_unit_id', 'quantity', 'unit_price',

@@ -31,7 +31,7 @@ final class PosSessions
                 ['device_type' => $this->deviceType($request), 'location_key' => $this->locationKey($request),
                     'ip_address' => $request->ip(), 'session_id' => $request->session()->getId(),
                     'user_agent' => Str::limit((string) $request->userAgent(), 1000, ''),
-                    'last_activity' => now(), 'created_at' => now(), 'updated_at' => now(), 'revoked_at' => null]
+                    'last_activity' => now(), 'last_human_activity' => now(), 'created_at' => now(), 'updated_at' => now(), 'revoked_at' => null]
             );
 
             return null;
@@ -41,7 +41,9 @@ final class PosSessions
     public function validateCurrent(Request $request, string $guard, int $accountId): ?string
     {
         $record = $this->active($guard, $accountId)->where('device_id', $this->deviceId($request))->first();
-        if (! $record || ! hash_equals($record->session_id, $request->session()->getId())) {
+        if (! $record || ! hash_equals($record->session_id, $request->session()->getId())
+            || ! $record->last_human_activity
+            || strtotime((string) $record->last_human_activity) <= now()->subMinutes((int) config('identity.sessions.admin.inactivity_minutes'))->timestamp) {
             return 'Session is expired, replaced or revoked.';
         }
         if ($record->location_key !== $this->locationKey($request)
@@ -67,7 +69,7 @@ final class PosSessions
     private function active(string $guard, int $accountId)
     {
         return DB::table('account_sessions')->where('guard', $guard)->where('account_id', $accountId)
-            ->whereNull('revoked_at')->where('last_activity', '>=', now()->subMinutes((int) config('session.lifetime', 30)));
+            ->whereNull('revoked_at')->where('last_human_activity', '>', now()->subMinutes((int) config('identity.sessions.admin.inactivity_minutes')));
     }
 
     private function deviceId(Request $request): string

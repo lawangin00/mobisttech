@@ -237,7 +237,7 @@ final class SalesOperations
                 return json_decode($request->response, true, flags: JSON_THROW_ON_ERROR);
             }
             $response = $callback();
-            IdentityAudit::record('admin', $actor->id, $operation === 'sale' ? 'sale_created' : 'return_accepted', ($operation === 'sale' ? 'invoice:' : 'return:').($response[$operation === 'sale' ? 'invoice_id' : 'return_id']));
+            IdentityAudit::record('admin', $actor->id, $operation === 'sale' ? 'sale_created' : 'return_accepted', ($operation === 'sale' ? 'invoice:' : 'return:').($response[$operation === 'sale' ? 'invoice_id' : 'return_id']), $outlet->id);
             DB::table('idempotency_requests')->where('id', $request->id)->update(['status' => 'completed', 'response' => json_encode($response, JSON_THROW_ON_ERROR),
                 'resource_type' => $operation, 'updated_at' => now()]);
 

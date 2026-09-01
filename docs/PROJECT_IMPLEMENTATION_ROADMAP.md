@@ -1,6 +1,6 @@
 # mobiST Tech - Project Implementation Roadmap
 
-Version: 1.7 | Date: 2026-09-01
+Version: 1.8 | Date: 2026-09-01
 
 Canonical Goal: docs/PROJECT_GOAL.md
 
@@ -13,6 +13,10 @@ Addendum traceability: docs/REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md
 Approved superseding requirement: docs/PROJECT_REQUIREMENTS_UNIFIED_ADMIN_GOOGLE_v1.0.md
 
 Superseding reconciliation: docs/remediation/RECONCILIATION.md
+
+Approved Team Member/session requirement: docs/PROJECT_REQUIREMENTS_TEAM_MEMBERS_SESSION_POLICY_v1.0.md
+
+Team Member/session reconciliation: docs/team-members/RECONCILIATION.md
 
 Source of Truth: docs/PROJECT_SOURCE_OF_TRUTH.md
 
@@ -28,7 +32,7 @@ The original POS/Website folders, remotes and data are immutable references. All
 
 Every point includes applicable focused/full tests, parity evidence, secrets review, source-boundary checks and ledger updates. Routine execution progress updates the ledger only and must not edit this roadmap or regenerate its DOCX. Regenerate/verify the DOCX only when roadmap structure/content materially changes. MT-1.1 detailed inventory may refine this roadmap from evidence, but valid functionality must not be silently dropped and completed IDs must not be renumbered.
 
-Goal, Preferences, approved addendum v1.1 and the approved unified Admin/Google integrations superseding requirement apply. For working features, assess reuse/adapt/refactor/migrate before rewrite; rewrite requires a verified reason. Verify parity, data consistency, integration and regression incrementally rather than using a big-bang rewrite. Prefer conventional solutions, justified Redis roles and a Laravel-only business backend; do not introduce a parallel Node/Express business backend. Record stack deviations only for verified unavoidable blockers and never silently resolve a Goal conflict.
+Goal, Preferences, approved addendum v1.1, the approved unified Admin/Google integrations superseding requirement and the approved Team Member/session security requirement apply. For working features, assess reuse/adapt/refactor/migrate before rewrite; rewrite requires a verified reason. Verify parity, data consistency, integration and regression incrementally rather than using a big-bang rewrite. Prefer conventional solutions, justified Redis roles and a Laravel-only business backend; do not introduce a parallel Node/Express business backend. Record stack deviations only for verified unavoidable blockers and never silently resolve a Goal conflict.
 
 Roman Urdu is limited to assistant chat/UI communication. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal/Preferences remain byte-preserved in their original language/content.
 
@@ -153,9 +157,17 @@ Scope: Migrate Website order/payment/COD/project-payment services into shared tr
 
 Acceptance: Price/amount/ownership verification, retry/replay, expiration, confirmation-versus-release, reconciliation and payment-failure recovery tests pass. Disabled providers remain safe. Mode-denied new commerce flows cannot bypass backend checks; callbacks and authorized historical resources remain safe across switching.
 
-### MT-2.9 - Supplier and procurement services
+### MT-2.19 - Team member roles, delegated access and session security remediation
 
 Dependencies: MT-2.7
+
+Scope: Preserve exactly the Admin and Customer credential realms while presenting internal personnel as individual Team Members. Implement explicit default and safe Custom Role permission bundles, protected Full Access authority, separate outlet assignments, server-side delegation ceilings, privilege-escalation prevention, per-human auditability and historical actor/role/outlet snapshots. Centralize realm session policy: Admin uses a 30-minute true inactivity timeout, no Remember Me and browser-close sessions across POS and Website administration; Customer uses a separate 120-minute inactivity policy and optional remembered login capped at 30 days. Provide a five-minute Admin inactivity warning contract/UI, ensure background requests do not extend human activity, revoke sessions/remembered state after password or security changes, and require centralized recent authentication for classified sensitive Admin actions.
+
+Acceptance: Only Admin and Customer human guards exist; supplied roles and Custom Roles are authorization bundles rather than credential providers, and Job Title grants no authority. Fresh negative tests prove Customer/Admin isolation, direct API authorization, permission/outlet delegation ceilings, protected Full Access, no self-promotion, Custom Role validation, disabled/revoked sessions, Admin no-remember/30-minute inactivity/background behavior, Customer 120-minute/capped-remember/browser-close behavior, password/reset revocation and stale recent-auth rejection. Existing unified Admin/device/CSRF/origin/ownership protections and durable business records remain intact; focused/full security, migration/schema, frontend/backend build and regression gates pass.
+
+### MT-2.9 - Supplier and procurement services
+
+Dependencies: MT-2.19
 
 Scope: Extend acquisition-source capture with supplier/vendor profiles, contacts, purchase orders, lines, status, expected dates, partial receiving, landed/unit costs and supplier-to-acquisition history (P1). Add outlet/product reorder thresholds, low/out-of-stock alerts and actionable procurement recommendations (P2).
 
@@ -311,9 +323,9 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 Dependencies: MT-3.4
 
-Scope: Build the React/TypeScript/Inertia/Tailwind POS shell, role landing pages, authentication and safe navigation.
+Scope: Build the React/TypeScript/Inertia/Tailwind POS shell, Team Member role landing pages, authentication and safe navigation. Consume the Laravel-owned MT-2.19 Admin session policy, effective permissions, outlet assignments and centralized inactivity warning/continuation contract.
 
-Acceptance: Desktop/mobile role journeys and direct-route permissions pass in Playwright; menu hiding is not treated as authorization.
+Acceptance: Desktop/mobile role journeys and direct-route permissions pass in Playwright; menu hiding is not treated as authorization. Every POS employee uses an individual Team Member credential; background refresh cannot preserve an otherwise inactive Admin session.
 
 ### MT-4.2 - POS inventory and transaction interfaces
 
@@ -351,9 +363,9 @@ Acceptance: Role-scoped flows, historical records, Thermal 80mm/A4 preview-downl
 
 Dependencies: MT-4.3
 
-Scope: Migrate protected React admin screens for Website CMS and POS configuration, revisions/media/branding/payment settings. Include three-way Website mode selector, per-mode preview and publish impact, revision rollback, case studies/digital testimonials/knowledge content, promotion/coupon and optional loyalty settings.
+Scope: Migrate protected React admin screens for Website CMS and POS configuration, Team Member/Role administration, revisions/media/branding/payment settings. Consume the same Laravel-owned Admin realm, effective permissions, outlet/delegation ceilings and session/recent-auth policy as POS. Include three-way Website mode selector, per-mode preview and publish impact, revision rollback, case studies/digital testimonials/knowledge content, promotion/coupon and optional loyalty settings.
 
-Acceptance: Separate permissions, preview/publish/rollback, safe recovery, secret masking and Dynamic Platform parity acceptance pass. Publish permissions remain distinct from editing; publication triggers verified cache/sitemap/SEO revalidation and does not delete historical data.
+Acceptance: Separate permissions, safe delegated Team Member/Custom Role changes, protected Full Access, preview/publish/rollback, safe recovery, secret masking and Dynamic Platform parity acceptance pass. Publish permissions remain distinct from editing; publication triggers verified cache/sitemap/SEO revalidation and does not delete historical data.
 
 ### MT-4.8 - Digital operations administration interfaces
 
@@ -388,9 +400,9 @@ Acceptance: Public-payload privacy, metadata, responsive layouts, pagination and
 
 Dependencies: MT-5.1
 
-Scope: Migrate registration/login/account, multi-line cart, customer order history/access and review eligibility. Add mode-aware wishlist/save-for-later, availability/price opt-in preferences and unsubscribe controls; expose optional loyalty state through owned contracts.
+Scope: Migrate registration/login/account under the separate Customer realm, multi-line cart, customer order history/access and review eligibility. Consume the MT-2.19 120-minute Customer inactivity, optional capped remembered-login, browser-close and re-authentication contracts. Add mode-aware wishlist/save-for-later, availability/price opt-in preferences and unsubscribe controls; expose optional loyalty state through owned contracts.
 
-Acceptance: Session boundaries, ownership, guest-to-account behavior, cart recovery and eligible-review Playwright/API journeys pass. Unavailable products, guest-to-account ownership and consent/deduplication pass; inactive marketing does not remove required order/invoice access or add unused client bundles.
+Acceptance: Session boundaries, capped remembered login, password/reset revocation, ownership, guest-to-account behavior, durable cart recovery and eligible-review Playwright/API journeys pass. Unavailable products, guest-to-account ownership and consent/deduplication pass; inactive marketing does not remove required order/invoice/client history or add unused client bundles.
 
 ### MT-5.3 - Checkout and customer payment flows
 
@@ -462,7 +474,7 @@ Acceptance: Record/relation/control-total reconciliation, rerun/idempotency, rol
 
 Dependencies: MT-7.1
 
-Scope: Audit authentication/authorization, uploads/content, secrets, payments, stock concurrency, queues, API/cache performance and recovery. Audit every added domain, capability switching/history exceptions and continuous per-mode performance budgets under production-like builds.
+Scope: Audit authentication/authorization, Team Member RBAC/delegation/outlet boundaries, Admin/Customer session and recent-auth policy, uploads/content, secrets, payments, stock concurrency, queues, API/cache performance and recovery. Audit every added domain, capability switching/history exceptions and continuous per-mode performance budgets under production-like builds.
 
 Acceptance: MySQL concurrency, cache outage/stale-data behavior, worker retries, negative paths, dependency audits and focused/full regression pass; verified gaps are remediated. Record representative LCP <= 2.5 s, INP <= 200 ms, CLS <= 0.1 and stable mobile Lighthouse 90+ targets across all modes; do not substitute Lighthouse for interaction evidence. Document cause, measured impact and remediation/acceptance for each justified exception.
 
@@ -499,7 +511,7 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 Dependencies: MT-7.5
 
-Scope: Independently audit the complete Goal and Preferences, requirement map, all completed-point claims, Git/code/data, migration/recovery, security, integrations, CI, documentation, HOLD register and source immutability. Include approved requirements addendum v1.1, safe reset, retail/digital expansion, all three Website modes and measured performance exceptions.
+Scope: Independently audit the complete Goal and Preferences, requirement map, all completed-point claims, Git/code/data, migration/recovery, security, integrations, CI, documentation, HOLD register and source immutability. Include approved requirements addendum v1.1, the unified Admin/Google requirement, the Team Member/delegated-access/session-security requirement, safe reset, retail/digital expansion, all three Website modes and measured performance exceptions.
 
 Acceptance: Reopen required gaps; the new repository must be clean and remote-aligned. Report `Project complete: 100%` only after a clean final audit; Deferred required work cannot substitute for completion. Verify original eight completed points were preserved and every subsequently required extension was independently accepted.
 

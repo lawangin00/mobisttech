@@ -18,8 +18,11 @@ Last reconciled: 2026-09-01
 - Approved superseding requirement: `docs/PROJECT_REQUIREMENTS_UNIFIED_ADMIN_GOOGLE_v1.0.md`
 - Superseding requirement SHA-256: `76fa2f903fa6e3e07912cfcdb76cb76e10f1ea1d8fd0331591234fd07f5bb458`
 - Superseding reconciliation: `docs/remediation/RECONCILIATION.md`
-- Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.7
-- Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.7
+- Approved Team Member/session requirement: `docs/PROJECT_REQUIREMENTS_TEAM_MEMBERS_SESSION_POLICY_v1.0.md`
+- Team Member/session requirement SHA-256: `94b42b6462b8e0e70a85991a3609d3de0ef21bd8f3e87ddea600744b8803b472`
+- Team Member/session reconciliation: `docs/team-members/RECONCILIATION.md`
+- Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.8
+- Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.8
 - Roadmap Word mirror: `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
 - Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r6 (universal 1.11 / system 7.4)
 - FINAL-AUDIT: `FINAL-AUDIT - Independent final project audit`
@@ -32,13 +35,13 @@ Last completed stage: MT-1 - Migration inventory and design
 
 Current In Progress point: None
 
-Status: MT-0 and MT-1 complete. MT-2 is in progress. 13/53 complete, 40 pending. MT-2.7 is complete; MT-2.9 is not started.
+Status: MT-0 and MT-1 complete. MT-2 is in progress. 14/54 complete, 40 pending. MT-2.19 is complete; MT-2.9 is not started.
 
-Last completed point: MT-2.7 - Unified orders, reservations and payments
+Last completed point: MT-2.19 - Team member roles, delegated access and session security remediation
 
 Next pending point: MT-2.9 - Supplier and procurement services
 
-Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, unified Admin/customer authorization, product/master-data, inventory/acquisition/stock transactions, internal POS sale/invoice/accepted-return authority, warranty/claim authority, canonical business profile and secure Google integration/backup services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales/claim mapping uses synthetic rows only. Real MySQL stock, return and claim concurrency and the existing `mobisttech-drive:` temporary read/write/delete check are verified. Actual private-data migration, authentic Gmail OAuth consent/test send, production Google verification, payment collection/refund execution, transfer/procurement/reset/publication workflows, complete POS/Website interfaces, rendered warranty documents, brand, Control and CI remain pending. Backend tests do not constitute live Gmail/provider, payment/refund, complete UI, rendered-document or private-data import acceptance.
+Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, unified Admin/customer authorization, Team Member Role/delegation authority, centralized Admin/Customer session policy, product/master-data, inventory/acquisition/stock transactions, internal POS sale/invoice/accepted-return authority, warranty/claim authority, canonical business profile and secure Google integration/backup services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales/claim mapping uses synthetic rows only. Real MySQL stock, return and claim concurrency and the existing `mobisttech-drive:` temporary read/write/delete check are verified. Actual private-data migration, authentic Gmail OAuth consent/test send, production Google verification, payment collection/refund execution, transfer/procurement/reset/publication workflows, complete POS/Website interfaces, rendered warranty documents, brand, Control and CI remain pending. Backend tests do not constitute live Gmail/provider, payment/refund, complete UI, rendered-document or private-data import acceptance.
 
 Approved addendum v1.1 expands required work without reinitialization. MT-2.8 implements its prerequisites only; mode publication/reset/retail/digital feature workflows remain pending at their named points.
 
@@ -236,7 +239,19 @@ The additive migration preserves the 86-table set and yields 1,052 columns, 143 
 
 Approved Goal/Preferences/addendum, Source of Truth, registry and structural roadmap Markdown/DOCX remain unchanged, so Word regeneration is neither required nor performed. No public business route, private source-data import, source runtime/database action, provider activation, external message or production change occurs. The owned target MySQL must return to its initial stopped state after final Git checks. Intended synchronization remains only this monorepo's private `origin/main`; MT-2.9 remains not started.
 
-## Roadmap point state - v1.7
+## MT-2.19 Team member roles, delegated access and session security remediation closure - 2026-09-01
+
+The approved requirement is preserved byte-for-byte in `docs/PROJECT_REQUIREMENTS_TEAM_MEMBERS_SESSION_POLICY_v1.0.md` and reconciled in `docs/team-members/RECONCILIATION.md`. It extends the unified Admin architecture without reopening MT-2.18 or MT-2.7. Runtime human credentials remain exactly Customer and Admin; Team Member Roles are authorization bundles, not new guards/providers. Existing direct permissions remain an explicit compatibility input to effective permissions while relational named and Custom Roles provide protected snapshots that never auto-acquire future permission definitions.
+
+The backend now owns Team Member creation, Role assignment, outlet assignment and safe delegation. An actor cannot grant permissions or outlets outside the actor's own effective ceiling, change the actor's own access, create a Custom Role containing the protected Full Access assignment permission or assign Full Access without that explicit protected permission. Job Title is descriptive only. Historical Team Member and operational audit records retain actor name, Role snapshots and outlet context independently of later Role changes.
+
+Laravel centrally enforces 30 minutes of true human inactivity for Admin and 120 minutes for Customer. Background requests cannot refresh either clock. Admin uses browser-close cookies and rejects remembered login; Customer uses browser-close cookies by default and may use a remembered login capped at 30 days. A five-minute Admin warning/continuation component consumes the same backend human-activity contract. Sensitive Team Member, Role, profile, credential and integration changes require a login/password-confirmed timestamp no older than ten minutes. Password change preserves existing account-wide session and remember-token revocation.
+
+The additive migration yields 91 tables, 1,089 columns, 153 foreign keys and 398 indexes with normalized schema hash `3906dc0f88ab3180e9887c2b7a06dea8366d419a580ee5ac22c49b36ccbf10ed`. Empty disposable rollback returns the verified MT-2.7 hash `00f9478e641f4d73b5b61e9bb736cf8cffad5f766df7630d80961886c10f7115`, and reapply restores the identical MT-2.19 hash. Fresh focused verification passes 8 tests / 54 assertions; identity regression passes 18 tests / 130 assertions; the full backend suite passes 131 tests / 4,773 assertions. Pint, Composer validation/platform requirements, optimize/clear, POS TypeScript/Vite build and Website lint/typecheck/Next.js build pass.
+
+The Source of Truth and structural roadmap advance once to v1.8. The roadmap contains 54 points and 261 visible content blocks; its same-basename DOCX has matching content, renders as 22 pages and all 22 pages were visually inspected without clipping or overlap. `docs/team-members/MT_2_19_VERIFICATION.json` records the detailed implementation, schema, regression, document, source-protection and artifact evidence. No source runtime/database/remote, private business data, provider, external message or production system is changed. The owned target MySQL must return to its initial stopped state after final Git checks. Intended synchronization remains only this monorepo's private `origin/main`; MT-2.9 remains not started.
+
+## Roadmap point state - v1.8
 
 This is the live status list. Completed counts are preserved from verified Git checkpoints; newly inserted points start Pending and advance only through their own verified checkpoint. The structural roadmap defines scopes and acceptance.
 
@@ -255,6 +270,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-2.6 | Warranty and claim migration | Completed |
 | MT-2.18 | Unified Admin identity and Google integrations remediation | Completed |
 | MT-2.7 | Unified orders, reservations and payments | Completed |
+| MT-2.19 | Team member roles, delegated access and session security remediation | Completed |
 | MT-2.9 | Supplier and procurement services | Pending |
 | MT-2.10 | Stocktake and cycle-count services | Pending |
 | MT-2.11 | Inter-outlet stock transfer services | Pending |
@@ -298,10 +314,10 @@ This is the live status list. Completed counts are preserved from verified Git c
 
 ## Recovery and next action
 
-Do not re-execute the thirteen completed points, addendum reconciliation or unified Admin/Google remediation. After the MT-2.7 checkpoint is committed/pushed and clean synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-2.9 - Supplier and procurement services`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r6 is current; routine progress requires no roadmap Word regeneration. Already-open chat/Work sessions that previously loaded r5 or older must run one `Refresh` / `VP:REFRESH-REGISTRY` before using aliases again; new chats load r6 on their first project alias. Broader addendum feature workflows remain assigned to their respective later points.
+Do not re-execute the fourteen completed points, addendum reconciliation, unified Admin/Google remediation or Team Member/session remediation. After the MT-2.19 checkpoint is committed/pushed and clean synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-2.9 - Supplier and procurement services`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r6 is current. Roadmap v1.8 and its same-basename DOCX were regenerated and verified once for the MT-2.19 structural insertion; routine point progress does not regenerate Word. Already-open chat/Work sessions that previously loaded r5 or older must run one `Refresh` / `VP:REFRESH-REGISTRY` before using aliases again; new chats load r6 on their first project alias. Broader addendum feature workflows remain assigned to their respective later points.
 
 ## HOLD / decisions
 
-Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure, unified Admin/customer identity, product/master-data, stock/acquisition, internal and Website sale/invoice/accepted-return, warranty/claim, order/reservation/COD/manual-refund transactions, milestone payment identity, canonical business profile and secure Google integration/backup foundations now exist. Private business-data migration, authentic external provider activation/automatic refunds, supplier and broader financial processing, authentic Gmail consent/test send, Google production verification, later interfaces/rendered documents and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. The local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block verified MT-2.7 scope. Addendum features are approved planned work, not H-04 exclusions; production destructive resets remain separately authorized under H-01/H-03.
+Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure, unified Admin/customer identity, Team Member Role/delegation and session-policy authority, product/master-data, stock/acquisition, internal and Website sale/invoice/accepted-return, warranty/claim, order/reservation/COD/manual-refund transactions, milestone payment identity, canonical business profile and secure Google integration/backup foundations now exist. Private business-data migration, authentic external provider activation/automatic refunds, supplier and broader financial processing, authentic Gmail consent/test send, Google production verification, later interfaces/rendered documents and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. The local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block verified MT-2.19 scope. Addendum features are approved planned work, not H-04 exclusions; production destructive resets remain separately authorized under H-01/H-03.
 
 No source-repository write, source-data migration, source runtime action, real payment-provider activation, external message or production change is authorized or performed by this reconciliation.

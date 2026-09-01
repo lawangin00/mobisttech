@@ -265,7 +265,7 @@ final class OrderTransactions
                     'payload_hash' => hash('sha256', $actor->id.'|'.$outlet->id.'|'.$receiptReference.'|'.$amount),
                     'merchant' => $payment->merchant, 'mode' => $payment->mode];
                 $result = $this->applyReceipt('cod', $event);
-                IdentityAudit::record('admin', $actor->id, 'cod_collected', 'order:'.$order->order_number);
+                IdentityAudit::record('admin', $actor->id, 'cod_collected', 'order:'.$order->order_number, $outlet->id);
 
                 return $result;
             });
@@ -343,7 +343,7 @@ final class OrderTransactions
             $refunded = bcadd($reserved, $refundAmount, 2);
             DB::table('orders')->where('id', $return->order_id)->update(['refund_status' => bccomp($refunded, $payment->amount, 2) === 0 ? 'refunded' : 'partial',
                 'refunded_at' => bccomp($refunded, $payment->amount, 2) === 0 ? now() : null, 'updated_at' => now()]);
-            IdentityAudit::record('admin', $actor->id, 'manual_refund_verified', 'refund:'.$public);
+            IdentityAudit::record('admin', $actor->id, 'manual_refund_verified', 'refund:'.$public, $outlet->id);
 
             return ['refund_id' => $public, 'status' => 'completed', 'amount' => $refundAmount, 'currency' => 'PKR'];
         });

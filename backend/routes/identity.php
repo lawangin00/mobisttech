@@ -3,6 +3,7 @@
 use App\Http\Controllers\BusinessProfileController;
 use App\Http\Controllers\IdentityController;
 use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\TeamMemberController;
 use Illuminate\Support\Facades\Route;
 
 foreach (['customer', 'admin'] as $realm) {
@@ -15,6 +16,8 @@ foreach (['customer', 'admin'] as $realm) {
         ['POST', '/auth/reset-password', 'reset', false],
         ['PATCH', '/auth/password', 'changePassword', true],
         ['GET', '/account', 'account', true],
+        ['POST', '/auth/activity', 'activity', true],
+        ['POST', '/auth/confirm-password', 'confirmPassword', true],
     ];
     if ($realm === 'customer') {
         $routes[] = ['POST', '/auth/register', 'register', false];
@@ -35,15 +38,22 @@ foreach (['customer', 'admin'] as $realm) {
     }
 }
 Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->group(function () {
+    Route::get('/team-members', [TeamMemberController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.team-members.index');
+    Route::get('/roles', [TeamMemberController::class, 'roles'])->defaults('identity_realm', 'admin')->name('admin.roles.index');
+    Route::post('/team-members', [TeamMemberController::class, 'store'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.team-members.store');
+    Route::patch('/team-members/{member:public_id}', [TeamMemberController::class, 'update'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.team-members.update');
+    Route::post('/roles', [TeamMemberController::class, 'storeRole'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.roles.store');
+    Route::patch('/roles/{role:public_id}', [TeamMemberController::class, 'updateRole'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.roles.update');
+    Route::delete('/roles/{role:public_id}', [TeamMemberController::class, 'destroyRole'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.roles.destroy');
     Route::get('/settings/integrations', [IntegrationController::class, 'page'])->defaults('identity_realm', 'admin')->name('admin.integrations.page');
     Route::get('/integrations', [IntegrationController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.integrations.index');
-    Route::post('/integrations/{provider}/connect', [IntegrationController::class, 'connect'])->defaults('identity_realm', 'admin')->middleware('throttle:identity')->name('admin.integrations.connect');
+    Route::post('/integrations/{provider}/connect', [IntegrationController::class, 'connect'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.integrations.connect');
     Route::get('/integrations/{provider}/callback', [IntegrationController::class, 'callback'])->defaults('identity_realm', 'admin')->name('admin.integrations.callback');
-    Route::post('/integrations/{provider}/test', [IntegrationController::class, 'test'])->defaults('identity_realm', 'admin')->middleware('throttle:identity')->name('admin.integrations.test');
-    Route::post('/integrations/google_drive/backup-now', [IntegrationController::class, 'backupNow'])->defaults('identity_realm', 'admin')->middleware('throttle:identity')->name('admin.integrations.backup-now');
-    Route::put('/integrations/google_drive/backup-settings', [IntegrationController::class, 'backupSettings'])->defaults('identity_realm', 'admin')->middleware('throttle:identity')->name('admin.integrations.backup-settings');
-    Route::delete('/integrations/{provider}', [IntegrationController::class, 'disconnect'])->defaults('identity_realm', 'admin')->middleware('throttle:identity')->name('admin.integrations.disconnect');
-    Route::put('/business-profile', [BusinessProfileController::class, 'update'])->defaults('identity_realm', 'admin')->middleware('throttle:identity')->name('admin.business-profile.update');
+    Route::post('/integrations/{provider}/test', [IntegrationController::class, 'test'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.integrations.test');
+    Route::post('/integrations/google_drive/backup-now', [IntegrationController::class, 'backupNow'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.integrations.backup-now');
+    Route::put('/integrations/google_drive/backup-settings', [IntegrationController::class, 'backupSettings'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.integrations.backup-settings');
+    Route::delete('/integrations/{provider}', [IntegrationController::class, 'disconnect'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.integrations.disconnect');
+    Route::put('/business-profile', [BusinessProfileController::class, 'update'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.business-profile.update');
 });
 Route::get('/sanctum/csrf-cookie', [IdentityController::class, 'csrf'])
     ->defaults('identity_realm', 'customer')->middleware('identity')->name('identity.csrf');

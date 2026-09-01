@@ -62,6 +62,12 @@ class Admin extends IdentityAccount
         'website.consultations.manage' => 'Manage consultations',
         'website.engagement.manage' => 'Manage engagement',
         'website.conversions.view' => 'View conversion analytics',
+        'team-members.view' => 'View Team Members and role assignments',
+        'team-members.manage' => 'Create and manage subordinate Team Members',
+        'team-members.roles.manage' => 'Create and manage delegated custom roles',
+        'team-members.outlets.assign' => 'Assign Team Members to delegated outlets',
+        'team-members.full-access.assign' => 'Assign protected Full Access authority',
+        'team-members.security.manage' => 'Manage Team Member security state',
     ];
 
     public const PERMISSIONS = self::OPERATIONAL_PERMISSIONS + self::CONFIGURATION_PERMISSIONS + Permissions::POS;
@@ -91,19 +97,44 @@ class Admin extends IdentityAccount
 
     public function hasPermission(string $permission): bool
     {
+        return in_array($permission, $this->effectivePermissions(), true);
+    }
+
+    public function effectivePermissions(): array
+    {
         $permissions = $this->permissions;
 
         // Existing administrator accounts remain fully capable until the
         // permissions migration/settings have been applied explicitly.
         if ($permissions === null) {
-            return in_array($permission, self::defaultPermissions(), true);
+            $permissions = self::defaultPermissions();
         }
 
-        return in_array($permission, $permissions, true);
+        $rolePermissions = $this->roles()->join('role_permissions', 'roles.id', '=', 'role_permissions.role_id')
+            ->whereNull('roles.archived_at')->pluck('role_permissions.permission_code')->all();
+
+        return array_values(array_unique([...$permissions, ...$rolePermissions]));
     }
 
     public function shops()
     {
         return $this->belongsToMany(Outlet::class, 'outlet_admins', 'admin_id', 'outlet_id');
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'admin_roles')->withPivot(['assigned_by_admin_id', 'assigned_at']);
+    }
+
+    public function roleNames(): array
+    {
+        return $this->roles()->whereNull('roles.archived_at')->orderBy('roles.name')->pluck('roles.name')->all();
+    }
+
+    public function roleSnapshot(): string
+    {
+        $roles = $this->roleNames();
+
+        return $roles ? implode(', ', $roles) : 'Legacy direct permissions';
     }
 }

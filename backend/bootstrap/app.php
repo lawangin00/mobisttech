@@ -4,6 +4,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IdentityAuthenticated;
 use App\Http\Middleware\IdentityContext;
 use App\Http\Middleware\IdentityCsrf;
+use App\Http\Middleware\RecentlyAuthenticated;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Application;
@@ -35,7 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             IdentityCsrf::class,
             SubstituteBindings::class,
         ]);
-        $middleware->alias(['identity.auth' => IdentityAuthenticated::class]);
+        $middleware->alias(['identity.auth' => IdentityAuthenticated::class, 'identity.recent' => RecentlyAuthenticated::class]);
         $middleware->prependToPriorityList(EncryptCookies::class, IdentityContext::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
