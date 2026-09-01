@@ -4,6 +4,7 @@ A new, independent mobiST Technologies monorepo. This is a controlled architectu
 
 ## Project control
 
+- [Project identity](docs/PROJECT_IDENTITY.json) - immutable Project ID, canonical private remote and local project boundary.
 - [Canonical project Goal](docs/PROJECT_GOAL.md) - the user's original file, preserved byte-for-byte.
 - [Binding project Preferences](docs/PROJECT_PREFERENCES.md) - approved implementation preferences, preserved byte-for-byte and applied alongside the Goal.
 - [Approved requirements addendum v1.1](docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md) / [clause traceability](docs/REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md) - supplemental scope; original Goal/Preferences stay unchanged.

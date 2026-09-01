@@ -1,6 +1,6 @@
 # mobiST Tech project instructions
 
-Read `docs/PROJECT_IMPLEMENTATION_STATUS.md`, its active Source of Truth/roadmap and Git/code before execution. Load `docs/AI_PROJECT_COMMAND_REGISTRY.md` once for the first alias in a session; reuse unless the user invokes Refresh Registry/Refresh/VP:REFRESH-REGISTRY.
+Resolve `docs/PROJECT_IDENTITY.json` first on the first project alias in every new/unbound session and bind the Session Project Lock to `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`. Only then read `docs/PROJECT_IMPLEMENTATION_STATUS.md`, its active Source of Truth/roadmap and Git/code, and load `docs/AI_PROJECT_COMMAND_REGISTRY.md` once for the session. Reuse the identity/registry for later aliases; Refresh never switches projects and only Switch Project / VP:SWITCH-PROJECT may intentionally rebind.
 
 The user's canonical Goal is `docs/PROJECT_GOAL.md`; binding implementation Preferences are `docs/PROJECT_PREFERENCES.md`. Read and apply both plus approved `docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md`; clause traceability is in `docs/REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md`. Addendum reconciliation does not rerun initialization or advance implementation. Architecture/execution interpretation is `docs/PROJECT_SOURCE_OF_TRUTH.md`. Current user instructions take precedence. Initialization cannot be marked complete until approved Goal and Preferences are registered and reconciled with the control documents; ask only for genuinely missing critical input.
 
