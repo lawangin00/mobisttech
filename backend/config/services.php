@@ -35,4 +35,25 @@ return [
         ],
     ],
 
+    'google' => [
+        'enabled' => env('EXTERNAL_INTEGRATIONS_ENABLED', false),
+        'gmail' => [
+            'client_id' => env('GOOGLE_GMAIL_CLIENT_ID'),
+            'client_secret' => env('GOOGLE_GMAIL_CLIENT_SECRET'),
+            'redirect' => env('GOOGLE_GMAIL_REDIRECT_URI', rtrim((string) env('IDENTITY_ADMIN_ORIGIN', 'http://127.0.0.1:18080'), '/').'/internal/admin/integrations/gmail/callback'),
+            'scopes' => ['https://www.googleapis.com/auth/gmail.send'],
+        ],
+        'google_drive' => [
+            'client_id' => env('GOOGLE_DRIVE_CLIENT_ID'),
+            'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
+            'redirect' => env('GOOGLE_DRIVE_REDIRECT_URI', rtrim((string) env('IDENTITY_ADMIN_ORIGIN', 'http://127.0.0.1:18080'), '/').'/internal/admin/integrations/google_drive/callback'),
+            'scopes' => ['https://www.googleapis.com/auth/drive.file'],
+        ],
+    ],
+
+    'google_drive' => [
+        'rclone_binary' => env('RCLONE_BINARY', 'rclone'),
+        'rclone_config' => env('RCLONE_CONFIG_PATH'),
+    ],
+
 ];

@@ -4,11 +4,11 @@ namespace Tests\Support;
 
 use App\Catalog\ProductDefinitions;
 use App\Inventory\InventoryOperations;
+use App\Models\Admin;
 use App\Models\Outlet;
 use App\Models\PosMasterDataOption;
 use App\Models\Product;
 use App\Models\StockUnit;
-use App\Models\SuperAdmin;
 use App\Services\PosInventoryMasterData;
 use Database\Seeders\PosMasterDataSeeder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -23,15 +23,17 @@ trait InventoryFixture
 {
     private Outlet $outlet;
 
-    private SuperAdmin $actor;
+    private Admin $actor;
 
     private function inventoryFixture(): void
     {
         $this->seed(PosMasterDataSeeder::class);
         $this->outlet = new Outlet;
         $this->outlet->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Synthetic inventory', 'outlet_code' => '024'])->save();
-        $this->actor = new SuperAdmin;
-        $this->actor->forceFill(['name' => 'Synthetic inventory operator', 'email' => 'stock@example.invalid', 'password' => 'SyntheticPass123!'])->save();
+        $this->actor = new Admin;
+        $this->actor->forceFill(['name' => 'Synthetic inventory operator', 'email' => 'stock@example.invalid', 'password' => 'SyntheticPass123!',
+            'permissions' => array_keys(Admin::PERMISSIONS)])->save();
+        $this->actor->shops()->attach($this->outlet);
     }
 
     private function product(bool $tracked = false): Product

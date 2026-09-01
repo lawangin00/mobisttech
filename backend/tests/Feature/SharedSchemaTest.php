@@ -32,6 +32,7 @@ class SharedSchemaTest extends TestCase
                     'issue_description', 'received_condition', 'accessories_received', 'assigned_to', 'diagnosis', 'resolution', 'internal_notes', 'received_at',
                     'expected_completion_at', 'resolved_at', 'delivered_at', 'customer_satisfied', 'follow_up_required', 'follow_up_at', 'follow_up_notes',
                     'activity_log', 'handled_by_admin_id', 'handled_by_name', 'warranty_snapshot', 'warranty_expires_at', 'public_id', 'version', 'active_stock_unit_id'],
+                'backup_records' => ['id', 'outlet_id', 'integration_connection_id', ...array_slice(array_column($table['columns'], 'name'), 2)],
                 default => [...array_column($table['columns'], 'name'), ...$identityColumns],
             };
             $this->assertSame($expectedColumns, $columns->keys()->all(), $name);
@@ -67,7 +68,7 @@ class SharedSchemaTest extends TestCase
             }
             $fks = Schema::getForeignKeys($name);
             $this->assertCount(count($table['foreign_keys']) + match ($name) {
-                'return_lines' => 3, 'claims' => 1, default => 0,
+                'return_lines' => 3, 'claims' => 1, 'backup_records' => 1, default => 0,
             }, $fks, $name);
             foreach ($fks as $relation) {
                 $this->assertSame('restrict', strtolower($relation['on_delete']), $name);

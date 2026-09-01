@@ -6,7 +6,6 @@ use App\Identity\Access;
 use App\Identity\IdentityAccount;
 use App\Identity\IdentityAudit;
 use App\Models\PosMasterDataOption;
-use App\Models\SuperAdmin;
 use App\Services\PosInventoryMasterData;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -30,7 +29,7 @@ final class MasterDataAdministration
             $option = $id ? PosMasterDataOption::whereKey($id)->where('list_key', $list)->lockForUpdate()->firstOrFail() : null;
             abort_if($action !== 'create' && ! $option, 404);
             $service = app(PosInventoryMasterData::class);
-            $realm = $actor instanceof SuperAdmin ? 'superadmin' : 'admin';
+            $realm = 'admin';
             $result = match ($action) {
                 'create' => $service->create($list, $input, $realm, $actor->id),
                 'update' => $service->update($option, $input, $realm, $actor->id),

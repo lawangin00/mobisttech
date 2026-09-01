@@ -27,6 +27,16 @@ final class IdentityImporter
         if (! $run || $run->status !== 'identity_rehearsal' || $run->target_identity !== DB::connection()->getDatabaseName()) {
             throw new InvalidArgumentException('An explicit target identity rehearsal run is required.');
         }
+        $websiteAdministrative = $source.'.'.$table === 'website.users'
+            && (! in_array($row['is_admin'] ?? null, [false, 0], true) || ($row['admin_role'] ?? null) !== null);
+        if (in_array($source.'.'.$table, ['pos.admins', 'pos.super_admins'], true) || $websiteAdministrative) {
+            $digest = hash('sha256', json_encode(['source_timezone' => $sourceTimezone, 'row' => $row], JSON_THROW_ON_ERROR));
+            DB::table('migration_quarantine')->insert(['run_id' => $runId, 'source_repository' => $source, 'source_table' => $table,
+                'source_primary_key' => (string) $row['id'], 'reason' => 'Superseded administrative identity requires explicit verified Admin mapping.',
+                'evidence_reference' => 'sha256:'.$digest]);
+
+            return ['outcome' => 'quarantined', 'reason' => 'Superseded administrative identity requires explicit verified Admin mapping.'];
+        }
         $manifest = json_decode(file_get_contents(base_path('../docs/schema/COLUMN_DESTINATIONS.json')), true, flags: JSON_THROW_ON_ERROR);
         $entry = collect($manifest['tables'])->first(fn ($entry) => $entry['source'] === $source && $entry['table'] === $table);
         $expected = array_column($entry['columns'], 'source_column');
@@ -86,8 +96,7 @@ final class IdentityImporter
                     }
                     $values[$destination] = $name === 'remember_token' ? null : $value;
                 }
-                $realm = $target === 'outlets' || $target === 'outlet_admins' ? 'pos'
-                    : ($target === 'admins' ? 'admin' : ($target === 'super_admins' ? 'superadmin' : ($row['is_admin'] ? 'website_admin' : 'customer')));
+                $realm = $target === 'outlets' || $target === 'outlet_admins' ? 'pos' : 'customer';
                 if (isset($values['password']) && ! in_array(password_get_info($values['password'])['algoName'], ['bcrypt', 'argon2i', 'argon2id'], true)) {
                     throw new InvalidArgumentException('Unsupported password hash.');
                 }
@@ -99,22 +108,13 @@ final class IdentityImporter
                         throw new InvalidArgumentException('Unknown POS permission.');
                     }
                 }
-                $legacyOwner = $target === 'users' && $row['is_admin'] && $row['admin_role'] === null;
-                if ($target === 'users') {
-                    if ($legacyOwner) {
-                        $values['admin_role'] = 'owner';
-                    }
-                    if ($row['is_admin'] && ! array_key_exists($values['admin_role'], User::ADMIN_ROLES)) {
-                        throw new InvalidArgumentException('Unknown Website admin role.');
-                    }
-                    if (! $row['is_admin'] && $row['admin_role'] !== null) {
-                        throw new InvalidArgumentException('Customer record carries an admin role.');
-                    }
-                }
                 if ($target === 'outlet_admins') {
                     foreach (['shop_id' => ['users', 'outlets', 'outlet_id'], 'admin_id' => ['admins', 'admins', 'admin_id']] as $field => [$sourceTable, $targetTable, $targetColumn]) {
-                        $mapped = DB::table('migration_identity_map')->where(['source_repository' => 'pos', 'source_table' => $sourceTable,
-                            'source_primary_key' => (string) $row[$field], 'target_table' => $targetTable])->value('target_id');
+                        $mapped = $field === 'admin_id'
+                            ? DB::table('admin_identity_mappings')->where(['source_repository' => 'pos', 'source_table' => $sourceTable,
+                                'source_primary_key' => (string) $row[$field]])->value('admin_id')
+                            : DB::table('migration_identity_map')->where(['source_repository' => 'pos', 'source_table' => $sourceTable,
+                                'source_primary_key' => (string) $row[$field], 'target_table' => $targetTable])->value('target_id');
                         if (! $mapped) {
                             throw new InvalidArgumentException('Unresolved outlet membership identity.');
                         }
@@ -132,7 +132,7 @@ final class IdentityImporter
                         'source_table' => $table, 'source_primary_key' => (string) $row['id'], 'verification_kind' => 'source-account-identity',
                         'verified_actor_type' => 'migration_run', 'verified_actor_id' => $runId, 'verified_at' => now(), 'verification_reason' => 'Mapped original customer credential identity; no contact matching.']);
                 }
-                IdentityAudit::record($realm, $id, $legacyOwner ? 'legacy_owner_mapped' : 'identity_imported', 'migration_run:'.$runId);
+                IdentityAudit::record($realm, $id, 'identity_imported', 'migration_run:'.$runId);
 
                 return ['outcome' => 'imported', 'target_table' => $target, 'target_id' => $id];
             });

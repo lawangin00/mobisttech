@@ -4,6 +4,7 @@ namespace App\Sales;
 
 use App\Addendum\FinancialReferences;
 use App\Addendum\MoneySnapshot;
+use App\Business\BusinessProfile;
 use App\Catalog\ProductDefinitions;
 use App\Identity\Access;
 use App\Identity\IdentityAccount;
@@ -15,7 +16,6 @@ use App\Models\Outlet;
 use App\Models\PosMasterDataOption;
 use App\Models\Product;
 use App\Models\StockUnit;
-use App\Models\SuperAdmin;
 use App\Services\PosInventoryMasterData;
 use App\Warranty\WarrantyClauses;
 use Illuminate\Support\Facades\DB;
@@ -63,10 +63,10 @@ final class SalesOperations
                 'outlet_id' => $outlet->id, 'total_bill' => $gross, 'discount' => $discount, 'final_bill' => bcsub($gross, $discount, 2),
                 'customer_id' => $customer?->id, 'customer_name' => $customer?->display_name ?? trim((string) ($data['customer_name'] ?? '')) ?: null,
                 'customer_phone' => $customer?->mobile ?? ($data['customer_phone'] ?? null), 'customer_cnic' => $data['customer_cnic'] ?? null,
-                'customer_info' => $data['customer_info'] ?? null, 'salesperson_admin_id' => $actor instanceof SuperAdmin ? null : $actor->id,
-                'salesperson_name' => $actor->name, 'business_snapshot' => json_encode(['contract' => 'outlet-business-at-sale.v1', 'outlet_id' => $outlet->public_id,
-                    'outlet_code' => $outlet->outlet_code, 'name' => $outlet->name, 'business_name' => $outlet->business_name,
-                    'business_legal_name' => $outlet->business_legal_name, 'business_email' => $outlet->business_email, 'business_phone' => $outlet->business_phone,
+                'customer_info' => $data['customer_info'] ?? null, 'salesperson_admin_id' => $actor->id,
+                'salesperson_name' => $actor->name, 'business_snapshot' => json_encode(['contract' => 'canonical-business-at-sale.v2', ...app(BusinessProfile::class)->current(), 'outlet_id' => $outlet->public_id,
+                    'outlet_code' => $outlet->outlet_code, 'outlet_name' => $outlet->name,
+                    'business_legal_name' => $outlet->business_legal_name, 'business_phone' => $outlet->business_phone,
                     'business_whatsapp' => $outlet->business_whatsapp, 'business_address' => $outlet->business_address,
                     'business_hours' => $outlet->business_hours, 'business_identifiers' => $outlet->business_identifiers], JSON_THROW_ON_ERROR),
                 'warranty_terms_snapshot' => json_encode(app(WarrantyClauses::class)->snapshot(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
@@ -179,7 +179,7 @@ final class SalesOperations
                 return json_decode($request->response, true, flags: JSON_THROW_ON_ERROR);
             }
             $response = $callback();
-            IdentityAudit::record($actor instanceof SuperAdmin ? 'superadmin' : 'admin', $actor->id, $operation === 'sale' ? 'sale_created' : 'return_accepted', ($operation === 'sale' ? 'invoice:' : 'return:').($response[$operation === 'sale' ? 'invoice_id' : 'return_id']));
+            IdentityAudit::record('admin', $actor->id, $operation === 'sale' ? 'sale_created' : 'return_accepted', ($operation === 'sale' ? 'invoice:' : 'return:').($response[$operation === 'sale' ? 'invoice_id' : 'return_id']));
             DB::table('idempotency_requests')->where('id', $request->id)->update(['status' => 'completed', 'response' => json_encode($response, JSON_THROW_ON_ERROR),
                 'resource_type' => $operation, 'updated_at' => now()]);
 

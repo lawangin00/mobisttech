@@ -12,12 +12,12 @@ final class PosSessions
 {
     public function register(Request $request, string $guard, int $accountId): ?string
     {
-        if (! in_array($guard, ['admin', 'superadmin'], true)) {
+        if ($guard !== 'admin') {
             throw new \InvalidArgumentException('POS session guard required.');
         }
 
         return DB::transaction(function () use ($request, $guard, $accountId) {
-            $table = $guard === 'admin' ? 'admins' : 'super_admins';
+            $table = 'admins';
             DB::table($table)->where('id', $accountId)->lockForUpdate()->firstOrFail();
             $device = $this->deviceId($request);
             $others = $this->active($guard, $accountId)->where('device_id', '!=', $device)->get();

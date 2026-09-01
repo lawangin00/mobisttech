@@ -11,7 +11,7 @@ class IdentityContext
     public function handle(Request $request, Closure $next)
     {
         $realm = $request->route()->defaults['identity_realm'];
-        abort_unless(in_array($realm, ['customer', 'admin', 'superadmin', 'website_admin'], true), 404);
+        abort_unless(in_array($realm, ['customer', 'admin'], true), 404);
         $request->attributes->set('identity_realm', $realm);
         if (! $request->isMethodSafe() && $request->isJson()) {
             try {

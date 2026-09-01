@@ -7,7 +7,6 @@ use App\Identity\IdentityAccount;
 use App\Identity\IdentityAudit;
 use App\Infrastructure\PrivateObjects;
 use App\Models\Outlet;
-use App\Models\SuperAdmin;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -34,7 +33,7 @@ final class AcquisitionDocuments
             $this->authorizedRow($actor, $outlet, $acquisitionId);
             DB::table('stock_acquisitions')->where('id', $acquisitionId)->lockForUpdate()->firstOrFail();
             DB::table('stock_acquisitions')->where('id', $acquisitionId)->update([$field => $key, 'updated_at' => now()]);
-            IdentityAudit::record($actor instanceof SuperAdmin ? 'superadmin' : 'admin', $actor->id, 'acquisition_evidence_attached', 'acquisition:'.$acquisitionId);
+            IdentityAudit::record('admin', $actor->id, 'acquisition_evidence_attached', 'acquisition:'.$acquisitionId);
         }, 3);
     }
 

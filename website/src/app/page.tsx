@@ -1,16 +1,21 @@
 import { readBackendHealth } from "@/lib/backend-health";
+import { readBusinessProfile } from "@/lib/business-profile";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const connected = await readBackendHealth();
+  const [connected, profile] = await Promise.all([readBackendHealth(), readBusinessProfile()]);
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-12">
-      <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-slate-500">mobiST Tech</p>
+      <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-slate-500">{profile?.business_name ?? "Website foundation"}</p>
       <h1 className="text-4xl font-semibold tracking-tight text-slate-950">Website foundation</h1>
       <p className="mt-5 text-lg leading-8 text-slate-600">Next.js, React, TypeScript and Tailwind are ready. Catalogue, customer accounts and checkout will be migrated through the shared Laravel API.</p>
       <p role="status" className="mt-8 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">Shared backend: {connected ? "connected" : "unavailable"}</p>
       <p className="mt-4 text-sm text-slate-500">Application foundation only. No business data is connected.</p>
+      {profile && <footer className="mt-8 border-t border-slate-200 pt-4 text-sm text-slate-600">
+        <p>{profile.business_name}</p><p><a href={`mailto:${profile.business_email}`}>{profile.business_email}</a></p>
+        <p><a href={profile.public_website}>{profile.public_website}</a></p>
+      </footer>}
     </main>
   );
 }

@@ -1,0 +1,136 @@
+{
+  "checkpoint": "MT-2.18 - Unified Admin identity and Google integrations remediation",
+  "date": "2026-09-01",
+  "starting_commit": "3267b9a1ae258bc782331d35fa69f3d89b3519e7",
+  "scope": {
+    "implemented": [
+      "one Admin credential realm shared by POS operations and Website administration",
+      "explicit legacy administrative mapping without email-based privilege union",
+      "explicit POS, Website, integration, backup and outlet authorization",
+      "canonical singleton business profile consumed by current runtime surfaces",
+      "Gmail OAuth 2.0 and Gmail API send-only integration with encrypted server tokens",
+      "proper text and HTML MIME sender, password-recovery link and session revocation behavior",
+      "safe Gmail connect, test, reconnect, disconnect and status operations",
+      "dynamic backend-only Google Drive and rclone connection with private portable configuration",
+      "live read, write and delete validation of the existing mobisttech-drive remote",
+      "encrypted Backup Now and scheduled backup jobs with retention and deployment provisioning"
+    ],
+    "excluded": [
+      "authentic Gmail consent and test send without provisioned Google OAuth secrets",
+      "Google production publishing, domain verification and OAuth verification",
+      "private source-data import or automatic reconciliation of real legacy people",
+      "migration, deletion or alteration of mobist-drive or previous-project archives",
+      "MT-2.7 and all later roadmap points"
+    ]
+  },
+  "authority": {
+    "requirement_copy": "byte-preserved from the supplied approved requirement",
+    "requirement_sha256": "76fa2f903fa6e3e07912cfcdb76cb76e10f1ea1d8fd0331591234fd07f5bb458",
+    "source_of_truth_version": "1.7",
+    "roadmap_version": "1.7",
+    "historical_mt_2_2_evidence_changed": false
+  },
+  "identity": {
+    "credential_realms": ["customer", "admin"],
+    "administrative_identity_label": "Admin",
+    "removed_runtime_models": ["SuperAdmin", "WebsiteAdmin"],
+    "legacy_mapping": "explicit source-qualified AdminIdentityReconciler decision with permission and credential digests",
+    "same_email_privilege_union": false,
+    "customer_admin_isolation": "PASS"
+  },
+  "business_profile": {
+    "business_name": "mobiST Technologies",
+    "business_email": "mobisttech@gmail.com",
+    "public_website": "https://mobisttech.com",
+    "runtime_consumers": ["public profile API", "Website metadata/contact/footer", "invoice snapshots", "Gmail sender", "password recovery"]
+  },
+  "gmail": {
+    "scope": "https://www.googleapis.com/auth/gmail.send",
+    "account": "mobisttech@gmail.com",
+    "tokens": "encrypted server-side; omitted from frontend, logs, Git and evidence",
+    "connected_gate": "exact account and scope plus actual backend test send",
+    "normal_smtp_or_app_password_setup": false,
+    "authentic_provider_test": "NOT CLAIMED: deployment OAuth client and user consent are production/operator inputs"
+  },
+  "google_drive": {
+    "remote": "mobisttech-drive:",
+    "namespace": "mobiST Tech/Backups/<environment>/<date>/",
+    "rclone": "1.75.0 on Windows development host",
+    "live_validation": "PASS: temporary object write, read, delete and cleanup",
+    "configured_remotes_seen": ["mobist-drive:", "mobisttech-drive:"],
+    "old_remote_or_archives_changed": false,
+    "frontend_rclone_access": false
+  },
+  "schema": {
+    "mysql": "8.4.11",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "timezone": "+00:00",
+    "strict": true,
+    "tables": 86,
+    "columns": 1042,
+    "foreign_keys": 142,
+    "indexes": 379,
+    "business_rows": 0,
+    "canonical_seed_rows": 3,
+    "sha256": "6f0b46482efd7a3a93e0986b3decf02d10ffaf62c4037d9f6ec204ddc877f488",
+    "rollback_reapply": "PASS: exact 81-table MT-2.6 baseline restored, then MT-2.18 reapplied"
+  },
+  "acceptance": {
+    "backend_full": "PASS: 116 tests, 4670 assertions",
+    "focused_admin_google": "PASS: 5 tests, 34 assertions",
+    "schema_verifier": "PASS: php tools/migration/verify_mysql_schema.php admin-google",
+    "php_format": "PASS: Pint",
+    "composer": "PASS: strict validation and platform requirements",
+    "backend_build": "PASS: TypeScript and Vite production build",
+    "website": "PASS: ESLint, TypeScript and Next.js production build",
+    "routes": "PASS: customer and Admin credential routes only; integration operations require authenticated Admin",
+    "secrets_scan": "PASS: examples contain blank Google client-secret values; no real OAuth, Gmail or rclone credentials found",
+    "protected_sources": "PASS: both source snapshots unchanged",
+    "online_advisory_refresh": "NOT CLAIMED: dependency lockfiles are unchanged and no new online audit was performed"
+  },
+  "roadmap_mirror": {
+    "points": 53,
+    "dependency_lines": 53,
+    "visible_content_blocks": 255,
+    "markdown_word_body_parity": "PASS",
+    "render_engine": "LibreOffice",
+    "rendered_pages": 22,
+    "visually_inspected_pages": 22,
+    "visual_result": "PASS: no clipping, overlap, missing text, broken headers or broken footers"
+  },
+  "corrections_during_verification": [
+    "Laravel scheduled callback naming was added before without-overlap protection so application boot and tests succeed.",
+    "The backup archive table enumerator was made compatible with MySQL information-schema column casing.",
+    "Google integration consumers were changed to read the canonical business-profile authority instead of repeating the approved business identity.",
+    "Detected existing rclone configurations now keep unmanaged mode for Backup Now and retention operations instead of incorrectly forcing the app-managed config path.",
+    "The DOCX renderer was pointed to the installed LibreOffice runtime after it was not present on the default process path."
+  ],
+  "artifact_sha256": {
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "01bcd56768fcff8dfd5f58516bcff2092570191b351aa20754655633e8dc2f25",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "17fef1f643435211efbf276885322ed4727931b4f67b0f7f74c663e4f3eb7ce6",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "db2c10382e16949ab8b67e17d9ffc8fbca25e53fae07cdeaf4fe81dae133914f",
+    "backend/app/Identity/AdminIdentityReconciler.php": "c42e6a9a71bfe779a33a5defedff3a073f364607f9c0a817af8a2e7f9847a355",
+    "backend/app/Integrations/IntegrationManager.php": "3d25782c882ec642238418de9482b0b5e8fb68bbb1d8d0f49daea3dcac4a9e8c",
+    "backend/app/Integrations/GoogleOAuthClient.php": "eb72b13d45aa3c72b640276170e91f964a7e1e06fd6867081fb3c957cc317431",
+    "backend/app/Integrations/GmailApi.php": "2d6a565648ddb0fb730f43e9867680ed2d1ded02f8df2df58002664a66ffbd29",
+    "backend/app/Integrations/RcloneGateway.php": "f8231d9f3eaf1f8304b3f005a632467390b6e97a68eded6064bd9b7fae51119c",
+    "backend/app/Backups/BackupArchive.php": "f49f2f6f0fac0e14372195764f5b43399da0b356a66274ea73b44237a3538796",
+    "backend/app/Backups/BackupService.php": "378711550cae6149b2b0c6cebdea2b73f17b7c59abe96b8e573b9b405a3bf1a3",
+    "backend/app/Jobs/CreateGoogleDriveBackup.php": "c6c571820cd2de85d65a959a2dfb4f861d11b5de4b59aa7f988c3f2a4c01eb74",
+    "backend/database/migrations/2026_09_01_130000_unify_admin_and_google_integrations.php": "04e34c18ca072d57c1acbb6592406c32d63212382f33487abdcc7dcc9692347b",
+    "backend/tests/Feature/UnifiedAdminGoogleIntegrationTest.php": "5ce703d94ee85ab4cdbb88f7e9df824c439e993b7aa85b61409dcd5bfc13635e",
+    "tools/deploy/Provision-Rclone.ps1": "1ec19821c018d0ff5a39c7efa83fe8f244a9c7009c3405db50131e2ba2741c63",
+    "tools/deploy/provision-rclone.sh": "ad8ca3d9507f36148f765b530e4efac02442941390b45875046d3f4ab8636a2a",
+    "tools/migration/verify_mysql_schema.php": "1a7eb195995beec4c24611d7a194b5548d032d62b7cdd672a37e955f4f1f6de6",
+    "website/src/lib/business-profile.ts": "63f921ae7fdb1aa8abbe7e195e3cccd25b9613d4ac03d3613e21e18e551e58bb"
+  },
+  "authority_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5",
+    "docs/PROJECT_REQUIREMENTS_UNIFIED_ADMIN_GOOGLE_v1.0.md": "76fa2f903fa6e3e07912cfcdb76cb76e10f1ea1d8fd0331591234fd07f5bb458",
+    "docs/AI_PROJECT_COMMAND_REGISTRY.md": "63fe5d304e5e49ada0b8c0a255a2b010f7d2ec8193db9accfe5959d5bdfb99e6"
+  },
+  "next": "MT-2.7 - Unified orders, reservations and payments"
+}

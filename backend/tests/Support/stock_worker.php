@@ -2,8 +2,8 @@
 
 use App\Inventory\InventoryOperations;
 use App\Inventory\TransactionalStock;
+use App\Models\Admin;
 use App\Models\Outlet;
-use App\Models\SuperAdmin;
 use App\Sales\SalesOperations;
 use App\Warranty\ClaimOperations;
 use Illuminate\Contracts\Console\Kernel;
@@ -32,11 +32,11 @@ try {
         return match ($input['operation']) {
             'reserve' => app(TransactionalStock::class)->reserve($input['id']),
             'sale' => app(TransactionalStock::class)->consumeSale($input['id']),
-            'imeis' => app(InventoryOperations::class)->imeis(SuperAdmin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
+            'imeis' => app(InventoryOperations::class)->imeis(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
                 $input['product'], $input['key'], ['unit_id' => $input['unit'], 'version' => 1, 'imeis' => [1 => 'race-imei-1', 2 => 'race-imei-2']]),
-            'return' => app(SalesOperations::class)->acceptReturn(SuperAdmin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
+            'return' => app(SalesOperations::class)->acceptReturn(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
                 $input['key'], $input['input']),
-            'claim' => app(ClaimOperations::class)->open(SuperAdmin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
+            'claim' => app(ClaimOperations::class)->open(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
                 $input['key'], $input['input']),
             default => throw new LogicException('Unknown synthetic operation.'),
         };

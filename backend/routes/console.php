@@ -1,8 +1,10 @@
 <?php
 
+use App\Backups\BackupService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -31,3 +33,8 @@ Artisan::command('foundation:check', function () {
 
     return 0;
 })->purpose('Verify target-only foundation connectivity without business data');
+
+Schedule::call(fn () => app(BackupService::class)->dispatchDue())
+    ->name('google-drive-business-backup')
+    ->hourly()
+    ->withoutOverlapping();

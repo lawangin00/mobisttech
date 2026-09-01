@@ -1,6 +1,6 @@
 # mobiST Tech - Project Source of Truth
 
-Version: 1.6 | Date: 2026-09-01
+Version: 1.7 | Date: 2026-09-01
 
 ## Authority, Goal and Preferences
 
@@ -9,6 +9,8 @@ Version: 1.6 | Date: 2026-09-01
 `docs/PROJECT_PREFERENCES.md` contains the approved binding implementation Preferences and applies alongside the Goal. Original source: `C:\Users\msaee\OneDrive\Desktop\mobisttech-preferences.md`; SHA-256: `e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402`. All 39 numbered Preferences are preserved unchanged.
 
 Approved scope expansion `docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md` (2026-09-01; SHA-256 `ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5`) is binding alongside the original inputs. Full clause-to-point coverage and dependency rationale are in `docs/REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md`. The addendum does not replace either original file or reinitialize the project.
+
+Approved superseding requirement `docs/PROJECT_REQUIREMENTS_UNIFIED_ADMIN_GOOGLE_v1.0.md` (2026-09-01; SHA-256 `76fa2f903fa6e3e07912cfcdb76cb76e10f1ea1d8fd0331591234fd07f5bb458`) is binding. It prospectively replaces the separate administrative credential providers implemented at MT-2.2 and the SMTP/Gmail App Password primary-email assumption. MT-2.2 evidence remains historical and unchanged. Reconciliation and implementation evidence are in `docs/remediation/` under `MT-2.18 - Unified Admin identity and Google integrations remediation`.
 
 Goal, Preferences and the approved addendum are binding. This document is their execution map, not a replacement or scope reduction. Current user instructions have highest authority; the Goal defines intended outcomes, Preferences define implementation boundaries, Source of Truth/roadmap define required work, the ledger defines project position, and Git/code evidence proves implementation. Legacy application documents are migration evidence only; their separate-database architecture does not apply to this new project. Global project-control specifications remain in registry/reference documents and are not duplicated into Goal or Preferences.
 
@@ -25,6 +27,8 @@ Roman Urdu is the default only for assistant chat/UI communication with the user
 5. Laravel backend and one master MySQL database own shared business state. Next.js must not receive master database credentials or direct transaction-writing access. Redis is derived cache/queue/session infrastructure, not another business master.
 6. Authentication/authorization, transaction arithmetic, stock integrity, payment verification and immutable history remain application-controlled. UI visibility is not a security boundary.
 7. Existing source completion is not completion of the new target. Fresh target gates are required; source test results may be used only as clearly labeled historical/characterization evidence.
+8. Target runtime has one administrative credential identity, `Admin`, shared by POS and Website administration. POS, Website, integration, reset and outlet access are explicit permissions/assignments. Customer identity remains isolated. Legacy administrative source records never merge by email and require explicit verified mapping.
+9. The singleton business profile is the current runtime authority for `mobiST Technologies`, `mobisttech@gmail.com` and `https://mobisttech.com`. Gmail API OAuth with only `gmail.send` is the primary transactional-email path; Gmail SMTP/App Password is not normal setup. Google Drive/rclone is backend-only, dynamically connected, private and portable.
 
 ## Binding implementation preferences
 
@@ -45,10 +49,11 @@ MT-0.1 re-verification and all-39-Preference coverage are recorded in `docs/INIT
 | Valid legacy functionality inventory/parity | docs + migrated tests | MT-1.1, MT-7.5, FINAL-AUDIT |
 | Laravel 13 shared backend | backend | MT-1.3, MT-2.1 |
 | Master MySQL; merged schema/data; Redis; S3 | backend | MT-1.2, MT-1.3, MT-2.1, MT-7.1 |
-| Shared identities, customer data, roles/authentication | backend | MT-2.2, MT-3.4, MT-4.1, MT-5.2 |
+| Unified Admin identity, customer isolation, roles/authentication | backend | MT-2.2, MT-2.18, MT-3.4, MT-4.1, MT-5.2 |
 | Products, variants/units, inventory, movements | backend + POS UI | MT-2.3, MT-2.4, MT-4.2 |
 | Sales, returns, warranties, reports, documents | backend + POS UI | MT-2.5, MT-2.6, MT-3.1, MT-4.3 |
-| Website orders, reservations, payments, integrations | backend + Website | MT-2.7, MT-3.3, MT-3.4, MT-5.3 |
+| Canonical business identity, Gmail API and Google Drive/rclone | backend + Admin + Website | MT-2.18, MT-3.1, MT-3.3, MT-4.4, MT-7.4 |
+| Website orders, reservations and payments | backend + Website | MT-2.7, MT-3.4, MT-5.3 |
 | React/TypeScript/Inertia/Tailwind POS | backend | MT-4.1 through MT-4.4 |
 | Next.js/React/TypeScript/Tailwind Website | website | MT-5.1 through MT-5.4 |
 | Catalogue, filters, product pages, SEO | website + REST API | MT-3.4, MT-5.1 |
@@ -81,7 +86,7 @@ Website order -> Laravel validates authenticated ownership, prices and availabil
 
 ## Migration design decisions to verify
 
-MT-1.1 inventories 1,224 tracked files, 316 application routes, 42 models, 79 migrations, source methods/settings/commands and 438 fresh isolated test cases. `docs/migration/FEATURE_PARITY_REGISTER.md` records reuse/adapt/refactor/migrate decisions, target gates and gaps. MT-1.2 design is complete: `docs/design/README.md` indexes the shared schema, source-qualified mappings, versioned API, authorization, transaction and recovery contracts. POS users map to outlets; separate credential providers preserve guard semantics; Website products become listings over canonical inventory; customer linking requires verified ownership. The mapping covers 58 source-qualified tables, all 42 models, 79 migration files and 316 routes, with 36 designed API operations and 34 pending implementation cases. POS `User` represents an outlet, not Website customer identity; inventory confirms stock-return behavior but no routed full sale-refund flow. Goal-required returns remain open under MT-2.5. The design preserves immutable history and exact money, defines active IMEI uniqueness, idempotent stock/payment/return transactions, COD holds, cache publication versions and full-schema/key recovery. Specification validation does not prove runtime behavior: MT-2.1 must complete the column manifest and disposable MySQL gates; implementation and parity remain pending. That was the MT-1.2 design baseline, not the current implementation position. Subsequent foundation, schema, identity, product and stock checkpoints are evidenced in the implementation ledger; private source-data migration remains unperformed. Addendum v1.1 requires additive design under MT-2.8 rather than retroactively reopening the original design checkpoint.
+MT-1.1 inventories 1,224 tracked files, 316 application routes, 42 models, 79 migrations, source methods/settings/commands and 438 fresh isolated test cases. `docs/migration/FEATURE_PARITY_REGISTER.md` records reuse/adapt/refactor/migrate decisions, target gates and gaps. MT-1.2 design is complete: `docs/design/README.md` indexes the shared schema, source-qualified mappings, versioned API, authorization, transaction and recovery contracts. POS users map to outlets; the original design used separate credential providers to preserve source guard semantics; Website products become listings over canonical inventory; customer linking requires verified ownership. The mapping covers 58 source-qualified tables, all 42 models, 79 migration files and 316 routes, with 36 designed API operations and 34 pending implementation cases. POS `User` represents an outlet, not Website customer identity; inventory confirms stock-return behavior but no routed full sale-refund flow. Goal-required returns remain open under MT-2.5. The design preserves immutable history and exact money, defines active IMEI uniqueness, idempotent stock/payment/return transactions, COD holds, cache publication versions and full-schema/key recovery. Specification validation does not prove runtime behavior: MT-2.1 must complete the column manifest and disposable MySQL gates; implementation and parity remain pending. That was the MT-1.2 design baseline, not the current implementation position. Subsequent foundation, schema, identity, product and stock checkpoints are evidenced in the implementation ledger; private source-data migration remains unperformed. Addendum v1.1 requires additive design under MT-2.8 rather than retroactively reopening the original design checkpoint. MT-2.18 prospectively supersedes only the target administrative credential/integration behavior; source mapping/history remains evidence.
 
 Website Admin/CMS moves into the shared backend's protected administration area, with separate permissions for POS and Website configuration. Shared branding has one master directory while controlled runtime copies/derivatives may live in application public/storage paths. Website and POS presentation settings may remain logically distinct within the single database.
 

@@ -5,8 +5,6 @@ namespace App\Identity;
 use App\Models\Admin;
 use App\Models\CustomerAccount;
 use App\Models\Outlet;
-use App\Models\SuperAdmin;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 final class Access
@@ -16,17 +14,11 @@ final class Access
         if (! $actor->usable()) {
             return false;
         }
-        if ($actor instanceof User) {
-            return $actor->canAdmin($permission);
-        }
         if (! array_key_exists($permission, Admin::PERMISSIONS)) {
             return false;
         }
         if (str_starts_with($permission, 'system.reset.')) {
-            return $actor instanceof SuperAdmin && $outlet === null;
-        }
-        if ($actor instanceof SuperAdmin) {
-            return $outlet === null || (! $outlet->status && $outlet->archived_at === null);
+            return $actor instanceof Admin && $actor->hasPermission($permission) && $outlet === null;
         }
         if (! $actor instanceof Admin || ! $actor->hasPermission($permission)) {
             return false;

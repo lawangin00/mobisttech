@@ -44,7 +44,8 @@ class ClaimOperationsTest extends TestCase
         $this->assertSame('shop_warranty', $claim['warranty']['type']);
         $this->assertFalse($claim['warranty']['legacy_product_fallback']);
         $this->assertSame('2026-09-02 10:00:00.000000', $claim['warranty']['expires_at']);
-        $this->assertSame('outlet-business-at-sale.v1', $claim['business']['contract']);
+        $this->assertSame('canonical-business-at-sale.v2', $claim['business']['contract']);
+        $this->assertSame('mobisttech@gmail.com', $claim['business']['business_email']);
         $this->assertSame($this->actor->name, $claim['handled_by_name']);
         CarbonImmutable::setTestNow('2026-09-02 10:00:01');
         $this->reject(fn () => app(ClaimOperations::class)->open($this->actor, $this->outlet, (string) Str::uuid(), [

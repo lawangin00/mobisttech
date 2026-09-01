@@ -8,7 +8,6 @@ use App\Identity\IdentityAudit;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\StockUnit;
-use App\Models\SuperAdmin;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -75,7 +74,7 @@ final class ClaimOperations
             $public = (string) Str::uuid();
             $id = DB::table('claims')->insertGetId(['public_id' => $public, 'claim_number' => $this->number($outlet), 'product_id' => $product->id,
                 'invoice_id' => $invoice->id, 'sale_id' => $sale->id, 'stock_unit_id' => $unit?->id, 'outlet_id' => $outlet->id,
-                'handled_by_admin_id' => $actor instanceof SuperAdmin ? null : $actor->id, 'handled_by_name' => $actor->name,
+                'handled_by_admin_id' => $actor->id, 'handled_by_name' => $actor->name,
                 'quantity' => $quantity, 'status' => 'received', 'issue_description' => trim($data['issue_description']),
                 'received_condition' => $this->nullable($data['received_condition'] ?? null), 'accessories_received' => $this->nullable($data['accessories_received'] ?? null),
                 'assigned_to' => $this->nullable($data['assigned_to'] ?? null), 'received_at' => $received,
@@ -178,7 +177,7 @@ final class ClaimOperations
                 return json_decode($request->response, true, flags: JSON_THROW_ON_ERROR);
             }
             $response = $callback();
-            IdentityAudit::record($actor instanceof SuperAdmin ? 'superadmin' : 'admin', $actor->id,
+            IdentityAudit::record('admin', $actor->id,
                 str_starts_with($operation, 'open') ? 'warranty_claim_opened' : 'warranty_claim_updated', 'claim:'.$response['claim_id']);
             DB::table('idempotency_requests')->where('id', $request->id)->update(['status' => 'completed',
                 'response' => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),

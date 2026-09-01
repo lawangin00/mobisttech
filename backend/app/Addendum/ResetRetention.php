@@ -18,12 +18,12 @@ final class ResetRetention
         'inventory' => ['products', 'stock_units', 'stock_movements', 'stock_acquisitions', 'product_imeis', 'active_imeis', 'product_listings', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references'],
         'business_content' => ['digital_services', 'site_managed_pages', 'site_navigation_items', 'site_media_assets', 'site_media_usages', 'customers', 'customer_source_links'],
         'configuration' => ['pos_configuration_revisions', 'site_configuration_revisions', 'pos_master_data_options', 'pos_master_data_usages', 'pos_media_assets', 'pos_media_usages',
-            'pos_settings', 'site_settings', 'site_secret_settings', 'website_operating_profiles'],
-        'bootstrap' => ['admins', 'super_admins', 'outlets', 'outlet_admins'],
+            'pos_settings', 'site_settings', 'site_secret_settings', 'website_operating_profiles', 'business_profiles', 'integration_connections'],
+        'bootstrap' => ['admins', 'outlets', 'outlet_admins'],
         'mixed_identity' => ['users'],
-        'preserved_evidence' => ['backup_records', 'pos_audit_logs', 'admin_audit_logs', 'identity_audit_events', 'migration_runs', 'migration_identity_map', 'migration_quarantine', 'migration_reconciliation', 'migration_source_history', 'legacy_integration_requests', 'legacy_integration_events'],
+        'preserved_evidence' => ['super_admins', 'backup_records', 'pos_audit_logs', 'admin_audit_logs', 'identity_audit_events', 'admin_identity_mappings', 'integration_events', 'migration_runs', 'migration_identity_map', 'migration_quarantine', 'migration_reconciliation', 'migration_source_history', 'legacy_integration_requests', 'legacy_integration_events'],
         'runtime' => ['cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'sessions', 'migrations', 'account_sessions', 'password_reset_tokens',
-            'admin_password_reset_tokens', 'super_admin_password_reset_tokens', 'site_admin_password_reset_tokens', 'personal_access_tokens', 'idempotency_requests', 'domain_events', 'publication_versions', 'document_sequences', 'resource_capabilities'],
+            'admin_password_reset_tokens', 'super_admin_password_reset_tokens', 'site_admin_password_reset_tokens', 'integration_oauth_states', 'personal_access_tokens', 'idempotency_requests', 'domain_events', 'publication_versions', 'document_sequences', 'resource_capabilities'],
     ];
 
     public function classify(string $level, array $tables): array

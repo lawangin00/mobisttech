@@ -15,7 +15,7 @@ use App\Models\Admin;
 use App\Models\CustomerAccount;
 use App\Models\Outlet;
 use App\Models\StockUnit;
-use App\Models\WebsiteAdmin;
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -90,16 +90,16 @@ class AddendumFoundationsTest extends TestCase
         $other = new Outlet;
         $other->forceFill(['name' => 'Other', 'outlet_code' => '028', 'public_id' => (string) Str::uuid()])->save();
         $this->assertFalse($access->allows($admin, 'shop.stocktake', $other));
-        $this->assertFalse($access->allows($admin, 'system.reset.factory'));
+        $this->assertTrue($access->allows($admin, 'system.reset.factory'));
         $this->assertTrue($access->allows($this->actor, 'system.reset.preview'));
         $this->assertFalse($access->allows($this->actor, 'system.reset.preview', $this->outlet));
-        $this->assertFalse($access->allows($this->actor, 'website.mode.publish'));
-        $cms = new WebsiteAdmin;
+        $this->assertTrue($access->allows($this->actor, 'website.mode.publish'));
+        $cms = new User;
         $cms->forceFill(['is_admin' => true, 'admin_role' => 'content_editor']);
-        $this->assertTrue($access->allows($cms, 'website.mode.preview'));
+        $this->assertFalse($access->allows($cms, 'website.mode.preview'));
         $this->assertFalse($access->allows($cms, 'website.mode.publish'));
         $cms->admin_role = 'owner';
-        $this->assertTrue($access->allows($cms, 'website.mode.publish'));
+        $this->assertFalse($access->allows($cms, 'website.mode.publish'));
         $this->assertFalse($access->allows($cms, 'system.reset.factory'));
         $customer = new CustomerAccount;
         $customer->forceFill(['is_admin' => false]);
@@ -256,10 +256,10 @@ class AddendumFoundationsTest extends TestCase
         $quote = $this->quote();
         $service = app(ResetRetention::class);
         $names = array_column(Schema::getTables(schema: DB::connection()->getDatabaseName()), 'name');
-        $this->assertCount(81, $names);
+        $this->assertCount(86, $names);
         foreach (ResetRetention::LEVELS as $level) {
             $plan = $service->classify($level, $names);
-            $this->assertCount(81, $plan['tables']);
+            $this->assertCount(86, $plan['tables']);
             $this->assertFalse($plan['executable']);
             $this->assertSame('preserve', $plan['tables']['backup_records']['action']);
         }

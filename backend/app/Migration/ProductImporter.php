@@ -64,7 +64,8 @@ final class ProductImporter
                             $actorTable = match ($type) {
                                 'admin' => 'admins', 'superadmin' => 'super_admins', default => throw new InvalidArgumentException('Unknown source actor realm.')
                             };
-                            $values[$kind.'_by_id'] = $this->mapped('pos', $actorTable, $actorId, $actorTable);
+                            $values[$kind.'_by_type'] = 'admin';
+                            $values[$kind.'_by_id'] = $this->mappedAdmin($actorTable, $actorId);
                         }
                     }
                 }
@@ -157,6 +158,20 @@ final class ProductImporter
             'source_primary_key' => (string) $id, 'target_table' => $target])->value('target_id');
         if (! $mapped || ! DB::table($target)->where('id', $mapped)->exists()) {
             throw new InvalidArgumentException('Unresolved source relationship; import its parent first.');
+        }
+
+        return (int) $mapped;
+    }
+
+    private function mappedAdmin(string $sourceTable, mixed $id): int
+    {
+        if ((! is_string($id) && ! is_int($id)) || ! ctype_digit((string) $id)) {
+            throw new InvalidArgumentException('Invalid legacy Admin identity.');
+        }
+        $mapped = DB::table('admin_identity_mappings')->where(['source_repository' => 'pos', 'source_table' => $sourceTable,
+            'source_primary_key' => (string) $id])->value('admin_id');
+        if (! $mapped || ! DB::table('admins')->where('id', $mapped)->exists()) {
+            throw new InvalidArgumentException('Legacy administrative actor requires explicit verified Admin mapping.');
         }
 
         return (int) $mapped;

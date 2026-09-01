@@ -5,7 +5,6 @@ namespace App\Warranty;
 use App\Identity\Access;
 use App\Identity\IdentityAccount;
 use App\Identity\IdentityAudit;
-use App\Models\SuperAdmin;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -53,7 +52,7 @@ final class WarrantyClauses
                 'created_by_type' => $actor::class, 'created_by_id' => $actor->id, 'published_by_type' => $actor::class,
                 'published_by_id' => $actor->id, 'published_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
             $response = $this->snapshot();
-            IdentityAudit::record($actor instanceof SuperAdmin ? 'superadmin' : 'admin', $actor->id, 'warranty_clauses_published', 'version:'.$version);
+            IdentityAudit::record('admin', $actor->id, 'warranty_clauses_published', 'version:'.$version);
             DB::table('idempotency_requests')->where('id', $request->id)->update(['status' => 'completed',
                 'response' => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
                 'resource_type' => 'pos_configuration_revision', 'updated_at' => now()]);

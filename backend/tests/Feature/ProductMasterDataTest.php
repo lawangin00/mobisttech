@@ -10,8 +10,7 @@ use App\Models\Outlet;
 use App\Models\PosMasterDataOption;
 use App\Models\Product;
 use App\Models\StockUnit;
-use App\Models\SuperAdmin;
-use App\Models\WebsiteAdmin;
+use App\Models\User;
 use App\Services\PosInventoryMasterData;
 use App\Support\BusinessIdentifier;
 use App\Support\PosMasterDataRegistry;
@@ -30,7 +29,7 @@ class ProductMasterDataTest extends TestCase
 
     private Outlet $outlet;
 
-    private SuperAdmin $actor;
+    private Admin $actor;
 
     protected function setUp(): void
     {
@@ -38,8 +37,10 @@ class ProductMasterDataTest extends TestCase
         $this->seed(PosMasterDataSeeder::class);
         $this->outlet = new Outlet;
         $this->outlet->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Synthetic outlet', 'outlet_code' => '007'])->save();
-        $this->actor = new SuperAdmin;
-        $this->actor->forceFill(['name' => 'Synthetic operator', 'email' => 'master@example.invalid', 'password' => 'SyntheticPass123!'])->save();
+        $this->actor = new Admin;
+        $this->actor->forceFill(['name' => 'Synthetic operator', 'email' => 'master@example.invalid', 'password' => 'SyntheticPass123!',
+            'permissions' => array_keys(Admin::PERMISSIONS)])->save();
+        $this->actor->shops()->attach($this->outlet);
     }
 
     public function test_source_registry_defaults_and_reseeding_preserve_managed_customization(): void
@@ -155,7 +156,7 @@ class ProductMasterDataTest extends TestCase
         DB::table('outlet_admins')->insert(['outlet_id' => $this->outlet->id, 'admin_id' => $admin->id]);
         $admin->forceFill(['permissions' => ['shops.enter']])->save();
         $this->reject(fn () => app(ProductDefinitions::class)->save($admin, $this->outlet, $base));
-        $cms = new WebsiteAdmin;
+        $cms = new User;
         $cms->forceFill(['name' => 'CMS', 'email' => 'cms-product@example.invalid', 'password' => 'SyntheticPass123!', 'is_admin' => true, 'admin_role' => 'owner'])->save();
         $this->reject(fn () => app(ProductDefinitions::class)->save($cms, $this->outlet, $base));
     }

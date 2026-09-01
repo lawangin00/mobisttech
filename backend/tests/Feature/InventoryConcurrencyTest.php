@@ -22,7 +22,7 @@ class InventoryConcurrencyTest extends TestCase
     private array $tables = ['identity_audit_events', 'domain_events', 'publication_versions', 'idempotency_requests', 'claim_events', 'claims', 'return_lines', 'returns', 'monetary_adjustments',
         'stock_unit_lineage', 'reservation_allocations', 'reservation_lines', 'reservations', 'product_imeis', 'active_imeis', 'stock_movements', 'stock_units',
         'stock_acquisitions', 'sales', 'invoices', 'order_items', 'orders', 'customers', 'document_sequences', 'pos_master_data_usages', 'products',
-        'pos_master_data_options', 'outlets', 'super_admins'];
+        'pos_master_data_options', 'outlet_admins', 'outlets', 'admins', 'super_admins'];
 
     private bool $ownsFixtures = false;
 

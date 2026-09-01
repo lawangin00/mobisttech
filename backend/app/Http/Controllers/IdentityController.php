@@ -6,7 +6,7 @@ use App\Identity\Access;
 use App\Identity\CustomerIdentity;
 use App\Identity\IdentityAudit;
 use App\Identity\PosSessions;
-use App\Identity\RecoveryNotification;
+use App\Integrations\GmailRecovery;
 use App\Models\Admin;
 use App\Models\CustomerAccount;
 use App\Models\Outlet;
@@ -61,13 +61,13 @@ class IdentityController extends Controller
             throw ValidationException::withMessages(['email' => 'The email or password is incorrect.']);
         }
         $user = $guard->user();
-        if ($previousId && in_array($realm, ['admin', 'superadmin'], true)) {
+        if ($previousId && $realm === 'admin') {
             DB::table('account_sessions')->where('guard', $realm)->where('account_id', $previousId)
                 ->where('session_id', $previousSession)->update(['revoked_at' => now()]);
         }
         $request->session()->regenerate();
         $request->session()->forget(['active_outlet_id', 'operator_admin_id']);
-        if (in_array($realm, ['admin', 'superadmin'], true)) {
+        if ($realm === 'admin') {
             $error = app(PosSessions::class)->register($request, $realm, $user->id);
             if ($error) {
                 $guard->logout();
@@ -100,7 +100,7 @@ class IdentityController extends Controller
     {
         $realm = $request->attributes->get('identity_realm');
         $user = Auth::guard($realm)->user();
-        if (in_array($realm, ['admin', 'superadmin'], true)) {
+        if ($realm === 'admin') {
             app(PosSessions::class)->release($request, $realm, $user->id);
         }
         IdentityAudit::record($realm, $user->id, 'logout');
@@ -148,11 +148,11 @@ class IdentityController extends Controller
     {
         $this->only($request, ['email']);
         $data = $request->validate(['email' => ['required', 'email', 'max:255']]);
-        abort_unless(config('identity.recovery_delivery_enabled') && ! in_array(config('mail.default'), ['log', 'array'], true), 503, 'Account recovery delivery is not configured.');
+        abort_unless(config('identity.recovery_delivery_enabled') && DB::table('integration_connections')->where('provider', 'gmail')->where('status', 'connected')->exists(), 503, 'Account recovery delivery is not configured.');
         $realm = $request->attributes->get('identity_realm');
         Password::broker($realm)->sendResetLink(['email' => strtolower(trim($data['email']))], function ($user, $token) use ($realm) {
             if ($user->usable()) {
-                $user->notify(new RecoveryNotification($realm, $token));
+                app(GmailRecovery::class)->send($user, $realm, $token);
             }
         });
 

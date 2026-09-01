@@ -12,7 +12,6 @@ use App\Models\Outlet;
 use App\Models\PosMasterDataOption;
 use App\Models\Product;
 use App\Models\StockUnit;
-use App\Models\SuperAdmin;
 use App\Services\PosInventoryMasterData;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -161,7 +160,7 @@ final class InventoryOperations
             $this->stock->snapshot($product->id);
             $response = $callback($product);
             $this->stock->snapshot($product->id);
-            IdentityAudit::record($actor instanceof SuperAdmin ? 'superadmin' : 'admin', $actor->id, 'inventory_'.$operation, 'product:'.$product->public_id);
+            IdentityAudit::record('admin', $actor->id, 'inventory_'.$operation, 'product:'.$product->public_id);
             DB::table('idempotency_requests')->where('id', $request->id)->update(['status' => 'completed', 'response' => json_encode($response, JSON_THROW_ON_ERROR),
                 'resource_type' => 'product', 'resource_id' => $product->id, 'updated_at' => now()]);
 

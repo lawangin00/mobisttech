@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Identity\AdminIdentityReconciler;
 use App\Identity\IdentityImporter;
+use App\Models\Admin;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -25,22 +27,26 @@ class IdentityMigrationTest extends TestCase
     public function test_same_source_ids_and_emails_remain_separate_outlet_and_credential_identities(): void
     {
         $hash = Hash::make('SyntheticPass123!');
-        foreach ([['pos', 'users'], ['pos', 'admins'], ['pos', 'super_admins'], ['website', 'users']] as [$source, $table]) {
+        foreach ([['pos', 'users'], ['website', 'users']] as [$source, $table]) {
             $row = $this->row($source, $table, ['id' => 7, 'email' => 'collision@example.invalid', 'password' => $hash, 'remember_token' => 'synthetic-old-token']);
             $result = $this->import($source, $table, $row);
             $this->assertSame('imported', $result['outcome'], json_encode($result));
         }
-        foreach (['outlets', 'admins', 'super_admins', 'users'] as $table) {
+        foreach ([['pos', 'admins'], ['pos', 'super_admins']] as [$source, $table]) {
+            $result = $this->import($source, $table, $this->row($source, $table, ['id' => 7, 'email' => 'collision@example.invalid', 'password' => $hash]));
+            $this->assertSame('quarantined', $result['outcome']);
+        }
+        foreach (['outlets', 'users'] as $table) {
             $this->assertSame(1, DB::table($table)->where('email', 'collision@example.invalid')->count());
         }
         $this->assertSame(1, DB::table('customers')->count());
         $this->assertSame(1, DB::table('customer_source_links')->count());
-        foreach (['admins', 'super_admins', 'users'] as $table) {
+        foreach (['users'] as $table) {
             $this->assertSame($hash, DB::table($table)->value('password'));
             $this->assertNull(DB::table($table)->value('remember_token'));
         }
         $this->assertSame('source-account-identity', DB::table('customer_source_links')->value('verification_kind'));
-        $this->assertSame(5, DB::table('migration_identity_map')->where('run_id', $this->run)->count());
+        $this->assertSame(3, DB::table('migration_identity_map')->where('run_id', $this->run)->count());
     }
 
     public function test_identity_replay_is_idempotent_and_changed_input_or_email_collision_is_quarantined(): void
@@ -63,10 +69,15 @@ class IdentityMigrationTest extends TestCase
     public function test_proven_legacy_owner_is_explicitly_mapped_and_audited_without_customer_identity(): void
     {
         $result = $this->import('website', 'users', $this->row('website', 'users', ['is_admin' => true, 'admin_role' => null]));
-        $this->assertSame('imported', $result['outcome'], json_encode($result));
-        $this->assertSame('owner', DB::table('users')->value('admin_role'));
+        $this->assertSame('quarantined', $result['outcome'], json_encode($result));
+        $verifier = $this->admin('verifier@example.invalid', ['config.users-roles.manage']);
+        $target = $this->admin('unified@example.invalid', ['website.content.manage']);
+        $mapped = app(AdminIdentityReconciler::class)->map($verifier, $target, ['repository' => 'website', 'table' => 'users', 'primary_key' => 1],
+            ['website.content.manage'], str_repeat('a', 64), 'Verified as the same human through migration review.');
+        $this->assertSame('mapped', $mapped['outcome']);
+        $this->assertSame($target->id, DB::table('admin_identity_mappings')->value('admin_id'));
         $this->assertSame(0, DB::table('customers')->count());
-        $this->assertSame(1, DB::table('identity_audit_events')->where('action', 'legacy_owner_mapped')->count());
+        $this->assertSame(1, DB::table('identity_audit_events')->where('action', 'legacy_admin_identity_mapped')->count());
     }
 
     public function test_invalid_privilege_values_are_quarantined_without_partial_accounts(): void
@@ -93,11 +104,14 @@ class IdentityMigrationTest extends TestCase
         $membership = $this->row('pos', 'shop_admins', ['shop_id' => 7, 'admin_id' => 9]);
         $this->assertSame('quarantined', $this->import('pos', 'shop_admins', $membership)['outcome']);
         $outlet = $this->import('pos', 'users', $this->row('pos', 'users', ['id' => 7]));
-        $admin = $this->import('pos', 'admins', $this->row('pos', 'admins', ['id' => 9]));
+        $verifier = $this->admin('mapping-verifier@example.invalid', ['config.users-roles.manage']);
+        $admin = $this->admin('mapped-admin@example.invalid', ['shops.enter']);
+        app(AdminIdentityReconciler::class)->map($verifier, $admin, ['repository' => 'pos', 'table' => 'admins', 'primary_key' => 9],
+            ['shops.enter'], str_repeat('b', 64), 'Verified source administrator identity.');
         $this->assertSame('imported', $this->import('pos', 'shop_admins', $membership)['outcome']);
         $link = DB::table('outlet_admins')->first();
         $this->assertSame($outlet['target_id'], $link->outlet_id);
-        $this->assertSame($admin['target_id'], $link->admin_id);
+        $this->assertSame($admin->id, $link->admin_id);
     }
 
     public function test_timestamps_hashes_and_unsupported_date_values_have_explicit_dispositions(): void
@@ -130,6 +144,14 @@ class IdentityMigrationTest extends TestCase
     private function import(string $source, string $table, array $row): array
     {
         return app(IdentityImporter::class)->import($this->run, $source, $table, $row, 'UTC');
+    }
+
+    private function admin(string $email, array $permissions): Admin
+    {
+        $admin = new Admin;
+        $admin->forceFill(['name' => 'Synthetic Admin', 'email' => $email, 'password' => Hash::make('SyntheticPass123!'), 'permissions' => $permissions])->save();
+
+        return $admin;
     }
 
     private function row(string $source, string $table, array $overrides = []): array

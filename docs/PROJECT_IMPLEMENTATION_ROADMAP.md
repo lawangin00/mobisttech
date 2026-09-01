@@ -1,6 +1,6 @@
 # mobiST Tech - Project Implementation Roadmap
 
-Version: 1.6 | Date: 2026-09-01
+Version: 1.7 | Date: 2026-09-01
 
 Canonical Goal: docs/PROJECT_GOAL.md
 
@@ -9,6 +9,10 @@ Binding Preferences: docs/PROJECT_PREFERENCES.md
 Approved scope expansion: docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md
 
 Addendum traceability: docs/REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md
+
+Approved superseding requirement: docs/PROJECT_REQUIREMENTS_UNIFIED_ADMIN_GOOGLE_v1.0.md
+
+Superseding reconciliation: docs/remediation/RECONCILIATION.md
 
 Source of Truth: docs/PROJECT_SOURCE_OF_TRUTH.md
 
@@ -24,7 +28,7 @@ The original POS/Website folders, remotes and data are immutable references. All
 
 Every point includes applicable focused/full tests, parity evidence, secrets review, source-boundary checks and ledger updates. Routine execution progress updates the ledger only and must not edit this roadmap or regenerate its DOCX. Regenerate/verify the DOCX only when roadmap structure/content materially changes. MT-1.1 detailed inventory may refine this roadmap from evidence, but valid functionality must not be silently dropped and completed IDs must not be renumbered.
 
-Goal, Preferences and approved addendum v1.1 apply. For working features, assess reuse/adapt/refactor/migrate before rewrite; rewrite requires a verified reason. Verify parity, data consistency, integration and regression incrementally rather than using a big-bang rewrite. Prefer conventional solutions, justified Redis roles and a Laravel-only business backend; do not introduce a parallel Node/Express business backend. Record stack deviations only for verified unavoidable blockers and never silently resolve a Goal conflict.
+Goal, Preferences, approved addendum v1.1 and the approved unified Admin/Google integrations superseding requirement apply. For working features, assess reuse/adapt/refactor/migrate before rewrite; rewrite requires a verified reason. Verify parity, data consistency, integration and regression incrementally rather than using a big-bang rewrite. Prefer conventional solutions, justified Redis roles and a Laravel-only business backend; do not introduce a parallel Node/Express business backend. Record stack deviations only for verified unavoidable blockers and never silently resolve a Goal conflict.
 
 Roman Urdu is limited to assistant chat/UI communication. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal/Preferences remain byte-preserved in their original language/content.
 
@@ -133,9 +137,17 @@ Scope: Preserve warranty duration, versioned clauses, claim lifecycle and histor
 
 Acceptance: Sale-time snapshots, permissions, expiry/boundary conditions and historical warranty/claim output parity pass.
 
-### MT-2.7 - Unified orders, reservations and payments
+### MT-2.18 - Unified Admin identity and Google integrations remediation
 
 Dependencies: MT-2.6
+
+Scope: Prospectively supersede the completed MT-2.2 separate administrative credential model with one Admin credential shared by POS and Website administration. Require explicit verified legacy administrative mapping, reconcile POS/Website permissions, outlet access, session/reset behavior and customer isolation. Establish the canonical `mobiST Technologies` / `mobisttech@gmail.com` / `https://mobisttech.com` business profile. Implement backend-controlled Gmail OAuth/Gmail API send with only `gmail.send`, secure tokens, test/reconnect/disconnect and reset/transactional delivery. Implement dynamic Google Drive/rclone connection, private portable configuration, read/write/delete validation, Backup Now, schedule/retention and Windows/Linux provisioning without migrating old archives.
+
+Acceptance: Removed Superadmin/Website-admin credential routes cannot authenticate; one Admin password/reset/session serves both administrative surfaces with explicit least-privilege permissions and outlet assignments. Same-email legacy records never union privileges. Current runtime consumers use the canonical business profile. Gmail remains Not Connected without authorization, uses exact approved account/scope, reports Connected only after an actual backend test send, never exposes secrets and addresses production OAuth publishing/verification. Drive detects or connects `mobisttech-drive:`, proves backend read/write/delete cleanup, keeps frontend away from rclone, executes encrypted new backups through backend jobs/scheduler, provisions portable private runtime/config, and leaves `mobist-drive:`/old archives untouched. Focused/full security, migration, integration, schema, build and DOCX parity/render/visual gates pass; historical MT-2.2 evidence remains unchanged.
+
+### MT-2.7 - Unified orders, reservations and payments
+
+Dependencies: MT-2.18
 
 Scope: Migrate Website order/payment/COD/project-payment services into shared transactions and prove replacement of obsolete cross-database synchronization. Consume versioned Website capabilities for new order creation versus legitimate historical access and preserve project/milestone extension identities.
 
