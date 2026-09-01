@@ -1,7 +1,7 @@
 # mobiST Tech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r5
-**Universal baseline:** Registry 1.10 / System 7.3
+**Registry version:** MT-1.1-r6
+**Universal baseline:** Registry 1.11 / System 7.4
 **Date:** 2026-09-01
 **Repository root:** `C:\mobisttech`
 **Remote:** `lawangin00/mobisttech` (independent, private)
@@ -26,24 +26,25 @@
 - Every completed point records applicable focused/full gates, exact pending state, source-boundary verification and Git evidence. Never mark partial work Complete.
 - Roadmap Markdown is the authoritative structural plan. Live Completed/In Progress/Pending state, last/current/next position and progress counts belong only in `docs/PROJECT_IMPLEMENTATION_STATUS.md`. Routine point/stage progress must not edit the roadmap or regenerate the DOCX. Regenerate, content-check and render-verify the same-basename DOCX only when roadmap structure/content materially changes. Helper: `tools/docs/build_roadmap_docx.py`.
 - Load the registry once on the first alias in a session and reuse it. Refresh Registry/Refresh/VP:REFRESH-REGISTRY forces a fresh reload and must not advance roadmap implementation.
+- Alias resolution uses normalized full-message matching with exact-match precedence. `N` resolves only to `N` / `VP:STOP`, `Next` only to `Next` / `VP:NEXT`, and `Y` only to `Y` / `Proceed` / `VP:PROCEED`; never use prefix, substring, abbreviation, edit-distance, semantic, autocomplete or fuzzy expansion to turn one registered alias into another.
 - `N` / `VP:STOP` is terminal for the current turn and overrides the default completion/incomplete prompt protocol. After STOP, never repeat `Proceed? Y/N`. If no roadmap point is `In Progress`, return only `Stopped.` and `Next pending: <exact point identifier> - <exact title>`. If a point is `In Progress`, return only `Stopped.`, `In Progress: <exact point identifier> - <exact title>` and `Next action: <exact recovery action>`.
 - Roman Urdu is the default only for assistant chat/UI communication. Git-tracked project documentation and technical artifacts must use standard English unless the user explicitly requests another language for a specific artifact. Preserve user-supplied source documents in their original language/content unless transformation is explicitly authorized. Minimal completion labels and exact technical/task identifiers remain unchanged.
 - Detailed evidence belongs in Git-tracked documentation; normal user-facing completion/status output remains concise.
 
-Documentation revision MT-1.1-r5 synchronizes Universal Registry 1.10 / System 7.3 and adopts the deterministic STOP output contract only. It does not advance roadmap implementation, change project position, or imply an automatic Refresh in already-open sessions.
+Documentation revision MT-1.1-r6 synchronizes Universal Registry 1.11 / System 7.4 and adopts deterministic normalized full-message alias resolution in addition to the existing STOP output contract. It does not advance roadmap implementation, change project position, or imply an automatic Refresh in already-open sessions.
 
 ## Adopted universal definitions
 
-This revision deliberately synchronizes the project registry to Universal Registry 1.10 / System 7.3. The deterministic STOP contract removes the prior output ambiguity between `N` and `VP:STOP`: STOP is terminal for the turn and does not re-prompt `Proceed? Y/N`. The optimized roadmap lifecycle, language boundary, project-specific Goal/Preferences initialization gate, VP:VERIFY boundary, point order, session-refresh model and current project position remain unchanged. No roadmap implementation point is advanced by this registry revision.
+This revision deliberately synchronizes the project registry to Universal Registry 1.11 / System 7.4. Exact normalized full-message matches now take precedence over tolerant interpretation, so `N` can never be expanded to `Next`, `Next` can never become STOP, and `Y` remains Proceed only; the existing deterministic STOP contract remains terminal and does not re-prompt `Proceed? Y/N`. The optimized roadmap lifecycle, language boundary, project-specific Goal/Preferences initialization gate, VP:VERIFY boundary, point order, session-refresh model and current project position remain unchanged. No roadmap implementation point is advanced by this registry revision.
 
-The canonical universal registry snapshot below is copied from `lawangin00/references/UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`. Project-specific rules above are explicit specializations; all other semantics remain unchanged. Baseline Git blob: `e3ddadd05b9cbb229dc7d7381033d2310045aa5e`. Roadmap specification v1.1 Git blob: `dc94355694365235e2294224b31a8bd8b2974003`.
+The canonical universal registry snapshot below is copied from `lawangin00/references/UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`. Project-specific rules above are explicit specializations; all other semantics remain unchanged. Baseline Git blob: `cd24fea0b4bf0a2dea07a9280730ab1fadf49de0`. Roadmap specification v1.1 Git blob: `dc94355694365235e2294224b31a8bd8b2974003`.
 
 ---
 
 # Universal Verified Project Command Registry
 
-**Registry version:** 1.10
-**System version:** 7.3  
+**Registry version:** 1.11
+**System version:** 7.4  
 **Canonical remote:** `lawangin00/references`  
 **Canonical path:** `UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`
 **Roadmap specification:** `UNIVERSAL_PROJECT_ROADMAP_SPEC.md`
@@ -65,7 +66,11 @@ It is not project state. A project's own Git-tracked registry may specialize the
 Conversation memory and uploaded Project Source snapshots are non-authoritative.
 ## Bootstrap and interpretation rules
 
-- Alias matching is case-insensitive and may tolerate minor punctuation/spacing differences.
+- Alias resolution uses normalized full-message matching. Trim leading/trailing whitespace; matching is case-insensitive; harmless punctuation/spacing tolerance may be applied only after full-message normalization and must never transform one registered alias into another.
+- Exact normalized alias matches take precedence over any tolerant interpretation.
+- Never use prefix, substring, abbreviation, edit-distance, semantic, autocomplete or fuzzy expansion to resolve one registered alias as another.
+- Single-token aliases are collision-protected: `N` resolves only to `N` / `VP:STOP`; `Next` resolves only to `Next` / `VP:NEXT`; `Y` resolves only to `Y` / `Proceed` / `VP:PROCEED`. Therefore `n` must never resolve to `Next`, and `next` must never resolve to `N` / `VP:STOP`.
+- An explicit `VP:` alias takes precedence whenever present and remains the collision-safe form.
 - `Y` and `Proceed` are synonyms.
 - Any short message beginning with `VP:` is an explicit collision-safe alias invocation.
 - Do not treat ordinary conversation as a command merely because it contains an alias word.
