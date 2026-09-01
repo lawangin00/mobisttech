@@ -4,6 +4,7 @@ use App\Inventory\InventoryOperations;
 use App\Inventory\TransactionalStock;
 use App\Models\Outlet;
 use App\Models\SuperAdmin;
+use App\Sales\SalesOperations;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,8 @@ try {
             'sale' => app(TransactionalStock::class)->consumeSale($input['id']),
             'imeis' => app(InventoryOperations::class)->imeis(SuperAdmin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
                 $input['product'], $input['key'], ['unit_id' => $input['unit'], 'version' => 1, 'imeis' => [1 => 'race-imei-1', 2 => 'race-imei-2']]),
+            'return' => app(SalesOperations::class)->acceptReturn(SuperAdmin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
+                $input['key'], $input['input']),
             default => throw new LogicException('Unknown synthetic operation.'),
         };
     }, 3);

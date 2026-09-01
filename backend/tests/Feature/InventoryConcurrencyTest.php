@@ -6,6 +6,7 @@ use App\Inventory\AcquisitionDocuments;
 use App\Inventory\StockLedger;
 use App\Models\Outlet;
 use App\Models\StockUnit;
+use App\Sales\SalesOperations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -18,9 +19,10 @@ class InventoryConcurrencyTest extends TestCase
     use InventoryFixture;
 
     // These tests deliberately commit fixtures so independent MySQL connections can see them.
-    private array $tables = ['identity_audit_events', 'domain_events', 'publication_versions', 'idempotency_requests', 'reservation_allocations', 'reservation_lines', 'reservations',
-        'product_imeis', 'active_imeis', 'stock_movements', 'stock_units', 'stock_acquisitions', 'sales', 'invoices', 'order_items', 'orders',
-        'pos_master_data_usages', 'products', 'pos_master_data_options', 'outlets', 'super_admins'];
+    private array $tables = ['identity_audit_events', 'domain_events', 'publication_versions', 'idempotency_requests', 'return_lines', 'returns', 'monetary_adjustments',
+        'stock_unit_lineage', 'reservation_allocations', 'reservation_lines', 'reservations', 'product_imeis', 'active_imeis', 'stock_movements', 'stock_units',
+        'stock_acquisitions', 'sales', 'invoices', 'order_items', 'orders', 'customers', 'document_sequences', 'pos_master_data_usages', 'products',
+        'pos_master_data_options', 'outlets', 'super_admins'];
 
     private bool $ownsFixtures = false;
 
@@ -94,6 +96,25 @@ class InventoryConcurrencyTest extends TestCase
         $this->assertSame(2, DB::table('product_imeis')->count());
         $this->assertSame(1, DB::table('active_imeis')->distinct()->count('stock_unit_id'));
         $this->assertSame(1, DB::table('idempotency_requests')->where('operation', 'inventory.imeis')->count());
+    }
+
+    public function test_separate_mysql_connections_cannot_accept_the_same_quantity_return_twice(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $sale = app(SalesOperations::class)->sell($this->actor, $this->outlet, (string) Str::uuid(), [
+            'discount' => '0.00', 'lines' => [['product_id' => $product->public_id, 'quantity' => 1]],
+        ]);
+        $input = ['invoice_id' => $sale['invoice_id'], 'reason' => 'Synthetic concurrent return', 'lines' => [[
+            'sale_id' => $sale['sale_ids'][0], 'quantity' => 1, 'condition' => 'opened', 'disposition' => 'sellable',
+        ]]];
+        $request = ['operation' => 'return', 'actor' => $this->actor->id, 'outlet' => $this->outlet->id, 'input' => $input];
+        $results = $this->race([$product->id], [[...$request, 'key' => (string) Str::uuid()], [...$request, 'key' => (string) Str::uuid()]]);
+        $this->oneWinner($results);
+        $this->assertSame(1, DB::table('returns')->count());
+        $this->assertSame(1, DB::table('return_lines')->count());
+        $this->assertSame(1, $product->fresh()->qty);
+        $this->assertSame(0, $product->fresh()->sold_qty);
     }
 
     public function test_private_acquisition_evidence_is_scoped_and_never_a_client_selected_path(): void

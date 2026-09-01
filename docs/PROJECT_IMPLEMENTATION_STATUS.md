@@ -29,13 +29,13 @@ Last completed stage: MT-1 - Migration inventory and design
 
 Current In Progress point: None
 
-Status: MT-0 and MT-1 complete. MT-2 is in progress. 9/52 complete, 43 pending. MT-2.8 is complete; MT-2.5 is not started.
+Status: MT-0 and MT-1 complete. MT-2 is in progress. 10/52 complete, 42 pending. MT-2.5 is complete; MT-2.6 is not started.
 
-Last completed point: MT-2.8 - Addendum foundations and capability contracts
+Last completed point: MT-2.5 - Sales, invoices and returns migration
 
-Next pending point: MT-2.5 - Sales, invoices and returns migration
+Next pending point: MT-2.6 - Warranty and claim migration
 
-Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, identity/customer/authorization, product/master-data and inventory/acquisition/stock transaction services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion now exist. Identity/product/stock mapping uses synthetic rows only. Real MySQL stock concurrency is verified. Actual private-data migration, full sales/invoice/return/payment processors, transfer/procurement/reset/publication workflows, POS/Website interfaces, brand, Control and CI remain pending. Backend tests do not constitute UI, live provider, financial transaction or private-data import acceptance.
+Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, identity/customer/authorization, product/master-data, inventory/acquisition/stock transactions and the internal POS sale/invoice/accepted-return authority exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales mapping uses synthetic rows only. Real MySQL stock and return concurrency is verified. Actual private-data migration, payment collection/refund execution, warranty/claim, transfer/procurement/reset/publication workflows, POS/Website interfaces, brand, Control and CI remain pending. Backend tests do not constitute UI, live provider, payment/refund or private-data import acceptance.
 
 Approved addendum v1.1 expands required work without reinitialization. MT-2.8 implements its prerequisites only; mode publication/reset/retail/digital feature workflows remain pending at their named points.
 
@@ -181,6 +181,20 @@ Fresh full backend verification passed 105 tests / 4,733 assertions, including a
 
 Source fingerprints, approved Goal/Preferences/addendum, Source of Truth, registry, roadmap Markdown/DOCX and historical evidence remain unchanged. No Word generation is needed for routine progress. No source runtime/data/remote, secret, provider, production action or browser-policy bypass occurred. The owned target MySQL is restored to its initial stopped state after verification. Intended synchronization is only the new monorepo main/private origin, followed by clean HEAD/upstream/live-main and artifact checks. MT-2.5 remains not started.
 
+## MT-2.5 sales, invoices and returns closure - 2026-09-01
+
+On user Y, only MT-2.5 executed. `docs/sales/README.md` records pinned source traceability, reuse/refactor decisions, server-owned customer/sale/invoice behavior, exact-money allocation, immutable snapshots, the explicit accepted-return contract, stock/accounting effects, offline import and remaining boundaries. The source stock-only return operation was not misrepresented as refund parity. No route/UI, payment collection, refund execution, warranty/claim workflow or private source-data import was enabled.
+
+`SalesOperations` now owns atomic outlet-authorized sales and accepted returns. It uses server product prices/costs, locked document sequences, explicit operational-customer identity, immutable invoice/business/salesperson/warranty/product snapshots, exact deterministic discount allocation and the MT-2.8 monetary-adjustment reference. The existing stock transaction authority consumes inventory in the same transaction. Idempotency, audit, invoice/sale rows, unit/IMEI retirement, stock movement, counters and publication effects commit or roll back together.
+
+Returns preserve original invoice and sale values. Cumulative returned quantity prevents excess acceptance; immutable return lines store exact gross/discount/net/cost evidence and a snapshot digest. Sellable returns restore stock, while damaged/quarantined returns remain unavailable. Serialized returns create a forward successor occurrence, preserve the sold source and IMEI history, and restore the active IMEI claim only on the sellable successor. A real two-connection race accepts exactly one request for the last returnable quantity. The response records refund due but writes no refund/payment/cash/provider record; MT-2.7 remains the actual refund authority.
+
+The additive migration keeps 80 tables and yields 975 columns, 132 foreign keys and 355 indexes with normalized schema hash `1abc1aa3023796d80dc82ecd477c7b3e2a0891f3b4b22a7ce2bbc6ffcd31f80c`. Empty-schema rollback/reapply succeeds after an initial rehearsal exposed and corrected check-constraint drop ordering. `SalesImporter` strictly migrates complete synthetic POS invoice/sale rows with source-qualified parents, UTC conversion, signed historical profit, exact arithmetic, stable identities, replay and quarantine; contact snapshots never infer a customer account.
+
+Fresh full backend verification passes 111 tests / 4,840 assertions. Focused sales/migration/concurrency verification passes 6 tests / 80 assertions. MySQL lifecycle/schema, source-schema/fingerprint checks, Pint, Composer validation/platform requirements, optimize/clear, POS TypeScript/Vite build and Website lint/typecheck/Next.js build pass. Online Composer/npm advisory refresh was attempted but blocked by the execution security policy because it would disclose private dependency metadata to public registries; dependency locks did not change and no fresh audit result is claimed. `docs/sales/MT_2_5_VERIFICATION.json` records exact evidence and artifact hashes.
+
+Approved Goal/Preferences/addendum, Source of Truth, registry and structural roadmap Markdown/DOCX remain unchanged, so Word regeneration is neither required nor performed. Protected originals remain unchanged. The owned target MySQL must return to its initial stopped state after final Git checks. Intended synchronization is only the new monorepo main/private origin. MT-2.6 remains not started.
+
 ## Roadmap point state - v1.6
 
 This is the live status list. Completed counts are preserved from verified Git checkpoints; newly inserted points start Pending and advance only through their own verified checkpoint. The structural roadmap defines scopes and acceptance.
@@ -196,7 +210,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-2.3 | Product and master-data migration | Completed |
 | MT-2.4 | Inventory and stock integrity migration | Completed |
 | MT-2.8 | Addendum foundations and capability contracts | Completed |
-| MT-2.5 | Sales, invoices and returns migration | Pending |
+| MT-2.5 | Sales, invoices and returns migration | Completed |
 | MT-2.6 | Warranty and claim migration | Pending |
 | MT-2.7 | Unified orders, reservations and payments | Pending |
 | MT-2.9 | Supplier and procurement services | Pending |
@@ -242,10 +256,10 @@ This is the live status list. Completed counts are preserved from verified Git c
 
 ## Recovery and next action
 
-Do not re-execute the nine completed points or addendum reconciliation. After the MT-2.8 checkpoint is committed/pushed and clean synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-2.5 - Sales, invoices and returns migration`, using the accepted MT-2.8 custody/financial/permission contracts. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r4 remains unchanged; routine progress requires no registry refresh or Word regeneration. Addendum feature workflows remain assigned to their respective later points.
+Do not re-execute the ten completed points or addendum reconciliation. After the MT-2.5 checkpoint is committed/pushed and clean synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-2.6 - Warranty and claim migration`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r4 remains unchanged; routine progress requires no registry refresh or Word regeneration. Payment/refund execution and other addendum feature workflows remain assigned to their respective later points.
 
 ## HOLD / decisions
 
-Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure, backend identity, product/master-data and stock/acquisition services now exist; private business-data migration, full financial/order transaction processing, later interfaces and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. Live email/Redis/S3 activation, broader consuming-feature resilience and provider/backup recovery remain later implementation gates; the local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block the verified MT-2.4 scope or documentation-only addendum reconciliation. Addendum features are approved planned work, not H-04 exclusions; production destructive resets remain separately authorized under H-01/H-03.
+Roadmap H-01 through H-04 remain the authoritative HOLD register: live production/cutover, authentic provider contracts/credentials, sensitive-data export/destructive restore and unrelated category/feature expansion boundaries. Shared schema/infrastructure, backend identity, product/master-data, stock/acquisition and internal sale/invoice/accepted-return services now exist; private business-data migration, payment/refund execution, warranty/claim, broader financial/order processing, later interfaces and approved branding inventory remain future verified work. Target-only runtime ports and locks remain unchanged, without real source data/provider/production actions. Live email/Redis/S3 activation, broader consuming-feature resilience and provider/backup recovery remain later implementation gates; the local environment uses file cache, database sessions/queue and private local storage. These HOLD items do not block the verified MT-2.5 scope. Addendum features are approved planned work, not H-04 exclusions; production destructive resets remain separately authorized under H-01/H-03.
 
 No source-repository write, source-data migration, source runtime action, real payment-provider activation, external message or production change is authorized or performed by this reconciliation.

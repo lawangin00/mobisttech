@@ -52,7 +52,7 @@ final class SourceRow
                         }
                         break;
                     case 'decimal':
-                        $value = self::money($value);
+                        $value = $column['destination'] === 'sales.profit' ? self::decimal($value) : self::money($value);
                         break;
                     case 'dateTime':
                         $date = is_string($value) ? DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $value, new DateTimeZone($timezone)) : false;
@@ -60,6 +60,12 @@ final class SourceRow
                             throw new InvalidArgumentException('Invalid source timestamp.');
                         }
                         $value = $date->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s.u');
+                        break;
+                    case 'date':
+                        $date = is_string($value) ? DateTimeImmutable::createFromFormat('!Y-m-d', $value, new DateTimeZone($timezone)) : false;
+                        if (! $date || $date->format('Y-m-d') !== $value) {
+                            throw new InvalidArgumentException('Invalid source date.');
+                        }
                         break;
                     case 'json':
                         $value = json_encode(is_string($value) ? json_decode($value, true, flags: JSON_THROW_ON_ERROR) : $value, JSON_THROW_ON_ERROR);
@@ -79,6 +85,15 @@ final class SourceRow
     {
         if ((! is_string($value) && ! is_int($value)) || ! preg_match('/\A\d{1,17}(?:\.\d{1,2})?\z/', (string) $value)) {
             throw new InvalidArgumentException('Money requires an exact non-negative decimal string.');
+        }
+
+        return bcadd((string) $value, '0', 2);
+    }
+
+    public static function decimal(mixed $value): string
+    {
+        if ((! is_string($value) && ! is_int($value)) || ! preg_match('/\A-?\d{1,17}(?:\.\d{1,2})?\z/', (string) $value)) {
+            throw new InvalidArgumentException('Decimal requires an exact signed decimal string.');
         }
 
         return bcadd((string) $value, '0', 2);

@@ -23,7 +23,14 @@ class SharedSchemaTest extends TestCase
                 'account_sessions' => ['revoked_at'],
                 default => [],
             };
-            $this->assertSame([...array_column($table['columns'], 'name'), ...$identityColumns], $columns->keys()->all(), $name);
+            $expectedColumns = match ($name) {
+                'sales' => ['id', 'public_id', 'version', 'product_id', 'outlet_id', 'sale_date', 'sale_price', 'invoice_id', 'quantity', 'returned_quantity',
+                    'total_price', 'created_at', 'updated_at', 'purchase_price', 'discount_allocated', 'net_total_price', 'profit', 'invoice_detail_options', 'invoice_detail_snapshot'],
+                'return_lines' => ['id', 'public_id', 'return_id', 'invoice_id', 'sale_id', 'stock_unit_id', 'successor_stock_unit_id', 'quantity', 'unit_price',
+                    'discount_amount', 'net_amount', 'purchase_amount', 'currency', 'sale_snapshot', 'snapshot_sha256', 'condition', 'disposition', 'accepted_at'],
+                default => [...array_column($table['columns'], 'name'), ...$identityColumns],
+            };
+            $this->assertSame($expectedColumns, $columns->keys()->all(), $name);
             foreach ($table['columns'] as $c) {
                 $actual = $columns[$c['name']];
                 $expectedType = match ($c['type']) {
@@ -55,7 +62,7 @@ class SharedSchemaTest extends TestCase
                 }
             }
             $fks = Schema::getForeignKeys($name);
-            $this->assertCount(count($table['foreign_keys']), $fks, $name);
+            $this->assertCount(count($table['foreign_keys']) + ($name === 'return_lines' ? 3 : 0), $fks, $name);
             foreach ($fks as $relation) {
                 $this->assertSame('restrict', strtolower($relation['on_delete']), $name);
             }
@@ -111,7 +118,8 @@ class SharedSchemaTest extends TestCase
         $second = $this->outlet('002');
         $product = $this->product($first);
         $invoice = DB::table('invoices')->insertGetId(['outlet_id' => $first, 'total_bill' => '25.50', 'final_bill' => '25.50', 'public_id' => (string) Str::uuid()]);
-        $sale = ['product_id' => $product, 'outlet_id' => $second, 'sale_date' => '2026-08-31', 'sale_price' => '25.50', 'invoice_id' => $invoice, 'quantity' => 1, 'total_price' => '25.50'];
+        $sale = ['public_id' => (string) Str::uuid(), 'product_id' => $product, 'outlet_id' => $second, 'sale_date' => '2026-08-31', 'sale_price' => '25.50',
+            'invoice_id' => $invoice, 'quantity' => 1, 'total_price' => '25.50', 'net_total_price' => '25.50', 'profit' => '25.50'];
         $this->rejects(fn () => DB::table('sales')->insert($sale), 1452);
         $sale['outlet_id'] = $first;
         DB::table('sales')->insert($sale);

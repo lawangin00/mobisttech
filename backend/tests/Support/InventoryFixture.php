@@ -80,8 +80,10 @@ trait InventoryFixture
     {
         $invoice = DB::table('invoices')->insertGetId(['outlet_id' => $product->outlet_id, 'order_id' => $order, 'total_bill' => '200.02', 'final_bill' => '200.02', 'public_id' => (string) Str::uuid()]);
 
-        return DB::table('sales')->insertGetId(['outlet_id' => $product->outlet_id, 'product_id' => $product->id, 'invoice_id' => $invoice,
-            'sale_date' => '2026-08-31', 'sale_price' => '200.02', 'total_price' => bcmul('200.02', (string) $quantity, 2), 'quantity' => $quantity]);
+        $total = bcmul('200.02', (string) $quantity, 2);
+
+        return DB::table('sales')->insertGetId(['public_id' => (string) Str::uuid(), 'outlet_id' => $product->outlet_id, 'product_id' => $product->id, 'invoice_id' => $invoice,
+            'sale_date' => '2026-08-31', 'sale_price' => '200.02', 'total_price' => $total, 'net_total_price' => $total, 'profit' => $total, 'quantity' => $quantity]);
     }
 
     private function reject(callable $callback): void

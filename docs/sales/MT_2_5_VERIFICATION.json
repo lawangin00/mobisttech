@@ -1,0 +1,90 @@
+{
+  "checkpoint": "MT-2.5 - Sales, invoices and returns migration",
+  "date": "2026-09-01",
+  "starting_commit": "5e19d1448a565a06e8eb58e300d4c4670cea4bb0",
+  "scope": {
+    "implemented": [
+      "atomic outlet-authorized POS sale and invoice authority",
+      "explicit operational customer selection or creation without contact-based account merge",
+      "server-owned exact price, cost, document identity and immutable invoice/line snapshots",
+      "deterministic exact discount allocation with MT-2.8 monetary adjustment reference",
+      "bounded accepted returns with immutable compensating financial evidence",
+      "sellable, damaged and quarantined stock dispositions",
+      "forward serialized successor lineage and sellable-only active IMEI re-entry",
+      "strict offline synthetic POS invoice and sale import with replay/quarantine",
+      "real independent-connection arbitration of the last returnable quantity"
+    ],
+    "excluded": [
+      "public or internal sales/return routes and user interfaces",
+      "payment collection, refund execution, cash-session or provider effects",
+      "warranty and claim migration",
+      "private source-data import, cutover or production action",
+      "MT-2.6 and all later roadmap points"
+    ]
+  },
+  "source_boundary": {
+    "source_commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+    "snapshot_check": "PASS: protected source snapshots unchanged",
+    "source_runtime_or_database_used": false,
+    "private_rows_imported": false
+  },
+  "schema": {
+    "mysql": "8.4.11",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "timezone": "+00:00",
+    "strict": true,
+    "tables": 80,
+    "columns": 975,
+    "foreign_keys": 132,
+    "indexes": 355,
+    "business_rows": 0,
+    "sha256": "1abc1aa3023796d80dc82ecd477c7b3e2a0891f3b4b22a7ce2bbc6ffcd31f80c",
+    "rollback_reapply": "PASS on the empty disposable test schema"
+  },
+  "acceptance": {
+    "backend_full": "PASS: 111 tests, 4840 assertions",
+    "focused_sales_migration_concurrency": "PASS: 6 tests, 80 assertions",
+    "schema_verifier": "PASS: php tools/migration/verify_mysql_schema.php sales",
+    "source_schema": "PASS: 79 pinned migrations, 58 source tables, 735 columns, 62 shared tables, 116 invalid row shapes rejected",
+    "php_format": "PASS: Pint",
+    "composer": "PASS: strict validation and platform requirements",
+    "backend_build": "PASS: TypeScript and Vite production build",
+    "website": "PASS: ESLint, TypeScript and Next.js production build",
+    "routes": "PASS: no sales, return, payment or refund endpoint introduced",
+    "online_advisory_refresh": "NOT CLAIMED: outbound Composer/npm audit was blocked by execution security policy because public registry submission could disclose private dependency metadata; lockfiles are unchanged"
+  },
+  "verified_contracts": [
+    "invoice gross equals the sum of persisted server price times quantity",
+    "invoice final equals gross minus exact discount and line allocations reconcile exactly",
+    "sale, adjustment, stock, IMEI, audit and idempotency evidence share one transaction",
+    "original invoices and sales are immutable when returns are accepted",
+    "cumulative accepted quantities never exceed the original sale",
+    "actual payment refunds are not created by MT-2.5",
+    "serialized return creates a new forward occurrence and retains the sold origin",
+    "active IMEI claim exists only for an eligible sellable occurrence",
+    "identical import replay is stable and changed/unresolved/invalid rows quarantine",
+    "Website/customer identity is never inferred from invoice contact snapshots"
+  ],
+  "corrections_during_verification": [
+    "The first rollback rehearsal exposed MySQL check constraints that had to be dropped before their columns. The down migration was corrected, the disposable test schema was rebuilt, and rollback/reapply plus schema verification passed.",
+    "The first full regression exposed pre-MT-2.5 synthetic direct-sale fixtures that omitted newly required sale identity and reconciled totals. The fixtures were updated to the new schema contract and affected plus full suites passed.",
+    "A signed decimal decoder was narrowed to the historical sales.profit destination so other imported money remains non-negative. Product, stock and sales migration suites passed after the correction."
+  ],
+  "artifact_sha256": {
+    "backend/app/Sales/SalesOperations.php": "3ea48189a249b5ba6539a98d7988eff5608f143524f580d7a0e2b49f3d280fbc",
+    "backend/app/Migration/SalesImporter.php": "6825d65e44c8eb91fe1e04949b977fb1a157df7ef6c4fea16d1a684c42ed2302",
+    "backend/app/Migration/SourceRow.php": "f6d5f9911b8c317ee7985236cb5ee51d5385cf225968f67dbf9977060a91d6e1",
+    "backend/database/migrations/2026_09_01_110000_add_sales_return_integrity.php": "f0d4921673da5ed88b6a2a2a7fcbadb63261eb9961ddf6b9310d897804a05dd4",
+    "backend/tests/Feature/SalesOperationsTest.php": "e295d7e393669a2fef86dcafd3d5353546751dfe085af920eb3ab9e2db8d8065",
+    "backend/tests/Feature/SalesMigrationTest.php": "527e728643ca40dd3574643c6f4689dd44db3eb790f612aca2ab0cc87afa63d4",
+    "backend/tests/Feature/InventoryConcurrencyTest.php": "6996f6f252c39be5c0964108624894034fa485653c00913464ac6cad0b2c6d6f",
+    "docs/sales/README.md": "6d0b73c9832e68d8c7cb6210968c2ad81ff82228fedce09c2157ee4d7386eb4d"
+  },
+  "authority_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5"
+  },
+  "next": "MT-2.6 - Warranty and claim migration"
+}
