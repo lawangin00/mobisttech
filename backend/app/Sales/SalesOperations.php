@@ -17,6 +17,7 @@ use App\Models\Product;
 use App\Models\StockUnit;
 use App\Models\SuperAdmin;
 use App\Services\PosInventoryMasterData;
+use App\Warranty\WarrantyClauses;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -68,7 +69,7 @@ final class SalesOperations
                     'business_legal_name' => $outlet->business_legal_name, 'business_email' => $outlet->business_email, 'business_phone' => $outlet->business_phone,
                     'business_whatsapp' => $outlet->business_whatsapp, 'business_address' => $outlet->business_address,
                     'business_hours' => $outlet->business_hours, 'business_identifiers' => $outlet->business_identifiers], JSON_THROW_ON_ERROR),
-                'warranty_terms_snapshot' => json_encode(['contract' => 'product-warranty-at-sale.v1'], JSON_THROW_ON_ERROR),
+                'warranty_terms_snapshot' => json_encode(app(WarrantyClauses::class)->snapshot(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
                 'invoice_number' => $this->number($outlet), 'public_id' => (string) Str::uuid(), 'currency' => 'PKR', 'created_at' => now(), 'updated_at' => now(),
             ]);
             if (bccomp($discount, '0.00', 2) > 0) {

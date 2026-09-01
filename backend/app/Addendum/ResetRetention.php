@@ -13,7 +13,7 @@ final class ResetRetention
     public const LEVELS = ['transactional', 'business', 'factory'];
 
     public const GROUPS = [
-        'transactional' => ['claims', 'invoices', 'sales', 'reservation_allocations', 'reservation_lines', 'reservations', 'order_items', 'orders', 'payments',
+        'transactional' => ['claim_events', 'claims', 'invoices', 'sales', 'reservation_allocations', 'reservation_lines', 'reservations', 'order_items', 'orders', 'payments',
             'product_reviews', 'project_quotes', 'service_requests', 'payment_receipts', 'returns', 'return_lines', 'refunds', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones'],
         'inventory' => ['products', 'stock_units', 'stock_movements', 'stock_acquisitions', 'product_imeis', 'active_imeis', 'product_listings', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references'],
         'business_content' => ['digital_services', 'site_managed_pages', 'site_navigation_items', 'site_media_assets', 'site_media_usages', 'customers', 'customer_source_links'],

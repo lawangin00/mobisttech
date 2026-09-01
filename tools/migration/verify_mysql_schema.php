@@ -15,20 +15,20 @@ if ($db->db !== 'mobisttech_test' || (int) $db->port !== 13306 || ! $app->enviro
     throw new RuntimeException('Exact disposable target test schema required.');
 }
 $mode = $argv[1] ?? '';
-if (! in_array($mode, ['sales', 'addendum', 'identity', 'shared', 'runtime'], true)) {
-    throw new RuntimeException('Expected sales, addendum, identity, shared or runtime verification mode.');
+if (! in_array($mode, ['warranty', 'sales', 'addendum', 'identity', 'shared', 'runtime'], true)) {
+    throw new RuntimeException('Expected warranty, sales, addendum, identity, shared or runtime verification mode.');
 }
 $schema = Illuminate\Support\Facades\Schema::getFacadeRoot();
 $spec = json_decode(file_get_contents($root.'/docs/schema/TARGET_SCHEMA.json'), true, flags: JSON_THROW_ON_ERROR);
 $runtime = ['cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'sessions', 'migrations'];
 $expected = $mode !== 'runtime' ? array_merge($runtime, array_keys($spec['tables'])) : $runtime;
-if (in_array($mode, ['identity', 'addendum', 'sales'], true)) {
+if (in_array($mode, ['identity', 'addendum', 'sales', 'warranty'], true)) {
     $expected = array_merge($expected, ['admin_password_reset_tokens', 'super_admin_password_reset_tokens', 'site_admin_password_reset_tokens', 'identity_audit_events']);
 }
-if (in_array($mode, ['addendum', 'sales'], true)) {
+if (in_array($mode, ['addendum', 'sales', 'warranty'], true)) {
     $expected = array_merge($expected, ['website_operating_profiles', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones']);
 }
-if ($mode === 'sales') {
+if (in_array($mode, ['sales', 'warranty'], true)) {
     foreach (['public_id', 'version', 'returned_quantity'] as $column) {
         if (! $schema->hasColumn('sales', $column)) {
             throw new RuntimeException('Missing sales integrity column: '.$column);
@@ -37,6 +37,14 @@ if ($mode === 'sales') {
     foreach (['public_id', 'invoice_id', 'successor_stock_unit_id', 'unit_price', 'discount_amount', 'net_amount', 'purchase_amount', 'currency', 'sale_snapshot', 'snapshot_sha256'] as $column) {
         if (! $schema->hasColumn('return_lines', $column)) {
             throw new RuntimeException('Missing return integrity column: '.$column);
+        }
+    }
+}
+if ($mode === 'warranty') {
+    $expected[] = 'claim_events';
+    foreach (['warranty_snapshot', 'warranty_expires_at', 'active_stock_unit_id'] as $column) {
+        if (! $schema->hasColumn('claims', $column)) {
+            throw new RuntimeException('Missing warranty claim integrity column: '.$column);
         }
     }
 }

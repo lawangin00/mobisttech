@@ -1,0 +1,102 @@
+{
+  "checkpoint": "MT-2.6 - Warranty and claim migration",
+  "date": "2026-09-01",
+  "starting_commit": "698d635c23aad08f52302f6cd5c7185465791468",
+  "scope": {
+    "implemented": [
+      "permissioned versioned warranty clause publication and immutable sale-time snapshots",
+      "calendar-correct inclusive warranty expiry from the historical sale line",
+      "atomic claim creation and explicit lifecycle transitions",
+      "returned-quantity and active-claim bounds with physical-unit exclusivity",
+      "append-only actor-attributed lifecycle event snapshots and digests",
+      "historical claim output including customer, business, product, unit, IMEI, warranty and activity evidence",
+      "strict synthetic source claim import with replay and quarantine",
+      "real independent-connection arbitration of the last eligible claim quantity"
+    ],
+    "excluded": [
+      "public or internal warranty routes and user interfaces",
+      "A4 or Thermal document rendering and communication",
+      "payment collection, refund execution or paid repair jobs",
+      "private source-data import, cutover or production action",
+      "MT-2.7 and all later roadmap points"
+    ]
+  },
+  "source_boundary": {
+    "source_commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+    "family": "P05 - POS warranty and claims",
+    "inventory": "15 files and 6 routes",
+    "snapshot_check": "PASS: protected source snapshots unchanged",
+    "source_runtime_or_database_used": false,
+    "private_rows_imported": false
+  },
+  "schema": {
+    "mysql": "8.4.11",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "timezone": "+00:00",
+    "strict": true,
+    "tables": 81,
+    "columns": 990,
+    "foreign_keys": 134,
+    "indexes": 361,
+    "business_rows": 0,
+    "sha256": "10bc28f7fee21948a7099fa1d3e0d9d67a5550ab1742d87150512e8934e1511e",
+    "rollback_reapply": "PASS on the empty disposable test schema"
+  },
+  "acceptance": {
+    "backend_full": "PASS: 120 tests, 4960 assertions",
+    "focused_warranty_claim_migration_concurrency": "PASS: 8 tests, 65 assertions",
+    "schema_verifier": "PASS: php tools/migration/verify_mysql_schema.php warranty",
+    "source_schema": "PASS: 79 pinned migrations, 58 source tables, 735 columns, 62 shared tables, 116 invalid row shapes rejected",
+    "php_syntax": "PASS: warranty, claim importer, migration and schema verifier",
+    "php_format": "PASS: Pint",
+    "composer": "PASS: strict validation and platform requirements",
+    "backend_build": "PASS: TypeScript and Vite production build",
+    "website": "PASS: ESLint, TypeScript and Next.js production build",
+    "routes": "PASS: no warranty or claim endpoint introduced",
+    "online_advisory_refresh": "NOT CLAIMED: dependency lockfiles are unchanged and no new online audit was performed"
+  },
+  "verified_contracts": [
+    "sale-time warranty type, duration and clause snapshot remain authoritative after master-data changes",
+    "the exact expiry instant is covered and the first later instant is rejected",
+    "accepted returns and active claims cannot over-allocate the sold quantity",
+    "serialized claims reference the exact sold and unreturned unit and allow only one active job",
+    "invalid lifecycle transitions, changed retries and denied roles have no partial business effect",
+    "each accepted lifecycle step has ordered actor, time, content and digest evidence",
+    "historical output retains stable invoice, claim, customer, business, product, unit, IMEI and warranty evidence",
+    "identical import replay is stable and changed, unresolved or invalid rows quarantine"
+  ],
+  "corrections_during_verification": [
+    "Historical claim output was expanded to include the immutable sale-time business and customer evidence, handler and unit color/condition before final acceptance.",
+    "A new output assertion initially referenced a nonexistent test property; it was corrected to the fixture actor and the focused plus full suites passed."
+  ],
+  "artifact_sha256": {
+    "backend/app/Warranty/WarrantyClauses.php": "6db01730bb8cc95f49f4f2d24cd016ab94149a6f68735302950e28749d2105f1",
+    "backend/app/Warranty/ClaimOperations.php": "d9eee72afe0d9bbfbe56bdc5cb540d9221bf0697d35a8485b76762854d5f7222",
+    "backend/app/Migration/ClaimImporter.php": "6344ae6df62d83f78e96263132fc040184cd732e40411f6248b14273e18ac5c5",
+    "backend/app/Sales/SalesOperations.php": "f951e01c7c3697ab62620935eee34d021db56473875eb6939c3643a27b87d09c",
+    "backend/app/Addendum/ResetRetention.php": "08d8af7bbfa6f0b7a06cf0a608384f4a859293c950d4f87dd83d9f0f32db19d7",
+    "backend/database/migrations/2026_09_01_120000_add_warranty_claim_integrity.php": "74838f93e6f84bb40245e3ab859027d1eeb5c247b8bc6212400cacf6618ef024",
+    "backend/tests/Feature/WarrantyClausesTest.php": "64739227604071639395fd94628708450d0c8ef0bbbf2bc5de33db436350e3ea",
+    "backend/tests/Feature/ClaimOperationsTest.php": "cf7587a163898b828d195cb2ad239445f2505d989c163e561ee6433ad24d95c8",
+    "backend/tests/Feature/ClaimMigrationTest.php": "5853b8aba933ee4d428d9edb7a6287a747e90aabac3c161a201c95ec8e7cacce",
+    "backend/tests/Feature/InventoryConcurrencyTest.php": "cc6d11ce38efcea33290976393866d52baabe2e0935614fc3baa624925592cc9",
+    "backend/tests/Feature/AddendumFoundationsTest.php": "3375126501bb657b4df94a7f3b338812b0c68ca5bc63eb53e4924b80a68cb52c",
+    "backend/tests/Feature/SharedSchemaTest.php": "7f2ce7f142386e822eaebab4eeb73d5f8c9275d55cc268cc03aead77eeaa6a84",
+    "backend/tests/Support/stock_worker.php": "09f9bd1d0f0a2bb1dca99c06a86ec078d2ee6858fa2d5d77e2cdba2f5c99ebe8",
+    "tools/migration/verify_mysql_schema.php": "98dbc6127aa1c9d95b239efd77cc4e15882ce91f6e4cf3f01c051ae456717e87",
+    "docs/warranty/README.md": "7f9cd91d77fc473b14407279e54feecf9fe7fbd9b8b4438637ed52b02c87dbc3"
+  },
+  "unchanged_control_sha256": {
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "6b5302950a048fe52e8f40a3d9ab4aac9a8a845baae91703943cf10ee8171843",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "7a4d94ce4b7244fb81abdf599cc69928a675b076faefe37ff1083cfcbf03be1f",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "bc87cf8f1e4a4879a71ba459105c52b685a8110bcb2a9b9f64f6760239f2efab",
+    "docs/AI_PROJECT_COMMAND_REGISTRY.md": "63fe5d304e5e49ada0b8c0a255a2b010f7d2ec8193db9accfe5959d5bdfb99e6"
+  },
+  "authority_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5"
+  },
+  "next": "MT-2.7 - Unified orders, reservations and payments"
+}

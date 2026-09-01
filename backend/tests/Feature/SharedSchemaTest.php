@@ -28,6 +28,10 @@ class SharedSchemaTest extends TestCase
                     'total_price', 'created_at', 'updated_at', 'purchase_price', 'discount_allocated', 'net_total_price', 'profit', 'invoice_detail_options', 'invoice_detail_snapshot'],
                 'return_lines' => ['id', 'public_id', 'return_id', 'invoice_id', 'sale_id', 'stock_unit_id', 'successor_stock_unit_id', 'quantity', 'unit_price',
                     'discount_amount', 'net_amount', 'purchase_amount', 'currency', 'sale_snapshot', 'snapshot_sha256', 'condition', 'disposition', 'accepted_at'],
+                'claims' => ['id', 'product_id', 'invoice_id', 'outlet_id', 'quantity', 'created_at', 'updated_at', 'claim_number', 'sale_id', 'stock_unit_id', 'status',
+                    'issue_description', 'received_condition', 'accessories_received', 'assigned_to', 'diagnosis', 'resolution', 'internal_notes', 'received_at',
+                    'expected_completion_at', 'resolved_at', 'delivered_at', 'customer_satisfied', 'follow_up_required', 'follow_up_at', 'follow_up_notes',
+                    'activity_log', 'handled_by_admin_id', 'handled_by_name', 'warranty_snapshot', 'warranty_expires_at', 'public_id', 'version', 'active_stock_unit_id'],
                 default => [...array_column($table['columns'], 'name'), ...$identityColumns],
             };
             $this->assertSame($expectedColumns, $columns->keys()->all(), $name);
@@ -62,7 +66,9 @@ class SharedSchemaTest extends TestCase
                 }
             }
             $fks = Schema::getForeignKeys($name);
-            $this->assertCount(count($table['foreign_keys']) + ($name === 'return_lines' ? 3 : 0), $fks, $name);
+            $this->assertCount(count($table['foreign_keys']) + match ($name) {
+                'return_lines' => 3, 'claims' => 1, default => 0,
+            }, $fks, $name);
             foreach ($fks as $relation) {
                 $this->assertSame('restrict', strtolower($relation['on_delete']), $name);
             }

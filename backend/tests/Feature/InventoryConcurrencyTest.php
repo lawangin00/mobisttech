@@ -19,7 +19,7 @@ class InventoryConcurrencyTest extends TestCase
     use InventoryFixture;
 
     // These tests deliberately commit fixtures so independent MySQL connections can see them.
-    private array $tables = ['identity_audit_events', 'domain_events', 'publication_versions', 'idempotency_requests', 'return_lines', 'returns', 'monetary_adjustments',
+    private array $tables = ['identity_audit_events', 'domain_events', 'publication_versions', 'idempotency_requests', 'claim_events', 'claims', 'return_lines', 'returns', 'monetary_adjustments',
         'stock_unit_lineage', 'reservation_allocations', 'reservation_lines', 'reservations', 'product_imeis', 'active_imeis', 'stock_movements', 'stock_units',
         'stock_acquisitions', 'sales', 'invoices', 'order_items', 'orders', 'customers', 'document_sequences', 'pos_master_data_usages', 'products',
         'pos_master_data_options', 'outlets', 'super_admins'];
@@ -115,6 +115,24 @@ class InventoryConcurrencyTest extends TestCase
         $this->assertSame(1, DB::table('return_lines')->count());
         $this->assertSame(1, $product->fresh()->qty);
         $this->assertSame(0, $product->fresh()->sold_qty);
+    }
+
+    public function test_separate_mysql_connections_cannot_open_claims_beyond_the_last_eligible_quantity(): void
+    {
+        $product = $this->product();
+        $product->forceFill(['warranty_type' => 'shop_warranty', 'warranty_unit' => 0, 'warranty_duration' => 30])->save();
+        $this->acquire($product);
+        $sale = app(SalesOperations::class)->sell($this->actor, $this->outlet, (string) Str::uuid(), [
+            'discount' => '0.00', 'lines' => [['product_id' => $product->public_id, 'quantity' => 1]],
+        ]);
+        $input = ['sale_id' => $sale['sale_ids'][0], 'quantity' => 1, 'issue_description' => 'Synthetic concurrent warranty issue'];
+        $request = ['operation' => 'claim', 'actor' => $this->actor->id, 'outlet' => $this->outlet->id, 'input' => $input];
+        $results = $this->race([$product->id], [[...$request, 'key' => (string) Str::uuid()], [...$request, 'key' => (string) Str::uuid()]]);
+        $this->oneWinner($results);
+        $this->assertSame(1, DB::table('claims')->count());
+        $this->assertSame(1, DB::table('claim_events')->count());
+        $this->assertSame('received', DB::table('claims')->value('status'));
+        $this->assertSame(1, DB::table('claims')->value('quantity'));
     }
 
     public function test_private_acquisition_evidence_is_scoped_and_never_a_client_selected_path(): void
