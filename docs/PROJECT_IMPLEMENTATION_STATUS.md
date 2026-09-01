@@ -21,7 +21,7 @@ Last reconciled: 2026-09-01
 - Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.7
 - Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.7
 - Roadmap Word mirror: `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
-- Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r4 (universal 1.9 / system 7.2)
+- Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r5 (universal 1.10 / system 7.3)
 - FINAL-AUDIT: `FINAL-AUDIT - Independent final project audit`
 
 ## Verified position
@@ -44,7 +44,7 @@ Approved addendum v1.1 expands required work without reinitialization. MT-2.8 im
 
 ## Documentation language policy
 
-Roman Urdu is the default only for assistant chat/UI communication with the user. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal and Preferences remain byte-preserved in their original language/content unless transformation is explicitly authorized. This boundary is recorded in Source of Truth, roadmap, AGENTS, project registry and the synchronized Universal Registry 1.9 baseline.
+Roman Urdu is the default only for assistant chat/UI communication with the user. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal and Preferences remain byte-preserved in their original language/content unless transformation is explicitly authorized. This boundary is recorded in Source of Truth, roadmap, AGENTS, project registry and the synchronized Universal Registry 1.10 baseline.
 
 ## Roadmap lifecycle policy
 
@@ -288,7 +288,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 
 ## Recovery and next action
 
-Do not re-execute the twelve completed points, addendum reconciliation or unified Admin/Google remediation. After the MT-2.18 checkpoint is committed/pushed and clean synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-2.7 - Unified orders, reservations and payments`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r4 remains unchanged; routine progress requires no registry refresh or Word regeneration. Broader addendum feature workflows remain assigned to their respective later points.
+Do not re-execute the twelve completed points, addendum reconciliation or unified Admin/Google remediation. After the MT-2.18 checkpoint is committed/pushed and clean synchronization is verified, stop. The next applicable Y/Proceed executes only `MT-2.7 - Unified orders, reservations and payments`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r5 is current; routine progress requires no roadmap Word regeneration. Already-open chat/Work sessions that previously loaded r4 must run one `Refresh` / `VP:REFRESH-REGISTRY` before using aliases again; new chats load r5 on their first project alias. Broader addendum feature workflows remain assigned to their respective later points.
 
 ## HOLD / decisions
 

@@ -1,7 +1,7 @@
 # mobiST Tech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r4
-**Universal baseline:** Registry 1.9 / System 7.2
+**Registry version:** MT-1.1-r5
+**Universal baseline:** Registry 1.10 / System 7.3
 **Date:** 2026-09-01
 **Repository root:** `C:\mobisttech`
 **Remote:** `lawangin00/mobisttech` (independent, private)
@@ -26,24 +26,25 @@
 - Every completed point records applicable focused/full gates, exact pending state, source-boundary verification and Git evidence. Never mark partial work Complete.
 - Roadmap Markdown is the authoritative structural plan. Live Completed/In Progress/Pending state, last/current/next position and progress counts belong only in `docs/PROJECT_IMPLEMENTATION_STATUS.md`. Routine point/stage progress must not edit the roadmap or regenerate the DOCX. Regenerate, content-check and render-verify the same-basename DOCX only when roadmap structure/content materially changes. Helper: `tools/docs/build_roadmap_docx.py`.
 - Load the registry once on the first alias in a session and reuse it. Refresh Registry/Refresh/VP:REFRESH-REGISTRY forces a fresh reload and must not advance roadmap implementation.
+- `N` / `VP:STOP` is terminal for the current turn and overrides the default completion/incomplete prompt protocol. After STOP, never repeat `Proceed? Y/N`. If no roadmap point is `In Progress`, return only `Stopped.` and `Next pending: <exact point identifier> - <exact title>`. If a point is `In Progress`, return only `Stopped.`, `In Progress: <exact point identifier> - <exact title>` and `Next action: <exact recovery action>`.
 - Roman Urdu is the default only for assistant chat/UI communication. Git-tracked project documentation and technical artifacts must use standard English unless the user explicitly requests another language for a specific artifact. Preserve user-supplied source documents in their original language/content unless transformation is explicitly authorized. Minimal completion labels and exact technical/task identifiers remain unchanged.
 - Detailed evidence belongs in Git-tracked documentation; normal user-facing completion/status output remains concise.
 
-Documentation revision MT-1.1-r4 registers addendum v1.1 and traceability only. Universal definitions and alias behavior remain unchanged from MT-1.1-r3; this is not an implicit Refresh command or an implementation advance.
+Documentation revision MT-1.1-r5 synchronizes Universal Registry 1.10 / System 7.3 and adopts the deterministic STOP output contract only. It does not advance roadmap implementation, change project position, or imply an automatic Refresh in already-open sessions.
 
 ## Adopted universal definitions
 
-This revision deliberately synchronizes the project registry to Universal Registry 1.9 / System 7.2 and adopts the optimized roadmap lifecycle: the roadmap is structural, the ledger owns live execution status, and routine progress does not regenerate the Word mirror. The existing language boundary, project-specific Goal/Preferences initialization gate, VP:VERIFY boundary, point order, session-refresh model and project position remain in force. No roadmap implementation point is advanced by this registry revision.
+This revision deliberately synchronizes the project registry to Universal Registry 1.10 / System 7.3. The deterministic STOP contract removes the prior output ambiguity between `N` and `VP:STOP`: STOP is terminal for the turn and does not re-prompt `Proceed? Y/N`. The optimized roadmap lifecycle, language boundary, project-specific Goal/Preferences initialization gate, VP:VERIFY boundary, point order, session-refresh model and current project position remain unchanged. No roadmap implementation point is advanced by this registry revision.
 
-The canonical universal registry snapshot below is copied from `lawangin00/references/UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`. Project-specific rules above are explicit specializations; all other semantics remain unchanged. Baseline Git blob: `73347e8cad30672093707a96496271d9e1dfceba`. Roadmap specification v1.1 Git blob: `dc94355694365235e2294224b31a8bd8b2974003`.
+The canonical universal registry snapshot below is copied from `lawangin00/references/UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`. Project-specific rules above are explicit specializations; all other semantics remain unchanged. Baseline Git blob: `e3ddadd05b9cbb229dc7d7381033d2310045aa5e`. Roadmap specification v1.1 Git blob: `dc94355694365235e2294224b31a8bd8b2974003`.
 
 ---
 
 # Universal Verified Project Command Registry
 
-**Registry version:** 1.9
-**System version:** 7.2
-**Canonical remote:** `lawangin00/references`
+**Registry version:** 1.10
+**System version:** 7.3  
+**Canonical remote:** `lawangin00/references`  
 **Canonical path:** `UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`
 **Roadmap specification:** `UNIVERSAL_PROJECT_ROADMAP_SPEC.md`
 
@@ -114,7 +115,18 @@ If an executable roadmap point is already verified `In Progress`, continue that 
 
 ## `N` / `VP:STOP`
 
-Stop after the current safe checkpoint. Do not start the next roadmap point. Preserve verified project state.
+Stop after the current safe checkpoint. Do not start the next roadmap point. Preserve verified project state. This command is terminal for the current turn and overrides the default completion/incomplete prompt protocol: after STOP, do not ask `Proceed? Y/N` again.
+
+If no roadmap point is currently `In Progress`, return only:
+
+`Stopped.`  
+`Next pending: <exact point identifier> - <exact title>`
+
+If a roadmap point is already `In Progress`, return only:
+
+`Stopped.`  
+`In Progress: <exact point identifier> - <exact title>`  
+`Next action: <exact recovery action>`
 
 ## `Resume` / `VP:RESUME`
 
@@ -201,8 +213,8 @@ Show registered aliases and a one-line meaning for each. Do not inspect or mutat
 
 After a point is fully completed and verified:
 
-`Completed: <exact point identifier> - <exact title>`
-`Next: <exact next point identifier> - <exact title>`
+`Completed: <exact point identifier> - <exact title>`  
+`Next: <exact next point identifier> - <exact title>`  
 `Proceed? Y/N`
 
 If it completes a stage, also include:
@@ -211,12 +223,12 @@ If it completes a stage, also include:
 
 If incomplete:
 
-`In Progress: <exact point identifier> - <exact title>`
-`Incomplete: <concise verified blocker or remaining work>`
-`Next action: <exact recovery action>`
+`In Progress: <exact point identifier> - <exact title>`  
+`Incomplete: <concise verified blocker or remaining work>`  
+`Next action: <exact recovery action>`  
 `Proceed? Y/N`
 
-`Incomplete` and `Next action` must each be one concise line. Do not include bullet lists, hashes, migration batches, test counts, backup metadata, completed sub-work or detailed technical evidence unless the user explicitly asks for details; keep such evidence in Git-tracked project documentation/logs. Always show `Proceed? Y/N` for incomplete work. In that context, `Y` / `Proceed` continues the same verified `In Progress` point from its `Next action`; `N` stops and waits. Never advance to the next roadmap point until the current point is verified complete.
+`Incomplete` and `Next action` must each be one concise line. Do not include bullet lists, hashes, migration batches, test counts, backup metadata, completed sub-work or detailed technical evidence unless the user explicitly asks for details; keep such evidence in Git-tracked project documentation/logs. Always show `Proceed? Y/N` for incomplete work. In that context, `Y` / `Proceed` continues the same verified `In Progress` point from its `Next action`; `N` stops and waits. When `N` / `VP:STOP` is invoked, the STOP output contract above overrides this default protocol and `Proceed? Y/N` must not be repeated. Never advance to the next roadmap point until the current point is verified complete.
 
 ## Final-audit rule
 
