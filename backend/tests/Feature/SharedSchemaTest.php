@@ -32,6 +32,10 @@ class SharedSchemaTest extends TestCase
                     'issue_description', 'received_condition', 'accessories_received', 'assigned_to', 'diagnosis', 'resolution', 'internal_notes', 'received_at',
                     'expected_completion_at', 'resolved_at', 'delivered_at', 'customer_satisfied', 'follow_up_required', 'follow_up_at', 'follow_up_notes',
                     'activity_log', 'handled_by_admin_id', 'handled_by_name', 'warranty_snapshot', 'warranty_expires_at', 'public_id', 'version', 'active_stock_unit_id'],
+                'orders' => [...array_column($table['columns'], 'name'), 'owner_scope_hash'],
+                'payments' => [...array_column($table['columns'], 'name'), 'intent_hash', 'failure_code', 'reconciliation_required_at', 'completed_at'],
+                'payment_receipts' => [...array_slice(array_column($table['columns'], 'name'), 0, 10), 'outcome', ...array_slice(array_column($table['columns'], 'name'), 10)],
+                'refunds' => [...array_slice(array_column($table['columns'], 'name'), 0, 10), 'completed_at', 'failed_at', ...array_slice(array_column($table['columns'], 'name'), 10)],
                 'backup_records' => ['id', 'outlet_id', 'integration_connection_id', ...array_slice(array_column($table['columns'], 'name'), 2)],
                 default => [...array_column($table['columns'], 'name'), ...$identityColumns],
             };

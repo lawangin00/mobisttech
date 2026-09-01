@@ -1,0 +1,101 @@
+{
+  "checkpoint": "MT-2.7 - Unified orders, reservations and payments",
+  "date": "2026-09-01",
+  "starting_commit": "52d7fd077be9d119b885b4f3e70e307c5a30f8a6",
+  "scope": {
+    "implemented": [
+      "shared physical Website checkout with canonical server repricing and one-outlet reservation",
+      "customer and guest owner-scope hashing with idempotent cancellation and expiry",
+      "authorized COD collection through the shared payment-to-sale transaction",
+      "narrow fail-closed external provider intent and verified callback contract",
+      "receipt replay, failure, unknown-result and late-paid reconciliation behavior",
+      "shared invoice, sale, stock, serialized-unit and movement settlement",
+      "mode-aware new commerce denial with safe verified callbacks and historical milestone payments",
+      "immutable project milestone payment linkage and exact customer ownership",
+      "bounded verified manual refunds against collected and accepted-return balances"
+    ],
+    "excluded": [
+      "public/internal commerce REST endpoints and user interfaces",
+      "authentic JazzCash, Easypaisa or hosted-card activation and sandbox acceptance",
+      "automatic external-provider refunds or real cash-session effects",
+      "private source-data import, cutover or production action",
+      "MT-2.9 and all later roadmap points"
+    ]
+  },
+  "source_boundary": {
+    "pos_commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+    "website_commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+    "working_trees": "PASS: both protected source working trees clean under read-only git --no-optional-locks inspection",
+    "source_runtime_or_database_used": false,
+    "private_rows_imported": false
+  },
+  "schema": {
+    "mysql": "8.4.11",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "timezone": "+00:00",
+    "strict": true,
+    "tables": 86,
+    "columns": 1052,
+    "foreign_keys": 143,
+    "indexes": 381,
+    "business_rows": 0,
+    "sha256": "00f9478e641f4d73b5b61e9bb736cf8cffad5f766df7630d80961886c10f7115",
+    "rollback_sha256": "6f0b46482efd7a3a93e0986b3decf02d10ffaf62c4037d9f6ec204ddc877f488",
+    "rollback_reapply": "PASS on the empty disposable test schema"
+  },
+  "acceptance": {
+    "backend_full": "PASS: 123 tests, 4719 assertions",
+    "focused_commerce": "PASS: 7 tests, 49 assertions",
+    "schema_manifest": "PASS: SharedSchemaTest, 9 tests, 3631 assertions",
+    "schema_verifier": "PASS: php tools/migration/verify_mysql_schema.php orders",
+    "php_format": "PASS: Pint",
+    "composer": "PASS: strict validation and platform requirements",
+    "laravel_runtime": "PASS: optimize and optimize:clear",
+    "backend_build": "PASS: TypeScript and Vite production build",
+    "website": "PASS: ESLint, TypeScript and Next.js production build",
+    "routes": "PASS: no commerce, payment or refund endpoint introduced before MT-3.4",
+    "online_advisory_refresh": "NOT CLAIMED: dependency locks are unchanged and no online registry audit was required for this point"
+  },
+  "verified_contracts": [
+    "client input cannot choose price, total, outlet, paid state or stock identity",
+    "one current physical hold and exact held units remain governed by shared stock constraints",
+    "invoice, sales, receipt, payment, order, allocation and stock effects share one transaction",
+    "same idempotency or provider event replay is stable and changed replay conflicts",
+    "provider initiation replay does not issue a second external request and a new charge is allowed only after definitive failure",
+    "unknown payment results retain a hold and require reconciliation",
+    "late verified payment is retained without creating an unallocated sale",
+    "disabled providers fail before an order is created",
+    "operating-mode changes govern new commerce but do not invalidate verified callbacks or authorized historical milestone access",
+    "paid milestone identity cannot be reused or silently recalculated",
+    "refund reservations cannot exceed collected funds or accepted-return net value",
+    "raw PAN/CVV and provider secrets are outside the service contract"
+  ],
+  "corrections_during_verification": [
+    "The first focused run used the previously migrated disposable schema and exposed the new migration as unapplied there; the exact test schema was migrated and then rebuilt from empty for the final gate.",
+    "Provider test registration initially used a transient container instance; the signed fake registry was explicitly scoped to the test application and disabled production defaults remained unchanged.",
+    "Guest cancellation originally lacked durable owner scope; owner_scope_hash was added and cancellation now requires the same server-derived scope.",
+    "The first local rollback encountered the earlier in-run migration shape after owner scope was added; the defensive empty-schema down migration and empty target local schema were rebuilt, then disposable rollback/reapply and hashes passed.",
+    "The MT-2.1 schema manifest test was extended with only the additive MT-2.7 columns; the frozen source/target baseline files remain unchanged."
+  ],
+  "artifact_sha256": {
+    "backend/app/Commerce/OrderTransactions.php": "18c0124e9d2c2d8ade154229de7848a20944b3390efc273d6a201f77cf022ee3",
+    "backend/app/Commerce/PaymentProvider.php": "64e5372374b184fc74d7b82cb0fc80aa4835905814fc69c794476659f62c2dec",
+    "backend/app/Commerce/PaymentProviders.php": "98ff56265e8c13f5644a9abf9879d907cf5bc8bd8354bd5b58d02265ce41816d",
+    "backend/app/Sales/SalesOperations.php": "98d896eb0de833279f3c0f1b7d4565a1e00463c26e1b743be9a6e79ded4e9f96",
+    "backend/config/commerce.php": "afe18caeb464e536168727a295dc1e70cfd7180c437b736b6b111c48e4e6b851",
+    "backend/database/migrations/2026_09_01_140000_add_order_payment_integrity.php": "9b9cd36de2ad02843754632cceca26f1d804ef8552d665c1eb027c862a480db9",
+    "backend/tests/Feature/OrderPaymentTransactionsTest.php": "ff2b4954c8b9fa3875060a6cfdcf37e4f5b74bcb050dbb721f80a84a4389325e",
+    "backend/tests/Feature/SharedSchemaTest.php": "c534cf0bb2f27ae67ce32ee3f6bcd7f65da0c3758135f4342e1f283b368fb4f6",
+    "tools/migration/verify_mysql_schema.php": "37189c8b203c3b010fd2262ced52e202ebc77d78707a8ae35544e685dba33bcf",
+    "docs/orders/README.md": "652ebad34adf25312e1b2568663690aded9f9156b99edb94969b53606b1e512e"
+  },
+  "authority_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "17fef1f643435211efbf276885322ed4727931b4f67b0f7f74c663e4f3eb7ce6",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "db2c10382e16949ab8b67e17d9ffc8fbca25e53fae07cdeaf4fe81dae133914f"
+  },
+  "next": "MT-2.9 - Supplier and procurement services"
+}

@@ -97,6 +97,64 @@ final class SalesOperations
         });
     }
 
+    /** Finalize a paid/COD Website reservation through the same invoice, sale and stock authority. */
+    public function finalizeReservedOrder(int $reservationId): int
+    {
+        if (DB::transactionLevel() < 1) {
+            throw new LogicException('Website sale finalization requires its owning payment transaction.');
+        }
+        $reservation = DB::table('reservations')->where('id', $reservationId)->lockForUpdate()->firstOrFail();
+        if ($reservation->state === 'confirmed') {
+            return $reservation->invoice_id;
+        }
+        if (! in_array($reservation->state, ['active', 'held_cod'], true)
+            || ($reservation->state === 'active' && $reservation->reservation_expires_at && now()->gte($reservation->reservation_expires_at))) {
+            throw new LogicException('Website reservation is not confirmable.');
+        }
+        $order = DB::table('orders')->where('id', $reservation->order_id)->lockForUpdate()->firstOrFail();
+        $outlet = Outlet::whereKey($reservation->outlet_id)->lockForUpdate()->firstOrFail();
+        $lines = DB::table('reservation_lines')->where('reservation_id', $reservation->id)->orderBy('product_id')->orderBy('id')->lockForUpdate()->get();
+        if ($lines->isEmpty() || bccomp($order->total, $reservation->total_amount, 2) !== 0) {
+            throw new LogicException('Order and reservation totals disagree.');
+        }
+        $sum = $lines->reduce(fn (string $value, object $line) => bcadd($value, $line->line_total, 2), '0.00');
+        if (bccomp($sum, $order->total, 2) !== 0) {
+            throw new LogicException('Reservation line totals disagree with the order.');
+        }
+        $invoiceId = DB::table('invoices')->insertGetId([
+            'outlet_id' => $outlet->id, 'order_id' => $order->id, 'total_bill' => $order->subtotal, 'discount' => bcsub($order->subtotal, $order->total, 2),
+            'final_bill' => $order->total, 'customer_id' => $order->customer_id, 'customer_name' => $order->customer_name,
+            'customer_phone' => $order->customer_mobile, 'customer_info' => $order->delivery_address,
+            'business_snapshot' => json_encode(['contract' => 'canonical-business-at-sale.v2', ...app(BusinessProfile::class)->current(),
+                'outlet_id' => $outlet->public_id, 'outlet_code' => $outlet->outlet_code, 'outlet_name' => $outlet->name,
+                'business_legal_name' => $outlet->business_legal_name, 'business_phone' => $outlet->business_phone,
+                'business_whatsapp' => $outlet->business_whatsapp, 'business_address' => $outlet->business_address,
+                'business_hours' => $outlet->business_hours, 'business_identifiers' => $outlet->business_identifiers], JSON_THROW_ON_ERROR),
+            'warranty_terms_snapshot' => json_encode(app(WarrantyClauses::class)->snapshot(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+            'invoice_number' => $this->number($outlet), 'public_id' => (string) Str::uuid(), 'currency' => 'PKR', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        foreach ($lines as $line) {
+            $item = DB::table('order_items')->where('id', $line->order_item_id)->lockForUpdate()->firstOrFail();
+            $product = Product::whereKey($line->product_id)->lockForUpdate()->firstOrFail();
+            if ($item->order_id !== $order->id || $item->product_id !== $product->id || $item->outlet_id !== $outlet->id
+                || $item->quantity !== $line->quantity || bccomp($item->unit_price, $line->unit_price, 2) !== 0
+                || bccomp($item->line_total, $line->line_total, 2) !== 0) {
+                throw new LogicException('Order item identity or immutable price snapshot changed.');
+            }
+            $cost = bcmul(SourceRow::money((string) $product->purchase_price), (string) $line->quantity, 2);
+            $saleId = DB::table('sales')->insertGetId(['public_id' => (string) Str::uuid(), 'product_id' => $product->id, 'outlet_id' => $outlet->id,
+                'sale_date' => now()->toDateString(), 'sale_price' => $line->unit_price, 'invoice_id' => $invoiceId, 'quantity' => $line->quantity,
+                'total_price' => $line->line_total, 'purchase_price' => SourceRow::money((string) $product->purchase_price),
+                'discount_allocated' => '0.00', 'net_total_price' => $line->line_total, 'profit' => bcsub($line->line_total, $cost, 2),
+                'invoice_detail_snapshot' => $line->source_snapshot, 'created_at' => now(), 'updated_at' => now()]);
+            $this->transactionalStock->consumeSale($saleId, $line->id);
+        }
+        DB::table('reservations')->where('id', $reservation->id)->update(['state' => 'confirmed', 'invoice_id' => $invoiceId,
+            'confirmed_at' => now(), 'updated_at' => now()]);
+
+        return $invoiceId;
+    }
+
     public function acceptReturn(IdentityAccount $actor, Outlet $outlet, string $key, array $input): array
     {
         $this->fields($input, ['invoice_id', 'reason', 'lines']);

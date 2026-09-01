@@ -15,20 +15,20 @@ if ($db->db !== 'mobisttech_test' || (int) $db->port !== 13306 || ! $app->enviro
     throw new RuntimeException('Exact disposable target test schema required.');
 }
 $mode = $argv[1] ?? '';
-if (! in_array($mode, ['admin-google', 'warranty', 'sales', 'addendum', 'identity', 'shared', 'runtime'], true)) {
-    throw new RuntimeException('Expected admin-google, warranty, sales, addendum, identity, shared or runtime verification mode.');
+if (! in_array($mode, ['orders', 'admin-google', 'warranty', 'sales', 'addendum', 'identity', 'shared', 'runtime'], true)) {
+    throw new RuntimeException('Expected orders, admin-google, warranty, sales, addendum, identity, shared or runtime verification mode.');
 }
 $schema = Illuminate\Support\Facades\Schema::getFacadeRoot();
 $spec = json_decode(file_get_contents($root.'/docs/schema/TARGET_SCHEMA.json'), true, flags: JSON_THROW_ON_ERROR);
 $runtime = ['cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'sessions', 'migrations'];
 $expected = $mode !== 'runtime' ? array_merge($runtime, array_keys($spec['tables'])) : $runtime;
-if (in_array($mode, ['identity', 'addendum', 'sales', 'warranty', 'admin-google'], true)) {
+if (in_array($mode, ['identity', 'addendum', 'sales', 'warranty', 'admin-google', 'orders'], true)) {
     $expected = array_merge($expected, ['admin_password_reset_tokens', 'super_admin_password_reset_tokens', 'site_admin_password_reset_tokens', 'identity_audit_events']);
 }
-if (in_array($mode, ['addendum', 'sales', 'warranty', 'admin-google'], true)) {
+if (in_array($mode, ['addendum', 'sales', 'warranty', 'admin-google', 'orders'], true)) {
     $expected = array_merge($expected, ['website_operating_profiles', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones']);
 }
-if (in_array($mode, ['sales', 'warranty', 'admin-google'], true)) {
+if (in_array($mode, ['sales', 'warranty', 'admin-google', 'orders'], true)) {
     foreach (['public_id', 'version', 'returned_quantity'] as $column) {
         if (! $schema->hasColumn('sales', $column)) {
             throw new RuntimeException('Missing sales integrity column: '.$column);
@@ -40,7 +40,7 @@ if (in_array($mode, ['sales', 'warranty', 'admin-google'], true)) {
         }
     }
 }
-if (in_array($mode, ['warranty', 'admin-google'], true)) {
+if (in_array($mode, ['warranty', 'admin-google', 'orders'], true)) {
     $expected[] = 'claim_events';
     foreach (['warranty_snapshot', 'warranty_expires_at', 'active_stock_unit_id'] as $column) {
         if (! $schema->hasColumn('claims', $column)) {
@@ -48,7 +48,7 @@ if (in_array($mode, ['warranty', 'admin-google'], true)) {
         }
     }
 }
-if ($mode === 'admin-google') {
+if (in_array($mode, ['admin-google', 'orders'], true)) {
     $expected = array_merge($expected, ['business_profiles', 'admin_identity_mappings', 'integration_connections', 'integration_oauth_states', 'integration_events']);
     foreach (['provider', 'status', 'encrypted_credentials', 'authorized_by_admin_id', 'last_success_at'] as $column) {
         if (! $schema->hasColumn('integration_connections', $column)) {
@@ -57,6 +57,21 @@ if ($mode === 'admin-google') {
     }
     if (! $schema->hasColumn('backup_records', 'integration_connection_id')) {
         throw new RuntimeException('Missing Google Drive backup integration reference.');
+    }
+}
+if ($mode === 'orders') {
+    foreach (['owner_scope_hash'] as $column) {
+        if (! $schema->hasColumn('orders', $column)) {
+            throw new RuntimeException('Missing order ownership column: '.$column);
+        }
+    }
+    foreach (['intent_hash', 'failure_code', 'reconciliation_required_at', 'completed_at'] as $column) {
+        if (! $schema->hasColumn('payments', $column)) {
+            throw new RuntimeException('Missing payment integrity column: '.$column);
+        }
+    }
+    if (! $schema->hasColumn('payment_receipts', 'outcome') || ! $schema->hasColumn('project_milestone_identities', 'paid_payment_id')) {
+        throw new RuntimeException('Missing receipt or milestone payment linkage.');
     }
 }
 $actual = array_column($schema->getTables(schema: $db->db), 'name');
@@ -77,7 +92,7 @@ foreach ($actual as $table) {
     if (! str_contains($definitions[$table], 'ENGINE=InnoDB')) {
         throw new RuntimeException('Non-transactional table found.');
     }
-    $seedRows = $mode === 'admin-google' ? ['business_profiles' => 1, 'integration_connections' => 2] : [];
+    $seedRows = in_array($mode, ['admin-google', 'orders'], true) ? ['business_profiles' => 1, 'integration_connections' => 2] : [];
     $rowCount = Illuminate\Support\Facades\DB::table($table)->count();
     if (! in_array($table, $runtime, true) && $rowCount !== ($seedRows[$table] ?? 0)) {
         throw new RuntimeException('Unexpected business rows remain in disposable schema.');
@@ -89,4 +104,4 @@ if (! str_contains($db->sql_mode, 'STRICT_TRANS_TABLES') || $db->timezone !== '+
 echo json_encode(['mode' => $mode, 'result' => 'PASS', 'database' => $db->db, 'port' => (int) $db->port,
     'mysql' => $db->version, 'timezone' => $db->timezone, 'strict' => true, 'counts' => $counts,
     'schema_sha256' => hash('sha256', json_encode($definitions, JSON_UNESCAPED_SLASHES)),
-    'business_rows' => 0, 'canonical_seed_rows' => $mode === 'admin-google' ? 3 : 0], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n";
+    'business_rows' => 0, 'canonical_seed_rows' => in_array($mode, ['admin-google', 'orders'], true) ? 3 : 0], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n";
