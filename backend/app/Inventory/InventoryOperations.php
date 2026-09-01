@@ -3,7 +3,6 @@
 namespace App\Inventory;
 
 use App\Catalog\CatalogChanged;
-use App\Catalog\ProductDefinitions;
 use App\Identity\Access;
 use App\Identity\IdentityAccount;
 use App\Identity\IdentityAudit;
@@ -20,7 +19,7 @@ use LogicException;
 
 final class InventoryOperations
 {
-    public function __construct(private StockLedger $stock) {}
+    public function __construct(private StockLedger $stock, private StockReceiptWriter $receipts) {}
 
     public function acquire(IdentityAccount $actor, Outlet $outlet, string $productId, string $key, array $input): array
     {
@@ -43,17 +42,12 @@ final class InventoryOperations
             if (($business && trim($data['business_name'] ?? '') === '') || (! $business && (trim($data['seller_name'] ?? '') === '' || empty($data['seller_cnic'])))) {
                 throw ValidationException::withMessages(['source' => 'The buying source requires its business or individual identity.']);
             }
-            $id = DB::table('stock_acquisitions')->insertGetId(['product_id' => $product->id, 'outlet_id' => $product->outlet_id,
-                'source_type' => $option->code, 'source_type_master_data_id' => $option->id, 'business_name' => $business ? $data['business_name'] : null,
-                'seller_name' => $business ? null : $data['seller_name'], 'seller_cnic' => $business ? null : $data['seller_cnic'],
-                'seller_phone' => $data['seller_phone'], 'seller_address' => $data['seller_address'], 'quantity' => $data['quantity'],
-                'unit_purchase_price' => $cost, 'acquired_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
-            $master->syncUsage(null, $option, 'stock_acquisition', $id, 'source_type');
-            $this->blankUnits($product, (int) $data['quantity'], $cost, $id);
-            $product->purchase_price = $cost;
-            $movement = $this->stock->movement($product, 'restock', (int) $data['quantity'], 'stock_acquisition', $id, $data['reason']);
 
-            return ['acquisition_id' => $id, 'movement_id' => $movement];
+            return $this->receipts->receive($product, $option, (int) $data['quantity'], $cost, [
+                'business_name' => $business ? $data['business_name'] : null, 'seller_name' => $business ? null : $data['seller_name'],
+                'seller_cnic' => $business ? null : $data['seller_cnic'], 'seller_phone' => $data['seller_phone'],
+                'seller_address' => $data['seller_address'],
+            ], $data['reason']);
         });
     }
 
@@ -66,7 +60,7 @@ final class InventoryOperations
             $quantity = (int) $data['quantity'];
             $unit = null;
             if ($data['type'] === 'correction_in') {
-                $this->blankUnits($product, $quantity, $product->purchase_price, null);
+                $this->receipts->correctionUnits($product, $quantity, $product->purchase_price);
             } else {
                 $snapshot = $this->stock->snapshot($product->id);
                 if ($product->track_imei) {
@@ -178,33 +172,6 @@ final class InventoryOperations
     {
         if (array_diff(array_keys($input), $allowed)) {
             throw ValidationException::withMessages(['input' => 'Unexpected inventory fields; identities, quantities and states are server controlled.']);
-        }
-    }
-
-    private function blankUnits(Product $product, int $quantity, string $cost, ?int $acquisition): void
-    {
-        if (! $product->track_imei) {
-            return;
-        }
-        $number = (int) StockUnit::where('product_id', $product->id)->orderByDesc('unit_no')->lockForUpdate()->value('unit_no');
-        $master = app(PosInventoryMasterData::class);
-        for ($i = 0; $i < $quantity; $i++) {
-            $unit = new StockUnit;
-            $unit->forceFill(['product_id' => $product->id, 'unit_no' => ++$number, 'stock_acquisition_id' => $acquisition, 'purchase_price' => $cost, 'status' => 'in_stock']);
-            foreach (ProductDefinitions::UNIT_OPTIONS as $field => [$list, $raw]) {
-                if ($raw === 'color') {
-                    continue;
-                }
-                $option = $master->optionByCode($list, 'unknown');
-                $unit->$field = $option?->id;
-                $unit->$raw = 'unknown';
-            }
-            $unit->save();
-            foreach (ProductDefinitions::UNIT_OPTIONS as $field => [$list, $raw]) {
-                if ($unit->$field) {
-                    $master->syncUsage(null, PosMasterDataOption::findOrFail($unit->$field), 'stock_unit', $unit->id, $raw);
-                }
-            }
         }
     }
 }

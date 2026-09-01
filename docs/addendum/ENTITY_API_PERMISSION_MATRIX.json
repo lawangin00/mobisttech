@@ -103,12 +103,12 @@
       "requirement": "P1 suppliers and purchase orders",
       "gates": "MT-2.9, MT-4.5",
       "acceptance": "Supplier contacts/profiles, PO lines/status/expected dates, partial receiving, landed/unit cost, supplier history and acquisition traceability.",
-      "entities": "acquisition_source_references, stock_acquisitions; planned suppliers/purchase_orders/lines/receipts",
+      "entities": "suppliers, supplier_contacts, purchase_orders, purchase_order_lines, purchase_order_receipts, purchase_order_receipt_lines, purchase_order_events, stock_acquisitions and acquisition_source_references",
       "permission_contract": "shop.procurement",
       "reserved_api_contracts": "GET/POST /internal/admin/suppliers; GET/POST /internal/admin/purchase-orders; POST /internal/admin/purchase-orders/{id}/receipts",
       "owning_backend_point": "MT-2.9",
-      "http_implementation": "Not implemented in MT-2.8",
-      "foundation_reference": "README.md; CONTRACTS.json; backend/app/Addendum; additive migration 2026_09_01_100000"
+      "http_implementation": "Backend service implemented in MT-2.9; reserved HTTP and interface contracts remain pending MT-3.4 and MT-4.5",
+      "foundation_reference": "README.md; CONTRACTS.json; docs/procurement/README.md; backend/app/Procurement/SupplierProcurement.php; additive migration 2026_09_02_100000"
     },
     {
       "clause": "4.4",
@@ -139,12 +139,12 @@
       "requirement": "P2 low-stock/reorder",
       "gates": "MT-2.9, MT-4.5",
       "acceptance": "Product/outlet thresholds, low/out-of-stock alerts, recommendations and procurement links preserve existing reports.",
-      "entities": "planned product/outlet reorder_thresholds; inventory and procurement read projections",
+      "entities": "reorder_policies plus outlet-scoped inventory and open-purchase-order recommendation projections",
       "permission_contract": "shop.procurement, reports.view",
       "reserved_api_contracts": "GET /internal/admin/reorder; PUT /internal/admin/reorder/thresholds/{product}",
       "owning_backend_point": "MT-2.9",
-      "http_implementation": "Not implemented in MT-2.8",
-      "foundation_reference": "README.md; CONTRACTS.json; backend/app/Addendum; additive migration 2026_09_01_100000"
+      "http_implementation": "Backend service implemented in MT-2.9; reserved HTTP and interface contracts remain pending MT-3.4 and MT-4.5",
+      "foundation_reference": "README.md; CONTRACTS.json; docs/procurement/README.md; backend/app/Procurement/SupplierProcurement.php; additive migration 2026_09_02_100000"
     },
     {
       "clause": "4.7",

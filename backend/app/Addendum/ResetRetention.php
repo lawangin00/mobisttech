@@ -15,7 +15,8 @@ final class ResetRetention
     public const GROUPS = [
         'transactional' => ['claim_events', 'claims', 'invoices', 'sales', 'reservation_allocations', 'reservation_lines', 'reservations', 'order_items', 'orders', 'payments',
             'product_reviews', 'project_quotes', 'service_requests', 'payment_receipts', 'returns', 'return_lines', 'refunds', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones'],
-        'inventory' => ['products', 'stock_units', 'stock_movements', 'stock_acquisitions', 'product_imeis', 'active_imeis', 'product_listings', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references'],
+        'inventory' => ['products', 'stock_units', 'stock_movements', 'stock_acquisitions', 'product_imeis', 'active_imeis', 'product_listings', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references',
+            'suppliers', 'supplier_contacts', 'purchase_orders', 'purchase_order_lines', 'purchase_order_receipts', 'purchase_order_receipt_lines', 'purchase_order_events', 'reorder_policies'],
         'business_content' => ['digital_services', 'site_managed_pages', 'site_navigation_items', 'site_media_assets', 'site_media_usages', 'customers', 'customer_source_links'],
         'configuration' => ['pos_configuration_revisions', 'site_configuration_revisions', 'pos_master_data_options', 'pos_master_data_usages', 'pos_media_assets', 'pos_media_usages',
             'pos_settings', 'site_settings', 'site_secret_settings', 'website_operating_profiles', 'business_profiles', 'integration_connections'],

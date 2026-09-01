@@ -4,11 +4,13 @@ use App\Inventory\InventoryOperations;
 use App\Inventory\TransactionalStock;
 use App\Models\Admin;
 use App\Models\Outlet;
+use App\Procurement\SupplierProcurement;
 use App\Sales\SalesOperations;
 use App\Warranty\ClaimOperations;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 // Isolated process fixture; never reads credentials from arguments or emits private data.
 require dirname(__DIR__, 2).'/vendor/autoload.php';
@@ -38,11 +40,13 @@ try {
                 $input['key'], $input['input']),
             'claim' => app(ClaimOperations::class)->open(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
                 $input['key'], $input['input']),
+            'procurement_receive' => app(SupplierProcurement::class)->receive(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
+                $input['order'], $input['key'], $input['input']),
             default => throw new LogicException('Unknown synthetic operation.'),
         };
     }, 3);
     echo json_encode(['outcome' => 'committed', 'result' => $result])."\n";
-} catch (LogicException|UniqueConstraintViolationException $error) {
+} catch (HttpException|LogicException|UniqueConstraintViolationException $error) {
     echo json_encode(['outcome' => 'rejected', 'class' => $error::class])."\n";
 } catch (Throwable $error) {
     echo json_encode(['outcome' => 'error', 'class' => $error::class, 'message' => $error->getMessage()])."\n";

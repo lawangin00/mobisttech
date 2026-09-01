@@ -256,10 +256,10 @@ class AddendumFoundationsTest extends TestCase
         $quote = $this->quote();
         $service = app(ResetRetention::class);
         $names = array_column(Schema::getTables(schema: DB::connection()->getDatabaseName()), 'name');
-        $this->assertCount(91, $names);
+        $this->assertCount(99, $names);
         foreach (ResetRetention::LEVELS as $level) {
             $plan = $service->classify($level, $names);
-            $this->assertCount(91, $plan['tables']);
+            $this->assertCount(99, $plan['tables']);
             $this->assertFalse($plan['executable']);
             $this->assertSame('preserve', $plan['tables']['backup_records']['action']);
         }

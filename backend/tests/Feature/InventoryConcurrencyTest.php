@@ -6,6 +6,7 @@ use App\Inventory\AcquisitionDocuments;
 use App\Inventory\StockLedger;
 use App\Models\Outlet;
 use App\Models\StockUnit;
+use App\Procurement\SupplierProcurement;
 use App\Sales\SalesOperations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +20,8 @@ class InventoryConcurrencyTest extends TestCase
     use InventoryFixture;
 
     // These tests deliberately commit fixtures so independent MySQL connections can see them.
-    private array $tables = ['identity_audit_events', 'domain_events', 'publication_versions', 'idempotency_requests', 'claim_events', 'claims', 'return_lines', 'returns', 'monetary_adjustments',
+    private array $tables = ['identity_audit_events', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
+        'purchase_order_lines', 'purchase_orders', 'supplier_contacts', 'reorder_policies', 'suppliers', 'domain_events', 'publication_versions', 'idempotency_requests', 'claim_events', 'claims', 'return_lines', 'returns', 'monetary_adjustments',
         'stock_unit_lineage', 'reservation_allocations', 'reservation_lines', 'reservations', 'product_imeis', 'active_imeis', 'stock_movements', 'stock_units',
         'stock_acquisitions', 'sales', 'invoices', 'order_items', 'orders', 'customers', 'document_sequences', 'pos_master_data_usages', 'products',
         'pos_master_data_options', 'outlet_admins', 'outlets', 'admins', 'super_admins'];
@@ -154,6 +156,29 @@ class InventoryConcurrencyTest extends TestCase
         } finally {
             $other->delete();
         }
+    }
+
+    public function test_separate_mysql_connections_cannot_receive_the_same_purchase_order_quantity_twice(): void
+    {
+        $product = $this->product();
+        $service = app(SupplierProcurement::class);
+        $supplier = $service->createSupplier($this->actor, $this->outlet, (string) Str::uuid(), [
+            'supplier_code' => 'RACE-SUP', 'name' => 'Race Supplier', 'phone' => '03000000000', 'address' => 'Synthetic address',
+        ]);
+        $order = $service->createOrder($this->actor, $this->outlet, (string) Str::uuid(), ['supplier_id' => $supplier['supplier_id'], 'lines' => [[
+            'product_id' => $product->public_id, 'quantity' => 1, 'unit_cost' => '100.00', 'landed_unit_cost' => '101.00',
+        ]]]);
+        $line = DB::table('purchase_order_lines')->where('purchase_order_id', DB::table('purchase_orders')->where('public_id', $order['purchase_order_id'])->value('id'))->value('public_id');
+        $request = ['operation' => 'procurement_receive', 'actor' => $this->actor->id, 'outlet' => $this->outlet->id,
+            'order' => $order['purchase_order_id'], 'input' => ['lines' => [[
+                'line_id' => $line, 'quantity' => 1, 'unit_cost' => '100.00', 'landed_unit_cost' => '101.00',
+            ]]]];
+        $results = $this->race([$product->id], [[...$request, 'key' => (string) Str::uuid()], [...$request, 'key' => (string) Str::uuid()]]);
+        $this->oneWinner($results);
+        $this->assertSame(1, DB::table('purchase_order_receipts')->count());
+        $this->assertSame(1, DB::table('stock_acquisitions')->count());
+        $this->assertSame(1, $product->fresh()->qty);
+        $this->assertSame('received', DB::table('purchase_orders')->where('public_id', $order['purchase_order_id'])->value('status'));
     }
 
     private function race(array $products, array $requests): array

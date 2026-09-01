@@ -1,0 +1,98 @@
+{
+  "checkpoint": "MT-2.9 - Supplier and procurement services",
+  "date": "2026-09-02",
+  "starting_commit": "b20b22e87c7f18e59d77825e84ab0cbe87082e21",
+  "scope": {
+    "implemented": [
+      "outlet-scoped supplier profiles and contacts with versioned updates",
+      "purchase orders with immutable supplier/contact snapshots, exact costs and expected dates",
+      "permissioned, idempotent and concurrency-safe partial receiving and cancellation",
+      "shared acquisition, stock-unit, movement and acquisition-source-reference writes",
+      "supplier-to-order, receipt and acquisition history",
+      "versioned outlet/product reorder policies and bounded low/out-of-stock recommendations"
+    ],
+    "excluded": [
+      "MT-2.10 stocktake and cycle-count implementation",
+      "HTTP/API publication and POS procurement interfaces assigned to MT-3.4 and MT-4.5",
+      "automatic ordering, accounts payable, general ledger or full ERP",
+      "private source-data migration or source runtime/database activity",
+      "external-provider, message, deployment or production changes"
+    ]
+  },
+  "source_boundary": {
+    "classification": "Approved extension: protected sources contain acquisition-party snapshots and low-stock reporting but no supplier or purchase-order workflow",
+    "pos_commit": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+    "website_commit": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+    "working_trees": "PASS: both protected source working trees clean under read-only git --no-optional-locks inspection with command-local safe.directory",
+    "source_runtime_or_database_used": false,
+    "private_rows_imported": false
+  },
+  "schema": {
+    "mysql": "8.4.11",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "timezone": "+00:00",
+    "strict": true,
+    "tables": 99,
+    "columns": 1191,
+    "foreign_keys": 172,
+    "indexes": 448,
+    "canonical_seed_rows": 287,
+    "business_rows": 0,
+    "sha256": "966fd7d798d15661ca070833126abc81ad20ece7c7b58e9d2b383fab03f1de27",
+    "rollback_sha256": "3906dc0f88ab3180e9887c2b7a06dea8366d419a580ee5ac22c49b36ccbf10ed",
+    "rollback_reapply": "PASS on the empty disposable test schema",
+    "local_clean_apply": "PASS: migrate:fresh applied every migration through MT-2.9 on the isolated target database"
+  },
+  "acceptance": {
+    "focused_procurement_concurrency": "PASS: 8 tests, 107 assertions",
+    "inventory_procurement_regression": "PASS: 30 tests, 313 assertions",
+    "backend_full": "PASS: 139 tests, 4935 assertions",
+    "schema_verifier": "PASS: MT-2.9 normalized schema and rollback/reapply",
+    "php_format": "PASS: Pint test mode",
+    "composer": "PASS: strict validation and platform requirements",
+    "laravel_runtime": "PASS: optimize and optimize:clear",
+    "backend_build": "PASS: TypeScript and Vite production build, 569 modules",
+    "website": "PASS: ESLint, TypeScript and Next.js production build",
+    "online_advisory_refresh": "NOT CLAIMED: dependency locks are unchanged and no online registry audit was required for this point"
+  },
+  "verified_contracts": [
+    "all supplier and procurement operations require an authorized Admin with shop.procurement for the server-owned outlet",
+    "durable idempotency rejects changed payload reuse and returns completed identical retries",
+    "purchase orders preserve supplier and primary-contact snapshots independently of later profile edits",
+    "exact positive ordered, acquisition and landed unit costs are persisted without floating-point arithmetic",
+    "partial and full receiving reconcile order-line quantities with stock acquisitions and stable source references",
+    "multi-line receipt failure rolls back receipt, acquisition, stock, movement and order state",
+    "a real two-connection race cannot receive the same remaining quantity twice",
+    "cancellation preserves completed receipt/acquisition history and prevents later receipt",
+    "reorder recommendations are bounded, outlet scoped and account for open incoming quantities",
+    "no automatic order placement, accounts-payable workflow, general ledger or full ERP is introduced"
+  ],
+  "roadmap_document": {
+    "markdown_version": "1.8",
+    "source_of_truth_version": "1.8",
+    "points": 54,
+    "content_blocks": 261,
+    "docx_pages": 22,
+    "change": "UNCHANGED: MT-2.9 is routine point progress, so the canonical Markdown and same-basename DOCX were not regenerated",
+    "markdown_sha256": "080146c17340d3952cd3fc8f34f5d39dd62e50c6db7b4632f2eedb7a45a29a38",
+    "docx_sha256": "64bee280dae4eb8a6c2e703042fcfef0f9a909e1167ac16864a23fe6cdf9a04f"
+  },
+  "artifact_sha256": {
+    "backend/app/Inventory/StockReceiptWriter.php": "022223e75f4675b5cc5f403d3b5b19b45a3fb8f96a19f11eb86e84075055d896",
+    "backend/app/Procurement/SupplierProcurement.php": "e36367f0a794cc0ed5f4dbab29a562f52f16fcb55ea786c8e5c7f2569b67a0ab",
+    "backend/database/migrations/2026_09_02_100000_add_supplier_procurement_services.php": "72dd791e290cbcf107c78fb0ffa406665eddf9e5e1c64af2086bffe9cf2c5d1b",
+    "backend/tests/Feature/ProcurementTest.php": "aa3765c42275f6b72ab2e54d61345266e19fa641643779f81c4bbd4a6b79ab61",
+    "docs/procurement/README.md": "e61ac6d9b420170fc0998d5f8d0a4264e547ec7b5345d60d6737b9be5f7b249b",
+    "docs/addendum/ENTITY_API_PERMISSION_MATRIX.json": "8e12f6201886819c09b52b9a8e3830ef7804a20db5d7d95577e1c3fff21b56ee"
+  },
+  "authority_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "c64849e8d43f021eaf63b1ace7a3db1934e1ac1a6d417443dce9f379cb503d27",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "080146c17340d3952cd3fc8f34f5d39dd62e50c6db7b4632f2eedb7a45a29a38",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "64bee280dae4eb8a6c2e703042fcfef0f9a909e1167ac16864a23fe6cdf9a04f"
+  },
+  "next": "MT-2.10 - Stocktake and cycle-count services"
+}
