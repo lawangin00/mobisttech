@@ -1,8 +1,8 @@
 # mobiST Tech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r9
-**Universal baseline:** Registry 1.14 / System 7.7
-**Adopted universal commit:** `e747ceb23308091a7461f8d86f6c05292c8801a3`
+**Registry version:** MT-1.1-r10
+**Universal baseline:** Registry 1.15 / System 7.7
+**Adopted universal commit:** `857fb7d03479efbf0750b4b859924f417cbfdac9`
 **Roadmap specification:** 1.4
 **Date:** 2026-09-02
 **Repository root:** `C:\mobisttech`
@@ -20,7 +20,7 @@
 
 ## Purpose
 
-This is a **delta-only** project registry. It inherits Universal Registry 1.14 / System 7.7 from the pinned universal release above and contains only mobiST Tech-specific rules. It must not embed a copied Universal Registry snapshot.
+This is a **delta-only** project registry. It inherits Universal Registry 1.15 / System 7.7 from the pinned universal release above and contains only mobiST Tech-specific rules. It must not embed a copied Universal Registry snapshot.
 
 ## Project-specific rules
 
@@ -56,6 +56,6 @@ This is a **delta-only** project registry. It inherits Universal Registry 1.14 /
 
 ## Universal inheritance and governance
 
-All aliases, collision rules, STOP/completion output, lazy evidence budgets, handoff grammar, identity/session-lock semantics and final-audit defaults not explicitly overridden above are inherited from Registry 1.14 / System 7.7 at `e747ceb23308091a7461f8d86f6c05292c8801a3`.
+All aliases, collision rules, exact-alias execution-intent isolation, read-only mutation barriers, STOP/completion output, lazy evidence budgets, strict read-only handoff grammar, identity/session-lock semantics and final-audit defaults not explicitly overridden above are inherited from Registry 1.15 / System 7.7 at `857fb7d03479efbf0750b4b859924f417cbfdac9`.
 
 Later universal releases do not auto-apply to this project. Update this declared baseline deliberately after compatibility review. A control-plane registry sync does not advance/reopen roadmap implementation.
