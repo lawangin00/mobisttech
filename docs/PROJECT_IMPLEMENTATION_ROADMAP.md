@@ -1,6 +1,6 @@
 # mobiST Tech - Project Implementation Roadmap
 
-Version: 1.8 | Date: 2026-09-01
+Version: 1.9 | Date: 2026-09-02
 
 Canonical Goal: docs/PROJECT_GOAL.md
 
@@ -18,6 +18,10 @@ Approved Team Member/session requirement: docs/PROJECT_REQUIREMENTS_TEAM_MEMBERS
 
 Team Member/session reconciliation: docs/team-members/RECONCILIATION.md
 
+Approved consolidated documents/payments/legal/manual requirement: docs/PROJECT_REQUIREMENTS_DOCUMENTS_PAYMENTS_LEGAL_MANUAL_v1.0.md
+
+Consolidated requirement reconciliation: docs/consolidated-requirements/RECONCILIATION.md
+
 Source of Truth: docs/PROJECT_SOURCE_OF_TRUTH.md
 
 Status ledger: docs/PROJECT_IMPLEMENTATION_STATUS.md
@@ -32,7 +36,7 @@ The original POS/Website folders, remotes and data are immutable references. All
 
 Every point includes applicable focused/full tests, parity evidence, secrets review, source-boundary checks and ledger updates. Routine execution progress updates the ledger only and must not edit this roadmap or regenerate its DOCX. Regenerate/verify the DOCX only when roadmap structure/content materially changes. MT-1.1 detailed inventory may refine this roadmap from evidence, but valid functionality must not be silently dropped and completed IDs must not be renumbered.
 
-Goal, Preferences, approved addendum v1.1, the approved unified Admin/Google integrations superseding requirement and the approved Team Member/session security requirement apply. For working features, assess reuse/adapt/refactor/migrate before rewrite; rewrite requires a verified reason. Verify parity, data consistency, integration and regression incrementally rather than using a big-bang rewrite. Prefer conventional solutions, justified Redis roles and a Laravel-only business backend; do not introduce a parallel Node/Express business backend. Record stack deviations only for verified unavoidable blockers and never silently resolve a Goal conflict.
+Goal, Preferences, approved addendum v1.1, the approved unified Admin/Google integrations superseding requirement, the approved Team Member/session security requirement and the approved consolidated documents/payments/legal/manual requirement apply. For working features, assess reuse/adapt/refactor/migrate before rewrite; rewrite requires a verified reason. Verify parity, data consistency, integration and regression incrementally rather than using a big-bang rewrite. Prefer conventional solutions, justified Redis roles and a Laravel-only business backend; do not introduce a parallel Node/Express business backend. Record stack deviations only for verified unavoidable blockers and never silently resolve a Goal conflict.
 
 Roman Urdu is limited to assistant chat/UI communication. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal/Preferences remain byte-preserved in their original language/content.
 
@@ -189,13 +193,21 @@ Scope: Add authorized dispatch, in-transit custody, receive/reject/partial-recei
 
 Acceptance: MySQL races prove one owner and one active IMEI claim, no double receipt/dispatch or sale of in-transit units, balanced movements and rollback. Stable origin identifiers and historical sale/acquisition references survive destination custody changes.
 
-### MT-2.12 - Cash sessions and operational expense services
+### MT-2.20 - POS payment channels, split tenders and settlement reconciliation
 
 Dependencies: MT-2.11
 
-Scope: Add operator/outlet cash sessions, opening cash, receipts, authorized expenses/payouts, closing counts, expected/actual variance, daily closing and reporting (P1).
+Scope: Implement backend authority for POS Payment Methods, configurable outlet-aware Payment Destinations, multiple tender allocations per Invoice, exact-money split tender, safe payment references, Cash tender/change, original-payment/refund traceability, settlement/merchant-fee evidence, reconciliation state and audit. Preserve the Website's fixed COD, JazzCash, Easypaisa and Credit / Debit Card checkout unchanged; do not introduce Website Bank Transfer, Website split tender, multiple customer-selectable merchant destinations or a general ledger/ERP.
 
-Acceptance: Exact cash reconciliation includes sale/return/payment effects with scoped approval, audit, retry and concurrent-close guards. Closed snapshots remain historical; operational cash control is not a general ledger.
+Acceptance: Exact tender sums atomically match the authoritative Invoice payable amount. Inactive/wrong-outlet destinations, client total overrides, sensitive card data, concurrent/double submit and changed idempotency replays fail. Cash/change math, safe terminal references, merchant-fee separation, refund override/reason/approval traceability, destination reconciliation state/audit and Website fixed-four-channel regressions pass with focused/full backend, MySQL schema and transaction gates.
+
+### MT-2.12 - Cash sessions and operational expense services
+
+Dependencies: MT-2.20
+
+Scope: Add operator/outlet cash sessions, opening cash, authorized cash-in, expenses/payouts, refunds, closing counts, daily closing and reporting (P1). Consume POS tender allocations while keeping Cash expected drawer movement separate from non-cash expected receipts and destination settlement/reconciliation.
+
+Acceptance: Exact reconciliation proves Opening Cash + Cash Sales + approved Cash In - Cash Refunds - Expenses/Payouts = Expected Cash, compares Actual Count and records variance. Non-cash destination totals, confirmed settlement, fees/adjustments and variance remain distinct. Scoped approval, audit, retry and concurrent-close guards pass; closed snapshots remain historical and operational closing is not a general ledger.
 
 ### MT-2.13 - Trade-in and buyback services
 
@@ -246,17 +258,17 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 Dependencies: MT-2.16
 
-Scope: Migrate verified reports, dashboards, A4/Thermal output, invoice/warranty documents and safe communication templates. Include new procurement, stocktake/transfer, cash/expense, trade-in, promotion/loyalty and optional repair histories in scoped reporting and retail labels.
+Scope: Establish one backend-owned canonical document-generation/delivery boundary for persisted Invoice and Warranty snapshots across Preview, Thermal 80mm where applicable, A4, Print, explicit Save PDF, Gmail API attachment delivery and assisted WhatsApp sharing. Add backward-compatible nullable sale/invoice-time customer email snapshots, separately managed Invoice/Warranty Email and WhatsApp templates, truthful delivery states and idempotent send/audit history. Migrate verified reports/dashboards and include procurement, stocktake/transfer, cash/expense, trade-in, promotion/loyalty, optional repair, payment method/destination/mix, settlement, fee and variance histories in scoped reporting and retail labels.
 
-Acceptance: Role-scoped totals/exports, history, print/download and protected-template-placeholder parity tests pass; no real messages are sent. Reconciled reports never conflate rewards with money or private supplier/client data with public exports.
+Acceptance: Preview/Print/Save PDF/Email use the same historical values and finalization never forces download or delivery. Gmail uses the approved sender and `gmail.send` architecture, fails truthfully when unavailable, validates headers/recipients, attaches the canonical PDF and separates send permission from integration management. Assisted WhatsApp reports Prepared/Opened rather than Sent, downloads only when manual attachment needs it and instructs the operator accurately. Role/outlet authorization, template safety, document hash/version, explicit resend, retry deduplication and all required delivery failures pass with safe fakes only. Payment reports do not double-count split tenders or conflate sales, customer payments, provider fees, settlements, rewards or private data.
 
 ### MT-3.2 - Dynamic CMS, media and presentation services
 
 Dependencies: MT-3.1
 
-Scope: Migrate Website-managed pages, navigation, homepage/catalogue, SEO/legal/promotion settings, media, themes and branding controls into the backend. Extend modular content with service landing schemas, managed case studies, client/industry disclosure, digital testimonials separate from retail reviews, reusable FAQs, insights/blog/guides and service associations.
+Scope: Migrate Website-managed pages, navigation, homepage/catalogue, SEO/promotion settings, media, themes and branding controls into the backend. Make Legal Content an explicit typed policy system for Privacy Policy, Terms & Conditions, Return & Refund Policy, Shipping / Delivery Policy, Warranty Policy and conditionally required Cookie Policy, Digital Services / Project Terms and payment disclosures, with purpose, version/effective date, approval state, protected slugs and footer destinations. Extend modular content with service landing schemas, managed case studies, client/industry disclosure, digital testimonials separate from retail reviews, reusable FAQs, insights/blog/guides and service associations.
 
-Acceptance: Draft/preview/publish, revisions/rollback, safe uploads/content, cache invalidation and distinct POS/Website settings are preserved. Draft/preview/publish/revisions, consent/moderation, disclosure, metadata and safe media handling cover each added content family; common plus capability/mode variants avoid three page-tree copies.
+Acceptance: Draft/preview/publish, revisions/rollback, safe rich content/uploads, cache invalidation and distinct POS/Website settings are preserved. Policy types, effective/version dates, approval state, protected routes, footer links and factual-data-flow review are enforced; unresolved owner/legal decisions remain explicit and no draft is falsely labeled lawyer-approved. Cookie coverage follows actual tracking behavior, public payment claims retain the fixed Website model, public policy changes never rewrite historical transaction/proposal/warranty snapshots, and content editors cannot replace protected routes. Consent/moderation, disclosure, metadata and safe media handling cover every other added content family; common plus capability/mode variants avoid three page-tree copies.
 
 ### MT-3.7 - Website operating mode publication
 
@@ -331,9 +343,9 @@ Acceptance: Desktop/mobile role journeys and direct-route permissions pass in Pl
 
 Dependencies: MT-4.1
 
-Scope: Migrate product/unit/IMEI, acquisition, stock, sale and return workflows onto verified backend services. Add barcode/QR/IMEI scanner-friendly lookup/entry and controlled product/unit retail label generation/printing.
+Scope: Migrate product/unit/IMEI, acquisition, stock, sale and return workflows onto verified backend services. Add the POS payment editor: Payment Method, authorized outlet Payment Destination, amount, optional safe reference and Add Payment; support split tender, Cash tendered/change and authoritative Invoice Total/Payments/Remaining. Add barcode/QR/IMEI scanner-friendly lookup/entry and controlled product/unit retail label generation/printing.
 
-Acceptance: Keyboard/form validation, pagination, conflict handling, totals and critical transaction-completion journeys pass. Scanning and label requests retain validation and permissions; shared promotion/coupon and optional loyalty adjustments are server-calculated and visible in sale/return journeys.
+Acceptance: Keyboard/form validation, pagination, conflict handling, totals and critical transaction-completion journeys pass. Finalization is blocked unless valid allocations exactly cover the authoritative payable amount; inactive/wrong-outlet destinations, secret payment credentials and prohibited card data remain unavailable. Split tender, cash/change and retry/conflict UI consume MT-2.20 without client-owned arithmetic. Scanning and label requests retain validation/permissions; shared promotion/coupon and optional loyalty adjustments are server-calculated and visible in sale/return journeys.
 
 ### MT-4.5 - Procurement and stock control interfaces
 
@@ -347,25 +359,25 @@ Acceptance: Role/outlet, scanner-friendly entry, concurrent conflicts, partial o
 
 Dependencies: MT-4.5
 
-Scope: Provide opening/expenses/payout/closing cash journeys, individual-seller valuation/intake/sale-credit, optional paid-repair estimate/approval/collection and linked histories.
+Scope: Provide opening/expenses/payout/closing cash journeys and Day Closing reconciliation for Opening Cash, Cash Sales, Cash Refunds, Expenses/Payouts, Expected Cash, Actual Count and Cash Variance. Show non-cash expected receipts, destination-level confirmed settlement, fees/adjustments, variance, reconciliation state and approval/audit through drill-down. Also provide individual-seller valuation/intake/sale-credit, optional paid-repair estimate/approval/collection and linked histories.
 
-Acceptance: Exact money, variance/approval, double-submit, privacy and role controls pass. Disabled repair behavior retains legitimate historical access; warranties remain a separate workflow.
+Acceptance: Exact money, destination/outlet scope, reconciliation state, fee/variance separation, approval, double-submit, privacy and audit controls pass. The home dashboard remains compact and destination detail uses drill-down. Disabled repair behavior retains legitimate historical access; warranties remain a separate workflow.
 
 ### MT-4.3 - POS customer, warranty and reporting interfaces
 
 Dependencies: MT-4.6
 
-Scope: Migrate required customer/history, invoice, warranty/claim, dashboard, report and export UI.
+Scope: Migrate required customer/history, invoice, warranty/claim, dashboard, report and export UI. Invoice uses Prepare Sale -> Preview/output choice -> Finalize -> Document Actions with `Send via WhatsApp`, `Send via Email`, `Print`, `Save PDF` and Done/New Invoice; finalization does not auto-download. Warranty Claim Receipt uses the same applicable Preview/delivery/Print/Save PDF model. Add optional customer email, controlled email composer, historical resend/reprint/redownload and a compact Payment Mix summary with destination drill-down.
 
-Acceptance: Role-scoped flows, historical records, Thermal 80mm/A4 preview-download-print and mobile layouts are verified.
+Acceptance: Role-scoped historical Invoice/Warranty actions, Thermal 80mm/A4 parity, explicit Print/Save PDF, delivery error/retry, controlled Email fields and assisted WhatsApp instructions pass on supported layouts. Delivery failure never rolls back an already-finalized transaction; no finalization-triggered automatic download/send occurs. Payment Mix avoids destination-card clutter and preserves Website/POS classification.
 
 ### MT-4.4 - Website CMS and platform administration interfaces
 
 Dependencies: MT-4.3
 
-Scope: Migrate protected React admin screens for Website CMS and POS configuration, Team Member/Role administration, revisions/media/branding/payment settings. Consume the same Laravel-owned Admin realm, effective permissions, outlet/delegation ceilings and session/recent-auth policy as POS. Include three-way Website mode selector, per-mode preview and publish impact, revision rollback, case studies/digital testimonials/knowledge content, promotion/coupon and optional loyalty settings.
+Scope: Migrate protected React admin screens for Website CMS and POS configuration, Team Member/Role administration, revisions/media/branding/payment settings. Manage six separate Invoice/Warranty Email and WhatsApp templates, POS Payment Destinations with masked identifiers, typed legal/policy content with publish/revision/effective-date controls, applicable document/output defaults and the existing Gmail connection/status entry point. Consume the same Laravel-owned Admin realm, effective permissions, outlet/delegation ceilings and session/recent-auth policy as POS. Include three-way Website mode selector, per-mode preview and publish impact, revision rollback, case studies/digital testimonials/knowledge content, promotion/coupon and optional loyalty settings.
 
-Acceptance: Separate permissions, safe delegated Team Member/Custom Role changes, protected Full Access, preview/publish/rollback, safe recovery, secret masking and Dynamic Platform parity acceptance pass. Publish permissions remain distinct from editing; publication triggers verified cache/sitemap/SEO revalidation and does not delete historical data.
+Acceptance: Separate permissions, safe delegated Team Member/Custom Role changes, protected Full Access, preview/publish/rollback, safe recovery, secret masking and Dynamic Platform parity acceptance pass. Ordinary document senders cannot manage integrations/templates/destinations; destination metadata exposes no provider secrets. Policy publication and Gmail configuration retain their own authorization/recent-auth boundaries. Publication triggers verified cache/sitemap/SEO revalidation and does not delete historical data.
 
 ### MT-4.8 - Digital operations administration interfaces
 
@@ -408,17 +420,17 @@ Acceptance: Session boundaries, capped remembered login, password/reset revocati
 
 Dependencies: MT-5.2
 
-Scope: Connect checkout, COD, pending/retry/cancel, invoice/status and provider-hosted payment boundaries. Use shared promotion/coupon/loyalty calculations and mode-aware creation rules while retaining approved historical payment/status links.
+Scope: Connect checkout to exactly four customer-facing channels: Cash on Delivery, one configured JazzCash integration, one configured Easypaisa integration and one approved hosted/tokenized Credit / Debit Card processor. Support pending/retry/cancel, invoice/status and provider boundaries. Do not add Website Bank Transfer, split tender, multiple selectable merchant accounts or exposure of internal POS Payment Destinations. Use shared promotion/coupon/loyalty calculations and mode-aware creation rules while retaining approved historical payment/status links.
 
-Acceptance: Duplicate submit, price/stock changes, failed payments and verified confirmation pass end-to-end; sandbox claims are made only for authentically configured providers. Measure mode-specific checkout loading with production builds; price/discount/reward tampering and usage-limit races fail safely.
+Acceptance: Duplicate submit, price/stock changes, failed payments, verified confirmation and the fixed-four-channel contract pass end-to-end; sandbox claims are made only for authentically configured providers. Website transactions classify into shared reporting/reconciliation without changing checkout choices. Measure mode-specific checkout loading with production builds; price/discount/reward tampering and usage-limit races fail safely.
 
 ### MT-5.4 - Dynamic public content and digital solutions
 
 Dependencies: MT-5.3
 
-Scope: Migrate managed pages/menu/homepage/themes, promotions, legal content, digital services, service requests and approved project quote/payment flows. Add rich service landing pages, case studies, digital testimonials, FAQs/insights/guides, package/add-on presentation and progressive optional-field enquiry/booking flows. Apply common/digital/commerce content and digital_only/hybrid/commerce_only hero/About/Contact/CTA variants.
+Scope: Migrate managed pages/menu/homepage/themes, promotions, legal content, digital services, service requests and approved project quote/payment flows. Publish responsive footer-linked Privacy, Terms, Return/Refund, Shipping/Delivery, Warranty and applicable Cookie/Digital Services/Project Terms pages from approved typed policy revisions. Add rich service landing pages, case studies, digital testimonials, FAQs/insights/guides, package/add-on presentation and progressive optional-field enquiry/booking flows. Apply common/digital/commerce content and digital_only/hybrid/commerce_only hero/About/Contact/CTA variants; distinguish fixed/package prices, starting-from indications and custom quotations.
 
-Acceptance: CMS publication/revision is reflected on the Website; safe content/media, protected routes and digital quote amount/token/ownership parity pass. Mode-aware discovery/enquiry, SEO/social metadata, safe attachments and low-friction journeys pass. Production-build measurements meet the MT-5.1 targets or record cause, measured impact and explicit remediation/acceptance; minimize global JS, scripts, libraries and fonts.
+Acceptance: CMS publication/revision is reflected on the Website; every applicable approved policy route/footer destination works, shows version/effective date and matches actual business/data/payment behavior. No placeholder or unapproved commercial/legal term is treated as final, and mutable Website copy cannot rewrite approved proposal/milestone/warranty/Invoice snapshots. Safe content/media, protected routes, digital quote amount/token/ownership, mode-aware discovery/enquiry, SEO/social metadata, safe attachments and low-friction journeys pass. Production-build measurements meet the MT-5.1 targets or record cause, measured impact and explicit remediation/acceptance; minimize global JS, scripts, libraries and fonts.
 
 ### MT-5.5 - Client project portal and digital conversion journeys
 
@@ -474,9 +486,9 @@ Acceptance: Record/relation/control-total reconciliation, rerun/idempotency, rol
 
 Dependencies: MT-7.1
 
-Scope: Audit authentication/authorization, Team Member RBAC/delegation/outlet boundaries, Admin/Customer session and recent-auth policy, uploads/content, secrets, payments, stock concurrency, queues, API/cache performance and recovery. Audit every added domain, capability switching/history exceptions and continuous per-mode performance budgets under production-like builds.
+Scope: Audit authentication/authorization, Team Member RBAC/delegation/outlet boundaries, Admin/Customer session and recent-auth policy, uploads/content, secrets, payments, stock concurrency, queues, API/cache performance and recovery. For document delivery audit recipient/header validation, Gmail token isolation, canonical attachment integrity, wrong-outlet access, retries/templates/audit privacy and truthful WhatsApp states. For POS payments audit split-tender arithmetic, destination scope, sensitive card-data exclusion, fee/settlement separation, refund traceability and reconciliation tampering. Verify legal/privacy drafts against actual data, cookies/tracking, providers, retention/reset and public/private boundaries; review project ownership/licensing plus distributed dependency/asset notices without treating framework metadata as an application license. Audit every added domain, capability switching/history exceptions and continuous per-mode performance budgets under production-like builds.
 
-Acceptance: MySQL concurrency, cache outage/stale-data behavior, worker retries, negative paths, dependency audits and focused/full regression pass; verified gaps are remediated. Record representative LCP <= 2.5 s, INP <= 200 ms, CLS <= 0.1 and stable mobile Lighthouse 90+ targets across all modes; do not substitute Lighthouse for interaction evidence. Document cause, measured impact and remediation/acceptance for each justified exception.
+Acceptance: MySQL concurrency, cache outage/stale-data behavior, worker retries, required document-delivery/payment/security/legal negative paths, dependency/license/notice audits and focused/full regression pass; verified gaps are remediated. No PAN/CVV/PIN/stripe data or OAuth/provider secrets appear in storage, frontend, audit or normal logs. Policy approval status and unresolved owner/legal decisions remain truthful. Record representative LCP <= 2.5 s, INP <= 200 ms, CLS <= 0.1 and stable mobile Lighthouse 90+ targets across all modes; do not substitute Lighthouse for interaction evidence. Document cause, measured impact and remediation/acceptance for each justified exception.
 
 ### MT-7.3 - Monorepo CI and reproducible build gates
 
@@ -498,9 +510,17 @@ Acceptance: Non-production configuration/recovery rehearsal and backup integrity
 
 Dependencies: MT-7.4
 
-Scope: Close every valid requirement in the complete source-to-target register with fresh target evidence and independently run operational journeys. Close the addendum clause traceability as well as original source parity; priorities and optional enablement do not waive implementation gates.
+Scope: Close every valid requirement in the complete source-to-target register with fresh target evidence and independently run operational journeys. Close the addendum and consolidated-requirement traceability as well as original source parity; priorities and optional enablement do not waive implementation gates. Include Invoice/Warranty no-auto-download, Preview/Save PDF/Print/safe Email/assisted WhatsApp/history; POS Cash/Card/Mobile Wallet/Bank Transfer, split tender, cash change, destination authorization, Day Closing, payment mix/fees/refund reconciliation; Website fixed-four-channel regression; and legal-policy/licensing/notice acceptance.
 
-Acceptance: Pest/PHPUnit, MySQL, builds, Playwright, POS/Website/Control, documentation and recovery gates pass; no silent feature loss or unreviewed duplicate master remains. Every approved addendum clause has fresh backend/UI/API/performance evidence or an explicit unresolved gap; expansion is not treated as legacy completed behavior.
+Acceptance: Pest/PHPUnit, MySQL, builds, Playwright, POS/Website/Control, documentation and recovery gates pass; no silent feature loss or unreviewed duplicate master remains. Every approved addendum and consolidated-requirement clause has fresh backend/UI/API/performance evidence or an explicit unresolved gap. Policy coverage matches final product behavior with approved versions/effective dates and working footer links; Privacy claims match real data flows; software ownership and third-party notice posture are deliberate.
+
+### MT-7.6 - Product user manual and administrator operations guide
+
+Dependencies: MT-7.5
+
+Scope: Create the complete role-aware mobiST Tech operational user manual from the final verified product, including current safe UI screenshots and coverage of POS, payments/reconciliation, documents/Email/WhatsApp, inventory/procurement, warranty, cash closing, Website CMS/legal content/Digital Services, integrations, backup/reset safety, mobiST Control and the customer Website. Produce canonical `docs/user-manual/USER_MANUAL.md`, verified same-content DOCX and PDF mirrors, and controlled screenshot assets.
+
+Acceptance: Every applicable final user-facing feature maps to its real navigation, permission and procedure; instructions are executed against the final product and no legacy/placeholder UI is presented as final. Screenshots use safe demo data and remain readable. Markdown/DOCX/PDF content parity, TOC/references, render and every-page visual QA pass. Security/destructive warnings and the documented release/Git checkpoint are accurate; no material supported workflow is undocumented.
 
 Stage exit: Verify all acceptance gates and Git-backed evidence for every point in this stage; never mark partial work Complete.
 
@@ -509,11 +529,11 @@ Stage exit: Verify all acceptance gates and Git-backed evidence for every point 
 
 ### FINAL-AUDIT - Independent final project audit
 
-Dependencies: MT-7.5
+Dependencies: MT-7.6
 
-Scope: Independently audit the complete Goal and Preferences, requirement map, all completed-point claims, Git/code/data, migration/recovery, security, integrations, CI, documentation, HOLD register and source immutability. Include approved requirements addendum v1.1, the unified Admin/Google requirement, the Team Member/delegated-access/session-security requirement, safe reset, retail/digital expansion, all three Website modes and measured performance exceptions.
+Scope: Independently audit the complete Goal and Preferences, requirement map, all completed-point claims, Git/code/data, migration/recovery, security, integrations, CI, documentation, HOLD register and source immutability. Include approved requirements addendum v1.1, the unified Admin/Google requirement, the Team Member/delegated-access/session-security requirement and the complete consolidated documents/payments/legal/manual requirement. Inspect actual Invoice/Warranty UX and canonical delivery, Gmail attachments, truthful WhatsApp, POS payment methods/destinations/split tender/refunds/settlement, Website fixed channels, Day Closing/payment mix, legal/privacy/service-pricing consistency, project ownership/third-party notices and the final User Manual.
 
-Acceptance: Reopen required gaps; the new repository must be clean and remote-aligned. Report `Project complete: 100%` only after a clean final audit; Deferred required work cannot substitute for completion. Verify original eight completed points were preserved and every subsequently required extension was independently accepted.
+Acceptance: Reopen every material requirement, policy, manual, payment or document-delivery mismatch; the new repository must be clean and remote-aligned. Report `Project complete: 100%` only after a clean final audit; Deferred required work cannot substitute for completion. Verify original completed history was preserved and every subsequent extension was independently accepted.
 
 Stage exit: Verify all acceptance gates and Git-backed evidence for every point in this stage; never mark partial work Complete.
 

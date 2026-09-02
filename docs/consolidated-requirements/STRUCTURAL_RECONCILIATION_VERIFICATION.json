@@ -1,0 +1,148 @@
+{
+  "checkpoint": "Approved consolidated customer-document, POS-payment, legal-policy, licensing and product-user-manual requirement structural reconciliation",
+  "date": "2026-09-02",
+  "starting_commit": "03502db3ad306e83120c964d71150319e29708ed",
+  "project": {
+    "name": "mobiST Tech",
+    "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+    "workspace": "C:\\mobisttech",
+    "branch": "main",
+    "project_registry": "MT-1.1-r9",
+    "universal_registry": "1.14",
+    "control_system": "7.7"
+  },
+  "approved_requirement": {
+    "canonical_path": "docs/PROJECT_REQUIREMENTS_DOCUMENTS_PAYMENTS_LEGAL_MANUAL_v1.0.md",
+    "source_attachment_bytes": 65000,
+    "canonical_bytes": 65000,
+    "source_attachment_sha256": "b682fed17cf6d955c2df0cac8eb081b0b641602e2b7391f3137c2e979e69b1a1",
+    "canonical_sha256": "b682fed17cf6d955c2df0cac8eb081b0b641602e2b7391f3137c2e979e69b1a1",
+    "staged_git_blob": "d4a78489542fd6cf63be23eb7433eab4fcfcf04c",
+    "staged_git_blob_bytes": 65000,
+    "staged_git_blob_sha256": "b682fed17cf6d955c2df0cac8eb081b0b641602e2b7391f3137c2e979e69b1a1",
+    "git_attribute": "-text",
+    "first_line": "NEW APPROVED CONSOLIDATED REQUIREMENT —",
+    "last_line": "Do not proceed into MT-2.10.",
+    "byte_preservation": "PASS",
+    "committed_blob_byte_preservation": "PASS",
+    "reconciliation": "docs/consolidated-requirements/RECONCILIATION.md"
+  },
+  "authority_preservation": {
+    "goal": {
+      "path": "docs/PROJECT_GOAL.md",
+      "bytes": 6766,
+      "sha256": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+      "unchanged": true
+    },
+    "preferences": {
+      "path": "docs/PROJECT_PREFERENCES.md",
+      "bytes": 7003,
+      "sha256": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+      "unchanged": true
+    }
+  },
+  "structural_changes": {
+    "source_of_truth_version": "1.9",
+    "roadmap_version": "1.9",
+    "added_points": [
+      {
+        "id": "MT-2.20",
+        "title": "POS payment channels, split tenders and settlement reconciliation",
+        "placed_after": "MT-2.11",
+        "dependency": "MT-2.11",
+        "successor_dependency_updated": "MT-2.12"
+      },
+      {
+        "id": "MT-7.6",
+        "title": "Product user manual and administrator operations guide",
+        "placed_after": "MT-7.5",
+        "dependency": "MT-7.5",
+        "successor_dependency_updated": "FINAL-AUDIT"
+      }
+    ],
+    "expanded_points": [
+      "MT-2.12",
+      "MT-3.1",
+      "MT-3.2",
+      "MT-4.2",
+      "MT-4.3",
+      "MT-4.4",
+      "MT-4.6",
+      "MT-5.3",
+      "MT-5.4",
+      "MT-7.2",
+      "MT-7.5",
+      "FINAL-AUDIT"
+    ],
+    "completed_points": 15,
+    "total_points": 56,
+    "pending_points": 41,
+    "first_pending": "MT-2.10 - Stocktake and cycle-count services",
+    "completed_checkpoint_reopened": false,
+    "application_implementation_advanced": false
+  },
+  "roadmap_document_qa": {
+    "markdown_path": "docs/PROJECT_IMPLEMENTATION_ROADMAP.md",
+    "markdown_sha256": "2124f7afe2e5f8f1020be5380b4b40deda21b51c3376534cd82c40175c79c122",
+    "docx_path": "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx",
+    "docx_sha256": "62190c24ef2d9ae4789f843e82ab857ac0664e0f0d289f7bdfe0332885bf8a0e",
+    "point_headers": 56,
+    "unique_point_ids": 56,
+    "dependency_lines": 56,
+    "visible_content_blocks": 271,
+    "markdown_docx_body_parity": "PASS",
+    "rendered_pages": 27,
+    "rendered_pdf_sha256": "ed82c1caa94fc11ab22d436c80525818384615dc31413098e275a35fc464c983",
+    "every_page_visually_inspected": true,
+    "clipping": false,
+    "overlap": false,
+    "missing_text": false,
+    "broken_page_furniture": false
+  },
+  "artifact_hashes": {
+    "source_of_truth_sha256": "ba0f3c6b108d9d19bbf3ca5d8cf95d8319a87ecc137840623b167e85d694e212",
+    "status_ledger_sha256": "8f593a97ad6bad65f81e688db3714a609d3f7a88d9f2c0939063fd3549517eba",
+    "reconciliation_sha256": "d35e7c58f30e0d5d8d6e7810600f004cfc0f100b60e0cd56cc2a3a376057f76c"
+  },
+  "protected_sources": {
+    "pos": {
+      "path": "C:\\mobiST\\mobiST-POS",
+      "pinned_application_baseline": "c61e47394e7b3db8a49cfe443c85b63835febc9b",
+      "current_head": "187f42ae487ac750e99535853f3dfc6ac1b49852",
+      "later_commit_scope": "System 7.7 repository control documentation only",
+      "status_clean": true,
+      "inspection_only": true
+    },
+    "website": {
+      "path": "C:\\mobiST\\mobiST-Website",
+      "pinned_application_baseline": "04e7c49518f9f11f60c83ad44f9f4e2fd2539066",
+      "current_head": "1f44f5adc5b70f3c7d82e03dd9b94d1357967a41",
+      "later_commit_scope": "System 7.7 repository control documentation only",
+      "status_clean": true,
+      "inspection_only": true
+    }
+  },
+  "licensing_finding": {
+    "root_application_license_present": false,
+    "composer_framework_metadata_is_application_license": false,
+    "decision_owner": "MT-7.2, MT-7.5 and FINAL-AUDIT",
+    "invented_legal_or_license_terms": false
+  },
+  "safety_boundary": {
+    "runtime_application_files_changed": false,
+    "source_repository_written": false,
+    "source_business_data_accessed": false,
+    "gmail_or_provider_call_performed": false,
+    "settlement_action_performed": false,
+    "production_action_performed": false,
+    "destructive_action_performed": false
+  },
+  "git_closure": {
+    "intended_remote": "origin/main",
+    "pre_commit_head_upstream_live_remote_equal": true,
+    "post_commit_requirement": "Clean HEAD, upstream and live origin/main must be equal after the intended documentation commit and push."
+  },
+  "result": "PASS",
+  "next": "MT-2.10 - Stocktake and cycle-count services",
+  "next_started": false
+}

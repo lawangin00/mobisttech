@@ -14,3 +14,6 @@ docs/PROJECT_PREFERENCES.md -text
 
 # Preserve the approved supplemental source document byte-for-byte.
 docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md -text
+
+# Preserve the approved consolidated source document byte-for-byte.
+docs/PROJECT_REQUIREMENTS_DOCUMENTS_PAYMENTS_LEGAL_MANUAL_v1.0.md -text
