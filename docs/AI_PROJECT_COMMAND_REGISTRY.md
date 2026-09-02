@@ -1,12 +1,13 @@
 # mobiST Tech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r7
-**Universal baseline:** Registry 1.12 / System 7.5
+**Registry version:** MT-1.1-r8
+**Universal baseline:** Registry 1.13 / System 7.6
 **Date:** 2026-09-02
 **Repository root:** `C:\mobisttech`
 **Remote:** `lawangin00/mobisttech` (independent, private)
 **Project ID:** `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`
 **Project identity:** `docs/PROJECT_IDENTITY.json`
+**Universal control bootstrap:** `lawangin00/references/UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md`
 **Canonical Goal:** `docs/PROJECT_GOAL.md`
 **Binding Preferences:** `docs/PROJECT_PREFERENCES.md`
 **Approved addendum:** `docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md`
@@ -25,44 +26,46 @@
 - Before initialization can complete, collect/read the approved Goal and Preferences, preserve them in canonical files and reconcile them with Source of Truth/roadmap/ledger/registry/decisions. Reuse existing approved input and ask only for genuinely missing critical information. Account-level instructions and the current Git-backed global initialization/roadmap rules apply; do not duplicate those global rules into Goal or Preferences.
 - Authorized local implementation and intended new-repository commit/push are within point scope. Destructive operations, live production/customer-data cutover, real external messaging and provider activation require separate authorization; do not request unnecessary permission for readiness or safe isolated tests.
 - Never replace/repoint/overwrite the new remote with an existing repository. Creation must follow an existence check and use an independent private repository. Never force-push.
-- System 7.5 durable identity is `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` from `docs/PROJECT_IDENTITY.json`. On the first project alias in every new/unbound chat/session, resolve and bind exactly this Project ID before loading alias-specific state; reuse that Session Project Lock for later aliases.
+- System 7.6 uses the stable loader at `lawangin00/references/UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md`. On the first project-control invocation in every new/unbound chat/session, fresh-read that bootstrap and the current Universal Registry when accessible, then resolve and bind exactly Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` before loading alias-specific state; reuse that Session Project Lock for later aliases.
 - `C:\mobisttech` is this project's exact local hard boundary. The protected legacy `C:\mobiST\mobiST-POS` and `C:\mobiST\mobiST-Website` repositories belong to a different Project ID and must never substitute for this project because of name similarity, sibling discovery or remembered context.
-- Directional handoffs are project-bound. Verify this Project ID, canonical remote `lawangin00/mobisttech` and the intended pushed commit using the System 7.5 structured handoff contract; any identity/workspace/remote/checkpoint mismatch hard-stops before mutation.
-- `Switch Project` / `VP:SWITCH-PROJECT` is the only normal read-only operation that may intentionally release this session lock and bind another verified Project ID. `Refresh` may refresh registry semantics only within the already locked Project ID and never switches projects.
+- Directional handoffs are project-bound. Verify this Project ID, canonical remote `lawangin00/mobisttech` and the intended pushed commit using the System 7.6 structured handoff contract; any identity/workspace/remote/checkpoint mismatch hard-stops before mutation.
+- `Switch Project` / `VP:SWITCH-PROJECT` is the only normal read-only operation that may intentionally release this session lock and bind another verified Project ID. `Refresh` fresh-reads the canonical control bootstrap, current Universal Registry and this project registry within the already locked Project ID; it never switches projects.
 - Every completed point records applicable focused/full gates, exact pending state, source-boundary verification and Git evidence. Never mark partial work Complete.
 - Roadmap Markdown is the authoritative structural plan. Live Completed/In Progress/Pending state, last/current/next position and progress counts belong only in `docs/PROJECT_IMPLEMENTATION_STATUS.md`. Routine point/stage progress must not edit the roadmap or regenerate the DOCX. Regenerate, content-check and render-verify the same-basename DOCX only when roadmap structure/content materially changes. Helper: `tools/docs/build_roadmap_docx.py`.
-- On the first alias in a new/unbound session, resolve and lock `docs/PROJECT_IDENTITY.json` first, then load this registry once and reuse both the Project ID lock and registry semantics. Refresh Registry/Refresh/VP:REFRESH-REGISTRY refreshes only this locked project and must not advance roadmap implementation.
+- On the first project-control invocation in a new/unbound session, fresh-read the canonical control bootstrap and Universal Registry first, resolve and lock `docs/PROJECT_IDENTITY.json`, then load this registry once and reuse the Project ID lock plus loaded bootstrap/registry semantics. Refresh Registry/Refresh/VP:REFRESH-REGISTRY refreshes the bootstrap and applicable registries only within this locked Project ID and must not advance roadmap implementation.
 - Alias resolution uses normalized full-message matching with exact-match precedence. `N` resolves only to `N` / `VP:STOP`, `Next` only to `Next` / `VP:NEXT`, and `Y` only to `Y` / `Proceed` / `VP:PROCEED`; never use prefix, substring, abbreviation, edit-distance, semantic, autocomplete or fuzzy expansion to turn one registered alias into another.
 - `N` / `VP:STOP` is terminal for the current turn and overrides the default completion/incomplete prompt protocol. After STOP, never repeat `Proceed? Y/N`. If no roadmap point is `In Progress`, return only `Stopped.` and `Next pending: <exact point identifier> - <exact title>`. If a point is `In Progress`, return only `Stopped.`, `In Progress: <exact point identifier> - <exact title>` and `Next action: <exact recovery action>`.
 - Roman Urdu is the default only for assistant chat/UI communication. Git-tracked project documentation and technical artifacts must use standard English unless the user explicitly requests another language for a specific artifact. Preserve user-supplied source documents in their original language/content unless transformation is explicitly authorized. Minimal completion labels and exact technical/task identifiers remain unchanged.
 - Detailed evidence belongs in Git-tracked documentation; normal user-facing completion/status output remains concise.
 
-Documentation revision MT-1.1-r7 synchronizes Universal Registry 1.12 / System 7.5 and adopts durable Project Identity, first-alias Session Project Lock, project-bound handoff verification, mismatch hard-stop and Switch Project semantics. This control-plane backfill does not advance or reopen roadmap implementation; already-open sessions that loaded r6 or older must run one Refresh to adopt r7 semantics.
+Documentation revision MT-1.1-r8 synchronizes Universal Registry 1.13 / System 7.6 and adopts the stable Git-backed `UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md` loader architecture while preserving durable Project Identity, Session Project Lock, project-bound handoff verification, mismatch hard-stop and Switch Project semantics. This control-plane sync does not advance or reopen roadmap implementation; already-open sessions that loaded r7 or older must run one Refresh to adopt r8/System 7.6 semantics.
 
 ## Adopted universal definitions
 
 This revision deliberately synchronizes the project registry to Universal Registry 1.12 / System 7.5. Exact alias semantics remain deterministic and the project now has immutable identity/session binding: every first alias in a new/unbound session resolves Project ID before execution, handoffs verify Project ID plus canonical remote checkpoint, mismatches hard-stop and only Switch Project can intentionally rebind. The optimized roadmap lifecycle, approved requirements, exact point order and current implementation position remain unchanged; no roadmap implementation point is advanced or reopened by this identity backfill.
 
-The canonical universal registry snapshot below is copied from `lawangin00/references/UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`. Project-specific rules above are explicit specializations; all other semantics remain unchanged. Baseline Git blob: `3cc304c6297e8a88f937b16e7644c0eb1ffd55b0`. Roadmap specification v1.2 Git blob: `26371515ca3aebfa68236dfee3971cfd08d764de`.
+The canonical universal registry snapshot below is copied from `lawangin00/references/UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`. Project-specific rules above are explicit specializations; all other semantics remain unchanged. Control bootstrap Git blob: `557326fa17dad92b99d2b327ff0a9fe36d0dc9e9`. Baseline Git blob: `ac5e61fb96651f9aa81628d1bfae521ee4fd10d3`. Roadmap specification v1.3 Git blob: `3cbb9af3f55bd1c9f814dc49497bec2f3ad549f2`.
 
 ---
 
 # Universal Verified Project Command Registry
 
-**Registry version:** 1.12
-**System version:** 7.5
+**Registry version:** 1.13
+**System version:** 7.6
 **Canonical remote:** `lawangin00/references`  
 **Canonical path:** `UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`
+**Control bootstrap:** `UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md`
 **Roadmap specification:** `UNIVERSAL_PROJECT_ROADMAP_SPEC.md`
 
 ## Purpose
 
-This is the Git-backed universal baseline for project-control aliases. It defines exact default behavior for new projects and provides a recovery source when a project-specific registry does not yet exist.
+This is the Git-backed universal authority for project-control aliases and default semantics. It is loaded through `UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md`, which is the stable account-level entry point and loading contract. This registry defines exact default behavior for new projects and provides a recovery source when a project-specific registry does not yet exist.
 
 It is not project state. A project's own Git-tracked registry may specialize these definitions. Within an initialized project, the project-specific registry wins where it explicitly differs.
 
 ## Authority model
 
+0. `UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md` defines the stable loading/discovery contract only; it is not project state and does not replace this registry.
 1. `docs/PROJECT_IDENTITY.json` defines the durable project identity, repository group and project boundary.
 2. Project-specific Source of Truth + roadmap define required work.
 3. `docs/PROJECT_IMPLEMENTATION_STATUS.md` defines verified project position.
@@ -81,11 +84,11 @@ Conversation memory and uploaded Project Source snapshots are non-authoritative.
 - `Y` and `Proceed` are synonyms.
 - Any short message beginning with `VP:` is an explicit collision-safe alias invocation.
 - Do not treat ordinary conversation as a command merely because it contains an alias word.
-- On the first project alias in a chat/session, read the current Git-backed project registry once and treat that verified copy as the session authority.
-- On later aliases in the same chat/session, reuse the already verified registry semantics without any repeated registry freshness probe or reread.
-- After an intentional registry update, run `Refresh Registry`, `Refresh` or `VP:REFRESH-REGISTRY` once in each already-open chat/session that should adopt the new behavior. New chats/sessions load the latest registry on their first project alias.
-- A refresh force-reads the latest current Git-backed project registry, replaces the session's previously loaded registry semantics, preserves the current project position and stops without advancing implementation.
-- If a requested refresh cannot access the current registry, state only the minimum access/handoff action required; do not pretend the refresh succeeded.
+- On the first project-control invocation in a new/unbound chat/session, fresh-read `UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md`, then this registry, resolve Project ID, and only then load the bound project registry once as the project-specific session authority.
+- On later aliases in the same chat/session, reuse the loaded bootstrap/registry semantics and Session Project Lock without repeated freshness checks.
+- After an intentional bootstrap/registry update, run `Refresh Registry`, `Refresh` or `VP:REFRESH-REGISTRY` once in each already-open session that should adopt the change. New chats/sessions load the latest bootstrap/registry on their first project-control invocation.
+- A refresh force-reads the canonical bootstrap, this Universal Registry and the latest registry for the already locked Project ID, replaces session-loaded semantics, preserves the current project position/Project ID and stops without advancing implementation.
+- If a requested bootstrap/registry refresh cannot access the required canonical source, state only the minimum access/handoff action required; do not pretend the refresh succeeded.
 - If multiple plausible projects exist, return concise numbered options instead of guessing.
 - If an uploaded/Project Source snapshot conflicts with newer Git-backed project state, Git-backed state wins; identify the stale snapshot.
 - Never repeat work already verified complete.
@@ -93,6 +96,15 @@ Conversation memory and uploaded Project Source snapshots are non-authoritative.
 - Read-only aliases never authorize implementation, commits, pushes or unrelated mutations.
 - Default language applies only to assistant chat/UI communication: use Roman Urdu unless explicitly overridden for the current scope. Git-tracked project documentation and technical artifacts (including README files, Source of Truth, roadmaps, status ledgers, command registries, specifications/evidence and code comments) must use standard English unless the user explicitly requests another language for that artifact. Preserve user-supplied source documents in their original language/content unless transformation is explicitly authorized.
 - If a required repository, registry, ledger or tool is inaccessible, state only the minimum access/handoff action required.
+
+## Bootstrap loading contract
+
+- Account-level Custom Instructions should remain a small stable loader that points to `lawangin00/references/UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md`; they should not duplicate this registry.
+- On the first project-control invocation in a new/unbound chat/session, fresh-read the canonical bootstrap first, then this Universal Registry, then resolve Project ID before alias-specific execution.
+- The account loader may treat a short standalone command-like message in a clear project/repository context as a bootstrap trigger without deciding its meaning from memory. Exact alias recognition happens only after this current registry and the bound project registry are loaded. Any short `VP:` message is always a bootstrap trigger.
+- Changing this bootstrap, this Universal Registry, the Roadmap Specification or a project registry normally must not require account-level Custom Instructions changes. Account settings need revision only if the canonical bootstrap path or fundamental loader trigger changes.
+- `Refresh Registry`, `Refresh` and `VP:REFRESH-REGISTRY` must fresh-read the canonical control bootstrap plus the current Universal Registry and the already locked project's registry, preserving the same Project ID and project position. Refresh never switches projects.
+- If the canonical private bootstrap is inaccessible, do not execute aliases from remembered/cached definitions; request only the minimum access/handoff action required.
 
 ## Project identity and session binding
 
@@ -106,7 +118,7 @@ Conversation memory and uploaded Project Source snapshots are non-authoritative.
 - Once identity is resolved, bind the chat/session to that exact `project_id` (Session Project Lock). Reuse that identity for all later project aliases in the same chat/session without repeating identity discovery. Registry refresh does not change the session's project identity.
 - A project identity mismatch between the session lock, selected workspace, identity file, canonical remote or structured handoff is a hard stop. Report the expected and observed identities concisely and perform no project mutation. Never silently switch, repoint or continue another project.
 - `Switch Project` / `VP:SWITCH-PROJECT` is the only normal alias that intentionally releases the current Session Project Lock. It is read-only: resolve/select another verified identity, bind the session to it, load that project's registry, and stop without advancing implementation.
-- Existing initialized projects that predate this rule must be backfilled non-destructively with a stable project identity before they adopt System 7.5 session-lock/handoff semantics. Backfilling identity does not reopen completed roadmap work.
+- Existing initialized projects that predate this rule must be backfilled non-destructively with a stable project identity before they adopt System 7.6 session-lock/handoff semantics. Backfilling identity does not reopen completed roadmap work.
 
 ## `Initialize Project` / `VP:INITIALIZE`
 
@@ -261,7 +273,7 @@ Read-only intentional session rebind. Release the current Session Project Lock, 
 
 ## `Refresh Registry` / `Refresh` / `VP:REFRESH-REGISTRY`
 
-Read-only force refresh within the already locked Project ID. Verify the current identity still matches, fresh-read that project's latest Git-backed registry, replace registry semantics previously loaded in this chat/session, preserve the current project position and Session Project Lock, and stop. A mismatch hard-stops; Refresh never switches projects. Do not advance the roadmap, edit application files, commit or push. Return only `Registry refreshed: <exact registry version>` when successful.
+Read-only force refresh within the already locked Project ID. Verify the current identity still matches; fresh-read `UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md`, this Universal Registry and that project's latest Git-backed registry; fresh-read the Roadmap Specification when the invoked/current workflow requires it. Replace session-loaded bootstrap/registry semantics, preserve the current project position and Session Project Lock, and stop. A mismatch hard-stops; Refresh never switches projects. Do not advance the roadmap, edit application files, commit or push. Return only `Registry refreshed: <exact registry version>` when successful.
 
 ## `Help` / `VP:HELP`
 
@@ -293,12 +305,12 @@ Every new project roadmap must end with `FINAL-AUDIT` or explicitly designate an
 
 ## Registry governance
 
-- New universal aliases or changed universal semantics must be updated here first and versioned in the Universal Project Command System reference document.
-- System 7.5 project identity/session-lock rules apply to every registered project-control alias on the first alias in a new/unbound chat/session; project-specific registries may tighten but must not weaken mismatch hard-stop or identity isolation.
+- New universal aliases or changed universal semantics must be updated here first and versioned in the Universal Project Command System reference document. Loader/discovery changes must also update `UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md`.
+- System 7.6 project identity/session-lock rules apply to every registered project-control alias on the first alias in a new/unbound chat/session; project-specific registries may tighten but must not weaken mismatch hard-stop or identity isolation.
 - Genuinely new projects require an independent private GitHub remote plus a pushed identity/control baseline before initialization can complete.
-- Existing initialized projects adopting System 7.5 must receive a non-destructive `docs/PROJECT_IDENTITY.json` backfill and registry synchronization; this control-plane update does not reopen completed roadmap work.
-- Existing project registries do not magically update when this file changes. They must be deliberately synchronized when the new universal behavior is intended for that project.
+- Existing initialized projects adopting System 7.6 must receive a non-destructive `docs/PROJECT_IDENTITY.json` backfill and registry synchronization; this control-plane update does not reopen completed roadmap work.
+- Existing project registries do not magically update when this file or the bootstrap changes. They must be deliberately synchronized when new universal behavior is intended for that project; account-level Custom Instructions should remain unchanged unless the bootstrap path/trigger contract itself changes.
 - Project-specific aliases belong in the project registry; they do not require account-level Custom Instructions when invoked through an explicit `VP:` form that the project's registry defines.
-- Common plain-language aliases intended to work in fresh contexts should also be listed in the account-level Custom Instructions bootstrap.
+- Common plain-language aliases are discovered from the current Git-backed registry after the stable account loader triggers the canonical bootstrap; they do not require a permanent exhaustive list in account-level Custom Instructions.
 - Roadmap creation/maintenance must follow `UNIVERSAL_PROJECT_ROADMAP_SPEC.md`: canonical Markdown remains authoritative; routine execution status/progress is ledger-only and must not edit the roadmap or regenerate its DOCX. Regenerate/verify the same-basename DOCX only when the roadmap itself changes structurally or materially.
 - Keep this file Git-backed. A local clone is a convenience; the GitHub remote is the durable master.
