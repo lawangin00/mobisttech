@@ -79,12 +79,12 @@
       "requirement": "P1 stocktake/cycle counting",
       "gates": "MT-2.10, MT-4.5",
       "acceptance": "Quantity and serialized/IMEI sessions, expected/counted variance, reason codes, approvals, recounts and auditable adjustments; no fabricated history.",
-      "entities": "planned count_sessions/count_lines/recounts/approvals; stock_movements",
+      "entities": "stocktake_sessions/stocktake_lines/stocktake_unit_baselines/stocktake_counts/stocktake_recounts/stocktake_approvals; stock_movements",
       "permission_contract": "shop.stocktake, shop.stocktake.approve",
       "reserved_api_contracts": "POST /internal/admin/stocktakes; PATCH /internal/admin/stocktakes/{id}/lines; POST /internal/admin/stocktakes/{id}/approve",
       "owning_backend_point": "MT-2.10",
-      "http_implementation": "Not implemented in MT-2.8",
-      "foundation_reference": "README.md; CONTRACTS.json; backend/app/Addendum; additive migration 2026_09_01_100000"
+      "http_implementation": "Backend domain implemented in MT-2.10; HTTP publication remains pending MT-3.4 and POS stock-control interfaces remain pending MT-4.5",
+      "foundation_reference": "backend/app/Inventory/StocktakeOperations.php; additive migration 2026_09_02_110000; docs/stocktake/README.md"
     },
     {
       "clause": "4.2",

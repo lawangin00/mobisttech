@@ -2086,7 +2086,8 @@
           "name": "status",
           "allowed": [
             "in_stock",
-            "sold"
+            "sold",
+            "adjusted_out"
           ],
           "nullable": false,
           "autoIncrement": false,

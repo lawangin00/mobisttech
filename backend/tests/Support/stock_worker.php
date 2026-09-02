@@ -1,6 +1,7 @@
 <?php
 
 use App\Inventory\InventoryOperations;
+use App\Inventory\StocktakeOperations;
 use App\Inventory\TransactionalStock;
 use App\Models\Admin;
 use App\Models\Outlet;
@@ -42,6 +43,8 @@ try {
                 $input['key'], $input['input']),
             'procurement_receive' => app(SupplierProcurement::class)->receive(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
                 $input['order'], $input['key'], $input['input']),
+            'stocktake_approve' => app(StocktakeOperations::class)->approve(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
+                $input['stocktake'], $input['key'], $input['input']),
             default => throw new LogicException('Unknown synthetic operation.'),
         };
     }, 3);

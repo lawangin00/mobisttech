@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Inventory\AcquisitionDocuments;
 use App\Inventory\StockLedger;
+use App\Inventory\StocktakeOperations;
 use App\Models\Outlet;
 use App\Models\StockUnit;
 use App\Procurement\SupplierProcurement;
@@ -20,7 +21,7 @@ class InventoryConcurrencyTest extends TestCase
     use InventoryFixture;
 
     // These tests deliberately commit fixtures so independent MySQL connections can see them.
-    private array $tables = ['identity_audit_events', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
+    private array $tables = ['identity_audit_events', 'stocktake_approvals', 'stocktake_recounts', 'stocktake_counts', 'stocktake_unit_baselines', 'stocktake_lines', 'stocktake_sessions', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
         'purchase_order_lines', 'purchase_orders', 'supplier_contacts', 'reorder_policies', 'suppliers', 'domain_events', 'publication_versions', 'idempotency_requests', 'claim_events', 'claims', 'return_lines', 'returns', 'monetary_adjustments',
         'stock_unit_lineage', 'reservation_allocations', 'reservation_lines', 'reservations', 'product_imeis', 'active_imeis', 'stock_movements', 'stock_units',
         'stock_acquisitions', 'sales', 'invoices', 'order_items', 'orders', 'customers', 'document_sequences', 'pos_master_data_usages', 'products',
@@ -137,6 +138,41 @@ class InventoryConcurrencyTest extends TestCase
         $this->assertSame(1, DB::table('claims')->value('quantity'));
     }
 
+    public function test_separate_mysql_connections_arbitrate_stocktake_approval_versus_sale(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        [$stocktake, $version] = $this->submittedStocktake($product);
+        $sale = $this->sale($product);
+        $results = $this->race([$product->id], [
+            ['operation' => 'stocktake_approve', 'actor' => $this->actor->id, 'outlet' => $this->outlet->id,
+                'stocktake' => $stocktake, 'key' => (string) Str::uuid(), 'input' => ['session_version' => $version]],
+            ['operation' => 'sale', 'id' => $sale],
+        ]);
+        $this->oneWinner($results);
+        $this->assertSame(0, $product->fresh()->qty);
+        $this->assertSame(1, DB::table('stock_movements')->whereIn('type', ['sale', 'stocktake_adjustment'])->count());
+        $this->assertSame(1, DB::table('stocktake_approvals')->count() + $product->fresh()->sold_qty);
+    }
+
+    public function test_separate_mysql_connections_arbitrate_stocktake_approval_versus_reservation(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        [$stocktake, $version] = $this->submittedStocktake($product);
+        $reservation = $this->reservation($product);
+        $results = $this->race([$product->id], [
+            ['operation' => 'stocktake_approve', 'actor' => $this->actor->id, 'outlet' => $this->outlet->id,
+                'stocktake' => $stocktake, 'key' => (string) Str::uuid(), 'input' => ['session_version' => $version]],
+            ['operation' => 'reserve', 'id' => $reservation['line']],
+        ]);
+        $this->oneWinner($results);
+        $snapshot = DB::transaction(fn () => app(StockLedger::class)->snapshot($product->id));
+        $this->assertSame(0, $snapshot['available']);
+        $this->assertSame(1, DB::table('stocktake_approvals')->count() + DB::table('reservation_allocations')->whereNull('released_at')->count());
+        $this->assertContains($product->fresh()->qty, [0, 1]);
+    }
+
     public function test_private_acquisition_evidence_is_scoped_and_never_a_client_selected_path(): void
     {
         Storage::fake('local');
@@ -179,6 +215,18 @@ class InventoryConcurrencyTest extends TestCase
         $this->assertSame(1, DB::table('stock_acquisitions')->count());
         $this->assertSame(1, $product->fresh()->qty);
         $this->assertSame('received', DB::table('purchase_orders')->where('public_id', $order['purchase_order_id'])->value('status'));
+    }
+
+    private function submittedStocktake($product): array
+    {
+        $service = app(StocktakeOperations::class);
+        $started = $service->start($this->actor, $this->outlet, (string) Str::uuid(), ['kind' => 'cycle', 'product_ids' => [$product->public_id]]);
+        $line = $service->session($this->actor, $this->outlet, $started['stocktake_id'])['lines'][0]['line_id'];
+        $count = $service->countLine($this->actor, $this->outlet, $started['stocktake_id'], $line, (string) Str::uuid(), [
+            'line_version' => 1, 'counted_quantity' => 0, 'reason_code' => 'loss', 'reason_notes' => 'Synthetic race variance',
+        ]);
+
+        return [$started['stocktake_id'], $count['session_version']];
     }
 
     private function race(array $products, array $requests): array

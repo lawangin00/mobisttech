@@ -1,0 +1,98 @@
+{
+  "checkpoint": "MT-2.10 - Stocktake and cycle-count services",
+  "date": "2026-09-02",
+  "starting_commit": "b9381483b3d797678f9fddcff023f7872f4b26b5",
+  "scope": {
+    "implemented": [
+      "outlet-scoped full stocktake and selected-product cycle-count sessions",
+      "explicit immutable movement-ID count baselines for quantity and serialized/IMEI inventory",
+      "append-only counted-versus-expected variance snapshots with required reason codes",
+      "permission-separated recount and approval workflows with durable idempotency",
+      "delta-based audited stocktake adjustments that preserve legitimate post-count sales/restocks/returns",
+      "serialized missing-unit retirement with explicit adjusted_out IMEI history and active-claim removal",
+      "real MySQL concurrency arbitration for stocktake approval versus sale and reservation"
+    ],
+    "excluded": [
+      "MT-2.11 inter-outlet transfer implementation",
+      "HTTP/API publication assigned to MT-3.4 and POS stock-control interfaces assigned to MT-4.5",
+      "private source-data migration or protected source runtime/database activity",
+      "external-provider, message, deployment or production changes"
+    ]
+  },
+  "source_boundary": {
+    "classification": "Approved additive extension: prior protected-source characterization found no stocktake/cycle-count workflow to migrate",
+    "pos_current_head": "187f42ae487ac750e99535853f3dfc6ac1b49852",
+    "website_current_head": "1f44f5adc5b70f3c7d82e03dd9b94d1357967a41",
+    "working_trees": "PASS: both protected source working trees clean under read-only Git inspection",
+    "source_runtime_or_database_used": false,
+    "private_rows_imported": false
+  },
+  "schema": {
+    "mysql": "8.4.11",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "timezone": "+00:00",
+    "strict": true,
+    "tables": 105,
+    "columns": 1279,
+    "foreign_keys": 186,
+    "indexes": 482,
+    "canonical_seed_rows": 287,
+    "business_rows": 0,
+    "sha256": "6ff5e8e2a05a57d3e255b1c9fd4a4cd5bcf4494e4db87da20306a061f3298f74",
+    "rollback_sha256": "966fd7d798d15661ca070833126abc81ad20ece7c7b58e9d2b383fab03f1de27",
+    "rollback_reapply": "PASS on the empty disposable test schema",
+    "local_clean_apply": "PASS: migrate:fresh applied every migration through MT-2.10 on the isolated target database"
+  },
+  "acceptance": {
+    "focused_stocktake": "PASS: 9 tests, 53 assertions",
+    "real_mysql_concurrency": "PASS: InventoryConcurrencyTest 9 tests, 537 assertions including approval-versus-sale and approval-versus-reservation",
+    "backend_full": "PASS: 150 tests, 5150 assertions",
+    "schema_verifier": "PASS: MT-2.10 normalized schema and rollback/reapply",
+    "php_format": "PASS: Pint test mode, 139 files",
+    "composer": "PASS: strict validation and platform requirements",
+    "laravel_runtime": "PASS: optimize and optimize:clear",
+    "backend_build": "PASS: TypeScript and Vite production build, 569 modules",
+    "website": "PASS: ESLint, route type generation, TypeScript and Next.js 16.3.3 production build",
+    "online_advisory_refresh": "NOT CLAIMED: dependency locks are unchanged and no online registry audit was required for this point"
+  },
+  "verified_contracts": [
+    "shop.stocktake is required for session/count access and shop.stocktake.approve is separately required for recount/approval",
+    "full sessions select the active outlet catalogue server-side while cycle sessions accept only explicit active outlet products",
+    "count baselines use the highest included stock-movement ID plus immutable serialized-unit snapshots rather than wall-clock inference",
+    "counting never mutates stock and every accepted iteration is append-only with a SHA-256 snapshot digest",
+    "non-zero variance requires a reason code and recount preserves prior count evidence",
+    "approval applies only the verified variance delta; it never silently overwrites the current product quantity",
+    "legitimate sale/restock/return movements after count are reconciled, while later manual/stocktake corrections invalidate stale approval",
+    "negative quantity variance cannot consume held stock and multi-line approval rolls back atomically on any unsafe line",
+    "missing serialized units are retired as adjusted_out without falsely marking them sold; positive serialized variance requires normal inventory evidence and recount",
+    "real independent MySQL connections serialize stocktake approval against sale and reservation so only one conflicting operation wins"
+  ],
+  "roadmap_document": {
+    "markdown_version": "1.9",
+    "source_of_truth_version": "1.9",
+    "points": 56,
+    "content_blocks": 271,
+    "change": "UNCHANGED: MT-2.10 is routine point progress, so the canonical Markdown and same-basename DOCX were not regenerated",
+    "markdown_sha256": "2124f7afe2e5f8f1020be5380b4b40deda21b51c3376534cd82c40175c79c122",
+    "docx_sha256": "62190c24ef2d9ae4789f843e82ab857ac0664e0f0d289f7bdfe0332885bf8a0e"
+  },
+  "artifact_sha256": {
+    "backend/app/Inventory/StocktakeOperations.php": "a25dd666aa9f76d6debc7d53ec8f7f23f1661984f621c865eebdeffa3f75804b",
+    "backend/database/migrations/2026_09_02_110000_add_stocktake_services.php": "5edcf4d3c9e7e7b9d08125dd04d4219636523ce849728b9a410bbca471a7cc33",
+    "backend/tests/Feature/StocktakeTest.php": "67f63f737b7b3629943755a442ab9e06ba152c52698a3fe0eab1356c7764a041",
+    "backend/tests/Feature/InventoryConcurrencyTest.php": "5f37632ebbfcde78bdca224443a7b33041a8f75b551a27d6ce8ce94e3794455f",
+    "docs/stocktake/README.md": "0d24ae97df1e14c1a921eec401536f44dbbf116e6e944bf3ec5d40bd8e98a83a",
+    "docs/addendum/ENTITY_API_PERMISSION_MATRIX.json": "df28a3536d2e91ca7c3dc8e84d9b4e7d6bd0febf93a95018dcc301d37930a9de",
+    "docs/schema/TARGET_SCHEMA.json": "ed298c9e049baa603ff022bceb3df9d491dd77f2dc6dca0e0feb377908db9939"
+  },
+  "authority_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "ba0f3c6b108d9d19bbf3ca5d8cf95d8319a87ecc137840623b167e85d694e212",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "2124f7afe2e5f8f1020be5380b4b40deda21b51c3376534cd82c40175c79c122",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "62190c24ef2d9ae4789f843e82ab857ac0664e0f0d289f7bdfe0332885bf8a0e"
+  },
+  "next": "MT-2.11 - Inter-outlet stock transfer services"
+}
