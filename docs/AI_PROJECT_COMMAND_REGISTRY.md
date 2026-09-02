@@ -42,7 +42,7 @@ Documentation revision MT-1.1-r8 synchronizes Universal Registry 1.13 / System 7
 
 ## Adopted universal definitions
 
-This revision deliberately synchronizes the project registry to Universal Registry 1.12 / System 7.5. Exact alias semantics remain deterministic and the project now has immutable identity/session binding: every first alias in a new/unbound session resolves Project ID before execution, handoffs verify Project ID plus canonical remote checkpoint, mismatches hard-stop and only Switch Project can intentionally rebind. The optimized roadmap lifecycle, approved requirements, exact point order and current implementation position remain unchanged; no roadmap implementation point is advanced or reopened by this identity backfill.
+This revision deliberately synchronizes the project registry to Universal Registry 1.13 / System 7.6. The stable account loader fresh-reads `lawangin00/references/UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md`, which loads current universal semantics before exact Project ID binding. Existing alias determinism, identity/session locking, handoff verification, project boundaries, approved requirements, exact point order and current implementation position remain unchanged. No roadmap implementation point is advanced or reopened by this control-plane loader sync.
 
 The canonical universal registry snapshot below is copied from `lawangin00/references/UNIVERSAL_PROJECT_COMMAND_REGISTRY.md`. Project-specific rules above are explicit specializations; all other semantics remain unchanged. Control bootstrap Git blob: `557326fa17dad92b99d2b327ff0a9fe36d0dc9e9`. Baseline Git blob: `ac5e61fb96651f9aa81628d1bfae521ee4fd10d3`. Roadmap specification v1.3 Git blob: `3cbb9af3f55bd1c9f814dc49497bec2f3ad549f2`.
 
