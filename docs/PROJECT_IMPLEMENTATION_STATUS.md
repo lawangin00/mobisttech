@@ -29,10 +29,10 @@ Last reconciled: 2026-09-02
 - Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.9
 - Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.9
 - Roadmap Word mirror: `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
-- Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r10 (universal 1.15 / system 7.7)
+- Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r11 (universal 1.16 / system 7.7)
 - FINAL-AUDIT: `FINAL-AUDIT - Independent final project audit`
 
-System 7.7 preserves the Git-backed bootstrap loading path and durable project/session binding. Registry 1.15 additionally enforces exact-alias execution-intent isolation, strict read-only handoffs and hard no-mutation barriers for read-only aliases. This control-plane patch does not reinitialize the project, reopen a completed checkpoint or advance application implementation.
+System 7.7 preserves the Git-backed bootstrap loading path and durable project/session binding. Registry 1.16 additionally enforces storage-bound visual-QA artifact routing: remote/local render artifacts stay on a viewer with direct access to their real filesystem, sandbox artifacts stay on sandbox-capable viewers, and cross-surface copies must be explicit and verified. This control-plane patch does not reinitialize the project, reopen a completed checkpoint or advance application implementation.
 
 ## Verified position
 
@@ -54,7 +54,7 @@ Approved addendum v1.1 expands required work without reinitialization. MT-2.8 im
 
 ## Documentation language policy
 
-Roman Urdu is the default only for assistant chat/UI communication with the user. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal and Preferences remain byte-preserved in their original language/content unless transformation is explicitly authorized. This boundary is recorded in Source of Truth, roadmap, AGENTS, project registry and the synchronized Universal Registry 1.15 / System 7.7 baseline loaded through the canonical control bootstrap.
+Roman Urdu is the default only for assistant chat/UI communication with the user. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal and Preferences remain byte-preserved in their original language/content unless transformation is explicitly authorized. This boundary is recorded in Source of Truth, roadmap, AGENTS, project registry and the synchronized Universal Registry 1.16 / System 7.7 baseline loaded through the canonical control bootstrap.
 
 ## Roadmap lifecycle policy
 
@@ -353,7 +353,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 
 ## Recovery and next action
 
-Do not re-execute the sixteen completed points, addendum reconciliation, unified Admin/Google remediation, Team Member/session remediation, consolidated-requirement structural reconciliation or the MT-2.10 stocktake closure. The project is 16/56 complete with 40 pending. Stop after the MT-2.10 checkpoint is committed/pushed and clean synchronization is verified. The next applicable Y/Proceed executes only `MT-2.11 - Inter-outlet stock transfer services`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r10 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`. It adopts Universal Registry 1.15 execution-intent isolation only; project position remains 16/56 complete with MT-2.11 pending. Roadmap v1.9 and its same-basename DOCX are the verified structural plan. Already-open chat/Work sessions that loaded r9 or older must run one `Refresh` / `VP:REFRESH-REGISTRY` before using aliases again; new/unbound sessions fresh-read the canonical control bootstrap and Universal Registry first, resolve the Project ID, then load r10 on their first project-control invocation. Approved addendum and consolidated-requirement feature workflows remain assigned to their named later points.
+Do not re-execute the sixteen completed points, addendum reconciliation, unified Admin/Google remediation, Team Member/session remediation, consolidated-requirement structural reconciliation or the MT-2.10 stocktake closure. The project is 16/56 complete with 40 pending. Stop after the MT-2.10 checkpoint is committed/pushed and clean synchronization is verified. The next applicable Y/Proceed executes only `MT-2.11 - Inter-outlet stock transfer services`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r11 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`. It adopts Universal Registry 1.15 execution-intent isolation only; project position remains 16/56 complete with MT-2.11 pending. Roadmap v1.9 and its same-basename DOCX are the verified structural plan. Already-open chat/Work sessions that loaded r10 or older must run one `Refresh` / `VP:REFRESH-REGISTRY` before using aliases again; new/unbound sessions fresh-read the canonical control bootstrap and Universal Registry first, resolve the Project ID, then load r11 on their first project-control invocation. Approved addendum and consolidated-requirement feature workflows remain assigned to their named later points.
 
 ## HOLD / decisions
 
