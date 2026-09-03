@@ -1,8 +1,9 @@
 # mobiST Tech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r14
-**Universal baseline:** Registry 1.19 / System 7.7
-**Adopted universal commit:** `3d4a9b77d24303a3347e27d3cb1e9752643ab6e2`
+**Registry version:** MT-1.1-r15
+**Universal baseline:** Registry 1.20 / System 7.7
+**Bootstrap baseline:** 1.3
+**Adopted universal commit:** `eaf3035f43d79153ca120c9e202c9051d46316de`
 **Roadmap specification:** 1.5
 **Date:** 2026-09-03
 **Repository root:** `C:\mobisttech`
@@ -20,7 +21,7 @@
 
 ## Purpose
 
-This is a **delta-only** project registry. It inherits Universal Registry 1.19 / System 7.7 from the pinned universal release above and contains only mobiST Tech-specific rules. It must not embed a copied Universal Registry snapshot.
+This is a **delta-only** project registry. It inherits Universal Registry 1.20 / System 7.7 from the pinned universal release above and contains only mobiST Tech-specific rules. It must not embed a copied Universal Registry snapshot.
 
 ## Project-specific rules
 
