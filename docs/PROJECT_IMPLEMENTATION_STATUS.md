@@ -29,10 +29,10 @@ Last reconciled: 2026-09-02
 - Active Source of Truth: `docs/PROJECT_SOURCE_OF_TRUTH.md` v1.9
 - Active roadmap: `docs/PROJECT_IMPLEMENTATION_ROADMAP.md` v1.9
 - Roadmap Word mirror: `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
-- Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r12 (universal 1.17 / system 7.7)
+- Project registry: `docs/AI_PROJECT_COMMAND_REGISTRY.md` MT-1.1-r13 (universal 1.18 / system 7.7)
 - FINAL-AUDIT: `FINAL-AUDIT - Independent final project audit`
 
-System 7.7 preserves the Git-backed bootstrap loading path and durable project/session binding. Registry 1.17 retains storage-bound visual-QA routing and adds scoped literal-safe command construction: ordinary commands stay on the fast inline path, while only complex shell-sensitive transformations use temporary/literal-safe scripts with fail-before-write validation. This control-plane patch does not reinitialize the project, reopen a completed checkpoint or advance application implementation.
+System 7.7 preserves the Git-backed bootstrap loading path and durable project/session binding. Registry 1.18 retains storage-bound visual-QA routing and scoped literal-safe command construction, and globally standardizes Refresh success output as `Registry refreshed: Universal <version> | Project <project-version>` so a project-delta revision can never be mistaken for the Universal Registry version. This control-plane patch does not reinitialize the project, reopen a completed checkpoint or advance application implementation.
 
 ## Verified position
 
@@ -54,7 +54,7 @@ Approved addendum v1.1 expands required work without reinitialization. MT-2.8 im
 
 ## Documentation language policy
 
-Roman Urdu is the default only for assistant chat/UI communication with the user. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal and Preferences remain byte-preserved in their original language/content unless transformation is explicitly authorized. This boundary is recorded in Source of Truth, roadmap, AGENTS, project registry and the synchronized Universal Registry 1.17 / System 7.7 baseline loaded through the canonical control bootstrap.
+Roman Urdu is the default only for assistant chat/UI communication with the user. Git-tracked project documentation and technical artifacts use standard English unless the user explicitly requests another language for a specific artifact. User-supplied Goal and Preferences remain byte-preserved in their original language/content unless transformation is explicitly authorized. This boundary is recorded in Source of Truth, roadmap, AGENTS, project registry and the synchronized Universal Registry 1.18 / System 7.7 baseline loaded through the canonical control bootstrap.
 
 ## Roadmap lifecycle policy
 
