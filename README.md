@@ -8,6 +8,7 @@ A new, independent mobiST Technologies monorepo. This is a controlled architectu
 - [Canonical project Goal](docs/PROJECT_GOAL.md) - the user's original file, preserved byte-for-byte.
 - [Binding project Preferences](docs/PROJECT_PREFERENCES.md) - approved implementation preferences, preserved byte-for-byte and applied alongside the Goal.
 - [Approved requirements addendum v1.1](docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md) / [clause traceability](docs/REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md) - supplemental scope; original Goal/Preferences stay unchanged.
+- [Approved Software Product publishing requirement](docs/PROJECT_REQUIREMENTS_SOFTWARE_PRODUCT_PUBLISHING_v1.0.md) / [reconciliation](docs/software-publishing/RECONCILIATION.md) - reusable Admin/CMS/public software pages, product policies/FAQ and version/release lifecycle.
 - [Architecture and execution boundaries](docs/PROJECT_SOURCE_OF_TRUTH.md)
 - [Active roadmap](docs/PROJECT_IMPLEMENTATION_ROADMAP.md) / [Word mirror](docs/PROJECT_IMPLEMENTATION_ROADMAP.docx)
 - [Verified implementation status](docs/PROJECT_IMPLEMENTATION_STATUS.md)

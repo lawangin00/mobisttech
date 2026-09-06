@@ -1,0 +1,70 @@
+{
+  "verification": "Software Product publishing structural reconciliation",
+  "date": "2026-09-06",
+  "result": "PASS",
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "requirement": {
+    "path": "docs/PROJECT_REQUIREMENTS_SOFTWARE_PRODUCT_PUBLISHING_v1.0.md",
+    "sha256": "8ecf91807c2d0e838d1e2daf7ccfc130c522159e42ee5cef7d57d60c4276c452",
+    "version": "1.0"
+  },
+  "roadmap_state": {
+    "source_of_truth_version": "1.10",
+    "roadmap_version": "1.10",
+    "point_headers": 56,
+    "unique_point_ids": 56,
+    "dependency_lines": 56,
+    "visible_content_blocks": 273,
+    "completed_points": 16,
+    "pending_points": 40,
+    "next": "MT-2.11 - Inter-outlet stock transfer services",
+    "completed_checkpoint_reopened": false,
+    "application_implementation_advanced": false
+  },
+  "roadmap_document_qa": {
+    "markdown_docx_body_parity": "PASS",
+    "rendered_pages": 23,
+    "every_page_visually_inspected": true,
+    "clipping": false,
+    "overlap": false,
+    "missing_text": false,
+    "broken_page_furniture": false,
+    "markdown_sha256": "2c2cecbbc4479c40d852e83ee0b41f8676d2ecf7125118664983d1b7ca4a7ab1",
+    "docx_sha256": "2164e6f71ff29776346af12f8662118e3b0dfb00b0b403eac2d17a831d55592f",
+    "rendered_pdf_sha256": "b2fa191b21b4077ce00f5c34b2875aefa90afc066fc400cec701870f01332804"
+  },
+  "mobiST_pos_seed_reference": {
+    "planned_slug": "mobist-pos",
+    "SOFTWARE_OVERVIEW.md": "6667c6163dafcce8df802c50822142d733c3fb09b88f5b01fb0543a28e958a7d",
+    "PRIVACY_POLICY.md": "9fe1b40854a793de8d34751ac83038bf96e7961c69f8acf710755f677197533c",
+    "TERMS_OF_SERVICE.md": "65ea5fec790b3ec4312118c1dfddf07210fe3cf88c3fbc54f8ba9c8861ca964c",
+    "FAQ.md": "8f795afae2eb36909d003344cd56be5d77eaa287493f1fe3c39e4de494b5239c"
+  },
+  "artifact_hashes": {
+    "source_of_truth_sha256": "d67d41d39c5c894ee19784d1503cea54b1de67ced8f9c7920569d73351f19e76",
+    "status_ledger_sha256": "3085537dec63a9588a9a1960250a31b125ac89aa66e411f14c327d01bad1cfee",
+    "reconciliation_sha256": "a60c71a626d7f10b685597a51a043740067e99b5d57ee28540347ae2c26856f8",
+    "readme_sha256": "72e580d5dcf5c85e1902485e266e06195cd9be778c9dc231e8063b0ad46714d1"
+  },
+  "boundaries": {
+    "live_domain_dns_tls": "H-01 unchanged",
+    "runtime_application_files_changed": false,
+    "live_domain_changed": false,
+    "google_or_provider_call_performed": false,
+    "private_business_data_accessed": false,
+    "production_publication_performed": false,
+    "protected_source_repository_written": false
+  },
+  "route_family": [
+    "/software/{software-slug}",
+    "/software/{software-slug}/privacy",
+    "/software/{software-slug}/terms",
+    "/software/{software-slug}/faq",
+    "/software/{software-slug}/releases",
+    "/software/{software-slug}/releases/{version}"
+  ],
+  "implementation_owners": [
+    "MT-3.2", "MT-3.4", "MT-4.4", "MT-5.4",
+    "MT-7.2", "MT-7.5", "MT-7.6", "FINAL-AUDIT"
+  ]
+}
