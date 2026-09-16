@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Catalog\ProductDefinitions;
 use App\Inventory\AcquisitionDocuments;
 use App\Inventory\StockLedger;
 use App\Inventory\StocktakeOperations;
+use App\Inventory\StockTransferOperations;
 use App\Models\Outlet;
 use App\Models\StockUnit;
 use App\Procurement\SupplierProcurement;
@@ -21,9 +23,9 @@ class InventoryConcurrencyTest extends TestCase
     use InventoryFixture;
 
     // These tests deliberately commit fixtures so independent MySQL connections can see them.
-    private array $tables = ['identity_audit_events', 'stocktake_approvals', 'stocktake_recounts', 'stocktake_counts', 'stocktake_unit_baselines', 'stocktake_lines', 'stocktake_sessions', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
+    private array $tables = ['identity_audit_events', 'stock_transfer_receipt_lines', 'stock_transfer_receipts', 'stock_transfer_units', 'stock_transfer_lines', 'stock_transfers', 'stocktake_approvals', 'stocktake_recounts', 'stocktake_counts', 'stocktake_unit_baselines', 'stocktake_lines', 'stocktake_sessions', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
         'purchase_order_lines', 'purchase_orders', 'supplier_contacts', 'reorder_policies', 'suppliers', 'domain_events', 'publication_versions', 'idempotency_requests', 'claim_events', 'claims', 'return_lines', 'returns', 'monetary_adjustments',
-        'stock_unit_lineage', 'reservation_allocations', 'reservation_lines', 'reservations', 'product_imeis', 'active_imeis', 'stock_movements', 'stock_units',
+        'inventory_custody_holds', 'stock_unit_lineage', 'reservation_allocations', 'reservation_lines', 'reservations', 'product_imeis', 'active_imeis', 'stock_movements', 'stock_units',
         'stock_acquisitions', 'sales', 'invoices', 'order_items', 'orders', 'customers', 'document_sequences', 'pos_master_data_usages', 'products',
         'pos_master_data_options', 'outlet_admins', 'outlets', 'admins', 'super_admins'];
 
@@ -215,6 +217,38 @@ class InventoryConcurrencyTest extends TestCase
         $this->assertSame(1, DB::table('stock_acquisitions')->count());
         $this->assertSame(1, $product->fresh()->qty);
         $this->assertSame('received', DB::table('purchase_orders')->where('public_id', $order['purchase_order_id'])->value('status'));
+    }
+
+    public function test_separate_mysql_connections_cannot_receive_the_same_transfer_twice(): void
+    {
+        $source = $this->product();
+        $this->acquire($source);
+        $destination = new Outlet;
+        $destination->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Race destination', 'outlet_code' => '026'])->save();
+        $this->actor->shops()->attach($destination);
+        $target = app(ProductDefinitions::class)->save($this->actor, $destination, [
+            'name' => $source->name, 'category' => $source->category, 'brand_master_data_id' => $source->brand_master_data_id,
+            'subcategory_master_data_id' => $source->subcategory_master_data_id, 'model' => $source->model,
+            'purchase_price' => $source->purchase_price, 'sale_price' => $source->sale_price, 'track_imei' => false,
+            'ram_master_data_id' => null, 'storage_master_data_id' => null, 'sim_master_data_id' => null, 'warranty_type' => 'no_warranty',
+        ]);
+        $service = app(StockTransferOperations::class);
+        $created = $service->create($this->actor, $this->outlet, (string) Str::uuid(), [
+            'destination_outlet_id' => $destination->public_id,
+            'lines' => [['source_product_id' => $source->public_id, 'destination_product_id' => $target->public_id, 'quantity' => 1]],
+        ]);
+        $dispatch = $service->dispatch($this->actor, $this->outlet, $created['transfer_id'], (string) Str::uuid(), ['transfer_version' => 1]);
+        $line = $service->details($this->actor, $created['transfer_id'])['lines'][0];
+        $request = ['operation' => 'transfer_receive', 'actor' => $this->actor->id, 'outlet' => $destination->id,
+            'transfer' => $created['transfer_id'], 'input' => ['transfer_version' => $dispatch['version'],
+                'lines' => [['line_id' => $line['line_id'], 'receive_quantity' => 1, 'reject_quantity' => 0]]]];
+        $results = $this->race([$source->id, $target->id], [[...$request, 'key' => (string) Str::uuid()], [...$request, 'key' => (string) Str::uuid()]]);
+        $this->oneWinner($results);
+        $this->assertSame(1, DB::table('stock_transfer_receipts')->count());
+        $this->assertSame(0, $source->fresh()->qty);
+        $this->assertSame(1, $target->fresh()->qty);
+        $this->assertSame(0, DB::table('inventory_custody_holds')->whereNull('released_at')->count());
+        $this->assertSame(2, DB::table('stock_movements')->whereIn('type', ['transfer_out', 'transfer_in'])->count());
     }
 
     private function submittedStocktake($product): array

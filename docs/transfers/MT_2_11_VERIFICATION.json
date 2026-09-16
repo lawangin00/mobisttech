@@ -1,0 +1,97 @@
+{
+  "checkpoint": "MT-2.11 - Inter-outlet stock transfer services",
+  "date": "2026-09-17",
+  "starting_commit": "6da06c5b3649ab8e30f529bfdfe89b383c012441",
+  "scope": {
+    "implemented": [
+      "authorized source-to-destination outlet transfer planning and dispatch",
+      "in-transit custody holds for quantity stock and exact serialized units",
+      "partial receive and reject handling without fabricated movements",
+      "serialized IMEI successor custody with forward stock-unit lineage",
+      "immutable transfer, unit and receipt snapshots with SHA-256 evidence",
+      "versioned idempotent mutations and real MySQL double-receipt arbitration"
+    ],
+    "excluded": [
+      "HTTP/API publication assigned to MT-3.4",
+      "POS transfer interfaces assigned to MT-4.5",
+      "private source-data migration, providers, messages, deployment or production activity"
+    ]
+  },
+  "source_boundary": {
+    "pos_current_head": "6dc645f60dd9dfd7296a2a77640a6078f3274706",
+    "website_current_head": "5d7177d457a448c392b0cf3d8c244ee33a715220",
+    "working_trees": "PASS: both protected source working trees clean under read-only Git inspection",
+    "source_runtime_or_database_used": false,
+    "private_rows_imported": false
+  },
+  "schema": {
+    "mysql": "8.4.11",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "timezone": "+00:00",
+    "strict": true,
+    "tables": 110,
+    "columns": 1341,
+    "foreign_keys": 201,
+    "indexes": 513,
+    "canonical_seed_rows": 287,
+    "business_rows": 0,
+    "sha256": "c26ea97aeeaf01b928040d06b0ad05fd2df72b6906dba358ccf305a90121bfee",
+    "rollback_sha256": "6ff5e8e2a05a57d3e255b1c9fd4a4cd5bcf4494e4db87da20306a061f3298f74",
+    "rollback_reapply": "PASS: rollback restored exact MT-2.10 schema; reapply restored identical MT-2.11 hash"
+  },
+  "acceptance": {
+    "focused_transfer": "PASS: 4 tests, 38 assertions",
+    "inventory_concurrency": "PASS: combined StockTransferTest + InventoryConcurrencyTest 14 tests, 697 assertions; includes independent-connection duplicate transfer receipt race",
+    "backend_full": "PASS: 155 tests, 5311 assertions",
+    "schema_verifier": "PASS: final, rollback and reapply normalized schema verification",
+    "php_format": "PASS: Pint test mode, 142 files",
+    "composer": "PASS: strict validation and platform requirements",
+    "laravel_runtime": "PASS: optimize and optimize:clear",
+    "backend_build": "PASS: TypeScript and Vite production build, 569 modules",
+    "website": "PASS: ESLint, route type generation, TypeScript and Next.js 16.3.3 production build",
+    "online_advisory_refresh": "NOT CLAIMED: dependency locks are unchanged and no online registry audit was required"
+  },
+  "verified_contracts": [
+    "dispatch keeps in-transit stock physically at source while custody holds remove it from availability",
+    "quantity receipt writes balanced transfer_out/transfer_in movements only for accepted quantity; rejection only releases custody",
+    "serialized receipt preserves IMEI identity through a transferred_out source occurrence and an in_stock destination successor",
+    "serialized rejection leaves source stock and active IMEI ownership unchanged",
+    "product-definition fingerprints and immutable unit snapshots detect stale transfer plans before receipt",
+    "partial receive/reject keeps unresolved custody held and completed outcomes immutable",
+    "source dispatch and destination receive permissions are independently outlet scoped",
+    "durable idempotency, row locks and version preconditions make duplicate or concurrent receive attempts safe"
+  ],
+  "roadmap_document": {
+    "markdown_version": "1.10",
+    "source_of_truth_version": "1.10",
+    "change": "UNCHANGED: MT-2.11 is routine implementation progress; structural roadmap/DOCX were not regenerated",
+    "markdown_sha256": "2c2cecbbc4479c40d852e83ee0b41f8676d2ecf7125118664983d1b7ca4a7ab1",
+    "docx_sha256": "2164e6f71ff29776346af12f8662118e3b0dfb00b0b403eac2d17a831d55592f"
+  },
+  "artifact_sha256": {
+    "backend/app/Inventory/StockTransferOperations.php": "51c38f498e2abecf40619e33b47bb05f9d2b5345f15fa25ed3c9939bb11eccb2",
+    "backend/database/migrations/2026_09_02_120000_add_stock_transfer_services.php": "c1748f3a42aa0522f38c3aa2e0fe58e28cfbd57284e2e10c2b0081e7aff447ba",
+    "backend/tests/Feature/StockTransferTest.php": "eca264b753a665ec8ea7abdb58128c9c9296489cb7f919456ae64d26dd85633f",
+    "backend/tests/Feature/InventoryConcurrencyTest.php": "3e5229d4fcef9df1a21b37ac2acce78c40a02334ef49704799685fbef7c92e55",
+    "backend/tests/Support/stock_worker.php": "03414db3a4ea3a0ef9f45fee424a3616886a0888a8f31a7fe75ced5550132b64",
+    "backend/app/Catalog/ProductDefinitions.php": "fa0fded1fd66b4126345b63e2c8670893aee726e9a52230eb934dcbca751cd44",
+    "backend/app/Models/StockUnit.php": "a5723837da974ae4c2b70ef8f60f119b700e3bc8e16e4ff502aa0d5a5860e166",
+    "backend/app/Addendum/ResetRetention.php": "fbe1d1ba185aa6345fe37a9378bb07863375a1d7ab0ff688da95228fbf599552",
+    "backend/tests/Feature/AddendumFoundationsTest.php": "8a356ac25989e80fb6ce29e4a56d6d48d65e60d3433e571d24c493ba8b83e69b",
+    "backend/tests/Feature/ProductMasterDataTest.php": "3e6db8f3587d0232d9d2145289c335d6688582f09efac623fafac5106445efdb",
+    "tools/migration/verify_mysql_schema.php": "347011b8aa792b6ab03c4e44d810636862f6ea955ed29ceb8ce848df9a6341db",
+    "docs/transfers/README.md": "165120220d115fb4f14819845e4b85b1d0701166c64f1728229e029ee27755eb",
+    "docs/addendum/ENTITY_API_PERMISSION_MATRIX.json": "50b895b0b0a72252f3f968cdfdf64b5da4d552a4510fe06561b79b8b61215f51",
+    "docs/schema/TARGET_SCHEMA.json": "1b4fd87720ea641a09199481166b0083cb170903c955897b1dbd91a17cfafe37"
+  },
+  "authority_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "d67d41d39c5c894ee19784d1503cea54b1de67ced8f9c7920569d73351f19e76",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "2c2cecbbc4479c40d852e83ee0b41f8676d2ecf7125118664983d1b7ca4a7ab1",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "2164e6f71ff29776346af12f8662118e3b0dfb00b0b403eac2d17a831d55592f"
+  },
+  "next": "MT-2.20 - POS payment channels, split tenders and settlement reconciliation"
+}

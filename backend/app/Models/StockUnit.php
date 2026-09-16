@@ -98,6 +98,7 @@ class StockUnit extends Model
         'damaged' => 'Damaged',
         'lost' => 'Lost',
         'adjusted_out' => 'Adjusted Out',
+        'transferred_out' => 'Transferred Out',
     ];
 
     protected $guarded = ['*'];

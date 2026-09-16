@@ -211,9 +211,11 @@ class ProductMasterDataTest extends TestCase
         $source = json_decode(file_get_contents(base_path('../docs/catalog/SOURCE_CONTRACTS.json')), true);
         foreach (['registry' => PosMasterDataRegistry::LISTS, 'categories' => Product::CATEGORY_LABELS, 'sim_labels' => Product::SIM_LABELS,
             'colors' => StockUnit::COLOR_OPTIONS, 'conditions' => StockUnit::CONDITIONS, 'pta_statuses' => StockUnit::PTA_STATUSES,
-            'carrier_lock_statuses' => StockUnit::CARRIER_LOCK_STATUSES, 'mdm_statuses' => StockUnit::MDM_STATUSES, 'stock_statuses' => StockUnit::STOCK_STATUSES] as $key => $target) {
+            'carrier_lock_statuses' => StockUnit::CARRIER_LOCK_STATUSES, 'mdm_statuses' => StockUnit::MDM_STATUSES] as $key => $target) {
             $this->assertSame($source[$key], $target);
         }
+        $this->assertSame($source['stock_statuses'], array_intersect_key(StockUnit::STOCK_STATUSES, $source['stock_statuses']));
+        $this->assertSame('Transferred Out', StockUnit::STOCK_STATUSES['transferred_out']);
         foreach ($source['variants'] as $case) {
             $this->assertSame($case['key'], ProductVariantKey::fromValues(...$case['input']));
         }

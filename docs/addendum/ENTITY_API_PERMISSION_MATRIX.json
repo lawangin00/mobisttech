@@ -91,12 +91,12 @@
       "requirement": "P1 inter-outlet transfers",
       "gates": "MT-2.8, MT-2.11, MT-4.5",
       "acceptance": "Dispatch/in-transit/receive/reject/partial receive, quantity and serialized identity/custody, immutable history, role control, IMEI uniqueness, race/rollback checks.",
-      "entities": "inventory_custody_holds, stock_unit_lineage, products, stock_units, active_imeis; planned transfers/lines/receipts",
+      "entities": "stock_transfers/stock_transfer_lines/stock_transfer_units/stock_transfer_receipts/stock_transfer_receipt_lines; inventory_custody_holds, stock_unit_lineage, products, stock_units, product_imeis, active_imeis, stock_movements",
       "permission_contract": "shop.transfers.dispatch, shop.transfers.receive",
       "reserved_api_contracts": "POST /internal/admin/transfers; POST /internal/admin/transfers/{id}/dispatch; POST /internal/admin/transfers/{id}/receipts",
       "owning_backend_point": "MT-2.11",
-      "http_implementation": "Not implemented in MT-2.8",
-      "foundation_reference": "README.md; CONTRACTS.json; backend/app/Addendum; additive migration 2026_09_01_100000"
+      "http_implementation": "Backend domain implemented in MT-2.11; HTTP publication remains pending MT-3.4 and POS stock-control interfaces remain pending MT-4.5",
+      "foundation_reference": "backend/app/Inventory/StockTransferOperations.php; additive migration 2026_09_02_120000; docs/transfers/README.md"
     },
     {
       "clause": "4.3",

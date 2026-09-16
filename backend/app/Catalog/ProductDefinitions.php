@@ -154,7 +154,8 @@ final class ProductDefinitions
 
     private function held(int $id): bool
     {
-        return app(StockLedger::class)->holds($id)->isNotEmpty();
+        return app(StockLedger::class)->holds($id)->isNotEmpty()
+            || DB::table('inventory_custody_holds')->where('destination_product_id', $id)->whereNull('released_at')->exists();
     }
 
     private function fields(array $input, array $allowed): void
