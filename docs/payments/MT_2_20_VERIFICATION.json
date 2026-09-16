@@ -1,0 +1,106 @@
+{
+  "checkpoint": "MT-2.20 - POS payment channels, split tenders and settlement reconciliation",
+  "date": "2026-09-17",
+  "starting_commit": "6f433e89221c0dc6583250be3466f7f591434886",
+  "scope": {
+    "implemented": [
+      "outlet-scoped configurable POS Payment Destinations for Cash, Card, Mobile Wallet and Bank Transfer",
+      "exact-money multi-allocation POS split tender with cash tender/change",
+      "append-only non-cash settlement evidence separating merchant fees from sale/customer payment",
+      "POS return refund allocation traceability with explicit different-method/destination override, reason and optional approval",
+      "sensitive-card-reference and unmasked financial-identifier rejection",
+      "real MySQL idempotent replay and competing last-stock sale arbitration"
+    ],
+    "excluded": [
+      "Website checkout method changes or Website split tender",
+      "provider credential activation or automatic external refunds",
+      "cash-session/day-closing execution assigned to MT-2.12",
+      "HTTP/UI/reporting publication assigned to later roadmap points"
+    ]
+  },
+  "website_boundary": {
+    "channels": [
+      "cod",
+      "jazzcash",
+      "easypaisa",
+      "card"
+    ],
+    "bank_transfer_added": false,
+    "split_tender_added": false,
+    "provider_security_changed": false
+  },
+  "source_boundary": {
+    "pos_current_head": "6dc645f60dd9dfd7296a2a77640a6078f3274706",
+    "website_current_head": "5d7177d457a448c392b0cf3d8c244ee33a715220",
+    "working_trees": "PASS: both protected source working trees clean under read-only Git inspection",
+    "source_runtime_or_database_used": false,
+    "private_rows_imported": false
+  },
+  "schema": {
+    "mysql": "8.4.11",
+    "database": "mobisttech_test",
+    "port": 13306,
+    "timezone": "+00:00",
+    "strict": true,
+    "tables": 114,
+    "columns": 1416,
+    "foreign_keys": 215,
+    "indexes": 540,
+    "canonical_seed_rows": 302,
+    "business_rows": 0,
+    "sha256": "e4909c96ddc9ff12bf637adb4118f9ac803de19202fba3fc6cbc8dfb3198063f",
+    "rollback_sha256": "c26ea97aeeaf01b928040d06b0ad05fd2df72b6906dba358ccf305a90121bfee",
+    "rollback_reapply": "PASS: one-step rollback restored exact MT-2.11 schema and reapply restored identical MT-2.20 hash"
+  },
+  "acceptance": {
+    "focused_pos_payments": "PASS: 4 tests, 41 assertions",
+    "focused_plus_real_mysql_concurrency": "PASS: PosPaymentTest + InventoryConcurrencyTest 16 tests, 883 assertions",
+    "backend_full": "PASS: 161 tests, 5535 assertions",
+    "schema_verifier": "PASS: final, rollback and reapply normalized schema verification",
+    "php_format": "PASS: Pint test mode, 145 files",
+    "composer": "PASS: strict validation and platform requirements",
+    "laravel_runtime": "PASS: optimize and optimize:clear",
+    "backend_build": "PASS: TypeScript and Vite production build, 569 modules",
+    "website": "PASS: ESLint, route type generation, TypeScript and Next.js 16.3.3 production build",
+    "online_advisory_refresh": "NOT CLAIMED: dependency locks unchanged and no online registry audit required"
+  },
+  "verified_contracts": [
+    "tender allocations must equal authoritative Invoice payable and cannot override the sale total",
+    "cash change is derived separately so expected business cash equals the allocation, not gross customer cash tendered",
+    "destination configuration is outlet scoped and independently permissioned from using a configured destination",
+    "inactive, future, expired and wrong-outlet destinations are rejected",
+    "PAN/CVV/PIN-like references and unmasked financial identifiers are rejected",
+    "merchant fees and adjustments are settlement evidence and never reduce original Sale or customer tender",
+    "accepted POS returns retain original tender evidence; different refund destination/method requires explicit override/reason and configured approval",
+    "Website remains fixed to COD, JazzCash, Easypaisa and Card with no Bank Transfer or split tender",
+    "same-key concurrent POS replay commits once semantically; different-key contention for last stock permits exactly one sale"
+  ],
+  "roadmap_document": {
+    "markdown_version": "1.10",
+    "source_of_truth_version": "1.10",
+    "change": "UNCHANGED: MT-2.20 is routine implementation progress; structural roadmap/DOCX were not regenerated",
+    "markdown_sha256": "2c2cecbbc4479c40d852e83ee0b41f8676d2ecf7125118664983d1b7ca4a7ab1",
+    "docx_sha256": "2164e6f71ff29776346af12f8662118e3b0dfb00b0b403eac2d17a831d55592f"
+  },
+  "artifact_sha256": {
+    "backend/app/Payments/PosPaymentOperations.php": "aedb33023c08465b4aa67394a7490d64636b6b97a1a0075cafda3207c0df595e",
+    "backend/database/migrations/2026_09_02_130000_add_pos_payment_services.php": "00bd15dd53fc9956ee3ef1790c873b4d1286a7c0a858d30be2a837ab57c7a751",
+    "backend/tests/Feature/PosPaymentTest.php": "cc0c469f7b816f41a48cbbda8e9a180fdc0e6d2e276b19ca4309e39dfaa8b5fd",
+    "backend/tests/Feature/InventoryConcurrencyTest.php": "b63d43828b9a57ff66a10a20ba2bb838adb8a5de7661f5ad0321fd593b360d93",
+    "backend/tests/Support/stock_worker.php": "3c900871b52bffafea74e6473f1e516174a475e81b4523e05c5328f3c99b1c81",
+    "backend/app/Addendum/Permissions.php": "06ac6f417b1d6cc3785b3e91bbeb9ee15ba39cb602eb760ee76cb0ef170ce5ca",
+    "backend/app/Addendum/ResetRetention.php": "2c207f44c48dd17b4dd6c776c67543d00501e4a9626d7a8094eab67a108bcdbe",
+    "tools/migration/verify_mysql_schema.php": "1dcc6cf77afcec8e831fd41fffe1264e8a6cb996cd079611f613c16f7c135af5",
+    "docs/payments/README.md": "533b399bfd87aa509d7fe6cb789f7a98fd5b9a7fba4114e7ee51ddef8d902624"
+  },
+  "authority_sha256": {
+    "docs/PROJECT_GOAL.md": "7bce00947418d18151756ea7176b51546b0cbc8ae00c02fda3c1bf7c1344908f",
+    "docs/PROJECT_PREFERENCES.md": "e37c3c2fd6a30ba7211ce73854c79501181b327a98ce7acafa5938ee9941d402",
+    "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md": "ec0947bac17002e6d003da31d53b2454d4cfb42be4c321b3b3097775613cccf5",
+    "docs/PROJECT_SOURCE_OF_TRUTH.md": "d67d41d39c5c894ee19784d1503cea54b1de67ced8f9c7920569d73351f19e76",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.md": "2c2cecbbc4479c40d852e83ee0b41f8676d2ecf7125118664983d1b7ca4a7ab1",
+    "docs/PROJECT_IMPLEMENTATION_ROADMAP.docx": "2164e6f71ff29776346af12f8662118e3b0dfb00b0b403eac2d17a831d55592f",
+    "docs/PROJECT_REQUIREMENTS_DOCUMENTS_PAYMENTS_LEGAL_MANUAL_v1.0.md": "b682fed17cf6d955c2df0cac8eb081b0b641602e2b7391f3137c2e979e69b1a1"
+  },
+  "next": "MT-2.12 - Cash sessions and operational expense services"
+}

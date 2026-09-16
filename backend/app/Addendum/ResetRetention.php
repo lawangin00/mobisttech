@@ -14,13 +14,13 @@ final class ResetRetention
 
     public const GROUPS = [
         'transactional' => ['claim_events', 'claims', 'invoices', 'sales', 'reservation_allocations', 'reservation_lines', 'reservations', 'order_items', 'orders', 'payments',
-            'product_reviews', 'project_quotes', 'service_requests', 'payment_receipts', 'returns', 'return_lines', 'refunds', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones'],
+            'product_reviews', 'project_quotes', 'service_requests', 'payment_receipts', 'returns', 'return_lines', 'refunds', 'pos_tender_allocations', 'pos_settlement_events', 'pos_refund_allocations', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones'],
         'inventory' => ['products', 'stock_units', 'stock_movements', 'stock_acquisitions', 'product_imeis', 'active_imeis', 'product_listings', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references',
             'suppliers', 'supplier_contacts', 'purchase_orders', 'purchase_order_lines', 'purchase_order_receipts', 'purchase_order_receipt_lines', 'purchase_order_events', 'reorder_policies', 'stocktake_sessions', 'stocktake_lines', 'stocktake_unit_baselines', 'stocktake_counts', 'stocktake_recounts', 'stocktake_approvals',
             'stock_transfers', 'stock_transfer_lines', 'stock_transfer_units', 'stock_transfer_receipts', 'stock_transfer_receipt_lines'],
         'business_content' => ['digital_services', 'site_managed_pages', 'site_navigation_items', 'site_media_assets', 'site_media_usages', 'customers', 'customer_source_links'],
         'configuration' => ['pos_configuration_revisions', 'site_configuration_revisions', 'pos_master_data_options', 'pos_master_data_usages', 'pos_media_assets', 'pos_media_usages',
-            'pos_settings', 'site_settings', 'site_secret_settings', 'website_operating_profiles', 'business_profiles', 'integration_connections'],
+            'pos_settings', 'site_settings', 'site_secret_settings', 'website_operating_profiles', 'business_profiles', 'integration_connections', 'pos_payment_destinations'],
         'bootstrap' => ['admins', 'outlets', 'outlet_admins', 'permission_definitions', 'roles', 'role_permissions', 'admin_roles'],
         'mixed_identity' => ['users'],
         'preserved_evidence' => ['super_admins', 'backup_records', 'pos_audit_logs', 'admin_audit_logs', 'identity_audit_events', 'team_member_audit_events', 'admin_identity_mappings', 'integration_events', 'migration_runs', 'migration_identity_map', 'migration_quarantine', 'migration_reconciliation', 'migration_source_history', 'legacy_integration_requests', 'legacy_integration_events'],

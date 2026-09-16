@@ -9,6 +9,7 @@ use App\Inventory\StocktakeOperations;
 use App\Inventory\StockTransferOperations;
 use App\Models\Outlet;
 use App\Models\StockUnit;
+use App\Payments\PosPaymentOperations;
 use App\Procurement\SupplierProcurement;
 use App\Sales\SalesOperations;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,7 @@ class InventoryConcurrencyTest extends TestCase
     use InventoryFixture;
 
     // These tests deliberately commit fixtures so independent MySQL connections can see them.
-    private array $tables = ['identity_audit_events', 'stock_transfer_receipt_lines', 'stock_transfer_receipts', 'stock_transfer_units', 'stock_transfer_lines', 'stock_transfers', 'stocktake_approvals', 'stocktake_recounts', 'stocktake_counts', 'stocktake_unit_baselines', 'stocktake_lines', 'stocktake_sessions', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
+    private array $tables = ['pos_refund_allocations', 'pos_settlement_events', 'pos_tender_allocations', 'pos_payment_destinations', 'identity_audit_events', 'stock_transfer_receipt_lines', 'stock_transfer_receipts', 'stock_transfer_units', 'stock_transfer_lines', 'stock_transfers', 'stocktake_approvals', 'stocktake_recounts', 'stocktake_counts', 'stocktake_unit_baselines', 'stocktake_lines', 'stocktake_sessions', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
         'purchase_order_lines', 'purchase_orders', 'supplier_contacts', 'reorder_policies', 'suppliers', 'domain_events', 'publication_versions', 'idempotency_requests', 'claim_events', 'claims', 'return_lines', 'returns', 'monetary_adjustments',
         'inventory_custody_holds', 'stock_unit_lineage', 'reservation_allocations', 'reservation_lines', 'reservations', 'product_imeis', 'active_imeis', 'stock_movements', 'stock_units',
         'stock_acquisitions', 'sales', 'invoices', 'order_items', 'orders', 'customers', 'document_sequences', 'pos_master_data_usages', 'products',
@@ -249,6 +250,51 @@ class InventoryConcurrencyTest extends TestCase
         $this->assertSame(1, $target->fresh()->qty);
         $this->assertSame(0, DB::table('inventory_custody_holds')->whereNull('released_at')->count());
         $this->assertSame(2, DB::table('stock_movements')->whereIn('type', ['transfer_out', 'transfer_in'])->count());
+    }
+
+    public function test_separate_mysql_connections_replay_same_pos_split_tender_once(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $service = app(PosPaymentOperations::class);
+        $cash = $service->createDestination($this->actor, $this->outlet, (string) Str::uuid(), [
+            'method' => 'cash', 'display_name' => 'Race Cash Drawer',
+        ]);
+        $card = $service->createDestination($this->actor, $this->outlet, (string) Str::uuid(), [
+            'method' => 'card', 'display_name' => 'Race Card Terminal', 'masked_identifier' => 'TERM-01',
+        ]);
+        $key = 'mt220-race-'.Str::uuid();
+        $input = ['sale' => ['discount' => '0.00', 'lines' => [['product_id' => $product->public_id, 'quantity' => 1]]], 'payments' => [
+            ['method' => 'cash', 'destination_id' => $cash['destination_id'], 'amount' => '50.02', 'cash_tendered' => '60.02'],
+            ['method' => 'card', 'destination_id' => $card['destination_id'], 'amount' => '150.00', 'transaction_reference' => 'APP-RACE-1'],
+        ]];
+        $request = ['operation' => 'pos_payment_sale', 'actor' => $this->actor->id, 'outlet' => $this->outlet->id, 'key' => $key, 'input' => $input];
+        $results = $this->race([$product->id], [$request, $request]);
+        $this->assertSame(['committed', 'committed'], array_column($results, 'outcome'));
+        $this->assertSame($results[0]['result']['invoice_id'], $results[1]['result']['invoice_id']);
+        $this->assertSame(1, DB::table('invoices')->count());
+        $this->assertSame(1, DB::table('sales')->count());
+        $this->assertSame(2, DB::table('pos_tender_allocations')->count());
+        $this->assertSame(1, $product->fresh()->sold_qty);
+    }
+
+    public function test_separate_mysql_connections_allow_only_one_different_key_pos_sale_for_last_stock(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $service = app(PosPaymentOperations::class);
+        $cash = $service->createDestination($this->actor, $this->outlet, (string) Str::uuid(), [
+            'method' => 'cash', 'display_name' => 'Last Stock Cash Drawer',
+        ]);
+        $input = ['sale' => ['discount' => '0.00', 'lines' => [['product_id' => $product->public_id, 'quantity' => 1]]],
+            'payments' => [['method' => 'cash', 'destination_id' => $cash['destination_id'], 'amount' => '200.02', 'cash_tendered' => '200.02']]];
+        $base = ['operation' => 'pos_payment_sale', 'actor' => $this->actor->id, 'outlet' => $this->outlet->id, 'input' => $input];
+        $results = $this->race([$product->id], [[...$base, 'key' => (string) Str::uuid()], [...$base, 'key' => (string) Str::uuid()]]);
+        $this->oneWinner($results);
+        $this->assertSame(1, DB::table('invoices')->count());
+        $this->assertSame(1, DB::table('sales')->count());
+        $this->assertSame(1, DB::table('pos_tender_allocations')->count());
+        $this->assertSame(1, $product->fresh()->sold_qty);
     }
 
     private function submittedStocktake($product): array

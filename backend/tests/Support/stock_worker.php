@@ -6,6 +6,7 @@ use App\Inventory\StockTransferOperations;
 use App\Inventory\TransactionalStock;
 use App\Models\Admin;
 use App\Models\Outlet;
+use App\Payments\PosPaymentOperations;
 use App\Procurement\SupplierProcurement;
 use App\Sales\SalesOperations;
 use App\Warranty\ClaimOperations;
@@ -48,6 +49,8 @@ try {
                 $input['stocktake'], $input['key'], $input['input']),
             'transfer_receive' => app(StockTransferOperations::class)->receive(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
                 $input['transfer'], $input['key'], $input['input']),
+            'pos_payment_sale' => app(PosPaymentOperations::class)->sell(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
+                $input['key'], $input['input']),
             default => throw new LogicException('Unknown synthetic operation.'),
         };
     }, 3);

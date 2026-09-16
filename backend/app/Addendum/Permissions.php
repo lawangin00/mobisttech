@@ -11,7 +11,9 @@ final class Permissions
         'shop.cash.approve' => 'Approve cash variances and expenses', 'shop.trade-in' => 'Manage trade-in intake',
         'shop.labels' => 'Print retail labels', 'shop.bulk-data' => 'Preview and execute approved bulk operations',
         'shop.repairs' => 'Manage paid repair jobs', 'config.promotions.manage' => 'Manage promotions',
-        'config.loyalty.manage' => 'Manage loyalty configuration',
+        'config.loyalty.manage' => 'Manage loyalty configuration', 'config.payments.manage' => 'Manage POS payment destinations',
+        'shop.payments.reconcile' => 'Reconcile POS payment settlements', 'shop.payments.refund-override' => 'Override POS refund destination or method',
+        'shop.payments.refund-approve' => 'Approve POS refund overrides',
         'system.reset.preview' => 'Preview a reset', 'system.reset.transactional' => 'Execute transactional reset',
         'system.reset.business' => 'Execute business reset', 'system.reset.factory' => 'Execute factory reset',
     ];
