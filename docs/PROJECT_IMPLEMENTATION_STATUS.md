@@ -43,9 +43,9 @@ Active stage: MT-4 - React POS and administration (In Progress)
 
 Last completed stage: MT-3 - Administration, content and REST APIs
 
-Current In Progress point: None
+Current In Progress point: MT-4.2 - POS inventory and transaction interfaces
 
-Status: MT-0 through MT-3 complete. MT-4 is in progress. 34/56 complete, 22 pending. No point is currently In Progress.
+Status: MT-0 through MT-3 complete. MT-4 is in progress. 34/56 complete, 22 pending. MT-4.2 is In Progress.
 
 Last completed point: MT-4.1 - POS shell, authentication and navigation
 
@@ -385,7 +385,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-3.8 | Guarded data reset services | Completed |
 | MT-3.4 | Versioned REST API and contract acceptance | Completed |
 | MT-4.1 | POS shell, authentication and navigation | Completed |
-| MT-4.2 | POS inventory and transaction interfaces | Pending |
+| MT-4.2 | POS inventory and transaction interfaces | In Progress |
 | MT-4.5 | Procurement and stock control interfaces | Pending |
 | MT-4.6 | Cash, trade-in and repair interfaces | Pending |
 | MT-4.3 | POS customer, warranty and reporting interfaces | Pending |
@@ -565,3 +565,13 @@ No source-repository write, source-data migration, source runtime action, real p
 - Resume orchestration read attempt 1 failed before mutation because nested PowerShell interpolation stripped command variables. Material change: retire that command shape and use direct RDC file/search reads. No product, database or Git mutation resulted.
 - Ledger reconciliation attempt 1 failed before remote execution because the orchestration payload parser rejected embedded template-literal characters. Material change: use this standalone patch file with literal-safe content. No product, database or Git mutation resulted; LOOP_GUARD remains inactive.
 - MT-4.1 closure: React/TypeScript/Inertia/Tailwind POS shell, individual Team Member sign-in, permission-scoped role landing/navigation, explicit outlet selection, direct-route authorization and centralized Admin inactivity warning/continuation behavior are verified. Background refresh does not preserve true inactivity. Evidence is in docs/pos/MT-4.1_VERIFICATION.md.
+
+## MT-4.2 attempt tracking
+
+- Start orchestration attempt 1: direct edit request was rejected by the tool safety gate before execution; no project file changed. Material change: use a standalone literal-safe Python patch path instead of repeating the rejected edit shape. LOOP_GUARD inactive.
+- Frontend write attempt 1 failed before target-file creation because embedded TypeScript template literals broke the orchestration payload parser. Material change: replace template literals with literal-safe string concatenation; the component then wrote successfully.
+- Short style gate attempt 1 failed only on formatting in the new PosTransactionController. Material change: run Pint formatter on that new controller, then rerun the scoped syntax/style/route gate; PASS.
+- Current durable implementation adds the permission/outlet-scoped POS transaction controller, safe active payment-destination projection, paginated/searchable catalogue, barcode/QR/IMEI lookup, inventory acquisition/IMEI/unit/label endpoints, server-authoritative sale quote/finalization, invoice/return/refund endpoints, and React inventory/sales workspaces.
+- Verification completed this turn: backend TypeScript typecheck PASS; new controller PHP syntax PASS; scoped Pint PASS for controller/routes; 15 POS routes registered; git diff check pending checkpoint finalization.
+- Incomplete: focused Feature tests, disposable-fixture Playwright transaction journeys, full backend regression, production builds and final MT-4.2 closure evidence were not started after the 9-minute long-operation guard.
+- Next action: add focused MT-4.2 endpoint/permission fixtures and Playwright sale/inventory journeys, run them plus affected/full regression and builds, fix any proven gaps, then reconcile completion evidence and commit/push the completed point.

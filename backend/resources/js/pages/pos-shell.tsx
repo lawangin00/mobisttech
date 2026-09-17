@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
+import PosTransactionWorkspace from '../components/pos-transaction-workspace';
 
 type NavigationItem = {
     key: string;
@@ -211,15 +212,12 @@ function Workspace({ shell, workspace }: {
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Authorized POS workspace</p>
         <h2 className="mt-3 text-3xl font-semibold tracking-tight">{workspace.label}</h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">{workspace.description}</p>
-        <div className="mt-6 rounded-2xl bg-slate-50 p-5">
-            <p className="font-medium">Shell boundary verified</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-                This route is protected server-side by the required permission and active outlet assignment.
-                Transaction forms intentionally remain outside MT-4.1 and arrive in their named interface points.
-            </p>
-            <p className="mt-3 text-xs text-slate-500">
-                Active outlet: {shell.active_outlet?.name ?? 'Not selected'}
-            </p>
-        </div>
+        {workspace.key === 'inventory' || workspace.key === 'sales'
+            ? <PosTransactionWorkspace area={workspace.key} />
+            : <div className="mt-6 rounded-2xl bg-slate-50 p-5">
+                <p className="font-medium">Shell boundary verified</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">This route is protected server-side by the required permission and active outlet assignment.</p>
+                <p className="mt-3 text-xs text-slate-500">Active outlet: {shell.active_outlet?.name ?? 'Not selected'}</p>
+            </div>}
     </section>;
 }

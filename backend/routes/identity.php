@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerApiController;
 use App\Http\Controllers\IdentityController;
 use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\PosShellController;
+use App\Http\Controllers\PosTransactionController;
 use App\Http\Controllers\TeamMemberController;
 use Illuminate\Support\Facades\Route;
 
@@ -68,6 +69,18 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::get('/pos', [PosShellController::class, 'home'])->defaults('identity_realm', 'admin')->name('admin.pos.home');
     Route::get('/pos/workspace/{area}', [PosShellController::class, 'workspace'])->whereIn('area', ['sales', 'inventory', 'invoices', 'warranty', 'claims', 'reports'])
         ->defaults('identity_realm', 'admin')->name('admin.pos.workspace');
+    Route::get('/pos/catalogue', [PosTransactionController::class, 'catalogue'])->defaults('identity_realm', 'admin')->name('admin.pos.catalogue');
+    Route::get('/pos/lookup', [PosTransactionController::class, 'lookup'])->defaults('identity_realm', 'admin')->name('admin.pos.lookup');
+    Route::post('/pos/inventory/products', [PosTransactionController::class, 'saveProduct'])->defaults('identity_realm', 'admin')->name('admin.pos.products.save');
+    Route::post('/pos/inventory/products/{product}/acquire', [PosTransactionController::class, 'acquire'])->defaults('identity_realm', 'admin')->name('admin.pos.inventory.acquire');
+    Route::post('/pos/inventory/products/{product}/imeis', [PosTransactionController::class, 'imeis'])->defaults('identity_realm', 'admin')->name('admin.pos.inventory.imeis');
+    Route::patch('/pos/inventory/units/{unit}', [PosTransactionController::class, 'unitAttributes'])->defaults('identity_realm', 'admin')->name('admin.pos.inventory.units');
+    Route::post('/pos/sales/quote', [PosTransactionController::class, 'quote'])->defaults('identity_realm', 'admin')->name('admin.pos.sales.quote');
+    Route::post('/pos/sales', [PosTransactionController::class, 'sell'])->defaults('identity_realm', 'admin')->name('admin.pos.sales.store');
+    Route::get('/pos/invoices/{invoice}', [PosTransactionController::class, 'invoice'])->defaults('identity_realm', 'admin')->name('admin.pos.invoices.show');
+    Route::post('/pos/returns', [PosTransactionController::class, 'acceptReturn'])->defaults('identity_realm', 'admin')->name('admin.pos.returns.store');
+    Route::post('/pos/refunds', [PosTransactionController::class, 'refund'])->defaults('identity_realm', 'admin')->name('admin.pos.refunds.store');
+    Route::get('/pos/labels/{kind}/{id}', [PosTransactionController::class, 'label'])->defaults('identity_realm', 'admin')->name('admin.pos.labels.show');
     Route::get('/team-members', [TeamMemberController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.team-members.index');
     Route::get('/roles', [TeamMemberController::class, 'roles'])->defaults('identity_realm', 'admin')->name('admin.roles.index');
     Route::post('/team-members', [TeamMemberController::class, 'store'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.team-members.store');
