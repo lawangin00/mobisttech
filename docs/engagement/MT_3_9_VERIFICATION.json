@@ -1,0 +1,54 @@
+{
+  "point": "MT-3.9",
+  "title": "Customer engagement and notification services",
+  "result": "PASS",
+  "schema": {
+    "mode": "engagement",
+    "tables": 166,
+    "columns": 2048,
+    "foreign_keys": 358,
+    "indexes": 794,
+    "sha256": "9f489e4c879b8b15dd4c232d02b25c2ab6df7f6ac0a39290b1f89d52b654e339",
+    "business_rows": 0
+  },
+  "rollback_checkpoint": {
+    "mode": "projects",
+    "tables": 161,
+    "columns": 1992,
+    "foreign_keys": 351,
+    "indexes": 776,
+    "sha256": "e1bc76ea5765fe792940827e2784e3827e745c4bb82517b88e9515c7a12317aa"
+  },
+  "tests": {
+    "focused": {"tests": 4, "assertions": 37, "result": "PASS"},
+    "affected": {"tests": 69, "assertions": 4164, "result": "PASS"},
+    "full_backend": {"tests": 210, "assertions": 6698, "result": "PASS"}
+  },
+  "quality_gates": {
+    "pint_files": 183,
+    "composer_validate_strict": "PASS",
+    "composer_platform_requirements": "PASS",
+    "optimize_clear": "PASS",
+    "backend_typecheck_vite_build": "PASS",
+    "website_lint_typecheck_next_build": "PASS"
+  },
+  "delivery": {
+    "external_delivery_default": false,
+    "safe_fake_only": true,
+    "real_external_messages_sent": 0,
+    "dedupe": "event-key plus canonical payload hash",
+    "rate_limit": "per-customer hourly database bucket"
+  },
+  "test_isolation": {
+    "result": "PASS",
+    "change": "Testing cache is flushed at each test boundary to prevent named rate-limiter state leaking between tests.",
+    "production_behavior_changed": false
+  },
+  "boundaries": {
+    "public_rest_endpoint_added": false,
+    "ui_added": false,
+    "background_scheduler_added": false,
+    "production_provider_activated": false,
+    "private_customer_data_migrated": false
+  }
+}
