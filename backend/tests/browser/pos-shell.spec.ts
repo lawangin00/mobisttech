@@ -28,7 +28,7 @@ test('desktop salesperson sees only authorized POS navigation and direct routes 
     const allowed = await page.goto('/internal/admin/pos/workspace/sales');
     expect(allowed?.status()).toBe(200);
     await expect(page.getByTestId('workspace-sales')).toBeVisible();
-    await expect(page.getByText('Shell boundary verified')).toBeVisible();
+    await expect(page.getByTestId('server-totals')).toBeVisible();
 
     await page.goto('/internal/admin/pos');
     await page.getByTestId('logout').click();
@@ -58,5 +58,6 @@ test('mobile inventory manager selects outlet and receives responsive permission
     const allowed = await page.goto('/internal/admin/pos/workspace/inventory');
     expect(allowed?.status()).toBe(200);
     await expect(page.getByTestId('workspace-inventory')).toBeVisible();
-    await expect(page.getByText('Active outlet: E2E Inventory Outlet')).toBeVisible();
+    await expect(page.getByTestId('acquire-submit')).toBeVisible();
+    await expect(page.getByTestId('outlet-select').locator('option:checked')).toHaveText('E2E Inventory Outlet');
 });

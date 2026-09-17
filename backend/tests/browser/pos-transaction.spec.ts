@@ -99,8 +99,12 @@ test('sales UI completes split tender then exposes accepted-return refund contro
     await returnPanel.locator('select').first().selectOption(saleId);
     await returnPanel.getByRole('button', { name: 'Accept return' }).click();
     await expect(returnPanel).toContainText('Refund due: PKR 200.02');
-    await expect(returnPanel.getByText('E2E Cash Drawer · PKR 50.02')).toBeVisible();
-    await expect(returnPanel.getByText('E2E Card Terminal · PKR 150.00')).toBeVisible();
+    const originalTenderSelect = returnPanel.locator('select').nth(1);
+    await expect(originalTenderSelect.locator('option')).toHaveText([
+        'Original tender',
+        'E2E Cash Drawer · PKR 50.02',
+        'E2E Card Terminal · PKR 150.00',
+    ]);
     await returnPanel.getByPlaceholder('Refund amount').fill('50.02');
     await returnPanel.getByRole('button', { name: 'Record refund' }).click();
     await expect(page.getByTestId('refund-result')).toContainText('PKR 50.02 via cash');
