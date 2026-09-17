@@ -1,0 +1,48 @@
+{
+  "point": "MT-2.13",
+  "result": "PASS",
+  "date": "2026-09-17",
+  "schema": {
+    "tables": 119,
+    "columns": 1498,
+    "foreign_keys": 235,
+    "indexes": 576,
+    "sha256": "2053c9a0e7ddaaf26f0dd8b91bb70e03b25deda8b6d3e30e09226e566369c0b0"
+  },
+  "rollback": {
+    "restored_point": "MT-2.12",
+    "sha256": "47692f4c7a369c729c24da8fddffdc28d696592122a76fc8019fe6e15a125cee",
+    "reapply_same": true
+  },
+  "tests": {
+    "focused": "4 passed / 31 assertions",
+    "full_backend": "171 passed / 5765 assertions"
+  },
+  "gates": {
+    "pint": "PASS / 151 files",
+    "composer_validate": "PASS",
+    "composer_platform": "PASS",
+    "optimize_clear": "PASS",
+    "backend_typecheck_vite": "PASS",
+    "website_lint": "PASS",
+    "website_typecheck": "PASS",
+    "website_next_16_3_3_build": "PASS"
+  },
+  "protected_sources": {
+    "pos": {
+      "head": "6dc645f60dd9dfd7296a2a77640a6078f3274706",
+      "clean": true
+    },
+    "website": {
+      "head": "5d7177d457a448c392b0cf3d8c244ee33a715220",
+      "clean": true
+    }
+  },
+  "boundaries": [
+    "no protected-source writes",
+    "no real provider activation",
+    "no private business-data migration",
+    "no external messages",
+    "no deployment or production mutation"
+  ]
+}
