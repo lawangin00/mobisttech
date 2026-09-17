@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import PosStockControlWorkspace from './pos-stock-control-workspace';
 
 type Unit = { id: string; code: string; status: string; version: number; imeis: string[] };
 type Product = { id: string; code: string; name: string; category?: string; model?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[] };
@@ -67,7 +68,7 @@ export default function PosTransactionWorkspace({ area }: { area: 'inventory' | 
             </div>
         </section>
         {area === 'inventory'
-            ? <Inventory catalogue={catalogue} busy={busy} run={run} reload={() => load(query, page)} />
+            ? <><Inventory catalogue={catalogue} busy={busy} run={run} reload={() => load(query, page)} /><PosStockControlWorkspace /></>
             : <Sales catalogue={catalogue} busy={busy} run={run} />}
     </div>;
 }

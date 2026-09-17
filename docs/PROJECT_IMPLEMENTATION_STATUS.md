@@ -43,9 +43,9 @@ Active stage: MT-4 - React POS and administration (In Progress)
 
 Last completed stage: MT-3 - Administration, content and REST APIs
 
-Current In Progress point: None
+Current In Progress point: MT-4.5 - Procurement and stock control interfaces
 
-Status: MT-0 through MT-3 complete. MT-4 is in progress. 35/56 complete, 21 pending. No point is currently In Progress.
+Status: MT-0 through MT-3 complete. MT-4 is in progress. 35/56 complete, 21 pending. MT-4.5 is In Progress.
 
 Last completed point: MT-4.2 - POS inventory and transaction interfaces
 
@@ -386,7 +386,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-3.4 | Versioned REST API and contract acceptance | Completed |
 | MT-4.1 | POS shell, authentication and navigation | Completed |
 | MT-4.2 | POS inventory and transaction interfaces | Completed |
-| MT-4.5 | Procurement and stock control interfaces | Pending |
+| MT-4.5 | Procurement and stock control interfaces | In Progress |
 | MT-4.6 | Cash, trade-in and repair interfaces | Pending |
 | MT-4.3 | POS customer, warranty and reporting interfaces | Pending |
 | MT-4.4 | Website CMS and platform administration interfaces | Pending |
@@ -591,3 +591,17 @@ No source-repository write, source-data migration, source runtime action, real p
 - Closure gates: focused MT-4.2 HTTP acceptance 2 tests / 50 assertions PASS; affected regression 29 tests / 322 assertions PASS; full backend regression 227 tests / 7064 assertions PASS; full Playwright 3/3 PASS; Composer strict/platform PASS; backend TypeScript/Vite production build PASS; Website lint/typecheck/Next production build PASS; scoped MT-4.2 PHP Pint PASS.
 - Full-repository Pint still reports only the already documented unrelated tests/Feature/IdentitySecurityTest.php line-ending baseline difference; no MT-4.2 changed PHP file fails Pint.
 - MT-4.2 closure: product/unit/IMEI definition and editing, acquisition and stock adjustment, paginated catalogue, scanner-friendly barcode/QR/IMEI lookup, permission-scoped retail labels, server-authoritative POS sale quote/finalization, Payment Method/Destination split tender, Cash tendered/change, Invoice Total/Payments/Remaining, accepted returns and original-tender-bound refunds are verified without exposing secret payment credentials or accepting prohibited card fields. Shared promotion/coupon and loyalty calculations remain server-owned through SalesOperations. Evidence is in docs/pos/MT-4.2_VERIFICATION.md. Next roadmap point by document order/dependency is MT-4.5 - Procurement and stock control interfaces.
+
+## MT-4.5 attempt tracking
+
+- Point started from clean synced commit f4abeeea2db3eb9416c1aa0c2305a8cd7febc50a. Existing verified backend procurement/stock-control services will remain authoritative; UI work must not duplicate validation or transaction rules. LOOP_GUARD inactive.
+- MT-4.5 implementation checkpoint adds a permission-aware Stock Control workspace inside Inventory plus 17 authenticated stock-control routes backed by SupplierProcurement, StocktakeOperations, StockTransferOperations and BulkDataOperations.
+- UI scope now includes supplier creation, purchase-order creation, partial receiving, reorder policy/version handling and low-stock recommendations; stocktake start/count/recount/approval; inter-outlet transfer create/dispatch/receive-reject controls; scanner-friendly unit inputs; and validated CSV bulk preview/import/export.
+- Reorder concurrency gap found during implementation: existing policy updates require the authoritative current version. Material change: project reorder policy version/threshold/target state in the controller and send that version from the UI instead of issuing versionless updates.
+- Focused HTTP acceptance attempt 1: procurement/reorder/stocktake/bulk passed, transfer fixture failed before transfer execution because synthetic outlet code E45 violated the immutable numeric 001-999 outlet-code contract. Material change: use valid synthetic code 045; rerun passed 2 tests / 44 assertions.
+- Affected regression passed 30 tests / 309 assertions across MT-4.5 HTTP interfaces, procurement, stocktake, transfers, bulk operations and POS shell.
+- Backend TypeScript typecheck PASS; new controller/routes PHP syntax PASS; scoped Pint PASS; 17 MT-4.5 routes registered.
+- Playwright attempt 1 timed out trying to click hidden mobile Menu at desktop width. Material change: use the visible desktop Inventory navigation link directly.
+- Playwright attempt 2 then timed out after the Inventory link click because navigation remained on /internal/admin/pos instead of reaching /internal/admin/pos/workspace/inventory. Failure screenshot/error-context/trace are retained under storage/framework/testing/playwright/pos-stock-control-stock-co-a5911--transfer-and-bulk-journeys. This distinct failure remains undiagnosed; LOOP_GUARD remains inactive.
+- Incomplete: diagnose the retained Playwright navigation failure, make one targeted fix, rerun the single MT-4.5 browser journey, then run full browser/full backend/build closure gates and reconcile MT-4.5 completion evidence.
+- Next action: inspect retained MT-4.5 Playwright error-context/trace for why Inventory navigation returns/stays on POS home -> targeted fix -> rerun pos-stock-control.spec.ts -> full browser/full backend/build gates -> completion evidence and final commit/push.
