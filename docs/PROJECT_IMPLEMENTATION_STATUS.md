@@ -45,13 +45,13 @@ Last completed stage: MT-2 - Shared backend and transactional migration
 
 Current In Progress point: None
 
-Status: MT-0, MT-1 and MT-2 complete. MT-3 is in progress. 24/56 complete, 32 pending. MT-2.16 is complete; MT-3.1 is pending.
+Status: MT-0, MT-1 and MT-2 complete. MT-3 is in progress. 25/56 complete, 31 pending. MT-3.1 is complete; MT-3.2 is pending.
 
-Last completed point: MT-2.16 - Paid repair job services
+Last completed point: MT-3.1 - Reports, documents and communication services
 
-Next pending point: MT-3.1 - Reports, documents and communication services
+Next pending point: MT-3.2 - Dynamic CMS, media and presentation services
 
-Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, unified Admin/customer authorization, Team Member Role/delegation authority, centralized Admin/Customer session policy, product/master-data, inventory/acquisition/stock transactions, internal POS sale/invoice/accepted-return authority, warranty/claim authority, supplier/purchase-order/partial-receipt authority, reorder recommendations, stocktake/cycle-count authority, inter-outlet transfer/custody authority, POS Payment Methods/Destinations and split-tender/refund/settlement authority, customer loyalty earn/redeem/history authority, paid repair intake/estimate/parts/payment/history authority, canonical business profile and secure Google integration/backup services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales/claim/procurement/stocktake mapping uses synthetic rows only. Transfer verification also uses synthetic target rows only. Real MySQL stock, return, claim, procurement, stocktake, transfer, POS payment, loyalty and paid-repair-part concurrency and the existing `mobisttech-drive:` temporary read/write/delete check are verified. Canonical Invoice/Warranty delivery, optional sale-email capture, final legal/policy content, the reusable Software Product Admin/CMS/publication model, licensing/notice review and the complete product user manual are approved future work at their named points. Actual private-data migration, authentic Gmail OAuth consent/test send, production Google verification, authentic provider payment/refund execution, reset/publication workflows, transfer HTTP/POS interfaces and complete POS/Website interfaces, rendered warranty documents, brand, Control and CI remain pending. Backend tests do not constitute live Gmail/provider, payment/refund, complete UI, rendered-document or private-data import acceptance.
+Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, unified Admin/customer authorization, Team Member Role/delegation authority, centralized Admin/Customer session policy, product/master-data, inventory/acquisition/stock transactions, internal POS sale/invoice/accepted-return authority, warranty/claim authority, supplier/purchase-order/partial-receipt authority, reorder recommendations, stocktake/cycle-count authority, inter-outlet transfer/custody authority, POS Payment Methods/Destinations and split-tender/refund/settlement authority, customer loyalty earn/redeem/history authority, paid repair intake/estimate/parts/payment/history authority, canonical business profile and secure Google integration/backup services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales/claim/procurement/stocktake mapping uses synthetic rows only. Transfer verification also uses synthetic target rows only. Real MySQL stock, return, claim, procurement, stocktake, transfer, POS payment, loyalty and paid-repair-part concurrency and the existing `mobisttech-drive:` temporary read/write/delete check are verified. Canonical Invoice/Warranty delivery, optional sale-email capture, six managed communication templates, truthful delivery audit, scoped operational reporting and retail-label backend projections now exist. Final legal/policy content, the reusable Software Product Admin/CMS/publication model, licensing/notice review and the complete product user manual remain approved future work at their named points. Actual private-data migration, authentic Gmail OAuth consent/test send, production Google verification, authentic provider payment/refund execution, reset/publication workflows, transfer HTTP/POS interfaces and complete POS/Website interfaces, rendered warranty documents, brand, Control and CI remain pending. Backend tests do not constitute live Gmail/provider, payment/refund, complete UI, rendered-document or private-data import acceptance.
 
 Approved addendum v1.1 expands required work without reinitialization. MT-2.8 implements its prerequisites only; mode publication/reset/retail/digital feature workflows remain pending at their named points.
 
@@ -375,7 +375,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-2.17 | Validated bulk data workflows | Completed |
 | MT-2.15 | Customer loyalty services | Completed |
 | MT-2.16 | Paid repair job services | Completed |
-| MT-3.1 | Reports, documents and communication services | Pending |
+| MT-3.1 | Reports, documents and communication services | Completed |
 | MT-3.2 | Dynamic CMS, media and presentation services | Pending |
 | MT-3.7 | Website operating mode publication | Pending |
 | MT-3.5 | Digital service catalogue and lead services | Pending |
@@ -469,3 +469,13 @@ No source-repository write, source-data migration, source runtime action, real p
 - LOOP_GUARD: final attempt-tracking reconciliation hit two equivalent exact-anchor mismatches; no product, database or Git mutation resulted. The replacement strategy is retired.
 - Material change: preserve the existing hygiene note as-is and append durable orchestration evidence instead of rewriting prior prose.
 - Commit/push orchestration attempt 1: the combined commit/push/equality command was blocked by the tool safety gate before execution; no Git action occurred. Commit, push and final verification are split into separate bounded commands.
+
+
+## MT-3.1 attempt tracking
+
+- Resume recovered the partial OperationalReports service without restarting completed renderer/schema work; the early extra-brace syntax defect was repaired before behavioral execution.
+- Schema verification was made checkpoint-aware for canonical document-template seed rows and the new document-send permission; exact MT-2.16 rollback and MT-3.1 reapply hashes passed.
+- Gmail filename validation was corrected after a focused fake-send failure exposed a malformed regular expression; finalized invoices remained unchanged on delivery failure.
+- Full regression initially exposed only the new nullable invoice email snapshot as a future schema addition; the frozen MT-2.1 manifest remained unchanged and SharedSchemaTest was made checkpoint-aware.
+- Completion verification passed 5 focused MT-3.1 tests / 46 assertions, 193 backend tests / 6490 assertions, Pint 167 files, Composer strict/platform gates, backend production build and Website lint/typecheck/Next build. Evidence is in docs/documents/.
+- MT-3.1 closure: canonical Invoice/Warranty rendering/delivery, managed communication templates, truthful idempotent delivery audit, scoped operational reporting and authorized retail-label projections are complete. Next roadmap point is MT-3.2 - Dynamic CMS, media and presentation services.

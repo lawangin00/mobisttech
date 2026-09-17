@@ -33,10 +33,10 @@ final class SalesOperations
 
     public function sell(IdentityAccount $actor, Outlet $outlet, string $key, array $input): array
     {
-        $this->fields($input, ['customer_id', 'new_customer', 'customer_name', 'customer_phone', 'customer_cnic', 'customer_info', 'discount', 'discount_reason', 'promotion_codes', 'loyalty_points', 'lines']);
+        $this->fields($input, ['customer_id', 'new_customer', 'customer_name', 'customer_phone', 'customer_email', 'customer_cnic', 'customer_info', 'discount', 'discount_reason', 'promotion_codes', 'loyalty_points', 'lines']);
         $data = Validator::make($input, [
             'customer_id' => 'nullable|uuid', 'new_customer' => 'sometimes|boolean', 'customer_name' => 'nullable|string|max:255',
-            'customer_phone' => 'nullable|string|max:40', 'customer_cnic' => ['nullable', 'regex:/\A\d{5}-\d{7}-\d\z/'],
+            'customer_phone' => 'nullable|string|max:40', 'customer_email' => 'nullable|email:rfc|max:255', 'customer_cnic' => ['nullable', 'regex:/\A\d{5}-\d{7}-\d\z/'],
             'customer_info' => 'nullable|string|max:2000', 'discount' => 'required', 'discount_reason' => 'nullable|string|max:500',
             'promotion_codes' => 'sometimes|array|max:10', 'promotion_codes.*' => 'string|max:80',
             'loyalty_points' => 'sometimes|integer|min:0|max:1000000000',
@@ -88,7 +88,7 @@ final class SalesOperations
             $invoiceId = DB::table('invoices')->insertGetId([
                 'outlet_id' => $outlet->id, 'total_bill' => $gross, 'discount' => $effectiveDiscount, 'final_bill' => bcsub($gross, $effectiveDiscount, 2),
                 'customer_id' => $customer?->id, 'customer_name' => $customer?->display_name ?? trim((string) ($data['customer_name'] ?? '')) ?: null,
-                'customer_phone' => $customer?->mobile ?? ($data['customer_phone'] ?? null), 'customer_cnic' => $data['customer_cnic'] ?? null,
+                'customer_phone' => $customer?->mobile ?? ($data['customer_phone'] ?? null), 'customer_email' => isset($customer?->email) ? mb_strtolower($customer->email) : (isset($data['customer_email']) ? mb_strtolower(trim($data['customer_email'])) : null), 'customer_cnic' => $data['customer_cnic'] ?? null,
                 'customer_info' => $data['customer_info'] ?? null, 'salesperson_admin_id' => $actor->id,
                 'salesperson_name' => $actor->name, 'business_snapshot' => json_encode(['contract' => 'canonical-business-at-sale.v2', ...app(BusinessProfile::class)->current(), 'outlet_id' => $outlet->public_id,
                     'outlet_code' => $outlet->outlet_code, 'outlet_name' => $outlet->name,
@@ -157,7 +157,7 @@ final class SalesOperations
         $invoiceId = DB::table('invoices')->insertGetId([
             'outlet_id' => $outlet->id, 'order_id' => $order->id, 'total_bill' => $order->subtotal, 'discount' => bcsub($order->subtotal, $order->total, 2),
             'final_bill' => $order->total, 'customer_id' => $order->customer_id, 'customer_name' => $order->customer_name,
-            'customer_phone' => $order->customer_mobile, 'customer_info' => $order->delivery_address,
+            'customer_phone' => $order->customer_mobile, 'customer_email' => $order->customer_email ? mb_strtolower($order->customer_email) : null, 'customer_info' => $order->delivery_address,
             'business_snapshot' => json_encode(['contract' => 'canonical-business-at-sale.v2', ...app(BusinessProfile::class)->current(),
                 'outlet_id' => $outlet->public_id, 'outlet_code' => $outlet->outlet_code, 'outlet_name' => $outlet->name,
                 'business_legal_name' => $outlet->business_legal_name, 'business_phone' => $outlet->business_phone,
@@ -296,7 +296,7 @@ final class SalesOperations
         if (trim((string) ($data['customer_name'] ?? '')) === '') {
             throw ValidationException::withMessages(['customer_name' => 'A new operational customer requires a name.']);
         }
-        $id = DB::table('customers')->insertGetId(['display_name' => trim($data['customer_name']), 'mobile' => $data['customer_phone'] ?? null,
+        $id = DB::table('customers')->insertGetId(['display_name' => trim($data['customer_name']), 'email' => isset($data['customer_email']) ? mb_strtolower(trim($data['customer_email'])) : null, 'mobile' => $data['customer_phone'] ?? null,
             'public_id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now()]);
 
         return DB::table('customers')->where('id', $id)->firstOrFail();

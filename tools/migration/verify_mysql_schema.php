@@ -1,39 +1,48 @@
 <?php
 
+use App\Models\Admin;
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
 // Inspect only the disposable target test schema. No DDL, row data or credentials are emitted.
 $root = dirname(__DIR__, 2);
 require $root.'/backend/vendor/autoload.php';
 $app = require $root.'/backend/bootstrap/app.php';
 $app->loadEnvironmentFrom('.env.testing');
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 set_exception_handler(function (Throwable $error): void {
     fwrite(STDERR, 'FAIL: '.$error->getMessage().PHP_EOL);
     exit(1);
 });
-$db = Illuminate\Support\Facades\DB::selectOne('SELECT DATABASE() AS db, @@port AS port, @@session.time_zone AS timezone, @@session.sql_mode AS sql_mode, VERSION() AS version');
+$db = DB::selectOne('SELECT DATABASE() AS db, @@port AS port, @@session.time_zone AS timezone, @@session.sql_mode AS sql_mode, VERSION() AS version');
 if ($db->db !== 'mobisttech_test' || (int) $db->port !== 13306 || ! $app->environment('testing')) {
     throw new RuntimeException('Exact disposable target test schema required.');
 }
 $mode = $argv[1] ?? '';
-if (! in_array($mode, ['repair', 'loyalty', 'promotion', 'trade-in', 'cash', 'payments', 'transfer', 'stocktake', 'procurement', 'team-members', 'orders', 'admin-google', 'warranty', 'sales', 'addendum', 'identity', 'shared', 'runtime'], true)) {
-    throw new RuntimeException('Expected repair, loyalty, promotion, trade-in, cash, payments, transfer, stocktake, procurement, team-members, orders, admin-google, warranty, sales, addendum, identity, shared or runtime verification mode.');
+if (! in_array($mode, ['documents', 'repair', 'loyalty', 'promotion', 'trade-in', 'cash', 'payments', 'transfer', 'stocktake', 'procurement', 'team-members', 'orders', 'admin-google', 'warranty', 'sales', 'addendum', 'identity', 'shared', 'runtime'], true)) {
+    throw new RuntimeException('Expected documents, repair, loyalty, promotion, trade-in, cash, payments, transfer, stocktake, procurement, team-members, orders, admin-google, warranty, sales, addendum, identity, shared or runtime verification mode.');
 }
 $paymentPermissions = ['config.payments.manage', 'shop.payments.reconcile', 'shop.payments.refund-override', 'shop.payments.refund-approve'];
-$checkpointPermissions = array_keys(App\Models\Admin::PERMISSIONS);
-if (! in_array($mode, ['payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+$checkpointPermissions = array_keys(Admin::PERMISSIONS);
+$documentPermissions = ['shop.documents.send'];
+if (! in_array($mode, ['payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $checkpointPermissions = array_values(array_diff($checkpointPermissions, $paymentPermissions));
 }
-$schema = Illuminate\Support\Facades\Schema::getFacadeRoot();
+if ($mode !== 'documents') {
+    $checkpointPermissions = array_values(array_diff($checkpointPermissions, $documentPermissions));
+}
+$schema = Schema::getFacadeRoot();
 $spec = json_decode(file_get_contents($root.'/docs/schema/TARGET_SCHEMA.json'), true, flags: JSON_THROW_ON_ERROR);
 $runtime = ['cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'sessions', 'migrations'];
 $expected = $mode !== 'runtime' ? array_merge($runtime, array_keys($spec['tables'])) : $runtime;
-if (in_array($mode, ['identity', 'addendum', 'sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['identity', 'addendum', 'sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['admin_password_reset_tokens', 'super_admin_password_reset_tokens', 'site_admin_password_reset_tokens', 'identity_audit_events']);
 }
-if (in_array($mode, ['addendum', 'sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['addendum', 'sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['website_operating_profiles', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones']);
 }
-if (in_array($mode, ['sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     foreach (['public_id', 'version', 'returned_quantity'] as $column) {
         if (! $schema->hasColumn('sales', $column)) {
             throw new RuntimeException('Missing sales integrity column: '.$column);
@@ -45,7 +54,7 @@ if (in_array($mode, ['sales', 'warranty', 'admin-google', 'orders', 'team-member
         }
     }
 }
-if (in_array($mode, ['warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected[] = 'claim_events';
     foreach (['warranty_snapshot', 'warranty_expires_at', 'active_stock_unit_id'] as $column) {
         if (! $schema->hasColumn('claims', $column)) {
@@ -53,7 +62,7 @@ if (in_array($mode, ['warranty', 'admin-google', 'orders', 'team-members', 'proc
         }
     }
 }
-if (in_array($mode, ['admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['business_profiles', 'admin_identity_mappings', 'integration_connections', 'integration_oauth_states', 'integration_events']);
     foreach (['provider', 'status', 'encrypted_credentials', 'authorized_by_admin_id', 'last_success_at'] as $column) {
         if (! $schema->hasColumn('integration_connections', $column)) {
@@ -64,7 +73,7 @@ if (in_array($mode, ['admin-google', 'orders', 'team-members', 'procurement', 's
         throw new RuntimeException('Missing Google Drive backup integration reference.');
     }
 }
-if (in_array($mode, ['orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     foreach (['owner_scope_hash'] as $column) {
         if (! $schema->hasColumn('orders', $column)) {
             throw new RuntimeException('Missing order ownership column: '.$column);
@@ -79,7 +88,7 @@ if (in_array($mode, ['orders', 'team-members', 'procurement', 'stocktake', 'tran
         throw new RuntimeException('Missing receipt or milestone payment linkage.');
     }
 }
-if (in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['permission_definitions', 'roles', 'role_permissions', 'admin_roles', 'team_member_audit_events']);
     foreach (['job_title', 'auth_version'] as $column) {
         if (! $schema->hasColumn('admins', $column)) {
@@ -92,18 +101,18 @@ if (in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'pa
     }
     $expectedRoles = ['Full Access', 'Manager', 'Store Manager', 'Sales Associate', 'Cashier', 'Inventory Manager',
         'Service & Warranty', 'Online Store Editor', 'Merchandiser', 'Customer Support', 'Digital Operations', 'Custom Role'];
-    $actualRoles = Illuminate\Support\Facades\DB::table('roles')->orderBy('id')->pluck('name')->all();
-    if ($actualRoles !== $expectedRoles || ! Illuminate\Support\Facades\DB::table('roles')->where('name', 'Full Access')->where('is_protected', true)->exists()) {
+    $actualRoles = DB::table('roles')->orderBy('id')->pluck('name')->all();
+    if ($actualRoles !== $expectedRoles || ! DB::table('roles')->where('name', 'Full Access')->where('is_protected', true)->exists()) {
         throw new RuntimeException('Default Team Member role catalogue differs from the approved policy.');
     }
-    $permissionCodes = Illuminate\Support\Facades\DB::table('permission_definitions')->pluck('code')->sort()->values()->all();
+    $permissionCodes = DB::table('permission_definitions')->pluck('code')->sort()->values()->all();
     $modelCodes = $checkpointPermissions;
     sort($modelCodes);
     if ($permissionCodes !== $modelCodes) {
         throw new RuntimeException('Permission definition catalogue differs from the server authorization catalogue.');
     }
 }
-if (in_array($mode, ['procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['suppliers', 'supplier_contacts', 'purchase_orders', 'purchase_order_lines',
         'purchase_order_receipts', 'purchase_order_receipt_lines', 'purchase_order_events', 'reorder_policies']);
     foreach (['ordered_quantity', 'received_quantity', 'ordered_unit_cost', 'planned_landed_unit_cost'] as $column) {
@@ -120,7 +129,7 @@ if (in_array($mode, ['procurement', 'stocktake', 'transfer', 'payments', 'cash',
         throw new RuntimeException('Missing reorder or procurement audit contract.');
     }
 }
-if (in_array($mode, ['stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['stocktake_sessions', 'stocktake_lines', 'stocktake_unit_baselines', 'stocktake_counts', 'stocktake_recounts', 'stocktake_approvals']);
     foreach (['baseline_quantity', 'baseline_movement_id', 'baseline_at', 'current_iteration', 'expected_quantity_at_count', 'variance'] as $column) {
         if (! $schema->hasColumn('stocktake_lines', $column)) {
@@ -138,7 +147,7 @@ if (in_array($mode, ['stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'p
         throw new RuntimeException('Missing serialized baseline, recount or approval audit contract.');
     }
 }
-if (in_array($mode, ['transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['stock_transfers', 'stock_transfer_lines', 'stock_transfer_units',
         'stock_transfer_receipts', 'stock_transfer_receipt_lines']);
     foreach (['public_id', 'transfer_number', 'source_outlet_id', 'destination_outlet_id', 'status', 'version', 'dispatched_at', 'completed_at'] as $column) {
@@ -160,12 +169,12 @@ if (in_array($mode, ['transfer', 'payments', 'cash', 'trade-in', 'promotion', 'l
         || ! $schema->hasColumn('stock_transfer_receipt_lines', 'line_snapshot')) {
         throw new RuntimeException('Missing immutable stock-transfer receipt audit contract.');
     }
-    $imeiStatus = (array) Illuminate\Support\Facades\DB::selectOne("SHOW COLUMNS FROM product_imeis WHERE Field = 'status'");
+    $imeiStatus = (array) DB::selectOne("SHOW COLUMNS FROM product_imeis WHERE Field = 'status'");
     if (! str_contains((string) ($imeiStatus['Type'] ?? ''), "'transferred_out'")) {
         throw new RuntimeException('Transferred-out IMEI history state is missing.');
     }
 }
-if (in_array($mode, ['payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['pos_payment_destinations', 'pos_tender_allocations', 'pos_settlement_events', 'pos_refund_allocations']);
     foreach (['public_id', 'outlet_id', 'method', 'display_name', 'masked_identifier', 'active', 'effective_from', 'effective_until', 'requires_refund_override_approval', 'version'] as $column) {
         if (! $schema->hasColumn('pos_payment_destinations', $column)) {
@@ -188,12 +197,12 @@ if (in_array($mode, ['payments', 'cash', 'trade-in', 'promotion', 'loyalty', 're
         }
     }
     foreach ($paymentPermissions as $permission) {
-        if (! Illuminate\Support\Facades\DB::table('permission_definitions')->where('code', $permission)->exists()) {
+        if (! DB::table('permission_definitions')->where('code', $permission)->exists()) {
             throw new RuntimeException('Missing POS payment permission: '.$permission);
         }
     }
 }
-if (in_array($mode, ['cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['cash_sessions', 'cash_entries']);
     foreach (['public_id', 'outlet_id', 'open_outlet_guard', 'opened_by_admin_id', 'closed_by_admin_id', 'variance_approved_by_admin_id',
         'business_date', 'status', 'version', 'opening_cash', 'expected_cash', 'actual_cash', 'variance_amount', 'variance_reason',
@@ -212,12 +221,12 @@ if (in_array($mode, ['cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true
         throw new RuntimeException('Missing MT-2.20 to cash-session attribution columns.');
     }
     foreach (['shop.cash', 'shop.cash.approve'] as $permission) {
-        if (! Illuminate\Support\Facades\DB::table('permission_definitions')->where('code', $permission)->exists()) {
+        if (! DB::table('permission_definitions')->where('code', $permission)->exists()) {
             throw new RuntimeException('Missing cash-session permission: '.$permission);
         }
     }
 }
-if (in_array($mode, ['promotion', 'loyalty', 'repair'], true)) {
+if (in_array($mode, ['promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['promotions', 'promotion_products', 'promotion_categories', 'promotion_claims', 'promotion_events']);
     foreach (['public_id', 'outlet_id', 'mode', 'code', 'discount_type', 'discount_value', 'max_discount', 'min_subtotal', 'usage_limit', 'per_customer_limit', 'customer_required', 'stackable', 'priority', 'status', 'version'] as $column) {
         if (! $schema->hasColumn('promotions', $column)) {
@@ -234,11 +243,11 @@ if (in_array($mode, ['promotion', 'loyalty', 'repair'], true)) {
             throw new RuntimeException('Missing promotion audit column: '.$column);
         }
     }
-    if (! Illuminate\Support\Facades\DB::table('permission_definitions')->where('code', 'config.promotions.manage')->exists()) {
+    if (! DB::table('permission_definitions')->where('code', 'config.promotions.manage')->exists()) {
         throw new RuntimeException('Missing promotion management permission.');
     }
 }
-if (in_array($mode, ['loyalty', 'repair'], true)) {
+if (in_array($mode, ['loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['loyalty_configurations', 'loyalty_accounts', 'loyalty_claims', 'loyalty_entries', 'loyalty_earn_lots', 'loyalty_claim_lots']);
     foreach (['public_id', 'version', 'enabled', 'earn_basis_amount', 'earn_points', 'redemption_value', 'min_redeem_points', 'max_redeem_points', 'daily_redeem_points', 'expiry_days', 'snapshot', 'snapshot_sha256'] as $column) {
         if (! $schema->hasColumn('loyalty_configurations', $column)) {
@@ -258,11 +267,11 @@ if (in_array($mode, ['loyalty', 'repair'], true)) {
     if (! $schema->hasColumn('loyalty_earn_lots', 'points_remaining') || ! $schema->hasColumn('loyalty_claim_lots', 'restored_points')) {
         throw new RuntimeException('Missing loyalty expiry or reversal allocation contract.');
     }
-    if (! Illuminate\Support\Facades\DB::table('permission_definitions')->where('code', 'config.loyalty.manage')->exists()) {
+    if (! DB::table('permission_definitions')->where('code', 'config.loyalty.manage')->exists()) {
         throw new RuntimeException('Missing loyalty management permission.');
     }
 }
-if ($mode === 'repair') {
+if (in_array($mode, ['repair', 'documents'], true)) {
     $expected = array_merge($expected, ['repair_settings', 'repair_jobs', 'repair_estimates', 'repair_estimate_lines',
         'repair_estimate_approvals', 'repair_part_consumptions', 'repair_payment_links', 'repair_events']);
     foreach (['outlet_id', 'enabled', 'version', 'updated_by_admin_id'] as $column) {
@@ -292,11 +301,35 @@ if ($mode === 'repair') {
         || ! $schema->hasColumn('repair_events', 'snapshot_sha256')) {
         throw new RuntimeException('Missing paid repair approval, stock, payment or history linkage.');
     }
-    if (! Illuminate\Support\Facades\DB::table('permission_definitions')->where('code', 'shop.repairs')->exists()) {
+    if (! DB::table('permission_definitions')->where('code', 'shop.repairs')->exists()) {
         throw new RuntimeException('Missing paid repair permission.');
     }
 }
-if (in_array($mode, ['trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+
+if ($mode === 'documents') {
+    $expected = array_merge($expected, ['document_template_revisions', 'document_delivery_attempts']);
+    foreach (['customer_email'] as $column) {
+        if (! $schema->hasColumn('invoices', $column)) {
+            throw new RuntimeException('Missing historical invoice email snapshot column: '.$column);
+        }
+    }
+    foreach (['public_id', 'template_key', 'document_type', 'channel', 'template_part', 'version', 'template_text', 'created_by_admin_id'] as $column) {
+        if (! $schema->hasColumn('document_template_revisions', $column)) {
+            throw new RuntimeException('Missing document template revision column: '.$column);
+        }
+    }
+    foreach (['public_id', 'outlet_id', 'document_type', 'document_public_id', 'channel', 'state', 'actor_admin_id', 'idempotency_key', 'request_sha256', 'intentional_resend', 'recipient', 'document_version', 'document_sha256', 'template_revisions', 'provider_reference', 'failure_summary'] as $column) {
+        if (! $schema->hasColumn('document_delivery_attempts', $column)) {
+            throw new RuntimeException('Missing document delivery audit column: '.$column);
+        }
+    }
+    if (! DB::table('permission_definitions')->where('code', 'shop.documents.send')->exists()
+        || DB::table('document_template_revisions')->distinct()->count('template_key') !== 6) {
+        throw new RuntimeException('Document send permission or six-template catalogue is missing.');
+    }
+}
+
+if (in_array($mode, ['trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
     $expected = array_merge($expected, ['trade_ins', 'trade_in_identifiers', 'trade_in_events']);
     foreach (['public_id', 'outlet_id', 'product_id', 'invoice_id', 'acquisition_id', 'monetary_adjustment_id', 'seller_name',
         'seller_cnic', 'seller_phone', 'device_serial', 'device_condition', 'diagnostics', 'valuation_amount', 'settlement_mode',
@@ -310,7 +343,7 @@ if (in_array($mode, ['trade-in', 'promotion', 'loyalty', 'repair'], true)) {
             throw new RuntimeException('Missing trade-in identifier column: '.$column);
         }
     }
-    if (! Illuminate\Support\Facades\DB::table('permission_definitions')->where('code', 'shop.trade-in')->exists()) {
+    if (! DB::table('permission_definitions')->where('code', 'shop.trade-in')->exists()) {
         throw new RuntimeException('Missing trade-in permission.');
     }
 }
@@ -327,17 +360,20 @@ foreach ($actual as $table) {
     $counts['columns'] += count($columns);
     $counts['foreign_keys'] += count($schema->getForeignKeys($table));
     $counts['indexes'] += count($schema->getIndexes($table));
-    $create = (array) Illuminate\Support\Facades\DB::selectOne('SHOW CREATE TABLE `'.$table.'`');
+    $create = (array) DB::selectOne('SHOW CREATE TABLE `'.$table.'`');
     $definitions[$table] = preg_replace('/ AUTO_INCREMENT=\d+/', '', $create['Create Table']);
     if (! str_contains($definitions[$table], 'ENGINE=InnoDB')) {
         throw new RuntimeException('Non-transactional table found.');
     }
-    $seedRows = in_array($mode, ['admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true) ? ['business_profiles' => 1, 'integration_connections' => 2] : [];
-    if (in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)) {
+    $seedRows = in_array($mode, ['admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true) ? ['business_profiles' => 1, 'integration_connections' => 2] : [];
+    if (in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)) {
         $seedRows += ['permission_definitions' => count($checkpointPermissions), 'roles' => 12,
-            'role_permissions' => Illuminate\Support\Facades\DB::table('role_permissions')->count()];
+            'role_permissions' => DB::table('role_permissions')->count()];
     }
-    $rowCount = Illuminate\Support\Facades\DB::table($table)->count();
+    if ($mode === 'documents') {
+        $seedRows += ['document_template_revisions' => 6];
+    }
+    $rowCount = DB::table($table)->count();
     if (! in_array($table, $runtime, true) && $rowCount !== ($seedRows[$table] ?? 0)) {
         throw new RuntimeException('Unexpected business rows remain in disposable schema.');
     }
@@ -348,6 +384,6 @@ if (! str_contains($db->sql_mode, 'STRICT_TRANS_TABLES') || $db->timezone !== '+
 echo json_encode(['mode' => $mode, 'result' => 'PASS', 'database' => $db->db, 'port' => (int) $db->port,
     'mysql' => $db->version, 'timezone' => $db->timezone, 'strict' => true, 'counts' => $counts,
     'schema_sha256' => hash('sha256', json_encode($definitions, JSON_UNESCAPED_SLASHES)),
-    'business_rows' => 0, 'canonical_seed_rows' => in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair'], true)
-        ? 3 + count($checkpointPermissions) + 12 + Illuminate\Support\Facades\DB::table('role_permissions')->count()
+    'business_rows' => 0, 'canonical_seed_rows' => in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents'], true)
+        ? 3 + count($checkpointPermissions) + 12 + DB::table('role_permissions')->count() + ($mode === 'documents' ? 6 : 0)
         : (in_array($mode, ['admin-google', 'orders'], true) ? 3 : 0)], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n";

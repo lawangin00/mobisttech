@@ -1,0 +1,28 @@
+{
+  "roadmap_point": "MT-3.1",
+  "title": "Reports, documents and communication services",
+  "result": "PASS",
+  "schema": {
+    "tables": 140,
+    "columns": 1744,
+    "foreign_keys": 290,
+    "indexes": 672,
+    "schema_sha256": "7174016314428190e333e1caf1906a43d94ef902148036f893e2e4fdcccd6c92",
+    "rollback_mt_2_16_sha256": "42f28550e7172b68dae0365f8ca171caa784aa3aafa89b5af962d580c138c086"
+  },
+  "focused_document_reporting_tests": {"tests": 5, "assertions": 46},
+  "affected_regression": {"tests": 40, "assertions": 359},
+  "shared_schema_and_document_focus": {"tests": 14, "assertions": 3677},
+  "full_backend": {"tests": 193, "assertions": 6490},
+  "pint_files": 167,
+  "composer_validate_strict": "PASS",
+  "composer_platform_requirements": "PASS",
+  "backend_typecheck_vite_build": "PASS",
+  "website_eslint_typecheck_next_build": "PASS",
+  "canonical_invoice_warranty_hash_parity": true,
+  "gmail_pdf_attachment_safe_fake": true,
+  "whatsapp_truthful_prepared_opened": true,
+  "retry_dedup_and_explicit_resend": true,
+  "split_tender_reporting_no_double_count": true,
+  "retail_labels_outlet_authorized": true
+}
