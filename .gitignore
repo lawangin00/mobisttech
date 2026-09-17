@@ -40,7 +40,7 @@ backend/bootstrap/cache/*.php
 
 # Local evidence, exports and private migration input
 .local/
-backups/
+/backups/
 migration-input/
 uploads/
 ~$*.docx

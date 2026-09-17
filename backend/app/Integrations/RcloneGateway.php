@@ -13,7 +13,8 @@ class RcloneGateway
     public function detectExisting(): bool
     {
         try {
-            return in_array(self::REMOTE, preg_split('/\R/', trim($this->run(['listremotes'], false))), true) && $this->validate(false);
+            return in_array(self::REMOTE, preg_split('/\R/', trim($this->run(['listremotes'], false))), true)
+                && $this->validate(false);
         } catch (\Throwable) {
             return false;
         }
@@ -28,8 +29,7 @@ class RcloneGateway
         }
         if (! is_dir($directory) && ! mkdir($directory, 0700, true) && ! is_dir($directory)) {
             throw new RuntimeException('Private rclone configuration directory could not be created.');
-        }
-        $secret = $this->runWithInput(['obscure', '-'], $clientSecret);
+        }        $secret = $this->runWithInput(['obscure', '-'], $clientSecret);
         $content = "[mobisttech-drive]\n".
             "type = drive\nclient_id = ".$this->line($clientId)."\nclient_secret = ".$this->line(trim($secret))."\n".
             "scope = drive.file\ntoken = ".$this->line(json_encode($tokens, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR))."\n";
@@ -43,20 +43,19 @@ class RcloneGateway
 
     public function validate(bool $managed = true): bool
     {
-        $config = $managed ? true : false;
-        $remoteObject = self::REMOTE.'mobiST Tech/Backups/.integration-check-'.Str::uuid().'.txt';
+        $remoteObject = $this->backupObject(config('backups.namespace').'.integration-check-'.Str::uuid().'.txt');
         $local = tempnam(storage_path('app/private'), 'drive-check-');
         try {
             file_put_contents($local, 'mobisttech-drive-validation');
-            $this->run(['copyto', $local, $remoteObject], $config);
-            $read = $this->run(['cat', $remoteObject], $config);
-            $this->run(['deletefile', $remoteObject], $config);
+            $this->run(['copyto', $local, $remoteObject], $managed);
+            $read = $this->run(['cat', $remoteObject], $managed);
+            $this->run(['deletefile', $remoteObject], $managed);
 
             return trim($read) === 'mobisttech-drive-validation';
         } finally {
             @unlink($local);
             try {
-                $this->run(['deletefile', $remoteObject], $config);
+                $this->run(['deletefile', $remoteObject], $managed);
             } catch (\Throwable) {
             }
         }
@@ -64,12 +63,12 @@ class RcloneGateway
 
     public function copyTo(string $localPath, string $remotePath, bool $managed = true): void
     {
-        $this->run(['copyto', $localPath, self::REMOTE.ltrim($remotePath, '/')], $managed);
+        $this->run(['copyto', $localPath, $this->backupObject($remotePath)], $managed);
     }
 
     public function deleteRemote(string $remotePath, bool $managed = true): void
     {
-        $this->run(['deletefile', self::REMOTE.ltrim($remotePath, '/')], $managed);
+        $this->run(['deletefile', $this->backupObject($remotePath)], $managed);
     }
 
     public function disconnectManaged(): void
@@ -87,7 +86,7 @@ class RcloneGateway
 
     protected function run(array $arguments, bool $managed): string
     {
-        $command = [config('services.google_drive.rclone_binary', 'rclone'), ...$arguments];
+        $command = [$this->binary(), ...$arguments];
         if ($managed) {
             array_push($command, '--config', $this->configPath());
         }
@@ -102,7 +101,7 @@ class RcloneGateway
 
     protected function runWithInput(array $arguments, string $input): string
     {
-        $process = new Process([config('services.google_drive.rclone_binary', 'rclone'), ...$arguments], base_path(), [], null, 15);
+        $process = new Process([$this->binary(), ...$arguments], base_path(), [], null, 15);
         $process->setInput($input);
         $process->run();
         if (! $process->isSuccessful()) {
@@ -110,6 +109,28 @@ class RcloneGateway
         }
 
         return $process->getOutput();
+    }
+
+    private function binary(): string
+    {
+        $binary = trim((string) config('services.google_drive.rclone_binary', 'rclone'));
+        $name = strtolower(basename(str_replace('\\', '/', $binary)));
+        if (! in_array($name, ['rclone', 'rclone.exe'], true) || preg_match('/[\r\n\x00]/', $binary)) {
+            throw new RuntimeException('Invalid rclone executable configuration.');
+        }
+
+        return $binary;
+    }
+
+    private function backupObject(string $remotePath): string
+    {
+        $path = ltrim(str_replace('\\', '/', $remotePath), '/');
+        $namespace = (string) config('backups.namespace', 'mobiST Tech/Backups/');
+        if (! str_starts_with($path, $namespace) || str_contains($path, '..') || preg_match('/[\r\n\x00]/', $path) || strlen($path) > 500) {
+            throw new RuntimeException('Invalid backup remote path.');
+        }
+
+        return self::REMOTE.$path;
     }
 
     private function line(string $value): string

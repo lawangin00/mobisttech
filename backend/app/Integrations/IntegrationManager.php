@@ -26,6 +26,7 @@ final class IntegrationManager
     {
         $this->authorize($actor);
         $this->provider($provider);
+        abort_unless((bool) config('services.google.enabled'), 409, 'External integrations are disabled.');
         $business = $this->businessProfile->current();
         if ($provider === 'google_drive' && $this->rclone->detectExisting()) {
             $connection = DB::table('integration_connections')->where('provider', $provider)->firstOrFail();
@@ -117,6 +118,7 @@ final class IntegrationManager
     {
         $this->authorize($actor);
         $this->provider($provider);
+        abort_unless((bool) config('services.google.enabled'), 409, 'External integrations are disabled.');
         if ($provider === 'gmail') {
             $business = $this->businessProfile->current();
             $this->gmail->send($business['business_email'], $business['business_name'].' Gmail test', 'The Gmail API test succeeded.', '<p>The Gmail API test succeeded.</p>');

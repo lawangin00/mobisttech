@@ -1,0 +1,38 @@
+{
+  "point": "MT-3.3",
+  "title": "Audit, configuration, backups and integrations",
+  "result": "PASS",
+  "schema": {
+    "mode": "operations",
+    "tables": 169,
+    "columns": 2085,
+    "foreign_keys": 362,
+    "indexes": 805,
+    "sha256": "6c0ed158422edf240ce53e8a3a00eae7cabef8ed2c9f499f7278404c90bfe545",
+    "rollback_mt_3_9_sha256": "9f489e4c879b8b15dd4c232d02b25c2ab6df7f6ac0a39290b1f89d52b654e339"
+  },
+  "focused": {
+    "tests": 4,
+    "assertions": 30
+  },
+  "affected_regression": {
+    "tests": 60,
+    "assertions": 4084
+  },
+  "full_backend": {
+    "tests": 214,
+    "assertions": 6728
+  },
+  "gates": {
+    "pint_files": 192,
+    "composer_validate_strict": "PASS",
+    "composer_platform_requirements": "PASS",
+    "backend_build": "PASS",
+    "website_lint": "PASS",
+    "website_typecheck": "PASS",
+    "website_build": "PASS"
+  },
+  "external_jobs_default_enabled": false,
+  "destructive_restore_implemented": false,
+  "next": "MT-3.8"
+}
