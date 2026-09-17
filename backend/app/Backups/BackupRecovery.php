@@ -19,6 +19,21 @@ final class BackupRecovery
     {
         $this->authorize($actor);
         $this->targetGuard();
+
+        return $this->perform($actor, $backupRecordId, $path, $providedKeyId);
+    }
+
+    public function rehearseForReset(Admin $actor, int $backupRecordId, string $path, string $providedKeyId, string $level): array
+    {
+        abort_unless(in_array($level, ['transactional', 'business', 'factory'], true), 422);
+        abort_unless(app(Access::class)->allows($actor, 'system.reset.'.$level), 403);
+        $this->targetGuard();
+
+        return $this->perform($actor, $backupRecordId, $path, $providedKeyId);
+    }
+
+    private function perform(Admin $actor, int $backupRecordId, string $path, string $providedKeyId): array
+    {
         $record = DB::table('backup_records')->where('id', $backupRecordId)->firstOrFail();
         $manifestRow = DB::table('backup_manifests')->where('backup_record_id', $backupRecordId)->firstOrFail();
 

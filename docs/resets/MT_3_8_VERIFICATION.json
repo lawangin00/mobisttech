@@ -1,0 +1,46 @@
+{
+  "roadmap_point": "MT-3.8",
+  "title": "Guarded data reset services",
+  "result": "PASS",
+  "schema": {
+    "tables": 170,
+    "columns": 2104,
+    "foreign_keys": 364,
+    "indexes": 811,
+    "sha256": "adf3f3593d169a912b0b3d71394351e345d53f76dde911c53cfbe15586db8848",
+    "rollback_mt_3_3_sha256": "6c0ed158422edf240ce53e8a3a00eae7cabef8ed2c9f499f7278404c90bfe545",
+    "business_rows": 0,
+    "canonical_seed_rows": 316
+  },
+  "verification": {
+    "focused": "4 passed / 37 assertions",
+    "affected": "76 passed / 4205 assertions",
+    "full_backend": "218 passed / 6765 assertions",
+    "pint_full_files": 200,
+    "composer_validate_strict": "PASS",
+    "composer_platform_requirements": "PASS",
+    "backend_production_build": "PASS",
+    "website_lint": "PASS",
+    "website_typecheck": "PASS",
+    "website_production_build": "PASS"
+  },
+  "safety": {
+    "execution_environments": ["testing"],
+    "production_execution": "separately authorized HOLD",
+    "automatic_verified_backup": true,
+    "typed_confirmation": true,
+    "recent_reauthentication": true,
+    "dependency_safe_delete": true,
+    "private_object_backup_and_cleanup": true,
+    "surviving_reset_audit": true,
+    "migrate_fresh_or_truncate": false,
+    "public_reset_route": false
+  },
+  "attempts": [
+    "Verifier reset-mode patch first failed on an exact CRLF anchor before write; structural Python patch then passed.",
+    "Business/factory planner first exposed reciprocal nullable CMS/software FK cycles; explicit selected-scope nullable cycle breaks replaced unsafe cycle failure.",
+    "Focused attempt 1 passed 3/4 and exposed JSON object-key-order-sensitive reset-object manifest hashing; canonical item-key hashing fixed it and focused rerun passed 4/37.",
+    "Final review hardened failed pre-destructive backup cleanup so encrypted object copies are discarded when DB backup/rehearsal cannot verify."
+  ],
+  "next": "MT-3.4 - Versioned REST API and contract acceptance"
+}

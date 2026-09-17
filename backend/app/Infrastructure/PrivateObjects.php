@@ -36,6 +36,22 @@ final class PrivateObjects
         return $this->disk($key)->get($key);
     }
 
+    public function exists(string $key): bool
+    {
+        $this->validateKey($key);
+
+        return $this->disk($key)->exists($key);
+    }
+
+    public function delete(string $key): void
+    {
+        $this->validateKey($key);
+        $disk = $this->disk($key);
+        if ($disk->exists($key) && (! $disk->delete($key) || $disk->exists($key))) {
+            throw new RuntimeException('Private object deletion failed.');
+        }
+    }
+
     private function validateKey(string $key): void
     {
         // New immutable object names only; no inherited source paths, URLs, traversal or executable suffixes.
