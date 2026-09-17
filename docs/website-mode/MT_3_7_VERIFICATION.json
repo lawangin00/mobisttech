@@ -1,0 +1,40 @@
+{
+  "point": "MT-3.7",
+  "title": "Website operating mode publication",
+  "result": "PASS",
+  "date": "2026-09-17",
+  "schema": {
+    "migration_added": false,
+    "checkpoint": "cms",
+    "tables": 148,
+    "columns": 1858,
+    "foreign_keys": 325,
+    "indexes": 729,
+    "sha256": "474c6a489c966df8cb30968fb03a53f15c148d269d27e5f09eadbb6cdaf748f5"
+  },
+  "tests": {
+    "focused_mode_publication": "3 passed / 51 assertions",
+    "affected_regression": "48 passed / 433 assertions",
+    "full_backend": "199 passed / 6598 assertions",
+    "pint": "172 files PASS"
+  },
+  "gates": [
+    "composer validate --strict PASS",
+    "composer check-platform-reqs PASS",
+    "php artisan optimize:clear PASS",
+    "backend TypeScript/Vite production build PASS",
+    "Website ESLint PASS",
+    "Website typecheck PASS",
+    "Website Next.js production build PASS"
+  ],
+  "invariants": [
+    "digital_only, hybrid and commerce_only use one versioned Laravel-owned profile",
+    "edit, preview and publish permissions are separated",
+    "preview reports capability/content/route/SEO impact before publish",
+    "mode switches delete no business or CMS history",
+    "inactive capabilities block new creation while authorized history remains accessible",
+    "public capability reads are cache-versioned while creation guards recheck master DB state",
+    "one-click rollback creates a new published revision and revalidates caches",
+    "common/digital/commerce/mode-variant content stays in one modular CMS model"
+  ]
+}
