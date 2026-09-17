@@ -170,9 +170,13 @@ final class OrderTransactions
         return $this->idempotent($scope, 'commerce.milestone', $key, $input, function () use ($scope, $customer, $data, $provider) {
             $milestone = DB::table('project_milestone_identities')->where('id', $data['milestone_id'])->lockForUpdate()->firstOrFail();
             $quote = DB::table('project_quotes')->where('id', $milestone->quote_id)->lockForUpdate()->firstOrFail();
-            if ($milestone->paid_payment_id || $quote->status !== 'approved' || ($quote->expires_at && now()->gte($quote->expires_at))
-                || ! (($quote->customer_email && hash_equals(mb_strtolower($quote->customer_email), mb_strtolower($customer->email)))
-                    || ($quote->customer_mobile && $customer->mobile && hash_equals($quote->customer_mobile, $customer->mobile)))) {
+            $projectOwnerId = DB::table('project_proposals as pp')->join('client_projects as cp', 'cp.id', '=', 'pp.client_project_id')
+                ->where('pp.quote_id', $quote->id)->value('cp.customer_account_id');
+            $ownerMatches = $projectOwnerId !== null
+                ? (int) $projectOwnerId === (int) $customer->id
+                : (($quote->customer_email && hash_equals(mb_strtolower($quote->customer_email), mb_strtolower($customer->email)))
+                    || ($quote->customer_mobile && $customer->mobile && hash_equals($quote->customer_mobile, $customer->mobile)));
+            if ($milestone->paid_payment_id || $quote->status !== 'approved' || ($quote->expires_at && now()->gte($quote->expires_at)) || ! $ownerMatches) {
                 throw new LogicException('Milestone ownership, state or validity check failed.');
             }
             $number = 'PRJ-'.now()->format('Ymd').'-'.strtoupper(Str::random(12));

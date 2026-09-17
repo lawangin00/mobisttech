@@ -39,7 +39,7 @@ final class PrivateObjects
     private function validateKey(string $key): void
     {
         // New immutable object names only; no inherited source paths, URLs, traversal or executable suffixes.
-        if (! preg_match('/\A(?:acquisitions|backups|media)\/[0-9a-f-]{36}\.(?:json|pdf|png|jpg|bin)\z/', $key)) {
+        if (! preg_match('/\A(?:acquisitions|backups|media|client-files)\/[0-9a-f-]{36}\.(?:json|pdf|png|jpg|bin)\z/', $key)) {
             throw new InvalidArgumentException('Invalid private object key.');
         }
     }

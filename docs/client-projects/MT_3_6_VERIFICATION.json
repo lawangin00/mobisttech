@@ -1,0 +1,45 @@
+{
+  "point": "MT-3.6",
+  "title": "Client projects, proposals and milestone services",
+  "result": "PASS",
+  "schema": {
+    "tables": 161,
+    "columns": 1992,
+    "foreign_keys": 351,
+    "indexes": 776,
+    "sha256": "e1bc76ea5765fe792940827e2784e3827e745c4bb82517b88e9515c7a12317aa",
+    "business_rows": 0,
+    "prior_checkpoint_sha256": "8afae7df3275944b34c2c5985aafa0088d5de0968ce73b20f4a8e5edcee504bd"
+  },
+  "verification": {
+    "focused": "4 tests / 38 assertions PASS",
+    "affected_regression": "42 tests / 3957 assertions PASS",
+    "full_backend": "206 tests / 6661 assertions PASS",
+    "pint": "178 files PASS",
+    "composer_validate_strict": "PASS",
+    "composer_platform_requirements": "PASS",
+    "optimize_clear": "PASS",
+    "backend_typecheck_vite_build": "PASS",
+    "website_lint_typecheck_next_build": "PASS"
+  },  "acceptance": {
+    "explicit_customer_account_ownership": true,
+    "immutable_proposal_snapshots": true,
+    "exact_milestone_sum_and_validity": true,
+    "paid_or_active_payment_repricing_blocked": true,
+    "payment_replay_and_owner_binding": true,
+    "mode_switch_preserves_historical_access": true,
+    "private_file_validation_integrity_and_retention": true,
+    "aggregate_conversion_reporting_minimizes_pii": true
+  },
+  "boundaries": {
+    "authentic_provider_activation": false,
+    "private_source_data_migration": false,
+    "public_rest_or_ui_publication": false,
+    "external_message": false,
+    "deployment_or_production_change": false
+  },
+  "attempts": [
+    "Initial schema verification used the default target database while the verifier intentionally inspects mobisttech_test; verification was corrected to migrate explicitly with --env=testing.",
+    "Initial focused tests exposed ISO-8601 due_at text being sent directly to a MySQL DATETIME column; persistence now binds the same immutable snapshot timestamp as a UTC Carbon value."
+  ]
+}
