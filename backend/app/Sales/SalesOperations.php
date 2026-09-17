@@ -16,6 +16,7 @@ use App\Models\Outlet;
 use App\Models\PosMasterDataOption;
 use App\Models\Product;
 use App\Models\StockUnit;
+use App\Promotions\PromotionServices;
 use App\Services\PosInventoryMasterData;
 use App\Warranty\WarrantyClauses;
 use Illuminate\Support\Facades\DB;
@@ -31,16 +32,17 @@ final class SalesOperations
 
     public function sell(IdentityAccount $actor, Outlet $outlet, string $key, array $input): array
     {
-        $this->fields($input, ['customer_id', 'new_customer', 'customer_name', 'customer_phone', 'customer_cnic', 'customer_info', 'discount', 'discount_reason', 'lines']);
+        $this->fields($input, ['customer_id', 'new_customer', 'customer_name', 'customer_phone', 'customer_cnic', 'customer_info', 'discount', 'discount_reason', 'promotion_codes', 'lines']);
         $data = Validator::make($input, [
             'customer_id' => 'nullable|uuid', 'new_customer' => 'sometimes|boolean', 'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:40', 'customer_cnic' => ['nullable', 'regex:/\A\d{5}-\d{7}-\d\z/'],
             'customer_info' => 'nullable|string|max:2000', 'discount' => 'required', 'discount_reason' => 'nullable|string|max:500',
+            'promotion_codes' => 'sometimes|array|max:10', 'promotion_codes.*' => 'string|max:80',
             'lines' => 'required|array|min:1|max:100', 'lines.*.product_id' => 'required|uuid', 'lines.*.quantity' => 'required|integer|min:1|max:10000',
         ])->validate();
         $discount = SourceRow::money($data['discount']);
 
-        return $this->mutate($actor, $outlet, 'sale', $key, $input, function () use ($actor, $outlet, $data, $discount) {
+        return $this->mutate($actor, $outlet, 'sale', $key, $input, function () use ($actor, $outlet, $data, $discount, $key) {
             $customer = $this->customer($data);
             $lines = collect($data['lines'])->sortBy('product_id')->values();
             if ($lines->pluck('product_id')->duplicates()->isNotEmpty()) {
@@ -58,9 +60,21 @@ final class SalesOperations
             if (bccomp($discount, $gross, 2) > 0 || (bccomp($discount, '0.00', 2) > 0 && trim((string) ($data['discount_reason'] ?? '')) === '')) {
                 throw ValidationException::withMessages(['discount' => 'Discount cannot exceed gross and requires a reason.']);
             }
-            $allocations = $this->allocate($prepared, $gross, $discount);
+            if (bccomp($discount, '0.00', 2) > 0 && ! empty($data['promotion_codes'])) {
+                throw ValidationException::withMessages(['promotion_codes' => 'Manual discounts cannot be combined with coupon promotions.']);
+            }
+            $promotion = ['discount' => '0.00', 'allocations' => array_fill_keys(array_keys($prepared), '0.00'), 'applications' => []];
+            if (bccomp($discount, '0.00', 2) === 0) {
+                $promotionLines = array_map(fn ($line) => ['product_id' => $line['product']->id, 'product_public_id' => $line['product']->public_id,
+                    'category' => $line['product']->category, 'quantity' => $line['quantity'], 'unit_price' => $line['unit'], 'gross' => $line['lineGross']], $prepared);
+                $promotion = app(PromotionServices::class)->claim('pos', $outlet,
+                    hash('sha256', $actor::class.':'.$actor->id.':'.$outlet->id.':'.$key),
+                    $customer ? hash('sha256', 'customer:'.$customer->public_id) : null, $promotionLines, $data['promotion_codes'] ?? []);
+            }
+            $effectiveDiscount = bccomp($discount, '0.00', 2) > 0 ? $discount : $promotion['discount'];
+            $allocations = bccomp($discount, '0.00', 2) > 0 ? $this->allocate($prepared, $gross, $discount) : $promotion['allocations'];
             $invoiceId = DB::table('invoices')->insertGetId([
-                'outlet_id' => $outlet->id, 'total_bill' => $gross, 'discount' => $discount, 'final_bill' => bcsub($gross, $discount, 2),
+                'outlet_id' => $outlet->id, 'total_bill' => $gross, 'discount' => $effectiveDiscount, 'final_bill' => bcsub($gross, $effectiveDiscount, 2),
                 'customer_id' => $customer?->id, 'customer_name' => $customer?->display_name ?? trim((string) ($data['customer_name'] ?? '')) ?: null,
                 'customer_phone' => $customer?->mobile ?? ($data['customer_phone'] ?? null), 'customer_cnic' => $data['customer_cnic'] ?? null,
                 'customer_info' => $data['customer_info'] ?? null, 'salesperson_admin_id' => $actor->id,
@@ -74,6 +88,8 @@ final class SalesOperations
             ]);
             if (bccomp($discount, '0.00', 2) > 0) {
                 app(FinancialReferences::class)->adjustment('invoice', $invoiceId, MoneySnapshot::adjustment((string) Str::uuid(), 'manual_discount', $discount, trim($data['discount_reason'])));
+            } elseif ($promotion['applications']) {
+                app(PromotionServices::class)->bind('invoice', $invoiceId, $promotion['applications']);
             }
             $saleIds = [];
             foreach ($prepared as $index => $line) {
@@ -93,7 +109,8 @@ final class SalesOperations
             $invoice = DB::table('invoices')->where('id', $invoiceId)->firstOrFail();
 
             return ['invoice_id' => $invoice->public_id, 'invoice_number' => $invoice->invoice_number, 'total_bill' => $gross,
-                'discount' => $discount, 'final_bill' => $invoice->final_bill, 'sale_ids' => $saleIds];
+                'discount' => $effectiveDiscount, 'final_bill' => $invoice->final_bill, 'sale_ids' => $saleIds,
+                'promotion_claim_ids' => array_column($promotion['applications'], 'claim_id')];
         });
     }
 
@@ -141,11 +158,16 @@ final class SalesOperations
                 || bccomp($item->line_total, $line->line_total, 2) !== 0) {
                 throw new LogicException('Order item identity or immutable price snapshot changed.');
             }
+            $grossLine = bcmul($line->unit_price, (string) $line->quantity, 2);
+            $lineDiscount = bcsub($grossLine, $line->line_total, 2);
+            if (bccomp($lineDiscount, '0.00', 2) < 0) {
+                throw new LogicException('Website promotion snapshot exceeds the immutable gross line.');
+            }
             $cost = bcmul(SourceRow::money((string) $product->purchase_price), (string) $line->quantity, 2);
             $saleId = DB::table('sales')->insertGetId(['public_id' => (string) Str::uuid(), 'product_id' => $product->id, 'outlet_id' => $outlet->id,
                 'sale_date' => now()->toDateString(), 'sale_price' => $line->unit_price, 'invoice_id' => $invoiceId, 'quantity' => $line->quantity,
-                'total_price' => $line->line_total, 'purchase_price' => SourceRow::money((string) $product->purchase_price),
-                'discount_allocated' => '0.00', 'net_total_price' => $line->line_total, 'profit' => bcsub($line->line_total, $cost, 2),
+                'total_price' => $grossLine, 'purchase_price' => SourceRow::money((string) $product->purchase_price),
+                'discount_allocated' => $lineDiscount, 'net_total_price' => $line->line_total, 'profit' => bcsub($line->line_total, $cost, 2),
                 'invoice_detail_snapshot' => $line->source_snapshot, 'created_at' => now(), 'updated_at' => now()]);
             $this->transactionalStock->consumeSale($saleId, $line->id);
         }

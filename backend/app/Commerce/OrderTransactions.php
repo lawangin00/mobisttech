@@ -12,6 +12,7 @@ use App\Models\Admin;
 use App\Models\CustomerAccount;
 use App\Models\Outlet;
 use App\Models\Product;
+use App\Promotions\PromotionServices;
 use App\Sales\SalesOperations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -28,22 +29,24 @@ final class OrderTransactions
         private TransactionalStock $stock,
         private StockLedger $ledger,
         private SalesOperations $sales,
+        private PromotionServices $promotions,
     ) {}
 
     public function checkout(string $ownerScope, ?CustomerAccount $customer, string $key, array $input): array
     {
         $this->owner($ownerScope, $customer);
-        $this->fields($input, ['customer_name', 'customer_mobile', 'customer_email', 'city', 'delivery_address', 'notes', 'gateway', 'lines']);
+        $this->fields($input, ['customer_name', 'customer_mobile', 'customer_email', 'city', 'delivery_address', 'notes', 'gateway', 'coupon_codes', 'lines']);
         $data = Validator::make($input, [
             'customer_name' => 'required|string|max:255', 'customer_mobile' => 'required|string|max:40',
             'customer_email' => 'nullable|email|max:255', 'city' => 'nullable|string|max:255', 'delivery_address' => 'nullable|string|max:2000',
             'notes' => 'nullable|string|max:2000', 'gateway' => 'required|in:cod,jazzcash,easypaisa,card',
+            'coupon_codes' => 'sometimes|array|max:10', 'coupon_codes.*' => 'string|max:80',
             'lines' => 'required|array|min:1|max:100', 'lines.*.product_id' => 'required|uuid',
             'lines.*.quantity' => 'required|integer|min:1|max:10000', 'lines.*.variant_key' => 'sometimes|string|max:100',
         ])->validate();
         $provider = $this->providers->assertAvailable($data['gateway']);
 
-        return $this->idempotent($ownerScope, 'commerce.checkout', $key, $input, function () use ($ownerScope, $customer, $data, $provider) {
+        return $this->idempotent($ownerScope, 'commerce.checkout', $key, $input, function () use ($ownerScope, $customer, $data, $provider, $key) {
             $mode = $this->capabilities->assertCreationAllowed('checkout.create');
             $lines = collect($data['lines'])->sortBy('product_id')->values();
             if ($lines->pluck('product_id')->duplicates()->isNotEmpty()) {
@@ -65,28 +68,40 @@ final class OrderTransactions
                 $total = bcadd($total, $lineTotal, 2);
                 $prepared[] = compact('product', 'variant', 'unit', 'lineTotal') + ['quantity' => (int) $line['quantity']];
             }
+            $outletModel = Outlet::whereKey($outlet)->lockForUpdate()->firstOrFail();
+            $promotionLines = array_map(fn ($line) => ['product_id' => $line['product']->id, 'product_public_id' => $line['product']->public_id,
+                'category' => $line['product']->category, 'quantity' => $line['quantity'], 'unit_price' => $line['unit'], 'gross' => $line['lineTotal']], $prepared);
+            $promotion = $this->promotions->claim('website', $outletModel, hash('sha256', $ownerScope.'|'.$key),
+                $customer ? hash('sha256', 'account:'.$customer->id) : null, $promotionLines, $data['coupon_codes'] ?? []);
+            $gross = $total;
+            $total = bcsub($gross, $promotion['discount'], 2);
             $number = 'WEB-'.now()->format('Ymd').'-'.strtoupper(Str::random(12));
             $orderId = DB::table('orders')->insertGetId([
                 'order_number' => $number, 'order_type' => 'commerce', 'status' => 'pending', 'fulfillment_status' => 'pending',
                 'customer_name' => trim($data['customer_name']), 'customer_mobile' => trim($data['customer_mobile']),
                 'customer_email' => isset($data['customer_email']) ? mb_strtolower(trim($data['customer_email'])) : null,
                 'city' => $data['city'] ?? null, 'delivery_address' => $data['delivery_address'] ?? null, 'notes' => $data['notes'] ?? null,
-                'subtotal' => $total, 'total' => $total, 'currency' => 'PKR', 'payment_status' => 'unpaid',
+                'subtotal' => $gross, 'total' => $total, 'currency' => 'PKR', 'payment_status' => 'unpaid',
                 'user_id' => $customer?->id, 'customer_id' => $customer ? DB::table('customers')->where('website_user_id', $customer->id)->value('id') : null,
                 'owner_scope_hash' => hash('sha256', $ownerScope), 'public_id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now(),
             ]);
+            if ($promotion['applications']) {
+                $this->promotions->bind('order', $orderId, $promotion['applications']);
+            }
             $reservationId = DB::table('reservations')->insertGetId([
                 'order_id' => $orderId, 'attempt' => 1, 'outlet_id' => $outlet, 'website_order_number' => $number,
                 'reservation_reference' => (string) Str::uuid(), 'state' => $data['gateway'] === 'cod' ? 'held_cod' : 'active',
                 'currency' => 'PKR', 'customer_name' => trim($data['customer_name']), 'customer_mobile' => trim($data['customer_mobile']),
                 'total_amount' => $total, 'reservation_expires_at' => $data['gateway'] === 'cod' ? null : now()->addMinutes(config('commerce.reservation_minutes')),
-                'gateway' => $data['gateway'], 'contract_hash' => hash('sha256', json_encode(['mode' => $mode, 'total' => $total, 'currency' => 'PKR'], JSON_THROW_ON_ERROR)),
+                'gateway' => $data['gateway'], 'contract_hash' => hash('sha256', json_encode(['mode' => $mode, 'subtotal' => $gross, 'discount' => $promotion['discount'], 'total' => $total, 'currency' => 'PKR'], JSON_THROW_ON_ERROR)),
                 'created_at' => now(), 'updated_at' => now(),
             ]);
             foreach ($prepared as $index => $line) {
+                $lineDiscount = $promotion['allocations'][$index] ?? '0.00';
+                $netLine = bcsub($line['lineTotal'], $lineDiscount, 2);
                 $itemId = DB::table('order_items')->insertGetId([
                     'order_id' => $orderId, 'item_type' => 'product', 'title' => $line['product']->name,
-                    'quantity' => $line['quantity'], 'unit_price' => $line['unit'], 'line_total' => $line['lineTotal'],
+                    'quantity' => $line['quantity'], 'unit_price' => $line['unit'], 'line_total' => $netLine,
                     'product_id' => $line['product']->id, 'outlet_id' => $outlet, 'outlet_external_id' => (string) $outlet,
                     'pos_variant_key' => $line['variant'], 'external_reference' => $line['product']->public_id,
                     'created_at' => now(), 'updated_at' => now(),
@@ -95,10 +110,11 @@ final class OrderTransactions
                     'reservation_id' => $reservationId, 'order_item_id' => $itemId, 'product_id' => $line['product']->id, 'outlet_id' => $outlet,
                     'website_order_item_id' => (string) $itemId, 'product_external_id' => $line['product']->public_id,
                     'outlet_external_id' => (string) $outlet, 'variant_key' => $line['variant'], 'quantity' => $line['quantity'],
-                    'unit_price' => $line['unit'], 'line_total' => $line['lineTotal'],
-                    'source_snapshot' => json_encode(['contract' => 'website-order-line.v1', 'product_id' => $line['product']->public_id,
+                    'unit_price' => $line['unit'], 'line_total' => $netLine,
+                    'source_snapshot' => json_encode(['contract' => 'website-order-line.v2', 'product_id' => $line['product']->public_id,
                         'product_code' => $line['product']->product_code, 'title' => $line['product']->name, 'unit_price' => $line['unit'],
-                        'quantity' => $line['quantity'], 'variant_key' => $line['variant']], JSON_THROW_ON_ERROR),
+                        'quantity' => $line['quantity'], 'variant_key' => $line['variant'], 'gross_line_total' => $line['lineTotal'],
+                        'discount_amount' => $lineDiscount, 'net_line_total' => $netLine], JSON_THROW_ON_ERROR),
                     'created_at' => now(), 'updated_at' => now(),
                 ]);
                 $this->stock->reserve($reservationLine);
@@ -117,7 +133,7 @@ final class OrderTransactions
             return ['order_id' => DB::table('orders')->where('id', $orderId)->value('public_id'), 'order_number' => $number,
                 'reservation_id' => DB::table('reservations')->where('id', $reservationId)->value('reservation_reference'),
                 'payment_id' => $paymentPublic, 'payment_status' => $data['gateway'] === 'cod' ? 'pending_collection' : 'pending',
-                'amount' => $total, 'currency' => 'PKR'];
+                'amount' => $total, 'currency' => 'PKR', 'promotion_claim_ids' => array_column($promotion['applications'], 'claim_id')];
         });
     }
 
@@ -284,6 +300,7 @@ final class OrderTransactions
             if ($reservation) {
                 $this->stock->release($reservation->id);
             }
+            $this->promotions->releaseOrder($order->id, 'customer_cancelled');
             DB::table('orders')->where('id', $order->id)->update(['status' => 'cancelled', 'fulfillment_status' => 'cancelled',
                 'cancelled_at' => now(), 'version' => $order->version + 1, 'updated_at' => now()]);
 
@@ -301,6 +318,7 @@ final class OrderTransactions
                 $order = DB::table('orders')->where('id', $reservation->order_id)->lockForUpdate()->firstOrFail();
                 DB::table('payments')->where('id', $reservation->website_payment_id)->whereNotIn('status', ['paid', 'paid_reconciliation'])
                     ->update(['status' => 'expired', 'failure_code' => 'reservation_expired', 'updated_at' => now()]);
+                $this->promotions->releaseOrder($order->id, 'reservation_expired');
                 DB::table('orders')->where('id', $order->id)->whereNotIn('payment_status', ['paid', 'paid_reconciliation'])
                     ->update(['status' => 'cancelled', 'fulfillment_status' => 'cancelled', 'payment_status' => 'expired',
                         'cancelled_at' => now(), 'version' => $order->version + 1, 'updated_at' => now()]);

@@ -1,0 +1,28 @@
+{
+  "point": "MT-2.14",
+  "title": "Promotion and coupon services",
+  "result": "PASS",
+  "focused_tests": {"tests": 12, "assertions": 91},
+  "full_backend_tests": {"tests": 173, "assertions": 5781},
+  "schema": {
+    "tables": 124,
+    "columns": 1548,
+    "foreign_keys": 247,
+    "indexes": 596,
+    "sha256": "5a2d4635f7d1eff99f3ee171fbe9c238372e37b9dc2c6504adf6a96be2dfa18a"
+  },
+  "rollback": {
+    "tables": 119,
+    "sha256": "2053c9a0e7ddaaf26f0dd8b91bb70e03b25deda8b6d3e30e09226e566369c0b0",
+    "reapply_identical": true
+  },
+  "gates": {
+    "pint": "PASS",
+    "composer_validate_strict": "PASS",
+    "composer_platform": "PASS",
+    "backend_build": "PASS",
+    "website_lint": "PASS",
+    "website_typecheck": "PASS",
+    "website_build": "PASS"
+  }
+}
