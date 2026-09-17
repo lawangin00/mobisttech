@@ -1,0 +1,43 @@
+{
+  "point": "MT-3.5",
+  "title": "Digital service catalogue and lead services",
+  "result": "PASS",
+  "date": "2026-09-17",
+  "schema": {
+    "tables": 156,
+    "columns": 1937,
+    "foreign_keys": 334,
+    "indexes": 749,
+    "sha256": "8afae7df3275944b34c2c5985aafa0088d5de0968ce73b20f4a8e5edcee504bd",
+    "rollback_baseline": {
+      "mode": "cms",
+      "tables": 148,
+      "columns": 1858,
+      "foreign_keys": 325,
+      "indexes": 729,
+      "sha256": "474c6a489c966df8cb30968fb03a53f15c148d269d27e5f09eadbb6cdaf748f5"
+    }
+  },
+  "tests": {
+    "focused": "3 passed / 25 assertions",
+    "affected": "46 passed / 4003 assertions",
+    "full_backend": "202 passed / 6623 assertions"
+  },
+  "gates": {
+    "pint": "175 files PASS",
+    "composer_validate_strict": "PASS",
+    "composer_platform_requirements": "PASS",
+    "optimize_clear": "PASS",
+    "backend_typecheck_vite_build": "PASS",
+    "website_lint_typecheck_next_build": "PASS"
+  },
+  "invariants": [
+    "Digital service discovery and new enquiries are governed by the published Website digital capability.",
+    "Service, package and add-on prices are server-owned and enquiry selections retain immutable price/version snapshots.",
+    "Public submission is idempotent and rate-limited using a database-serialized hourly fingerprint bucket.",
+    "Reference files are byte/type/size/digest validated and private storage identities are never exposed publicly.",
+    "Consultation preferences are timezone-safe and external calendar integration remains disabled by default.",
+    "Mode disablement blocks new digital leads without deleting existing request/history records.",
+    "Lead assignment, follow-up, notes and status changes are permission-scoped and append-only audited."
+  ]
+}
