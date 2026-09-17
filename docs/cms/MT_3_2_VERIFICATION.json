@@ -1,0 +1,30 @@
+{
+  "roadmap_point": "MT-3.2",
+  "title": "Dynamic CMS, media and presentation services",
+  "result": "PASS",
+  "schema": {
+    "tables": 148,
+    "columns": 1858,
+    "foreign_keys": 325,
+    "indexes": 729,
+    "schema_sha256": "474c6a489c966df8cb30968fb03a53f15c148d269d27e5f09eadbb6cdaf748f5",
+    "rollback_mt_3_1_sha256": "7174016314428190e333e1caf1906a43d94ef902148036f893e2e4fdcccd6c92"
+  },
+  "focused_cms_tests": {"tests": 3, "assertions": 48},
+  "affected_regression": {"tests": 33, "assertions": 3878},
+  "full_backend": {"tests": 196, "assertions": 6547},
+  "pint_files": 170,
+  "composer_validate_strict": "PASS",
+  "composer_platform_requirements": "PASS",
+  "backend_typecheck_vite_build": "PASS",
+  "website_eslint_typecheck_next_build": "PASS",
+  "draft_content_private_until_publish": true,
+  "publication_rollback_and_cache_versioning": true,
+  "media_bytes_verified_server_side": true,
+  "typed_policy_recent_auth_and_review_gates": true,
+  "protected_routes_and_policy_slugs": true,
+  "reusable_multi_software_template": true,
+  "software_release_history_and_impact_review": true,
+  "canonical_slug_redirect_history": true,
+  "legacy_pos_and_transaction_snapshots_unchanged": true
+}

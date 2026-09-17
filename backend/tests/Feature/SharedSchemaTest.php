@@ -34,6 +34,11 @@ class SharedSchemaTest extends TestCase
                     'issue_description', 'received_condition', 'accessories_received', 'assigned_to', 'diagnosis', 'resolution', 'internal_notes', 'received_at',
                     'expected_completion_at', 'resolved_at', 'delivered_at', 'customer_satisfied', 'follow_up_required', 'follow_up_at', 'follow_up_notes',
                     'activity_log', 'handled_by_admin_id', 'handled_by_name', 'warranty_snapshot', 'warranty_expires_at', 'public_id', 'version', 'active_stock_unit_id'],
+                'site_configuration_revisions' => ['id', 'domain', 'version', 'state', 'snapshot', 'created_by_user_id', 'created_by_admin_id', 'published_by_user_id', 'published_by_admin_id', 'published_at', 'restored_from_revision_id', 'created_at', 'updated_at'],
+                'site_managed_pages' => ['id', 'public_id', 'version', 'current_revision_id', 'title', 'slug', 'content', 'template', 'show_in_navigation', 'publish_state', 'published_at', 'created_by_user_id', 'created_by_admin_id', 'updated_by_user_id', 'updated_by_admin_id', 'created_at', 'updated_at', 'content_format', 'seo_title', 'meta_description', 'canonical_url', 'social_title', 'social_description', 'social_image_media_id', 'is_indexable', 'content_purpose', 'capability_scope', 'structured_content', 'protected_slug'],
+                'site_media_assets' => ['id', 'disk', 'path', 'original_name', 'mime_type', 'extension', 'byte_size', 'width', 'height', 'aspect_ratio', 'sha256', 'alt_text', 'status', 'uploaded_by_user_id', 'uploaded_by_admin_id', 'created_at', 'updated_at'],
+                'site_navigation_items' => ['id', 'key', 'parent_id', 'label', 'destination_type', 'destination_key', 'destination_payload', 'sort_order', 'is_visible', 'is_enabled', 'target_behavior', 'capability_scope', 'created_by_user_id', 'created_by_admin_id', 'updated_by_user_id', 'updated_by_admin_id', 'created_at', 'updated_at'],
+                'site_settings' => ['id', 'key', 'value', 'group', 'label', 'sort_order', 'updated_by_admin_id', 'created_at', 'updated_at'],
                 'invoices' => [...array_slice(array_column($table['columns'], 'name'), 0, 7), 'customer_email', ...array_slice(array_column($table['columns'], 'name'), 7)],
                 'orders' => [...array_column($table['columns'], 'name'), 'owner_scope_hash'],
                 'payments' => [...array_column($table['columns'], 'name'), 'intent_hash', 'failure_code', 'reconciliation_required_at', 'completed_at'],
@@ -75,7 +80,8 @@ class SharedSchemaTest extends TestCase
             }
             $fks = Schema::getForeignKeys($name);
             $this->assertCount(count($table['foreign_keys']) + match ($name) {
-                'return_lines' => 3, 'claims' => 1, 'backup_records' => 1, default => 0,
+                'return_lines' => 3, 'claims' => 1, 'backup_records' => 1, 'site_configuration_revisions' => 2,
+                'site_managed_pages' => 3, 'site_media_assets' => 1, 'site_navigation_items' => 2, 'site_settings' => 1, default => 0,
             }, $fks, $name);
             foreach ($fks as $relation) {
                 $this->assertSame('restrict', strtolower($relation['on_delete']), $name);
