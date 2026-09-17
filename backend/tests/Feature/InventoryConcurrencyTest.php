@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Cash\CashSessionOperations;
 use App\Catalog\ProductDefinitions;
 use App\Inventory\AcquisitionDocuments;
 use App\Inventory\StockLedger;
@@ -24,7 +25,7 @@ class InventoryConcurrencyTest extends TestCase
     use InventoryFixture;
 
     // These tests deliberately commit fixtures so independent MySQL connections can see them.
-    private array $tables = ['pos_refund_allocations', 'pos_settlement_events', 'pos_tender_allocations', 'pos_payment_destinations', 'identity_audit_events', 'stock_transfer_receipt_lines', 'stock_transfer_receipts', 'stock_transfer_units', 'stock_transfer_lines', 'stock_transfers', 'stocktake_approvals', 'stocktake_recounts', 'stocktake_counts', 'stocktake_unit_baselines', 'stocktake_lines', 'stocktake_sessions', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
+    private array $tables = ['cash_entries', 'pos_refund_allocations', 'pos_settlement_events', 'pos_tender_allocations', 'cash_sessions', 'pos_payment_destinations', 'identity_audit_events', 'stock_transfer_receipt_lines', 'stock_transfer_receipts', 'stock_transfer_units', 'stock_transfer_lines', 'stock_transfers', 'stocktake_approvals', 'stocktake_recounts', 'stocktake_counts', 'stocktake_unit_baselines', 'stocktake_lines', 'stocktake_sessions', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
         'purchase_order_lines', 'purchase_orders', 'supplier_contacts', 'reorder_policies', 'suppliers', 'domain_events', 'publication_versions', 'idempotency_requests', 'claim_events', 'claims', 'return_lines', 'returns', 'monetary_adjustments',
         'inventory_custody_holds', 'stock_unit_lineage', 'reservation_allocations', 'reservation_lines', 'reservations', 'product_imeis', 'active_imeis', 'stock_movements', 'stock_units',
         'stock_acquisitions', 'sales', 'invoices', 'order_items', 'orders', 'customers', 'document_sequences', 'pos_master_data_usages', 'products',
@@ -257,6 +258,7 @@ class InventoryConcurrencyTest extends TestCase
         $product = $this->product();
         $this->acquire($product);
         $service = app(PosPaymentOperations::class);
+        app(CashSessionOperations::class)->open($this->actor, $this->outlet, (string) Str::uuid(), ['opening_cash' => '0.00']);
         $cash = $service->createDestination($this->actor, $this->outlet, (string) Str::uuid(), [
             'method' => 'cash', 'display_name' => 'Race Cash Drawer',
         ]);
@@ -283,6 +285,7 @@ class InventoryConcurrencyTest extends TestCase
         $product = $this->product();
         $this->acquire($product);
         $service = app(PosPaymentOperations::class);
+        app(CashSessionOperations::class)->open($this->actor, $this->outlet, (string) Str::uuid(), ['opening_cash' => '0.00']);
         $cash = $service->createDestination($this->actor, $this->outlet, (string) Str::uuid(), [
             'method' => 'cash', 'display_name' => 'Last Stock Cash Drawer',
         ]);
@@ -295,6 +298,43 @@ class InventoryConcurrencyTest extends TestCase
         $this->assertSame(1, DB::table('sales')->count());
         $this->assertSame(1, DB::table('pos_tender_allocations')->count());
         $this->assertSame(1, $product->fresh()->sold_qty);
+    }
+
+    public function test_separate_mysql_connections_cannot_close_same_cash_session_twice(): void
+    {
+        $product = $this->product();
+        $session = app(CashSessionOperations::class)->open($this->actor, $this->outlet, (string) Str::uuid(), ['opening_cash' => '100.00']);
+        $base = ['operation' => 'cash_close', 'actor' => $this->actor->id, 'outlet' => $this->outlet->id,
+            'session' => $session['session_id'], 'barrier_product' => $product->id,
+            'input' => ['session_version' => 1, 'actual_cash' => '100.00']];
+        $results = $this->race([$product->id], [[...$base, 'key' => (string) Str::uuid()], [...$base, 'key' => (string) Str::uuid()]]);
+        $this->oneWinner($results);
+        $this->assertSame('closed', DB::table('cash_sessions')->where('public_id', $session['session_id'])->value('status'));
+        $this->assertSame(1, DB::table('cash_sessions')->where('public_id', $session['session_id'])->count());
+    }
+
+    public function test_cash_close_vs_sale_never_omits_committed_cash(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $session = app(CashSessionOperations::class)->open($this->actor, $this->outlet, (string) Str::uuid(), ['opening_cash' => '0.00']);
+        $cash = app(PosPaymentOperations::class)->createDestination($this->actor, $this->outlet, (string) Str::uuid(), [
+            'method' => 'cash', 'display_name' => 'Closing Race Drawer',
+        ]);
+        $close = ['operation' => 'cash_close', 'actor' => $this->actor->id, 'outlet' => $this->outlet->id,
+            'session' => $session['session_id'], 'key' => (string) Str::uuid(), 'barrier_product' => $product->id,
+            'input' => ['session_version' => 1, 'actual_cash' => '0.00', 'variance_reason' => 'Synthetic close race']];
+        $sale = ['operation' => 'pos_payment_sale', 'actor' => $this->actor->id, 'outlet' => $this->outlet->id,
+            'key' => (string) Str::uuid(), 'barrier_product' => $product->id, 'input' => [
+                'sale' => ['discount' => '0.00', 'lines' => [['product_id' => $product->public_id, 'quantity' => 1]]],
+                'payments' => [['method' => 'cash', 'destination_id' => $cash['destination_id'], 'amount' => '200.02', 'cash_tendered' => '200.02']],
+            ]];
+        $results = $this->race([$product->id], [$close, $sale]);
+        $this->assertContains('committed', array_column($results, 'outcome'));
+        $closed = json_decode(DB::table('cash_sessions')->where('public_id', $session['session_id'])->value('closing_snapshot'), true);
+        $sold = DB::table('invoices')->count() === 1;
+        $this->assertSame($sold ? '200.02' : '0.00', $closed['expected_cash']);
+        $this->assertSame($sold ? 1 : 0, DB::table('pos_tender_allocations')->whereNotNull('cash_session_id')->count());
     }
 
     private function submittedStocktake($product): array

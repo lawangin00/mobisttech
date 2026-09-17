@@ -1,5 +1,6 @@
 <?php
 
+use App\Cash\CashSessionOperations;
 use App\Inventory\InventoryOperations;
 use App\Inventory\StocktakeOperations;
 use App\Inventory\StockTransferOperations;
@@ -33,6 +34,9 @@ try {
         DB::table('products')->count();
         echo "ATTEMPT\n";
         flush();
+        if (isset($input['barrier_product'])) {
+            DB::table('products')->where('id', $input['barrier_product'])->lockForUpdate()->firstOrFail();
+        }
 
         return match ($input['operation']) {
             'reserve' => app(TransactionalStock::class)->reserve($input['id']),
@@ -51,6 +55,8 @@ try {
                 $input['transfer'], $input['key'], $input['input']),
             'pos_payment_sale' => app(PosPaymentOperations::class)->sell(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
                 $input['key'], $input['input']),
+            'cash_close' => app(CashSessionOperations::class)->close(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
+                $input['session'], $input['key'], $input['input']),
             default => throw new LogicException('Unknown synthetic operation.'),
         };
     }, 3);

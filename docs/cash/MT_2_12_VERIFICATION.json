@@ -1,0 +1,19 @@
+{
+  "point": "MT-2.12",
+  "title": "Cash sessions and operational expense services",
+  "date": "2026-09-17",
+  "result": "PASS",
+  "requirements": ["docs/PROJECT_IMPLEMENTATION_ROADMAP.md#MT-2.12", "docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md#4.4", "docs/PROJECT_REQUIREMENTS_DOCUMENTS_PAYMENTS_LEGAL_MANUAL_v1.0.md#U"],
+  "schema": {"database":"mobisttech_test","mysql":"8.4.11","port":13306,"timezone":"+00:00","strict":true,"tables":116,"columns":1454,"foreign_keys":224,"indexes":559,"sha256":"47692f4c7a369c729c24da8fddffdc28d696592122a76fc8019fe6e15a125cee","business_rows":0,"canonical_seed_rows":302},
+  "rollback_baseline": {"mode":"payments","result":"PASS","tables":114,"columns":1416,"foreign_keys":215,"indexes":540,"sha256":"e4909c96ddc9ff12bf637adb4118f9ac803de19202fba3fc6cbc8dfb3198063f"},
+  "focused_tests": {"result":"PASS","tests":21,"assertions":1080,"scope":["CashSessionTest","PosPaymentTest","InventoryConcurrencyTest"]},
+  "full_backend_tests": {"result":"PASS","tests":167,"assertions":5734},
+  "formatting": {"result":"PASS","tool":"Laravel Pint","files_checked":148},
+  "composer": {"validate_strict":"PASS","platform_requirements":"PASS"},
+  "laravel_cache": {"optimize":"PASS","optimize_clear":"PASS"},
+  "pos_build": {"result":"PASS","typecheck":"PASS","vite":"8.2.2","modules":569},
+  "website_build": {"result":"PASS","lint":"PASS","typecheck":"PASS","next":"16.3.3"},
+  "git_diff_check": "PASS (line-ending conversion warnings only)",
+  "verified_behaviors": ["exact cash reconciliation", "approved cash-in/expense/payout control", "cash tender/refund session attribution", "non-cash destination settlement separation", "variance approval", "immutable closing snapshot", "idempotent retry", "concurrent close arbitration", "close-versus-sale completeness", "populated financial-history rollback refusal"],
+  "boundaries": ["backend services only", "MT-3.1 owns broader reporting/document communication", "MT-4.6 owns cash/day-closing interfaces", "no general ledger", "no private source-data migration", "no provider activation", "no external message", "no production mutation"]
+}

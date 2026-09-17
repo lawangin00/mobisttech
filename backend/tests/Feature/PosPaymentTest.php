@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Cash\CashSessionOperations;
 use App\Models\Admin;
 use App\Models\Outlet;
 use App\Payments\PosPaymentOperations;
@@ -20,6 +21,7 @@ class PosPaymentTest extends TestCase
     {
         parent::setUp();
         $this->inventoryFixture();
+        app(CashSessionOperations::class)->open($this->actor, $this->outlet, 'mt220-cash-session-'.Str::uuid(), ['opening_cash' => '0.00']);
     }
 
     public function test_split_tender_is_exact_atomic_idempotent_and_keeps_website_channels_fixed(): void

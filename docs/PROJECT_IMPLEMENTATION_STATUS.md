@@ -45,11 +45,11 @@ Last completed stage: MT-1 - Migration inventory and design
 
 Current In Progress point: None
 
-Status: MT-0 and MT-1 complete. MT-2 is in progress. 18/56 complete, 38 pending. MT-2.20 is complete; MT-2.12 is not started.
+Status: MT-0 and MT-1 complete. MT-2 is in progress. 19/56 complete, 37 pending. MT-2.12 is complete; MT-2.13 is pending.
 
-Last completed point: MT-2.20 - POS payment channels, split tenders and settlement reconciliation
+Last completed point: MT-2.12 - Cash sessions and operational expense services
 
-Next pending point: MT-2.12 - Cash sessions and operational expense services
+Next pending point: MT-2.13 - Trade-in and buyback services
 
 Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, unified Admin/customer authorization, Team Member Role/delegation authority, centralized Admin/Customer session policy, product/master-data, inventory/acquisition/stock transactions, internal POS sale/invoice/accepted-return authority, warranty/claim authority, supplier/purchase-order/partial-receipt authority, reorder recommendations, stocktake/cycle-count authority, inter-outlet transfer/custody authority, POS Payment Methods/Destinations and split-tender/refund/settlement authority, canonical business profile and secure Google integration/backup services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales/claim/procurement/stocktake mapping uses synthetic rows only. Transfer verification also uses synthetic target rows only. Real MySQL stock, return, claim, procurement, stocktake, transfer and POS payment concurrency and the existing `mobisttech-drive:` temporary read/write/delete check are verified. Canonical Invoice/Warranty delivery, optional sale-email capture, final legal/policy content, the reusable Software Product Admin/CMS/publication model, licensing/notice review and the complete product user manual are approved future work at their named points. Actual private-data migration, authentic Gmail OAuth consent/test send, production Google verification, authentic provider payment/refund execution, reset/publication workflows, transfer HTTP/POS interfaces and complete POS/Website interfaces, rendered warranty documents, brand, Control and CI remain pending. Backend tests do not constitute live Gmail/provider, payment/refund, complete UI, rendered-document or private-data import acceptance.
 
@@ -325,6 +325,16 @@ The additive migration yields 114 tables, 1,416 columns, 215 foreign keys and 54
 
 `docs/payments/README.md` records the payment/destination/split-tender/settlement/refund contracts and exclusions; `docs/payments/MT_2_20_VERIFICATION.json` records exact schema, concurrency, regression, source-boundary and artifact evidence. Approved Goal/Preferences/addendum/payment requirement, Source of Truth and structural roadmap Markdown/DOCX remain unchanged, so Word regeneration is neither required nor performed. Protected source repositories remain clean under read-only inspection. No authentic provider activation, automatic external refund, private-data migration, external message, deployment or production mutation occurred. HTTP/UI/reporting publication and cash-session/day-closing work remain at their named later points.
 
+## MT-2.12 cash sessions and operational expense services closure - 2026-09-17
+
+The shared Laravel backend now owns outlet-scoped cash sessions, opening cash, approved Cash In, operational expenses/payouts, Cash refund attribution, closing counts and immutable Day Closing snapshots. Exact reconciliation is `Opening Cash + Cash Sales + approved Cash In - Cash Refunds - Expenses/Payouts = Expected Cash`; Actual Cash records variance, and non-zero variance requires reason plus approval authority. Non-cash Payment Destination gross receipts, settlement fees/adjustments, expected net, confirmed received net and settlement variance remain separate from drawer cash and from the customer sale amount.
+
+Cash POS tenders and Cash refunds bind to the active outlet session while non-cash activity can remain independent. Outlet/session locks, version preconditions and durable idempotency reject duplicate close and ensure a concurrent close-versus-sale cannot omit committed cash. Closed snapshots retain destination display evidence and SHA-256 integrity independently of later configuration edits. Populated cash/tender/refund history blocks unsafe migration rollback, and reset retention classifies cash sessions/entries as transactional history.
+
+The additive migration yields 116 tables, 1,454 columns, 224 foreign keys and 559 indexes with normalized schema hash `47692f4c7a369c729c24da8fddffdc28d696592122a76fc8019fe6e15a125cee`. One-step rollback restores the exact MT-2.20 schema hash `e4909c96ddc9ff12bf637adb4118f9ac803de19202fba3fc6cbc8dfb3198063f`, and reapply restores the identical MT-2.12 hash. Focused cash/payment/concurrency verification passes 21 tests / 1,080 assertions; the full backend suite passes 167 tests / 5,734 assertions. Pint, strict Composer/platform checks, optimize/clear, POS TypeScript/Vite production build and Website lint/typecheck/Next.js 16.3.3 production build pass. Detailed evidence is in `docs/cash/MT_2_12_VERIFICATION.json`.
+
+Approved Goal/Preferences/addendum/consolidated requirement, Source of Truth and structural roadmap Markdown/DOCX remain unchanged, so Word regeneration is neither required nor performed. No protected source runtime/database/remote, private business data, provider, external message, deployment or production system is changed. Broader reports remain MT-3.1 and cash/day-closing UI remains MT-4.6. Intended synchronization remains only this monorepo's private `origin/main`; MT-2.13 remains not started.
+
 ## Roadmap point state - v1.10
 
 This is the live status list. Completed counts are preserved from verified Git checkpoints; newly inserted points start Pending and advance only through their own verified checkpoint. The structural roadmap defines scopes and acceptance.
@@ -349,7 +359,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-2.10 | Stocktake and cycle-count services | Completed |
 | MT-2.11 | Inter-outlet stock transfer services | Completed |
 | MT-2.20 | POS payment channels, split tenders and settlement reconciliation | Completed |
-| MT-2.12 | Cash sessions and operational expense services | Pending |
+| MT-2.12 | Cash sessions and operational expense services | Completed |
 | MT-2.13 | Trade-in and buyback services | Pending |
 | MT-2.14 | Promotion and coupon services | Pending |
 | MT-2.17 | Validated bulk data workflows | Pending |
@@ -390,7 +400,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 
 ## Recovery and next action
 
-Do not re-execute the eighteen completed points, addendum reconciliation, unified Admin/Google remediation, Team Member/session remediation, consolidated-requirement structural reconciliation, Software Product publishing structural reconciliation, the MT-2.10 stocktake closure, the MT-2.11 transfer closure or the MT-2.20 payment closure. The project is 18/56 complete with 38 pending. The next applicable Y/Proceed executes only `MT-2.12 - Cash sessions and operational expense services`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r15 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` and adopts Universal Registry 1.20 / System 7.7 without changing application position. Roadmap v1.10 and its same-basename DOCX are the verified structural plan. Sessions using an older loaded registry must refresh before project-control aliases; new/unbound sessions resolve the Project ID and load the canonical current registry through the bootstrap. Approved addendum, consolidated-requirement and Software Product publishing workflows remain assigned to their named later points.
+Do not re-execute the eighteen completed points, addendum reconciliation, unified Admin/Google remediation, Team Member/session remediation, consolidated-requirement structural reconciliation, Software Product publishing structural reconciliation, the MT-2.10 stocktake closure, the MT-2.11 transfer closure or the MT-2.20 payment closure. The project is 19/56 complete with 37 pending. The next applicable Y/Proceed executes only `MT-2.13 - Trade-in and buyback services`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r15 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` and adopts Universal Registry 1.20 / System 7.7 without changing application position. Roadmap v1.10 and its same-basename DOCX are the verified structural plan. Sessions using an older loaded registry must refresh before project-control aliases; new/unbound sessions resolve the Project ID and load the canonical current registry through the bootstrap. Approved addendum, consolidated-requirement and Software Product publishing workflows remain assigned to their named later points.
 
 ## HOLD / decisions
 

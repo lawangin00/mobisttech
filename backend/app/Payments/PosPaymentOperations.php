@@ -2,6 +2,7 @@
 
 namespace App\Payments;
 
+use App\Cash\CashSessionOperations;
 use App\Identity\Access;
 use App\Identity\IdentityAudit;
 use App\Migration\SourceRow;
@@ -115,6 +116,8 @@ final class PosPaymentOperations
         ])->validate();
 
         return $this->mutate($actor, $outlet, 'sale', $key, $input, 'shop.sales', function (Admin $fresh) use ($outlet, $key, $input) {
+            $requiresCash = collect($input['payments'])->contains(fn ($payment) => is_array($payment) && ($payment['method'] ?? null) === 'cash');
+            $cashSessionId = app(CashSessionOperations::class)->transactionSession($outlet, $requiresCash);
             $sale = $this->sales->sell($fresh, $outlet, 'mt220-'.substr(hash('sha256', $key), 0, 48), $input['sale']);
             $invoice = DB::table('invoices')->where('public_id', $sale['invoice_id'])->where('outlet_id', $outlet->id)->lockForUpdate()->firstOrFail();
             if ($invoice->order_id !== null) {
@@ -136,7 +139,7 @@ final class PosPaymentOperations
             $allocationResults = [];
             $change = '0.00';
             foreach ($prepared as $row) {
-                $allocationResults[] = $this->insertTender($fresh, $invoice, $row);
+                $allocationResults[] = $this->insertTender($fresh, $invoice, $row, $cashSessionId);
                 $change = bcadd($change, $row['change_returned'], 2);
             }
             IdentityAudit::record('admin', $fresh->id, 'pos_sale_tendered', 'invoice:'.$invoice->public_id, $outlet->id);
@@ -218,6 +221,7 @@ final class PosPaymentOperations
                 ->where('invoice_id', $invoice->id)->where('outlet_id', $outlet->id)->lockForUpdate()->firstOrFail();
             $destination = $this->lockDestination($outlet, $data['refund_destination_id']);
             $this->assertDestinationAvailable($destination);
+            $cashSessionId = app(CashSessionOperations::class)->transactionSession($outlet, $destination->method === 'cash');
             $amount = SourceRow::money($data['amount']);
             if (bccomp($amount, '0.00', 2) <= 0) {
                 throw ValidationException::withMessages(['amount' => 'Refund amount must be positive.']);
@@ -261,7 +265,7 @@ final class PosPaymentOperations
             $public = (string) Str::uuid();
             DB::table('pos_refund_allocations')->insert([
                 'public_id' => $public, 'return_id' => $return->id, 'invoice_id' => $invoice->id, 'outlet_id' => $outlet->id,
-                'original_tender_allocation_id' => $original->id, 'refund_destination_id' => $destination->id, 'amount' => $amount,
+                'cash_session_id' => $cashSessionId, 'original_tender_allocation_id' => $original->id, 'refund_destination_id' => $destination->id, 'amount' => $amount,
                 'original_method' => $original->method, 'refund_method' => $destination->method, 'is_override' => $isOverride,
                 'override_reason' => $reason, 'requested_by_admin_id' => $fresh->id, 'approved_by_admin_id' => $approver?->id,
                 'transaction_reference' => $snapshot['transaction_reference'],
@@ -331,13 +335,13 @@ final class PosPaymentOperations
             'reconciliation_state' => $data['method'] === 'cash' ? 'cash' : 'pending', 'actor_id' => $actor->id];
     }
 
-    private function insertTender(Admin $actor, object $invoice, array $row): array
+    private function insertTender(Admin $actor, object $invoice, array $row, ?int $cashSessionId): array
     {
         $snapshotJson = json_encode($row['destination_snapshot'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
         $public = (string) Str::uuid();
         DB::table('pos_tender_allocations')->insert([
             'public_id' => $public, 'invoice_id' => $invoice->id, 'outlet_id' => $invoice->outlet_id,
-            'payment_destination_id' => $row['destination']->id, 'sequence' => $row['sequence'], 'method' => $row['method'],
+            'cash_session_id' => $cashSessionId, 'payment_destination_id' => $row['destination']->id, 'sequence' => $row['sequence'], 'method' => $row['method'],
             'amount' => $row['amount'], 'cash_tendered' => $row['cash_tendered'], 'change_returned' => $row['change_returned'],
             'transaction_reference' => $row['transaction_reference'], 'reconciliation_reference' => $row['reconciliation_reference'],
             'destination_snapshot' => $snapshotJson, 'snapshot_sha256' => hash('sha256', $snapshotJson),

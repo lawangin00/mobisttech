@@ -14,7 +14,7 @@ final class ResetRetention
 
     public const GROUPS = [
         'transactional' => ['claim_events', 'claims', 'invoices', 'sales', 'reservation_allocations', 'reservation_lines', 'reservations', 'order_items', 'orders', 'payments',
-            'product_reviews', 'project_quotes', 'service_requests', 'payment_receipts', 'returns', 'return_lines', 'refunds', 'pos_tender_allocations', 'pos_settlement_events', 'pos_refund_allocations', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones'],
+            'product_reviews', 'project_quotes', 'service_requests', 'payment_receipts', 'returns', 'return_lines', 'refunds', 'pos_tender_allocations', 'pos_settlement_events', 'pos_refund_allocations', 'cash_sessions', 'cash_entries', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones'],
         'inventory' => ['products', 'stock_units', 'stock_movements', 'stock_acquisitions', 'product_imeis', 'active_imeis', 'product_listings', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references',
             'suppliers', 'supplier_contacts', 'purchase_orders', 'purchase_order_lines', 'purchase_order_receipts', 'purchase_order_receipt_lines', 'purchase_order_events', 'reorder_policies', 'stocktake_sessions', 'stocktake_lines', 'stocktake_unit_baselines', 'stocktake_counts', 'stocktake_recounts', 'stocktake_approvals',
             'stock_transfers', 'stock_transfer_lines', 'stock_transfer_units', 'stock_transfer_receipts', 'stock_transfer_receipt_lines'],
