@@ -1,0 +1,35 @@
+{
+  "point": "MT-2.17",
+  "title": "Validated bulk data workflows",
+  "result": "PASS",
+  "scope": ["catalogue", "price", "master_data", "inventory"],
+  "formats": ["csv", "xlsx-style-cell-matrix"],
+  "focused_tests": {
+    "tests": 5,
+    "assertions": 39,
+    "result": "PASS"
+  },
+  "backend_regression": {
+    "tests": 178,
+    "assertions": 5820,
+    "result": "PASS"
+  },
+  "pint": {"files": 156, "result": "PASS"},
+  "composer_validate_strict": "PASS",
+  "composer_platform_requirements": "PASS",
+  "backend_typecheck_vite_build": "PASS",
+  "website_eslint": "PASS",
+  "website_typecheck": "PASS",
+  "website_next_production_build": "PASS",
+  "schema_change": false,
+  "verified_boundaries": [
+    "permission-scoped preview/import/export",
+    "formula-leading import rejection and export escaping",
+    "whole-batch rollback and replay safety",
+    "row-level recovery and replay safety",
+    "exact money values through authoritative catalogue services",
+    "stock/hold invariants through InventoryOperations",
+    "operational versus historical-import separation",
+    "sensitive export field minimization"
+  ]
+}
