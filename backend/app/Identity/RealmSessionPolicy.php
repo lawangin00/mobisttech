@@ -30,12 +30,7 @@ final class RealmSessionPolicy
 
     public function assertActive(Request $request, string $realm, object $user): ?string
     {
-        $last = (int) $request->session()->get('identity_last_human_activity_at', 0);
-        if ($realm === 'admin' && $user instanceof Admin) {
-            $databaseLast = DB::table('account_sessions')->where('guard', 'admin')->where('account_id', $user->id)
-                ->where('session_id', $request->session()->getId())->whereNull('revoked_at')->value('last_human_activity');
-            $last = $databaseLast ? max($last, strtotime((string) $databaseLast)) : $last;
-        }
+        $last = $this->lastActivityTimestamp($request, $realm, $user);
         if ($last <= 0 || now()->timestamp - $last >= $this->for($realm)['inactivity_minutes'] * 60) {
             return 'Session expired due to inactivity.';
         }
@@ -81,6 +76,35 @@ final class RealmSessionPolicy
             'expire_on_close_without_remember' => true,
             'recent_auth_minutes' => $policy['recent_auth_minutes'],
         ];
+    }
+
+    public function publicState(Request $request, string $realm, object $user): array
+    {
+        $last = $this->lastActivityTimestamp($request, $realm, $user);
+        $policy = $this->for($realm);
+        $expires = $last > 0 ? $last + ((int) $policy['inactivity_minutes'] * 60) : 0;
+        $warning = $realm === 'admin' && $expires > 0
+            ? $expires - ((int) $policy['warning_minutes'] * 60)
+            : null;
+
+        return [
+            'server_epoch' => now()->timestamp,
+            'last_human_activity_epoch' => $last,
+            'warning_epoch' => $warning,
+            'expires_epoch' => $expires,
+        ];
+    }
+
+    private function lastActivityTimestamp(Request $request, string $realm, object $user): int
+    {
+        $last = (int) $request->session()->get('identity_last_human_activity_at', 0);
+        if ($realm === 'admin' && $user instanceof Admin) {
+            $databaseLast = DB::table('account_sessions')->where('guard', 'admin')->where('account_id', $user->id)
+                ->where('session_id', $request->session()->getId())->whereNull('revoked_at')->value('last_human_activity');
+            $last = $databaseLast ? max($last, strtotime((string) $databaseLast)) : $last;
+        }
+
+        return $last;
     }
 
     private function isHumanActivity(Request $request): bool

@@ -39,17 +39,17 @@ System 7.7 preserves the Git-backed bootstrap loading path and durable project/s
 
 ## Verified position
 
-Active stage: MT-4 - React POS and administration (Pending)
+Active stage: MT-4 - React POS and administration (In Progress)
 
 Last completed stage: MT-3 - Administration, content and REST APIs
 
 Current In Progress point: None
 
-Status: MT-0 through MT-3 complete. MT-4 is next. 33/56 complete, 23 pending. No point is currently In Progress.
+Status: MT-0 through MT-3 complete. MT-4 is in progress. 34/56 complete, 22 pending. No point is currently In Progress.
 
-Last completed point: MT-3.4 - Versioned REST API and contract acceptance
+Last completed point: MT-4.1 - POS shell, authentication and navigation
 
-Next pending point: MT-4.1 - POS shell, authentication and navigation
+Next pending point: MT-4.2 - POS inventory and transaction interfaces
 
 Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, unified Admin/customer authorization, Team Member Role/delegation authority, centralized Admin/Customer session policy, product/master-data, inventory/acquisition/stock transactions, internal POS sale/invoice/accepted-return authority, warranty/claim authority, supplier/purchase-order/partial-receipt authority, reorder recommendations, stocktake/cycle-count authority, inter-outlet transfer/custody authority, POS Payment Methods/Destinations and split-tender/refund/settlement authority, customer loyalty earn/redeem/history authority, paid repair intake/estimate/parts/payment/history authority, canonical business profile and secure Google integration/backup services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales/claim/procurement/stocktake mapping uses synthetic rows only. Transfer verification also uses synthetic target rows only. Real MySQL stock, return, claim, procurement, stocktake, transfer, POS payment, loyalty and paid-repair-part concurrency and the existing `mobisttech-drive:` temporary read/write/delete check are verified. Canonical Invoice/Warranty delivery, optional sale-email capture, six managed communication templates, truthful delivery audit, scoped operational reporting and retail-label backend projections now exist. The typed Website CMS, policy revision/publication authority and reusable Software Product backend publication model now exist. Final business-specific policy copy/sign-off, licensing/notice review, Admin/public UI realization and the complete product user manual remain approved future work at their named points. The versioned Website operating-mode publication workflow now exists with preview/diff, capability gates, audit/revisions, rollback and cache revalidation. The Digital Service catalogue now owns authoritative quote/fixed/starting-from/package and add-on pricing, progressive mode-gated enquiries, private reference uploads, timezone-safe consultation preferences and a permission-scoped lightweight lead pipeline with immutable history. Client project services now own explicit Customer-account project ownership, versioned lifecycle, immutable proposal revisions, canonical exact milestone schedules, private reference/delivery files and aggregate conversion reporting while reusing the existing payment authority. Actual private-data migration, authentic Gmail OAuth consent/test send, production Google verification, authentic provider payment/refund execution, production reset authorization, transfer/POS interfaces and complete POS/Website interfaces, rendered warranty documents, brand, Control and CI remain pending. Backend tests do not constitute live Gmail/provider, payment/refund, complete UI, rendered-document or private-data import acceptance.
 
@@ -384,7 +384,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-3.3 | Audit, configuration, backups and integrations | Completed |
 | MT-3.8 | Guarded data reset services | Completed |
 | MT-3.4 | Versioned REST API and contract acceptance | Completed |
-| MT-4.1 | POS shell, authentication and navigation | Pending |
+| MT-4.1 | POS shell, authentication and navigation | Completed |
 | MT-4.2 | POS inventory and transaction interfaces | Pending |
 | MT-4.5 | Procurement and stock control interfaces | Pending |
 | MT-4.6 | Cash, trade-in and repair interfaces | Pending |
@@ -410,7 +410,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 
 ## Recovery and next action
 
-Do not re-execute completed roadmap points or prior reconciliations/closures. The project is 33/56 complete with 23 pending. MT-3 is complete. The next applicable Y/Proceed executes only `MT-4.1 - POS shell, authentication and navigation`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r15 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` and adopts Universal Registry 1.20 / System 7.7 without changing application position. Roadmap v1.10 and its same-basename DOCX are the verified structural plan. Sessions using an older loaded registry must refresh before project-control aliases; new/unbound sessions resolve the Project ID and load the canonical current registry through the bootstrap. Approved addendum, consolidated-requirement and Software Product publishing workflows remain assigned to their named later points.
+Do not re-execute completed roadmap points or prior reconciliations/closures. The project is 34/56 complete with 22 pending. MT-3 is complete and MT-4 is in progress. The next applicable Y/Proceed executes only `MT-4.2 - POS inventory and transaction interfaces`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r15 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` and adopts Universal Registry 1.20 / System 7.7 without changing application position. Roadmap v1.10 and its same-basename DOCX are the verified structural plan. Sessions using an older loaded registry must refresh before project-control aliases; new/unbound sessions resolve the Project ID and load the canonical current registry through the bootstrap. Approved addendum, consolidated-requirement and Software Product publishing workflows remain assigned to their named later points.
 
 ## HOLD / decisions
 
@@ -554,3 +554,14 @@ No source-repository write, source-data migration, source runtime action, real p
 - Exact schema proof passed at 170 tables / 2104 columns / 364 foreign keys / 817 indexes with SHA-256 `e092af61d6a36c10df55e04782bf59c101f0beae11029d5842c531f6adee70a3`; one-step rollback restored MT-3.8 SHA-256 `adf3f3593d169a912b0b3d71394351e345d53f76dde911c53cfbe15586db8848`, then reapply reproduced the MT-3.4 hash.
 - Completion verification passed 4 focused HTTP tests / 163 assertions, 92 affected regression tests / 4462 assertions and 222 full backend tests / 6932 assertions. Composer strict/platform, cache clear, backend production build and Website lint/typecheck/Next production build passed. Full Pint processed 207 files; its only unrelated line-ending normalization was restored, and MT-3.4 changed PHP files are Pint-clean. Evidence is in `docs/api/`.
 - MT-3.4 closure: versioned public/authenticated Laravel REST contracts, strict public projections, ETags, mode-aware capability denial, authenticated historical exceptions, bounded cursor pagination, route rate limits, indexed API reads, server-authoritative cart quote/repricing, shared checkout/payment/project/engagement services and published Software Product contracts are complete. MT-3 is complete. Next roadmap point is `MT-4.1 - POS shell, authentication and navigation`.
+
+## MT-4.1 attempt tracking
+
+- Resume recovered the durable MT-4.1 working tree instead of restarting the point.
+- Playwright attempt 1: desktop passed, mobile inventory journey failed with HTTP 401 after outlet selection. Material change: retain the authenticated session ID during outlet selection instead of regenerating it after the server-owned Admin session had already been registered; direct-route authorization remained server-side.
+- Reverification: Playwright desktop/mobile role journeys passed 2/2; TeamMemberSessionSecurity passed 8 tests / 54 assertions; API schema verification remained PASS at 170 tables / 2104 columns / 364 foreign keys / 817 indexes with SHA-256 e092af61d6a36c10df55e04782bf59c101f0beae11029d5842c531f6adee70a3.
+- Full backend regression passed 225 tests / 7014 assertions. Changed PHP syntax and Pint passed across all 8 changed PHP files. Composer strict/platform gates, backend TypeScript/Vite production build and Website lint/typecheck/Next production build passed.
+- Full-repository Pint still reports only the already documented unrelated tests/Feature/IdentitySecurityTest.php line-ending baseline difference; MT-4.1 changed PHP files are Pint-clean.
+- Resume orchestration read attempt 1 failed before mutation because nested PowerShell interpolation stripped command variables. Material change: retire that command shape and use direct RDC file/search reads. No product, database or Git mutation resulted.
+- Ledger reconciliation attempt 1 failed before remote execution because the orchestration payload parser rejected embedded template-literal characters. Material change: use this standalone patch file with literal-safe content. No product, database or Git mutation resulted; LOOP_GUARD remains inactive.
+- MT-4.1 closure: React/TypeScript/Inertia/Tailwind POS shell, individual Team Member sign-in, permission-scoped role landing/navigation, explicit outlet selection, direct-route authorization and centralized Admin inactivity warning/continuation behavior are verified. Background refresh does not preserve true inactivity. Evidence is in docs/pos/MT-4.1_VERIFICATION.md.

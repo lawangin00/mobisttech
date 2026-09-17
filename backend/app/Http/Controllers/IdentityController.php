@@ -128,8 +128,10 @@ class IdentityController extends Controller
         $user = Auth::guard($request->attributes->get('identity_realm'))->user();
 
         $realm = $request->attributes->get('identity_realm');
+        $policy = app(RealmSessionPolicy::class);
         $data = ['id' => $user->public_id, 'name' => $user->name, 'email' => $user->email, 'mobile' => $user->mobile,
-            'session_policy' => app(RealmSessionPolicy::class)->publicContract($realm)];
+            'session_policy' => $policy->publicContract($realm),
+            'session_state' => $policy->publicState($request, $realm, $user)];
         if ($user instanceof Admin) {
             $data += ['job_title' => $user->job_title, 'roles' => $user->roleNames(), 'permissions' => $user->effectivePermissions()];
         }
@@ -141,9 +143,14 @@ class IdentityController extends Controller
     {
         $this->only($request, []);
         $realm = $request->attributes->get('identity_realm');
-        app(RealmSessionPolicy::class)->recordHumanActivity($request, $realm, Auth::guard($realm)->id());
+        $policy = app(RealmSessionPolicy::class);
+        $user = Auth::guard($realm)->user();
+        $policy->recordHumanActivity($request, $realm, $user->id);
 
-        return response()->json(['data' => ['session_policy' => app(RealmSessionPolicy::class)->publicContract($realm)]]);
+        return response()->json(['data' => [
+            'session_policy' => $policy->publicContract($realm),
+            'session_state' => $policy->publicState($request, $realm, $user),
+        ]]);
     }
 
     public function confirmPassword(Request $request)
@@ -176,7 +183,6 @@ class IdentityController extends Controller
         $user = Auth::guard('admin')->user();
         abort_unless($outlet && app(Access::class)->allows($user, 'shops.enter', $outlet), 404);
         $request->session()->put(['active_outlet_id' => $outlet->id, 'operator_admin_id' => $user->id]);
-        $request->session()->regenerate();
         abort_if(app(PosSessions::class)->register($request, 'admin', $user->id), 403);
 
         return response()->json(['data' => ['outlet_id' => $outlet->public_id]]);

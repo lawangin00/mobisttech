@@ -4,6 +4,7 @@ use App\Http\Controllers\BusinessProfileController;
 use App\Http\Controllers\CustomerApiController;
 use App\Http\Controllers\IdentityController;
 use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\PosShellController;
 use App\Http\Controllers\TeamMemberController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,9 @@ foreach (['customer', 'admin'] as $realm) {
         }
     }
 }
+Route::get('/internal/admin/pos/login', [PosShellController::class, 'login'])
+    ->defaults('identity_realm', 'admin')->middleware('identity')->name('admin.pos.login');
+
 Route::prefix('/api/v1')->middleware(['identity', 'identity.auth', 'throttle:api-customer'])->group(function () {
     Route::post('/cart/quote', [CustomerApiController::class, 'cartQuote'])->defaults('identity_realm', 'customer')->name('api.customer.cart.quote');
     Route::post('/orders', [CustomerApiController::class, 'checkout'])->defaults('identity_realm', 'customer')->name('api.customer.orders.store');
@@ -61,6 +65,9 @@ Route::prefix('/api/v1')->middleware(['identity', 'identity.auth', 'throttle:api
     Route::post('/reviews', [CustomerApiController::class, 'submitReview'])->defaults('identity_realm', 'customer')->name('api.customer.reviews.store');
 });
 Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->group(function () {
+    Route::get('/pos', [PosShellController::class, 'home'])->defaults('identity_realm', 'admin')->name('admin.pos.home');
+    Route::get('/pos/workspace/{area}', [PosShellController::class, 'workspace'])->whereIn('area', ['sales', 'inventory', 'invoices', 'warranty', 'claims', 'reports'])
+        ->defaults('identity_realm', 'admin')->name('admin.pos.workspace');
     Route::get('/team-members', [TeamMemberController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.team-members.index');
     Route::get('/roles', [TeamMemberController::class, 'roles'])->defaults('identity_realm', 'admin')->name('admin.roles.index');
     Route::post('/team-members', [TeamMemberController::class, 'store'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.team-members.store');
