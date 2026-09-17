@@ -11,6 +11,7 @@ use App\Identity\IdentityAccount;
 use App\Identity\IdentityAudit;
 use App\Inventory\StockLedger;
 use App\Inventory\TransactionalStock;
+use App\Loyalty\LoyaltyServices;
 use App\Migration\SourceRow;
 use App\Models\Outlet;
 use App\Models\PosMasterDataOption;
@@ -32,12 +33,13 @@ final class SalesOperations
 
     public function sell(IdentityAccount $actor, Outlet $outlet, string $key, array $input): array
     {
-        $this->fields($input, ['customer_id', 'new_customer', 'customer_name', 'customer_phone', 'customer_cnic', 'customer_info', 'discount', 'discount_reason', 'promotion_codes', 'lines']);
+        $this->fields($input, ['customer_id', 'new_customer', 'customer_name', 'customer_phone', 'customer_cnic', 'customer_info', 'discount', 'discount_reason', 'promotion_codes', 'loyalty_points', 'lines']);
         $data = Validator::make($input, [
             'customer_id' => 'nullable|uuid', 'new_customer' => 'sometimes|boolean', 'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:40', 'customer_cnic' => ['nullable', 'regex:/\A\d{5}-\d{7}-\d\z/'],
             'customer_info' => 'nullable|string|max:2000', 'discount' => 'required', 'discount_reason' => 'nullable|string|max:500',
             'promotion_codes' => 'sometimes|array|max:10', 'promotion_codes.*' => 'string|max:80',
+            'loyalty_points' => 'sometimes|integer|min:0|max:1000000000',
             'lines' => 'required|array|min:1|max:100', 'lines.*.product_id' => 'required|uuid', 'lines.*.quantity' => 'required|integer|min:1|max:10000',
         ])->validate();
         $discount = SourceRow::money($data['discount']);
@@ -60,19 +62,29 @@ final class SalesOperations
             if (bccomp($discount, $gross, 2) > 0 || (bccomp($discount, '0.00', 2) > 0 && trim((string) ($data['discount_reason'] ?? '')) === '')) {
                 throw ValidationException::withMessages(['discount' => 'Discount cannot exceed gross and requires a reason.']);
             }
-            if (bccomp($discount, '0.00', 2) > 0 && ! empty($data['promotion_codes'])) {
-                throw ValidationException::withMessages(['promotion_codes' => 'Manual discounts cannot be combined with coupon promotions.']);
+            $loyaltyPoints = (int) ($data['loyalty_points'] ?? 0);
+            if ($loyaltyPoints > 0 && (bccomp($discount, '0.00', 2) > 0 || ! empty($data['promotion_codes']))) {
+                throw ValidationException::withMessages(['loyalty_points' => 'Loyalty redemption cannot be combined with manual or coupon discounts.']);
+            }
+            if ($loyaltyPoints > 0 && ! $customer) {
+                throw ValidationException::withMessages(['customer_id' => 'Loyalty redemption requires an operational customer.']);
             }
             $promotion = ['discount' => '0.00', 'allocations' => array_fill_keys(array_keys($prepared), '0.00'), 'applications' => []];
-            if (bccomp($discount, '0.00', 2) === 0) {
+            $loyalty = ['points' => 0, 'discount' => '0.00', 'allocations' => array_fill_keys(array_keys($prepared), '0.00'), 'applications' => []];
+            if (bccomp($discount, '0.00', 2) === 0 && $loyaltyPoints === 0) {
                 $promotionLines = array_map(fn ($line) => ['product_id' => $line['product']->id, 'product_public_id' => $line['product']->public_id,
                     'category' => $line['product']->category, 'quantity' => $line['quantity'], 'unit_price' => $line['unit'], 'gross' => $line['lineGross']], $prepared);
                 $promotion = app(PromotionServices::class)->claim('pos', $outlet,
                     hash('sha256', $actor::class.':'.$actor->id.':'.$outlet->id.':'.$key),
                     $customer ? hash('sha256', 'customer:'.$customer->public_id) : null, $promotionLines, $data['promotion_codes'] ?? []);
+            } elseif ($loyaltyPoints > 0) {
+                $loyalty = app(LoyaltyServices::class)->claim('pos', $customer->id,
+                    hash('sha256', $actor::class.':'.$actor->id.':'.$outlet->id.':'.$key), $loyaltyPoints, $gross,
+                    array_column($prepared, 'lineGross'));
             }
-            $effectiveDiscount = bccomp($discount, '0.00', 2) > 0 ? $discount : $promotion['discount'];
-            $allocations = bccomp($discount, '0.00', 2) > 0 ? $this->allocate($prepared, $gross, $discount) : $promotion['allocations'];
+            $effectiveDiscount = bccomp($discount, '0.00', 2) > 0 ? $discount : ($loyaltyPoints > 0 ? $loyalty['discount'] : $promotion['discount']);
+            $allocations = bccomp($discount, '0.00', 2) > 0 ? $this->allocate($prepared, $gross, $discount)
+                : ($loyaltyPoints > 0 ? $loyalty['allocations'] : $promotion['allocations']);
             $invoiceId = DB::table('invoices')->insertGetId([
                 'outlet_id' => $outlet->id, 'total_bill' => $gross, 'discount' => $effectiveDiscount, 'final_bill' => bcsub($gross, $effectiveDiscount, 2),
                 'customer_id' => $customer?->id, 'customer_name' => $customer?->display_name ?? trim((string) ($data['customer_name'] ?? '')) ?: null,
@@ -88,6 +100,8 @@ final class SalesOperations
             ]);
             if (bccomp($discount, '0.00', 2) > 0) {
                 app(FinancialReferences::class)->adjustment('invoice', $invoiceId, MoneySnapshot::adjustment((string) Str::uuid(), 'manual_discount', $discount, trim($data['discount_reason'])));
+            } elseif ($loyalty['applications']) {
+                app(LoyaltyServices::class)->bind('invoice', $invoiceId, $loyalty['applications']);
             } elseif ($promotion['applications']) {
                 app(PromotionServices::class)->bind('invoice', $invoiceId, $promotion['applications']);
             }
@@ -107,10 +121,12 @@ final class SalesOperations
                 $saleIds[] = DB::table('sales')->where('id', $sale)->value('public_id');
             }
             $invoice = DB::table('invoices')->where('id', $invoiceId)->firstOrFail();
+            $earned = app(LoyaltyServices::class)->earnInvoice($invoiceId);
 
             return ['invoice_id' => $invoice->public_id, 'invoice_number' => $invoice->invoice_number, 'total_bill' => $gross,
                 'discount' => $effectiveDiscount, 'final_bill' => $invoice->final_bill, 'sale_ids' => $saleIds,
-                'promotion_claim_ids' => array_column($promotion['applications'], 'claim_id')];
+                'promotion_claim_ids' => array_column($promotion['applications'], 'claim_id'),
+                'loyalty_claim_ids' => array_column($loyalty['applications'], 'claim_id'), 'loyalty_earned_points' => $earned['points']];
         });
     }
 
@@ -173,6 +189,7 @@ final class SalesOperations
         }
         DB::table('reservations')->where('id', $reservation->id)->update(['state' => 'confirmed', 'invoice_id' => $invoiceId,
             'confirmed_at' => now(), 'updated_at' => now()]);
+        app(LoyaltyServices::class)->earnInvoice($invoiceId);
 
         return $invoiceId;
     }
@@ -236,9 +253,10 @@ final class SalesOperations
                 $ids[] = $public;
             }
             $return = DB::table('returns')->where('id', $returnId)->firstOrFail();
+            $loyalty = app(LoyaltyServices::class)->reverseReturn($returnId);
 
             return ['return_id' => $return->public_id, 'status' => 'accepted', 'refund_due' => $due, 'currency' => 'PKR',
-                'refund_status' => 'not_created', 'return_line_ids' => $ids];
+                'refund_status' => 'not_created', 'return_line_ids' => $ids, 'loyalty' => $loyalty];
         });
     }
 

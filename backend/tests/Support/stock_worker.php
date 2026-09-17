@@ -5,6 +5,7 @@ use App\Inventory\InventoryOperations;
 use App\Inventory\StocktakeOperations;
 use App\Inventory\StockTransferOperations;
 use App\Inventory\TransactionalStock;
+use App\Loyalty\LoyaltyServices;
 use App\Models\Admin;
 use App\Models\Outlet;
 use App\Payments\PosPaymentOperations;
@@ -14,6 +15,7 @@ use App\Warranty\ClaimOperations;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 // Isolated process fixture; never reads credentials from arguments or emits private data.
@@ -57,11 +59,14 @@ try {
                 $input['key'], $input['input']),
             'cash_close' => app(CashSessionOperations::class)->close(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
                 $input['session'], $input['key'], $input['input']),
+            'loyalty_claim' => app(LoyaltyServices::class)->claim('pos', $input['customer'], $input['owner'], $input['points'], $input['max'], $input['bases']),
+            'loyalty_earn' => app(LoyaltyServices::class)->earnInvoice($input['invoice']),
+            'loyalty_reverse' => app(LoyaltyServices::class)->reverseReturn($input['return']),
             default => throw new LogicException('Unknown synthetic operation.'),
         };
     }, 3);
     echo json_encode(['outcome' => 'committed', 'result' => $result])."\n";
-} catch (HttpException|LogicException|UniqueConstraintViolationException $error) {
+} catch (HttpException|LogicException|UniqueConstraintViolationException|ValidationException $error) {
     echo json_encode(['outcome' => 'rejected', 'class' => $error::class])."\n";
 } catch (Throwable $error) {
     echo json_encode(['outcome' => 'error', 'class' => $error::class, 'message' => $error->getMessage()])."\n";

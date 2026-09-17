@@ -1,0 +1,25 @@
+{
+  "roadmap_point": "MT-2.15",
+  "title": "Customer loyalty services",
+  "result": "PASS",
+  "verified_on": "2026-09-17",
+  "schema": {
+    "tables": 130,
+    "columns": 1615,
+    "foreign_keys": 264,
+    "indexes": 625,
+    "schema_sha256": "0ca4e48de5fce0f5a48816ae8a1ff15102398b4f5642d5c9db3c5a5a11425f18"
+  },
+  "rollback_restored": {
+    "checkpoint": "MT-2.14",
+    "schema_sha256": "5a2d4635f7d1eff99f3ee171fbe9c238372e37b9dc2c6504adf6a96be2dfa18a"
+  },
+  "focused_lifecycle_and_affected_suites": {"tests": 15, "assertions": 126, "result": "PASS"},
+  "separate_mysql_loyalty_concurrency": {"tests": 3, "assertions": 245, "result": "PASS"},
+  "full_backend": {"tests": 184, "assertions": 6184, "result": "PASS"},
+  "pint_files": 159,
+  "composer_strict": "PASS",
+  "composer_platform": "PASS",
+  "backend_typecheck_vite_build": "PASS",
+  "website_eslint_typecheck_next_build": "PASS"
+}

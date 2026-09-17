@@ -8,6 +8,7 @@ use App\Inventory\AcquisitionDocuments;
 use App\Inventory\StockLedger;
 use App\Inventory\StocktakeOperations;
 use App\Inventory\StockTransferOperations;
+use App\Loyalty\LoyaltyServices;
 use App\Models\Outlet;
 use App\Models\StockUnit;
 use App\Payments\PosPaymentOperations;
@@ -25,7 +26,7 @@ class InventoryConcurrencyTest extends TestCase
     use InventoryFixture;
 
     // These tests deliberately commit fixtures so independent MySQL connections can see them.
-    private array $tables = ['cash_entries', 'pos_refund_allocations', 'pos_settlement_events', 'pos_tender_allocations', 'cash_sessions', 'pos_payment_destinations', 'identity_audit_events', 'stock_transfer_receipt_lines', 'stock_transfer_receipts', 'stock_transfer_units', 'stock_transfer_lines', 'stock_transfers', 'stocktake_approvals', 'stocktake_recounts', 'stocktake_counts', 'stocktake_unit_baselines', 'stocktake_lines', 'stocktake_sessions', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
+    private array $tables = ['loyalty_claim_lots', 'loyalty_earn_lots', 'loyalty_entries', 'loyalty_claims', 'loyalty_accounts', 'loyalty_configurations', 'cash_entries', 'pos_refund_allocations', 'pos_settlement_events', 'pos_tender_allocations', 'cash_sessions', 'pos_payment_destinations', 'identity_audit_events', 'stock_transfer_receipt_lines', 'stock_transfer_receipts', 'stock_transfer_units', 'stock_transfer_lines', 'stock_transfers', 'stocktake_approvals', 'stocktake_recounts', 'stocktake_counts', 'stocktake_unit_baselines', 'stocktake_lines', 'stocktake_sessions', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
         'purchase_order_lines', 'purchase_orders', 'supplier_contacts', 'reorder_policies', 'suppliers', 'domain_events', 'publication_versions', 'idempotency_requests', 'claim_events', 'claims', 'return_lines', 'returns', 'monetary_adjustments',
         'inventory_custody_holds', 'stock_unit_lineage', 'reservation_allocations', 'reservation_lines', 'reservations', 'product_imeis', 'active_imeis', 'stock_movements', 'stock_units',
         'stock_acquisitions', 'sales', 'invoices', 'order_items', 'orders', 'customers', 'document_sequences', 'pos_master_data_usages', 'products',
@@ -335,6 +336,96 @@ class InventoryConcurrencyTest extends TestCase
         $sold = DB::table('invoices')->count() === 1;
         $this->assertSame($sold ? '200.02' : '0.00', $closed['expected_cash']);
         $this->assertSame($sold ? 1 : 0, DB::table('pos_tender_allocations')->whereNotNull('cash_session_id')->count());
+    }
+
+    public function test_separate_mysql_connections_replay_same_loyalty_redemption_once(): void
+    {
+        $product = $this->product();
+        [$customer, $invoice] = $this->loyaltyBalance();
+        $owner = hash('sha256', 'same-loyalty-owner');
+        $request = ['operation' => 'loyalty_claim', 'barrier_product' => $product->id, 'customer' => $customer,
+            'owner' => $owner, 'points' => 10, 'max' => '200.02', 'bases' => ['200.02']];
+        $results = $this->race([$product->id], [$request, $request]);
+        $this->assertSame(['committed', 'committed'], array_column($results, 'outcome'));
+        $this->assertSame($results[0]['result']['applications'][0]['claim_id'], $results[1]['result']['applications'][0]['claim_id']);
+        $this->assertSame(1, DB::table('loyalty_claims')->count());
+        $this->assertSame(1, DB::table('loyalty_entries')->where('entry_type', 'redeem')->count());
+        $this->assertSame(10, (int) DB::table('loyalty_accounts')->where('customer_id', $customer)->value('balance_points'));
+        $this->assertNotNull($invoice);
+    }
+
+    public function test_separate_mysql_connections_arbitrate_competing_loyalty_redemptions(): void
+    {
+        $product = $this->product();
+        [$customer] = $this->loyaltyBalance();
+        $base = ['operation' => 'loyalty_claim', 'barrier_product' => $product->id, 'customer' => $customer,
+            'points' => 15, 'max' => '200.02', 'bases' => ['200.02']];
+        $results = $this->race([$product->id], [
+            [...$base, 'owner' => hash('sha256', 'loyalty-a')], [...$base, 'owner' => hash('sha256', 'loyalty-b')],
+        ]);
+        $this->oneWinner($results);
+        $this->assertSame(1, DB::table('loyalty_claims')->count());
+        $this->assertSame(5, (int) DB::table('loyalty_accounts')->where('customer_id', $customer)->value('balance_points'));
+        $this->assertSame(15, (int) DB::table('loyalty_entries')->where('entry_type', 'redeem')->sum('points'));
+    }
+
+    public function test_separate_mysql_connections_replay_loyalty_earn_and_return_reversal(): void
+    {
+        $product = $this->product();
+        $this->loyaltyConfig();
+        $customer = $this->loyaltyCustomer();
+        $invoice = DB::table('invoices')->insertGetId(['outlet_id' => $this->outlet->id, 'total_bill' => '200.02',
+            'discount' => '0.00', 'final_bill' => '200.02', 'customer_id' => $customer, 'public_id' => (string) Str::uuid(), 'currency' => 'PKR']);
+        $earn = ['operation' => 'loyalty_earn', 'barrier_product' => $product->id, 'invoice' => $invoice];
+        $results = $this->race([$product->id], [$earn, $earn]);
+        $this->assertSame(['committed', 'committed'], array_column($results, 'outcome'));
+        $this->assertSame(20, (int) DB::table('loyalty_accounts')->where('customer_id', $customer)->value('balance_points'));
+        $this->assertSame(1, DB::table('loyalty_entries')->where('entry_type', 'earn')->count());
+
+        $sale = DB::table('sales')->insertGetId(['public_id' => (string) Str::uuid(), 'product_id' => $product->id,
+            'outlet_id' => $this->outlet->id, 'invoice_id' => $invoice, 'sale_date' => now()->toDateString(),
+            'sale_price' => '200.02', 'quantity' => 1, 'returned_quantity' => 1, 'total_price' => '200.02',
+            'purchase_price' => '100.01', 'discount_allocated' => '0.00', 'net_total_price' => '200.02', 'profit' => '100.01']);
+        $return = DB::table('returns')->insertGetId(['invoice_id' => $invoice, 'actor_type' => $this->actor::class,
+            'actor_id' => $this->actor->id, 'reason' => 'Synthetic concurrent reversal', 'status' => 'accepted',
+            'idempotency_key' => (string) Str::uuid(), 'public_id' => (string) Str::uuid()]);
+        $snapshot = ['contract' => 'sale-return.v1', 'invoice_id' => DB::table('invoices')->where('id', $invoice)->value('public_id'),
+            'sale_id' => DB::table('sales')->where('id', $sale)->value('public_id'), 'quantity' => 1, 'unit_price' => '200.02',
+            'discount_amount' => '0.00', 'net_amount' => '200.02', 'purchase_amount' => '100.01', 'currency' => 'PKR'];
+        DB::table('return_lines')->insert(['public_id' => (string) Str::uuid(), 'return_id' => $return, 'invoice_id' => $invoice,
+            'sale_id' => $sale, 'quantity' => 1, 'unit_price' => '200.02', 'discount_amount' => '0.00', 'net_amount' => '200.02',
+            'purchase_amount' => '100.01', 'currency' => 'PKR', 'sale_snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR),
+            'snapshot_sha256' => hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR)), 'condition' => 'opened',
+            'disposition' => 'sellable', 'accepted_at' => now()]);
+        $reverse = ['operation' => 'loyalty_reverse', 'barrier_product' => $product->id, 'return' => $return];
+        $results = $this->race([$product->id], [$reverse, $reverse]);
+        $this->assertSame(['committed', 'committed'], array_column($results, 'outcome'));
+        $this->assertSame(0, (int) DB::table('loyalty_accounts')->where('customer_id', $customer)->value('balance_points'));
+        $this->assertSame(1, DB::table('loyalty_entries')->where('entry_type', 'earn_return_reversal')->count());
+    }
+
+    private function loyaltyBalance(): array
+    {
+        $this->loyaltyConfig();
+        $customer = $this->loyaltyCustomer();
+        $invoice = DB::table('invoices')->insertGetId(['outlet_id' => $this->outlet->id, 'total_bill' => '200.02',
+            'discount' => '0.00', 'final_bill' => '200.02', 'customer_id' => $customer, 'public_id' => (string) Str::uuid(), 'currency' => 'PKR']);
+        app(LoyaltyServices::class)->earnInvoice($invoice);
+
+        return [$customer, $invoice];
+    }
+
+    private function loyaltyConfig(): void
+    {
+        app(LoyaltyServices::class)->configure($this->actor, ['enabled' => true, 'earn_basis_amount' => '100.00',
+            'earn_points' => 10, 'redemption_value' => '1.00', 'min_redeem_points' => 1,
+            'max_redeem_points' => 100, 'daily_redeem_points' => 100, 'expiry_days' => 30]);
+    }
+
+    private function loyaltyCustomer(): int
+    {
+        return DB::table('customers')->insertGetId(['display_name' => 'Concurrent loyalty customer',
+            'email' => 'loyalty-race-'.Str::uuid().'@example.invalid', 'public_id' => (string) Str::uuid()]);
     }
 
     private function submittedStocktake($product): array

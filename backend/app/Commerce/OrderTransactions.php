@@ -7,6 +7,7 @@ use App\Identity\Access;
 use App\Identity\IdentityAudit;
 use App\Inventory\StockLedger;
 use App\Inventory\TransactionalStock;
+use App\Loyalty\LoyaltyServices;
 use App\Migration\SourceRow;
 use App\Models\Admin;
 use App\Models\CustomerAccount;
@@ -30,17 +31,19 @@ final class OrderTransactions
         private StockLedger $ledger,
         private SalesOperations $sales,
         private PromotionServices $promotions,
+        private LoyaltyServices $loyalty,
     ) {}
 
     public function checkout(string $ownerScope, ?CustomerAccount $customer, string $key, array $input): array
     {
         $this->owner($ownerScope, $customer);
-        $this->fields($input, ['customer_name', 'customer_mobile', 'customer_email', 'city', 'delivery_address', 'notes', 'gateway', 'coupon_codes', 'lines']);
+        $this->fields($input, ['customer_name', 'customer_mobile', 'customer_email', 'city', 'delivery_address', 'notes', 'gateway', 'coupon_codes', 'loyalty_points', 'lines']);
         $data = Validator::make($input, [
             'customer_name' => 'required|string|max:255', 'customer_mobile' => 'required|string|max:40',
             'customer_email' => 'nullable|email|max:255', 'city' => 'nullable|string|max:255', 'delivery_address' => 'nullable|string|max:2000',
             'notes' => 'nullable|string|max:2000', 'gateway' => 'required|in:cod,jazzcash,easypaisa,card',
             'coupon_codes' => 'sometimes|array|max:10', 'coupon_codes.*' => 'string|max:80',
+            'loyalty_points' => 'sometimes|integer|min:0|max:1000000000',
             'lines' => 'required|array|min:1|max:100', 'lines.*.product_id' => 'required|uuid',
             'lines.*.quantity' => 'required|integer|min:1|max:10000', 'lines.*.variant_key' => 'sometimes|string|max:100',
         ])->validate();
@@ -69,12 +72,29 @@ final class OrderTransactions
                 $prepared[] = compact('product', 'variant', 'unit', 'lineTotal') + ['quantity' => (int) $line['quantity']];
             }
             $outletModel = Outlet::whereKey($outlet)->lockForUpdate()->firstOrFail();
-            $promotionLines = array_map(fn ($line) => ['product_id' => $line['product']->id, 'product_public_id' => $line['product']->public_id,
-                'category' => $line['product']->category, 'quantity' => $line['quantity'], 'unit_price' => $line['unit'], 'gross' => $line['lineTotal']], $prepared);
-            $promotion = $this->promotions->claim('website', $outletModel, hash('sha256', $ownerScope.'|'.$key),
-                $customer ? hash('sha256', 'account:'.$customer->id) : null, $promotionLines, $data['coupon_codes'] ?? []);
+            $customerId = $customer ? DB::table('customers')->where('website_user_id', $customer->id)->value('id') : null;
+            $loyaltyPoints = (int) ($data['loyalty_points'] ?? 0);
+            if ($loyaltyPoints > 0 && ! empty($data['coupon_codes'])) {
+                throw ValidationException::withMessages(['loyalty_points' => 'Loyalty redemption cannot be combined with coupon promotions.']);
+            }
+            if ($loyaltyPoints > 0 && ! $customerId) {
+                throw ValidationException::withMessages(['loyalty_points' => 'Loyalty redemption requires a linked operational customer.']);
+            }
+            $promotion = ['discount' => '0.00', 'allocations' => array_fill_keys(array_keys($prepared), '0.00'), 'applications' => []];
+            $loyalty = ['points' => 0, 'discount' => '0.00', 'allocations' => array_fill_keys(array_keys($prepared), '0.00'), 'applications' => []];
+            if ($loyaltyPoints === 0) {
+                $promotionLines = array_map(fn ($line) => ['product_id' => $line['product']->id, 'product_public_id' => $line['product']->public_id,
+                    'category' => $line['product']->category, 'quantity' => $line['quantity'], 'unit_price' => $line['unit'], 'gross' => $line['lineTotal']], $prepared);
+                $promotion = $this->promotions->claim('website', $outletModel, hash('sha256', $ownerScope.'|'.$key),
+                    $customer ? hash('sha256', 'account:'.$customer->id) : null, $promotionLines, $data['coupon_codes'] ?? []);
+            } else {
+                $loyalty = $this->loyalty->claim('website', (int) $customerId, hash('sha256', $ownerScope.'|'.$key),
+                    $loyaltyPoints, $total, array_column($prepared, 'lineTotal'));
+            }
             $gross = $total;
-            $total = bcsub($gross, $promotion['discount'], 2);
+            $discountAmount = $loyaltyPoints > 0 ? $loyalty['discount'] : $promotion['discount'];
+            $allocations = $loyaltyPoints > 0 ? $loyalty['allocations'] : $promotion['allocations'];
+            $total = bcsub($gross, $discountAmount, 2);
             $number = 'WEB-'.now()->format('Ymd').'-'.strtoupper(Str::random(12));
             $orderId = DB::table('orders')->insertGetId([
                 'order_number' => $number, 'order_type' => 'commerce', 'status' => 'pending', 'fulfillment_status' => 'pending',
@@ -82,10 +102,12 @@ final class OrderTransactions
                 'customer_email' => isset($data['customer_email']) ? mb_strtolower(trim($data['customer_email'])) : null,
                 'city' => $data['city'] ?? null, 'delivery_address' => $data['delivery_address'] ?? null, 'notes' => $data['notes'] ?? null,
                 'subtotal' => $gross, 'total' => $total, 'currency' => 'PKR', 'payment_status' => 'unpaid',
-                'user_id' => $customer?->id, 'customer_id' => $customer ? DB::table('customers')->where('website_user_id', $customer->id)->value('id') : null,
+                'user_id' => $customer?->id, 'customer_id' => $customerId,
                 'owner_scope_hash' => hash('sha256', $ownerScope), 'public_id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now(),
             ]);
-            if ($promotion['applications']) {
+            if ($loyalty['applications']) {
+                $this->loyalty->bind('order', $orderId, $loyalty['applications']);
+            } elseif ($promotion['applications']) {
                 $this->promotions->bind('order', $orderId, $promotion['applications']);
             }
             $reservationId = DB::table('reservations')->insertGetId([
@@ -93,11 +115,11 @@ final class OrderTransactions
                 'reservation_reference' => (string) Str::uuid(), 'state' => $data['gateway'] === 'cod' ? 'held_cod' : 'active',
                 'currency' => 'PKR', 'customer_name' => trim($data['customer_name']), 'customer_mobile' => trim($data['customer_mobile']),
                 'total_amount' => $total, 'reservation_expires_at' => $data['gateway'] === 'cod' ? null : now()->addMinutes(config('commerce.reservation_minutes')),
-                'gateway' => $data['gateway'], 'contract_hash' => hash('sha256', json_encode(['mode' => $mode, 'subtotal' => $gross, 'discount' => $promotion['discount'], 'total' => $total, 'currency' => 'PKR'], JSON_THROW_ON_ERROR)),
+                'gateway' => $data['gateway'], 'contract_hash' => hash('sha256', json_encode(['mode' => $mode, 'subtotal' => $gross, 'discount' => $discountAmount, 'discount_kind' => $loyaltyPoints > 0 ? 'loyalty' : 'promotion', 'total' => $total, 'currency' => 'PKR'], JSON_THROW_ON_ERROR)),
                 'created_at' => now(), 'updated_at' => now(),
             ]);
             foreach ($prepared as $index => $line) {
-                $lineDiscount = $promotion['allocations'][$index] ?? '0.00';
+                $lineDiscount = $allocations[$index] ?? '0.00';
                 $netLine = bcsub($line['lineTotal'], $lineDiscount, 2);
                 $itemId = DB::table('order_items')->insertGetId([
                     'order_id' => $orderId, 'item_type' => 'product', 'title' => $line['product']->name,
@@ -133,7 +155,8 @@ final class OrderTransactions
             return ['order_id' => DB::table('orders')->where('id', $orderId)->value('public_id'), 'order_number' => $number,
                 'reservation_id' => DB::table('reservations')->where('id', $reservationId)->value('reservation_reference'),
                 'payment_id' => $paymentPublic, 'payment_status' => $data['gateway'] === 'cod' ? 'pending_collection' : 'pending',
-                'amount' => $total, 'currency' => 'PKR', 'promotion_claim_ids' => array_column($promotion['applications'], 'claim_id')];
+                'amount' => $total, 'currency' => 'PKR', 'promotion_claim_ids' => array_column($promotion['applications'], 'claim_id'),
+                'loyalty_claim_ids' => array_column($loyalty['applications'], 'claim_id')];
         });
     }
 
@@ -301,6 +324,7 @@ final class OrderTransactions
                 $this->stock->release($reservation->id);
             }
             $this->promotions->releaseOrder($order->id, 'customer_cancelled');
+            $this->loyalty->releaseOrder($order->id, 'customer_cancelled');
             DB::table('orders')->where('id', $order->id)->update(['status' => 'cancelled', 'fulfillment_status' => 'cancelled',
                 'cancelled_at' => now(), 'version' => $order->version + 1, 'updated_at' => now()]);
 
@@ -319,6 +343,7 @@ final class OrderTransactions
                 DB::table('payments')->where('id', $reservation->website_payment_id)->whereNotIn('status', ['paid', 'paid_reconciliation'])
                     ->update(['status' => 'expired', 'failure_code' => 'reservation_expired', 'updated_at' => now()]);
                 $this->promotions->releaseOrder($order->id, 'reservation_expired');
+                $this->loyalty->releaseOrder($order->id, 'reservation_expired');
                 DB::table('orders')->where('id', $order->id)->whereNotIn('payment_status', ['paid', 'paid_reconciliation'])
                     ->update(['status' => 'cancelled', 'fulfillment_status' => 'cancelled', 'payment_status' => 'expired',
                         'cancelled_at' => now(), 'version' => $order->version + 1, 'updated_at' => now()]);

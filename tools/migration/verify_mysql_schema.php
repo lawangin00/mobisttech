@@ -15,25 +15,25 @@ if ($db->db !== 'mobisttech_test' || (int) $db->port !== 13306 || ! $app->enviro
     throw new RuntimeException('Exact disposable target test schema required.');
 }
 $mode = $argv[1] ?? '';
-if (! in_array($mode, ['promotion', 'trade-in', 'cash', 'payments', 'transfer', 'stocktake', 'procurement', 'team-members', 'orders', 'admin-google', 'warranty', 'sales', 'addendum', 'identity', 'shared', 'runtime'], true)) {
-    throw new RuntimeException('Expected promotion, trade-in, cash, payments, transfer, stocktake, procurement, team-members, orders, admin-google, warranty, sales, addendum, identity, shared or runtime verification mode.');
+if (! in_array($mode, ['loyalty', 'promotion', 'trade-in', 'cash', 'payments', 'transfer', 'stocktake', 'procurement', 'team-members', 'orders', 'admin-google', 'warranty', 'sales', 'addendum', 'identity', 'shared', 'runtime'], true)) {
+    throw new RuntimeException('Expected loyalty, promotion, trade-in, cash, payments, transfer, stocktake, procurement, team-members, orders, admin-google, warranty, sales, addendum, identity, shared or runtime verification mode.');
 }
 $paymentPermissions = ['config.payments.manage', 'shop.payments.reconcile', 'shop.payments.refund-override', 'shop.payments.refund-approve'];
 $checkpointPermissions = array_keys(App\Models\Admin::PERMISSIONS);
-if (! in_array($mode, ['payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (! in_array($mode, ['payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     $checkpointPermissions = array_values(array_diff($checkpointPermissions, $paymentPermissions));
 }
 $schema = Illuminate\Support\Facades\Schema::getFacadeRoot();
 $spec = json_decode(file_get_contents($root.'/docs/schema/TARGET_SCHEMA.json'), true, flags: JSON_THROW_ON_ERROR);
 $runtime = ['cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'sessions', 'migrations'];
 $expected = $mode !== 'runtime' ? array_merge($runtime, array_keys($spec['tables'])) : $runtime;
-if (in_array($mode, ['identity', 'addendum', 'sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['identity', 'addendum', 'sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     $expected = array_merge($expected, ['admin_password_reset_tokens', 'super_admin_password_reset_tokens', 'site_admin_password_reset_tokens', 'identity_audit_events']);
 }
-if (in_array($mode, ['addendum', 'sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['addendum', 'sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     $expected = array_merge($expected, ['website_operating_profiles', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones']);
 }
-if (in_array($mode, ['sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     foreach (['public_id', 'version', 'returned_quantity'] as $column) {
         if (! $schema->hasColumn('sales', $column)) {
             throw new RuntimeException('Missing sales integrity column: '.$column);
@@ -45,7 +45,7 @@ if (in_array($mode, ['sales', 'warranty', 'admin-google', 'orders', 'team-member
         }
     }
 }
-if (in_array($mode, ['warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     $expected[] = 'claim_events';
     foreach (['warranty_snapshot', 'warranty_expires_at', 'active_stock_unit_id'] as $column) {
         if (! $schema->hasColumn('claims', $column)) {
@@ -53,7 +53,7 @@ if (in_array($mode, ['warranty', 'admin-google', 'orders', 'team-members', 'proc
         }
     }
 }
-if (in_array($mode, ['admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     $expected = array_merge($expected, ['business_profiles', 'admin_identity_mappings', 'integration_connections', 'integration_oauth_states', 'integration_events']);
     foreach (['provider', 'status', 'encrypted_credentials', 'authorized_by_admin_id', 'last_success_at'] as $column) {
         if (! $schema->hasColumn('integration_connections', $column)) {
@@ -64,7 +64,7 @@ if (in_array($mode, ['admin-google', 'orders', 'team-members', 'procurement', 's
         throw new RuntimeException('Missing Google Drive backup integration reference.');
     }
 }
-if (in_array($mode, ['orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     foreach (['owner_scope_hash'] as $column) {
         if (! $schema->hasColumn('orders', $column)) {
             throw new RuntimeException('Missing order ownership column: '.$column);
@@ -79,7 +79,7 @@ if (in_array($mode, ['orders', 'team-members', 'procurement', 'stocktake', 'tran
         throw new RuntimeException('Missing receipt or milestone payment linkage.');
     }
 }
-if (in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     $expected = array_merge($expected, ['permission_definitions', 'roles', 'role_permissions', 'admin_roles', 'team_member_audit_events']);
     foreach (['job_title', 'auth_version'] as $column) {
         if (! $schema->hasColumn('admins', $column)) {
@@ -103,7 +103,7 @@ if (in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'pa
         throw new RuntimeException('Permission definition catalogue differs from the server authorization catalogue.');
     }
 }
-if (in_array($mode, ['procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     $expected = array_merge($expected, ['suppliers', 'supplier_contacts', 'purchase_orders', 'purchase_order_lines',
         'purchase_order_receipts', 'purchase_order_receipt_lines', 'purchase_order_events', 'reorder_policies']);
     foreach (['ordered_quantity', 'received_quantity', 'ordered_unit_cost', 'planned_landed_unit_cost'] as $column) {
@@ -120,7 +120,7 @@ if (in_array($mode, ['procurement', 'stocktake', 'transfer', 'payments', 'cash',
         throw new RuntimeException('Missing reorder or procurement audit contract.');
     }
 }
-if (in_array($mode, ['stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     $expected = array_merge($expected, ['stocktake_sessions', 'stocktake_lines', 'stocktake_unit_baselines', 'stocktake_counts', 'stocktake_recounts', 'stocktake_approvals']);
     foreach (['baseline_quantity', 'baseline_movement_id', 'baseline_at', 'current_iteration', 'expected_quantity_at_count', 'variance'] as $column) {
         if (! $schema->hasColumn('stocktake_lines', $column)) {
@@ -138,7 +138,7 @@ if (in_array($mode, ['stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'p
         throw new RuntimeException('Missing serialized baseline, recount or approval audit contract.');
     }
 }
-if (in_array($mode, ['transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     $expected = array_merge($expected, ['stock_transfers', 'stock_transfer_lines', 'stock_transfer_units',
         'stock_transfer_receipts', 'stock_transfer_receipt_lines']);
     foreach (['public_id', 'transfer_number', 'source_outlet_id', 'destination_outlet_id', 'status', 'version', 'dispatched_at', 'completed_at'] as $column) {
@@ -165,7 +165,7 @@ if (in_array($mode, ['transfer', 'payments', 'cash', 'trade-in', 'promotion'], t
         throw new RuntimeException('Transferred-out IMEI history state is missing.');
     }
 }
-if (in_array($mode, ['payments', 'cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     $expected = array_merge($expected, ['pos_payment_destinations', 'pos_tender_allocations', 'pos_settlement_events', 'pos_refund_allocations']);
     foreach (['public_id', 'outlet_id', 'method', 'display_name', 'masked_identifier', 'active', 'effective_from', 'effective_until', 'requires_refund_override_approval', 'version'] as $column) {
         if (! $schema->hasColumn('pos_payment_destinations', $column)) {
@@ -193,7 +193,7 @@ if (in_array($mode, ['payments', 'cash', 'trade-in', 'promotion'], true)) {
         }
     }
 }
-if (in_array($mode, ['cash', 'trade-in', 'promotion'], true)) {
+if (in_array($mode, ['cash', 'trade-in', 'promotion', 'loyalty'], true)) {
     $expected = array_merge($expected, ['cash_sessions', 'cash_entries']);
     foreach (['public_id', 'outlet_id', 'open_outlet_guard', 'opened_by_admin_id', 'closed_by_admin_id', 'variance_approved_by_admin_id',
         'business_date', 'status', 'version', 'opening_cash', 'expected_cash', 'actual_cash', 'variance_amount', 'variance_reason',
@@ -217,7 +217,7 @@ if (in_array($mode, ['cash', 'trade-in', 'promotion'], true)) {
         }
     }
 }
-if ($mode === 'promotion') {
+if (in_array($mode, ['promotion', 'loyalty'], true)) {
     $expected = array_merge($expected, ['promotions', 'promotion_products', 'promotion_categories', 'promotion_claims', 'promotion_events']);
     foreach (['public_id', 'outlet_id', 'mode', 'code', 'discount_type', 'discount_value', 'max_discount', 'min_subtotal', 'usage_limit', 'per_customer_limit', 'customer_required', 'stackable', 'priority', 'status', 'version'] as $column) {
         if (! $schema->hasColumn('promotions', $column)) {
@@ -238,7 +238,31 @@ if ($mode === 'promotion') {
         throw new RuntimeException('Missing promotion management permission.');
     }
 }
-if (in_array($mode, ['trade-in', 'promotion'], true)) {
+if ($mode === 'loyalty') {
+    $expected = array_merge($expected, ['loyalty_configurations', 'loyalty_accounts', 'loyalty_claims', 'loyalty_entries', 'loyalty_earn_lots', 'loyalty_claim_lots']);
+    foreach (['public_id', 'version', 'enabled', 'earn_basis_amount', 'earn_points', 'redemption_value', 'min_redeem_points', 'max_redeem_points', 'daily_redeem_points', 'expiry_days', 'snapshot', 'snapshot_sha256'] as $column) {
+        if (! $schema->hasColumn('loyalty_configurations', $column)) {
+            throw new RuntimeException('Missing loyalty configuration column: '.$column);
+        }
+    }
+    foreach (['public_id', 'monetary_adjustment_id', 'customer_id', 'account_id', 'channel', 'owner_key', 'invoice_id', 'order_id', 'points', 'discount_amount', 'status', 'snapshot', 'snapshot_sha256', 'released_at', 'release_reason'] as $column) {
+        if (! $schema->hasColumn('loyalty_claims', $column)) {
+            throw new RuntimeException('Missing loyalty claim integrity column: '.$column);
+        }
+    }
+    foreach (['customer_id', 'account_id', 'loyalty_claim_id', 'invoice_id', 'order_id', 'return_id', 'entry_type', 'direction', 'points', 'event_key', 'snapshot', 'snapshot_sha256'] as $column) {
+        if (! $schema->hasColumn('loyalty_entries', $column)) {
+            throw new RuntimeException('Missing loyalty ledger column: '.$column);
+        }
+    }
+    if (! $schema->hasColumn('loyalty_earn_lots', 'points_remaining') || ! $schema->hasColumn('loyalty_claim_lots', 'restored_points')) {
+        throw new RuntimeException('Missing loyalty expiry or reversal allocation contract.');
+    }
+    if (! Illuminate\Support\Facades\DB::table('permission_definitions')->where('code', 'config.loyalty.manage')->exists()) {
+        throw new RuntimeException('Missing loyalty management permission.');
+    }
+}
+if (in_array($mode, ['trade-in', 'promotion', 'loyalty'], true)) {
     $expected = array_merge($expected, ['trade_ins', 'trade_in_identifiers', 'trade_in_events']);
     foreach (['public_id', 'outlet_id', 'product_id', 'invoice_id', 'acquisition_id', 'monetary_adjustment_id', 'seller_name',
         'seller_cnic', 'seller_phone', 'device_serial', 'device_condition', 'diagnostics', 'valuation_amount', 'settlement_mode',
@@ -274,8 +298,8 @@ foreach ($actual as $table) {
     if (! str_contains($definitions[$table], 'ENGINE=InnoDB')) {
         throw new RuntimeException('Non-transactional table found.');
     }
-    $seedRows = in_array($mode, ['admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true) ? ['business_profiles' => 1, 'integration_connections' => 2] : [];
-    if (in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)) {
+    $seedRows = in_array($mode, ['admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true) ? ['business_profiles' => 1, 'integration_connections' => 2] : [];
+    if (in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)) {
         $seedRows += ['permission_definitions' => count($checkpointPermissions), 'roles' => 12,
             'role_permissions' => Illuminate\Support\Facades\DB::table('role_permissions')->count()];
     }
@@ -290,6 +314,6 @@ if (! str_contains($db->sql_mode, 'STRICT_TRANS_TABLES') || $db->timezone !== '+
 echo json_encode(['mode' => $mode, 'result' => 'PASS', 'database' => $db->db, 'port' => (int) $db->port,
     'mysql' => $db->version, 'timezone' => $db->timezone, 'strict' => true, 'counts' => $counts,
     'schema_sha256' => hash('sha256', json_encode($definitions, JSON_UNESCAPED_SLASHES)),
-    'business_rows' => 0, 'canonical_seed_rows' => in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion'], true)
+    'business_rows' => 0, 'canonical_seed_rows' => in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty'], true)
         ? 3 + count($checkpointPermissions) + 12 + Illuminate\Support\Facades\DB::table('role_permissions')->count()
         : (in_array($mode, ['admin-google', 'orders'], true) ? 3 : 0)], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n";
