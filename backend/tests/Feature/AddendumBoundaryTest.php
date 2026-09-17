@@ -39,10 +39,13 @@ class AddendumBoundaryTest extends TestCase
         MoneySnapshot::adjustment((string) Str::uuid(), 'promotion', '1.00', 'Synthetic');
     }
 
-    public function test_no_addendum_business_endpoint_is_exposed(): void
+    public function test_only_approved_addendum_endpoints_are_exposed(): void
     {
         $paths = collect(app('router')->getRoutes()->getRoutes())->map(fn ($r) => $r->uri());
-        foreach (['api/v1/website-profile', 'api/v1/checkout', 'internal/superadmin/data-reset', 'internal/admin/transfers'] as $path) {
+        foreach (['api/v1/website-profile', 'api/v1/orders'] as $path) {
+            $this->assertTrue($paths->contains($path));
+        }
+        foreach (['api/v1/checkout', 'internal/superadmin/data-reset', 'internal/admin/transfers'] as $path) {
             $this->assertFalse($paths->contains($path));
         }
     }

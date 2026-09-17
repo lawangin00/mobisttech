@@ -10,7 +10,7 @@ final class WebsiteCapabilities
 {
     public const PUBLIC_OPERATIONS = [
         'catalogue.read' => 'commerce', 'category.read' => 'commerce', 'compare.read' => 'commerce',
-        'cart.write' => 'commerce', 'checkout.create' => 'commerce', 'wishlist.write' => 'commerce',
+        'cart.write' => 'commerce', 'checkout.create' => 'commerce', 'wishlist.write' => 'commerce', 'review.write' => 'commerce',
         'product-notification.subscribe' => 'commerce', 'service.read' => 'digital', 'enquiry.create' => 'digital',
         'consultation.create' => 'digital', 'case-study.read' => 'digital',
     ];

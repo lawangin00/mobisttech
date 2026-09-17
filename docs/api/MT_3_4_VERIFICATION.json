@@ -1,0 +1,51 @@
+{
+  "point": "MT-3.4",
+  "title": "Versioned REST API and contract acceptance",
+  "result": "PASS",
+  "schema": {
+    "mode": "api",
+    "tables": 170,
+    "columns": 2104,
+    "foreign_keys": 364,
+    "indexes": 817,
+    "sha256": "e092af61d6a36c10df55e04782bf59c101f0beae11029d5842c531f6adee70a3",
+    "rollback_mt_3_8_sha256": "adf3f3593d169a912b0b3d71394351e345d53f76dde911c53cfbe15586db8848",
+    "rollback_reapply_exact": true
+  },
+  "routes": {
+    "api_v1_total": 43,
+    "public_throttled": 10,
+    "customer_throttled": 20,
+    "public_write_throttled": 1,
+    "provider_callback_throttled": 1
+  },
+  "tests": {
+    "focused": {"tests": 4, "assertions": 163, "result": "PASS"},
+    "affected": {"tests": 92, "assertions": 4462, "result": "PASS"},
+    "full_backend": {"tests": 222, "assertions": 6932, "result": "PASS"}
+  },
+  "gates": {
+    "pint_scope": "207 files processed; only pre-existing IdentitySecurityTest line-ending baseline normalized and restored; MT-3.4 changed PHP files Pint-clean",
+    "composer_validate_strict": "PASS",
+    "composer_platform_requirements": "PASS",
+    "optimize_clear": "PASS",
+    "backend_typecheck_vite_build": "PASS (569 modules)",
+    "website_lint": "PASS",
+    "website_typecheck": "PASS",
+    "website_next_build": "PASS (Next.js 16.3.3)"
+  },
+  "contracts": {
+    "public_allowlists": true,
+    "etag_and_cache_headers": true,
+    "mode_aware_capability_denial": true,
+    "authenticated_historical_exceptions": true,
+    "server_authoritative_cart_quote": true,
+    "shared_order_payment_services": true,
+    "software_draft_leakage_blocked": true,
+    "bounded_cursor_pagination": true,
+    "rate_limits": true,
+    "selective_versioned_cache_invalidation": true
+  },
+  "source_or_production_data_touched": false,
+  "next": "MT-4.1 - POS shell, authentication and navigation"
+}

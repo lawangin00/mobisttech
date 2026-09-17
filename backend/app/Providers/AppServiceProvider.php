@@ -27,6 +27,18 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Auth::provider('identity', fn ($app, $config) => new IdentityUserProvider($app['hash'], $config['model']));
+        RateLimiter::for('api-public', fn (Request $request) => Limit::perMinute(120)->by('api-public|'.$request->ip()));
+        RateLimiter::for('api-write', fn (Request $request) => Limit::perMinute(10)->by('api-write|'.$request->path().'|'.$request->ip()));
+        RateLimiter::for('api-callback', fn (Request $request) => Limit::perMinute(120)->by('api-callback|'.$request->ip()));
+        RateLimiter::for('api-customer', function (Request $request) {
+            $owner = (string) ($request->user()?->getAuthIdentifier() ?? $request->ip());
+            $limits = [Limit::perMinute(120)->by('api-customer|'.$owner)];
+            if (! $request->isMethodSafe()) {
+                $limits[] = Limit::perMinute(30)->by('api-customer-write|'.$owner.'|'.$request->path());
+            }
+
+            return $limits;
+        });
         RateLimiter::for('identity', function (Request $request) {
             $realm = $request->attributes->get('identity_realm');
             $identity = strtolower(trim((string) $request->input('email')));

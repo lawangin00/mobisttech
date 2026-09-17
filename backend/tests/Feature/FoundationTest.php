@@ -24,9 +24,9 @@ class FoundationTest extends TestCase
             ->where('scope', 'Application foundation only'));
     }
 
-    public function test_business_and_legacy_transport_routes_are_not_prematurely_exposed(): void
+    public function test_approved_api_requires_auth_and_legacy_transport_routes_remain_absent(): void
     {
-        $this->getJson('/api/v1/orders')->assertNotFound();
+        $this->getJson('/api/v1/orders')->assertUnauthorized();
         $this->get('/login')->assertNotFound();
         $this->getJson('/api/website/products')->assertNotFound();
         $this->postJson('/api/v1/provider-events/jazzcash', [])->assertNotFound();

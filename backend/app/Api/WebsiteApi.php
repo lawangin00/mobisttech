@@ -1,0 +1,355 @@
+<?php
+
+namespace App\Api;
+
+use App\Addendum\WebsiteCapabilities;
+use App\Cms\WebsiteCms;
+use App\Cms\WebsiteModePublication;
+use App\Digital\DigitalServiceLeads;
+use App\Infrastructure\VersionedCache;
+use App\Inventory\StockLedger;
+use App\Migration\SourceRow;
+use App\Models\CustomerAccount;
+use App\Models\Product;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+
+final class WebsiteApi
+{
+    public function __construct(
+        private WebsiteCapabilities $capabilities,
+        private WebsiteModePublication $modes,
+        private WebsiteCms $cms,
+        private DigitalServiceLeads $digital,
+        private VersionedCache $cache,
+        private StockLedger $stock,
+    ) {}
+
+    public function profile(): array
+    {
+        $profile = $this->modes->publicProfile();
+        $caps = $this->capabilities->snapshot();
+
+        return [
+            'mode' => $profile['mode'],
+            'version' => (int) ($profile['version'] ?? 0),
+            'published_at' => $profile['published_at'] ?? null,
+            'capabilities' => $profile['capabilities'],
+            'content_scopes' => $profile['content_scopes'],
+            'routes' => $profile['routes'],
+            'api_operations' => $profile['api_operations'],
+            'cache_namespace' => $caps['cache_namespace'],
+        ];
+    }
+
+    public function catalogue(array $input): array
+    {
+        $this->assertScope('commerce');
+        $data = Validator::make($input, [
+            'limit' => 'sometimes|integer|min:1|max:24',
+            'after' => 'nullable|string|max:120',
+            'category' => 'nullable|string|max:50',
+            'q' => 'nullable|string|min:2|max:80',
+        ])->validate();
+        $limit = (int) ($data['limit'] ?? 12);
+        $after = $this->decodeCursor($data['after'] ?? null);
+        $category = isset($data['category']) ? trim($data['category']) : null;
+        $query = isset($data['q']) ? trim($data['q']) : null;
+        $resource = json_encode(compact('limit', 'after', 'category', 'query'), JSON_THROW_ON_ERROR);
+
+        return $this->cache->remember('catalogue', 'api:v1:products:'.$resource, function () use ($limit, $after, $category, $query) {
+            return DB::transaction(function () use ($limit, $after, $category, $query) {
+                $rows = DB::table('product_listings as l')->join('products as p', 'p.id', '=', 'l.product_id')
+                    ->where('l.is_online', true)->where('p.isDeleted', false)->whereNull('p.archived_at')
+                    ->when($after !== null, fn ($q) => $q->where('l.id', '>', $after))
+                    ->when($category, fn ($q) => $q->where('p.category', $category))
+                    ->when($query, fn ($q) => $q->where('l.name', 'like', $this->escapeLike($query).'%'))
+                    ->orderBy('l.id')->limit($limit + 1)
+                    ->get(['l.id as listing_id', 'l.public_id as listing_public_id', 'l.slug', 'l.image_url',
+                        'p.id as product_id', 'p.public_id as product_public_id', 'p.name', 'p.brand', 'p.model',
+                        'p.category', 'p.sale_price', 'p.warranty_type', 'p.track_imei']);
+                $hasMore = $rows->count() > $limit;
+                $rows = $rows->take($limit);
+                $items = $rows->map(fn ($row) => $this->productProjection($row))->all();
+                $last = $rows->last();
+
+                return ['items' => $items, 'page' => ['limit' => $limit, 'has_more' => $hasMore,
+                    'next_cursor' => $hasMore && $last ? $this->encodeCursor((int) $last->listing_id) : null]];
+            }, 2);
+        });
+    }
+
+    public function product(string $slug): array
+    {
+        $this->assertScope('commerce');
+        $slug = $this->slug($slug);
+
+        $payload = $this->cache->remember('catalogue', 'api:v1:product:'.$slug, function () use ($slug) {
+            return DB::transaction(function () use ($slug) {
+                $row = DB::table('product_listings as l')->join('products as p', 'p.id', '=', 'l.product_id')
+                    ->where('l.slug', $slug)->where('l.is_online', true)->where('p.isDeleted', false)->whereNull('p.archived_at')
+                    ->select('l.id as listing_id', 'l.public_id as listing_public_id', 'l.slug', 'l.image_url', 'l.description',
+                        'l.warranty_summary', 'p.id as product_id', 'p.public_id as product_public_id', 'p.name', 'p.brand',
+                        'p.model', 'p.category', 'p.sale_price', 'p.warranty_type', 'p.track_imei')->firstOrFail();
+                $payload = $this->productProjection($row);
+                $payload['description'] = $row->description;
+                $payload['warranty_summary'] = $row->warranty_summary;
+
+                return $payload;
+            }, 2);
+        });
+        $listingId = DB::table('product_listings')->where('slug', $slug)->where('is_online', true)->value('id') ?? abort(404);
+        $payload['reviews'] = $this->approvedReviews((int) $listingId, 10);
+
+        return $payload;
+    }
+
+    public function categories(): array
+    {
+        $this->assertScope('commerce');
+
+        return $this->cache->remember('catalogue', 'api:v1:categories', fn () => DB::table('product_listings as l')
+            ->join('products as p', 'p.id', '=', 'l.product_id')->where('l.is_online', true)
+            ->where('p.isDeleted', false)->whereNull('p.archived_at')->groupBy('p.category')->orderBy('p.category')
+            ->selectRaw('p.category as code, COUNT(*) as products')->get()
+            ->map(fn ($row) => ['code' => $row->code, 'label' => Product::CATEGORY_LABELS[$row->code] ?? $row->code,
+                'products' => (int) $row->products])->all());
+    }
+
+    public function page(string $slug): array
+    {
+        $payload = $this->cache->remember('cms.pages', 'api:v1:page:'.$slug, fn () => $this->cms->publicPage($slug));
+        $scope = (string) ($payload['snapshot']['capability_scope'] ?? 'common');
+        abort_unless($this->capabilities->allowsScope($scope), 404);
+
+        return $payload;
+    }
+
+    public function policies(): array
+    {
+        $this->assertScope('common');
+
+        return $this->cache->remember('cms.policies', 'api:v1:policies', fn () => $this->cms->publicPolicies());
+    }
+
+    public function software(string $slug): array
+    {
+        $this->assertScope('common');
+        $public = $this->softwarePublic($slug);
+        $snapshot = $public['snapshot'];
+
+        return ['public_id' => $public['public_id'], 'slug' => $public['slug'], 'revision' => $public['revision'],
+            'published_at' => $public['published_at'], 'current_version' => $public['current_version'],
+            'overview' => array_intersect_key($snapshot, array_flip([
+                'name', 'summary', 'overview', 'features', 'platforms', 'system_requirements', 'logo_media_id',
+                'icon_media_id', 'hero_media_id', 'screenshot_media_ids', 'demo_media_id', 'limitations', 'support', 'cta', 'seo',
+            ])),
+            'latest_releases' => array_slice($public['releases'], 0, 10),
+            'routes' => $public['routes'], 'sha256' => $public['sha256']];
+    }
+
+    public function softwareSection(string $slug, string $section): array
+    {
+        $this->assertScope('common');
+        abort_unless(in_array($section, ['privacy', 'terms', 'faq', 'releases'], true), 404);
+        $public = $this->softwarePublic($slug);
+        if ($section === 'releases') {
+            return ['slug' => $public['slug'], 'current_version' => $public['current_version'],
+                'items' => array_slice($public['releases'], 0, 50), 'truncated' => count($public['releases']) > 50];
+        }
+
+        return ['slug' => $public['slug'], 'revision' => $public['revision'], $section => $public['snapshot'][$section] ?? ($section === 'faq' ? [] : '')];
+    }
+
+    public function services(): array
+    {
+        $this->assertScope('digital');
+        $items = $this->digital->catalogue();
+        abort_if(count($items) > 100, 503, 'Published service catalogue exceeds the API payload budget.');
+
+        return ['items' => $items];
+    }
+
+    public function assertCommerce(): void
+    {
+        $this->assertScope('commerce');
+    }
+
+    public function cartQuote(array $input): array
+    {
+        $this->assertScope('commerce');
+        $data = Validator::make($input, [
+            'lines' => 'required|array|min:1|max:50',
+            'lines.*.product_id' => 'required|uuid',
+            'lines.*.quantity' => 'required|integer|min:1|max:10000',
+            'lines.*.variant_key' => 'sometimes|string|max:100',
+        ])->validate();
+        $ids = collect($data['lines'])->pluck('product_id');
+        if ($ids->duplicates()->isNotEmpty()) {
+            throw ValidationException::withMessages(['lines' => 'Each product may appear once.']);
+        }
+
+        return DB::transaction(function () use ($data) {
+            $items = [];
+            $total = '0.00';
+            $outlet = null;
+            foreach (collect($data['lines'])->sortBy('product_id') as $line) {
+                $row = DB::table('product_listings as l')->join('products as p', 'p.id', '=', 'l.product_id')
+                    ->where('p.public_id', $line['product_id'])->where('l.is_online', true)
+                    ->where('p.isDeleted', false)->whereNull('p.archived_at')
+                    ->select('p.*', 'l.slug as listing_slug')->lockForUpdate()->firstOrFail();
+                $product = Product::findOrFail($row->id);
+                if ($outlet !== null && $outlet !== $product->outlet_id) {
+                    throw ValidationException::withMessages(['lines' => 'A commerce cart must use one outlet.']);
+                }
+                $outlet = $product->outlet_id;
+                $variant = $line['variant_key'] ?? 'standard';
+                $available = $this->stock->select($product, (int) $line['quantity'], $variant);
+                $unit = SourceRow::money((string) $product->sale_price);
+                $lineTotal = bcmul($unit, (string) $line['quantity'], 2);
+                $total = bcadd($total, $lineTotal, 2);
+                $items[] = ['product_id' => $product->public_id, 'slug' => $row->listing_slug,
+                    'name' => $product->name, 'variant_key' => $variant, 'quantity' => (int) $line['quantity'],
+                    'unit_price' => $unit, 'line_total' => $lineTotal,
+                    'serialized_units_selected' => $product->track_imei ? $available->count() : null];
+            }
+            $snapshot = ['currency' => 'PKR', 'items' => $items, 'subtotal' => $total,
+                'checkout_reprices' => true, 'outlet_id' => (string) $outlet];
+            $snapshot['quote_sha256'] = hash('sha256', json_encode($snapshot, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+
+            return $snapshot;
+        }, 2);
+    }
+
+    public function orders(CustomerAccount $customer, array $input): array
+    {
+        $this->capabilities->assertHistoricalAllowed('order.status');
+        $data = Validator::make($input, ['limit' => 'sometimes|integer|min:1|max:20', 'after' => 'nullable|string|max:120'])->validate();
+        $limit = (int) ($data['limit'] ?? 10);
+        $after = $this->decodeCursor($data['after'] ?? null);
+        $query = DB::table('orders')->where('user_id', $customer->id)
+            ->when($after !== null, fn ($q) => $q->where('id', '<', $after))->orderByDesc('id')->limit($limit + 1);
+        $rows = $query->get(['id', 'public_id', 'order_number', 'order_type', 'status', 'fulfillment_status',
+            'payment_status', 'subtotal', 'total', 'currency', 'created_at', 'updated_at']);
+        $hasMore = $rows->count() > $limit;
+        $rows = $rows->take($limit);
+        $last = $rows->last();
+
+        return ['items' => $rows->map(fn ($row) => $this->orderSummary($row))->all(),
+            'page' => ['limit' => $limit, 'has_more' => $hasMore,
+                'next_cursor' => $hasMore && $last ? $this->encodeCursor((int) $last->id) : null]];
+    }
+
+    public function order(CustomerAccount $customer, string $publicId): array
+    {
+        $this->capabilities->assertHistoricalAllowed('order.status');
+        $order = DB::table('orders')->where('public_id', $publicId)->where('user_id', $customer->id)->firstOrFail();
+        $items = DB::table('order_items')->where('order_id', $order->id)->orderBy('id')
+            ->get(['item_type', 'title', 'quantity', 'unit_price', 'line_total', 'external_reference', 'pos_variant_key'])
+            ->map(fn ($row) => (array) $row)->all();
+        $payments = DB::table('payments')->where('order_id', $order->id)->orderBy('id')
+            ->get(['public_id', 'gateway', 'status', 'amount', 'currency', 'initiated_at', 'paid_at'])
+            ->map(fn ($row) => (array) $row)->all();
+
+        return $this->orderSummary($order) + ['items' => $items, 'payments' => $payments];
+    }
+
+    public function assertOwnedPayment(CustomerAccount $customer, string $paymentPublicId): void
+    {
+        abort_unless(DB::table('payments as p')->join('orders as o', 'o.id', '=', 'p.order_id')
+            ->where('p.public_id', $paymentPublicId)->where('o.user_id', $customer->id)->exists(), 404);
+    }
+
+    private function productProjection(object $row): array
+    {
+        $product = Product::findOrFail($row->product_id);
+        $snapshot = $this->stock->snapshot((int) $row->product_id);
+
+        return [
+            'id' => $row->product_public_id,
+            'listing_id' => $row->listing_public_id,
+            'slug' => $row->slug,
+            'name' => $row->name,
+            'brand' => $product->brandDisplay(),
+            'model' => $row->model,
+            'category' => ['code' => $row->category, 'label' => $product->categoryDisplay()],
+            'price' => (string) $row->sale_price,
+            'currency' => 'PKR',
+            'availability' => ['in_stock' => $snapshot['available'] > 0, 'quantity' => $snapshot['available']],
+            'warranty_type' => $row->warranty_type,
+            'image_url' => $row->image_url,
+        ];
+    }
+
+    private function approvedReviews(int $listingId, int $limit): array
+    {
+        return DB::table('product_reviews')->where('product_listing_id', $listingId)->where('status', 'approved')
+            ->orderByDesc('approved_at')->orderByDesc('id')->limit($limit)
+            ->get(['rating', 'title', 'body', 'approved_at'])
+            ->map(fn ($row) => ['rating' => (int) $row->rating, 'title' => $row->title,
+                'body' => $row->body, 'approved_at' => $row->approved_at])->all();
+    }
+
+    private function softwarePublic(string $slug): array
+    {
+        $slug = $this->slug($slug);
+
+        return $this->cache->remember('cms.software', 'api:v1:software:'.$slug,
+            fn () => $this->cms->publicSoftware($slug));
+    }
+
+    private function orderSummary(object $row): array
+    {
+        return [
+            'id' => $row->public_id,
+            'number' => $row->order_number,
+            'type' => $row->order_type,
+            'status' => $row->status,
+            'fulfillment_status' => $row->fulfillment_status,
+            'payment_status' => $row->payment_status,
+            'subtotal' => (string) $row->subtotal,
+            'total' => (string) $row->total,
+            'currency' => $row->currency,
+            'created_at' => $row->created_at,
+            'updated_at' => $row->updated_at,
+        ];
+    }
+
+    private function assertScope(string $scope): void
+    {
+        abort_unless($this->capabilities->allowsScope($scope), 404, 'The requested Website capability is not active.');
+    }
+
+    private function encodeCursor(int $id): string
+    {
+        return rtrim(strtr(base64_encode('v1:'.$id), '+/', '-_'), '=');
+    }
+
+    private function decodeCursor(?string $cursor): ?int
+    {
+        if ($cursor === null || $cursor === '') {
+            return null;
+        }
+        $raw = strtr($cursor, '-_', '+/');
+        $decoded = base64_decode($raw.str_repeat('=', (4 - strlen($raw) % 4) % 4), true);
+        if (! is_string($decoded) || ! preg_match('/\Av1:([1-9][0-9]*)\z/', $decoded, $match)) {
+            throw ValidationException::withMessages(['after' => 'Invalid pagination cursor.']);
+        }
+
+        return (int) $match[1];
+    }
+
+    private function slug(string $value): string
+    {
+        $value = strtolower(trim($value));
+        abort_unless((bool) preg_match('/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/', $value) && strlen($value) <= 160, 404);
+
+        return $value;
+    }
+
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+    }
+}

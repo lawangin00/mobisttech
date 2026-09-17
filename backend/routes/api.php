@@ -1,9 +1,30 @@
 <?php
 
 use App\Http\Controllers\BusinessProfileController;
+use App\Http\Controllers\WebsiteApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/v1/health', fn () => response()->json([
     'data' => ['service' => 'mobisttech-backend', 'status' => 'ok', 'contract' => 'v1'],
 ])->header('Cache-Control', 'no-store'));
-Route::get('/v1/business-profile', [BusinessProfileController::class, 'show'])->name('business-profile.show');
+
+Route::prefix('/v1')->middleware('throttle:api-public')->group(function () {
+    Route::get('/business-profile', [BusinessProfileController::class, 'show'])->name('business-profile.show');
+    Route::get('/website-profile', [WebsiteApiController::class, 'profile'])->name('api.website-profile');
+    Route::get('/catalogue/products', [WebsiteApiController::class, 'catalogue'])->name('api.catalogue.index');
+    Route::get('/catalogue/products/{slug}', [WebsiteApiController::class, 'product'])->name('api.catalogue.show');
+    Route::get('/catalogue/categories', [WebsiteApiController::class, 'categories'])->name('api.categories.index');
+    Route::get('/content/pages/{slug}', [WebsiteApiController::class, 'page'])->where('slug', '[a-z0-9-]+')->name('api.pages.show');
+    Route::get('/content/policies', [WebsiteApiController::class, 'policies'])->name('api.policies.index');
+    Route::get('/software/{slug}', [WebsiteApiController::class, 'software'])->name('api.software.show');
+    Route::get('/software/{slug}/{section}', [WebsiteApiController::class, 'softwareSection'])
+        ->where('section', 'privacy|terms|faq|releases')->name('api.software.section');
+    Route::get('/services', [WebsiteApiController::class, 'services'])->name('api.services.index');
+});
+
+Route::prefix('/v1')->middleware('throttle:api-write')->group(function () {
+    Route::post('/enquiries', [WebsiteApiController::class, 'enquiry'])->name('api.enquiries.store');
+});
+
+Route::post('/v1/payment-callbacks/{gateway}', [WebsiteApiController::class, 'paymentCallback'])
+    ->middleware('throttle:api-callback')->where('gateway', 'jazzcash|easypaisa|card')->name('api.payments.callback');

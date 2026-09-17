@@ -7,6 +7,8 @@ use App\Http\Middleware\IdentityCsrf;
 use App\Http\Middleware\RecentlyAuthenticated;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\RecordNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -44,16 +46,37 @@ return Application::configure(basePath: dirname(__DIR__))
             if (! $request->attributes->has('identity_realm')) {
                 return null;
             }
+            $businessApi = $request->is('api/v1/*') && ! $request->is('api/v1/auth/*') && ! $request->is('api/v1/account');
             $status = $error instanceof ValidationException ? 422
                 : ($error instanceof TokenMismatchException ? 419
-                    : ($error instanceof HttpExceptionInterface ? $error->getStatusCode() : 500));
-            $body = ['code' => 'identity_'.$status, 'message' => $status === 500 ? 'Identity service unavailable.' : 'The request could not be completed.', 'request_id' => (string) Str::uuid()];
+                    : (($businessApi && ($error instanceof ModelNotFoundException || $error instanceof RecordNotFoundException)) ? 404
+                        : (($businessApi && $error instanceof LogicException) ? 409
+                            : ($error instanceof HttpExceptionInterface ? $error->getStatusCode() : 500))));
+            $prefix = $businessApi ? 'api_' : 'identity_';
+            $body = ['code' => $prefix.$status, 'message' => $status === 500 ? ($businessApi ? 'API service unavailable.' : 'Identity service unavailable.') : 'The request could not be completed.', 'request_id' => (string) Str::uuid()];
             if ($error instanceof ValidationException) {
                 $body['fields'] = $error->errors();
             }
 
             return response()->json(['error' => $body], $status, $error instanceof HttpExceptionInterface ? $error->getHeaders() : [])
                 ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
+        });
+        $exceptions->render(function (Throwable $error, Request $request) {
+            if (! $request->is('api/v1/*') || $request->attributes->has('identity_realm')) {
+                return null;
+            }
+            $status = $error instanceof ValidationException ? 422
+                : (($error instanceof ModelNotFoundException || $error instanceof RecordNotFoundException) ? 404
+                    : ($error instanceof HttpExceptionInterface ? $error->getStatusCode()
+                        : ($error instanceof LogicException ? 409 : 500)));
+            $body = ['code' => 'api_'.$status, 'message' => $status === 500 ? 'API service unavailable.' : 'The request could not be completed.',
+                'request_id' => (string) Str::uuid()];
+            if ($error instanceof ValidationException) {
+                $body['fields'] = $error->errors();
+            }
+
+            return response()->json(['error' => $body], $status, $error instanceof HttpExceptionInterface ? $error->getHeaders() : [])
+                ->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
         });
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
