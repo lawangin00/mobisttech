@@ -1,0 +1,25 @@
+{
+  "roadmap_point": "MT-2.16",
+  "title": "Paid repair job services",
+  "result": "PASS",
+  "schema": {
+    "tables": 138,
+    "columns": 1711,
+    "foreign_keys": 287,
+    "indexes": 662,
+    "schema_sha256": "42f28550e7172b68dae0365f8ca171caa784aa3aafa89b5af962d580c138c086",
+    "rollback_mt_2_15_sha256": "0ca4e48de5fce0f5a48816ae8a1ff15102398b4f5642d5c9db3c5a5a11425f18"
+  },
+  "focused_repair_tests": {"tests": 3, "assertions": 38},
+  "affected_regression": {"tests": 20, "assertions": 215},
+  "mysql_concurrency": {"tests": 18, "assertions": 1559},
+  "full_backend": {"tests": 188, "assertions": 6444},
+  "pint_files": 162,
+  "composer_validate_strict": "PASS",
+  "composer_platform_requirements": "PASS",
+  "backend_typecheck_vite_build": "PASS",
+  "website_eslint_typecheck_next_build": "PASS",
+  "warranty_claim_domain_separate": true,
+  "disabled_new_intake_preserves_existing_jobs": true,
+  "historical_estimates_preserved": true
+}

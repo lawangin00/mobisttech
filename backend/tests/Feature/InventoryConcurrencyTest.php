@@ -13,6 +13,7 @@ use App\Models\Outlet;
 use App\Models\StockUnit;
 use App\Payments\PosPaymentOperations;
 use App\Procurement\SupplierProcurement;
+use App\Repairs\PaidRepairOperations;
 use App\Sales\SalesOperations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -26,7 +27,7 @@ class InventoryConcurrencyTest extends TestCase
     use InventoryFixture;
 
     // These tests deliberately commit fixtures so independent MySQL connections can see them.
-    private array $tables = ['loyalty_claim_lots', 'loyalty_earn_lots', 'loyalty_entries', 'loyalty_claims', 'loyalty_accounts', 'loyalty_configurations', 'cash_entries', 'pos_refund_allocations', 'pos_settlement_events', 'pos_tender_allocations', 'cash_sessions', 'pos_payment_destinations', 'identity_audit_events', 'stock_transfer_receipt_lines', 'stock_transfer_receipts', 'stock_transfer_units', 'stock_transfer_lines', 'stock_transfers', 'stocktake_approvals', 'stocktake_recounts', 'stocktake_counts', 'stocktake_unit_baselines', 'stocktake_lines', 'stocktake_sessions', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
+    private array $tables = ['repair_events', 'repair_payment_links', 'repair_part_consumptions', 'repair_estimate_approvals', 'repair_estimate_lines', 'repair_estimates', 'repair_jobs', 'repair_settings', 'loyalty_claim_lots', 'loyalty_earn_lots', 'loyalty_entries', 'loyalty_claims', 'loyalty_accounts', 'loyalty_configurations', 'cash_entries', 'pos_refund_allocations', 'pos_settlement_events', 'pos_tender_allocations', 'cash_sessions', 'pos_payment_destinations', 'identity_audit_events', 'stock_transfer_receipt_lines', 'stock_transfer_receipts', 'stock_transfer_units', 'stock_transfer_lines', 'stock_transfers', 'stocktake_approvals', 'stocktake_recounts', 'stocktake_counts', 'stocktake_unit_baselines', 'stocktake_lines', 'stocktake_sessions', 'purchase_order_events', 'acquisition_source_references', 'purchase_order_receipt_lines', 'purchase_order_receipts',
         'purchase_order_lines', 'purchase_orders', 'supplier_contacts', 'reorder_policies', 'suppliers', 'domain_events', 'publication_versions', 'idempotency_requests', 'claim_events', 'claims', 'return_lines', 'returns', 'monetary_adjustments',
         'inventory_custody_holds', 'stock_unit_lineage', 'reservation_allocations', 'reservation_lines', 'reservations', 'product_imeis', 'active_imeis', 'stock_movements', 'stock_units',
         'stock_acquisitions', 'sales', 'invoices', 'order_items', 'orders', 'customers', 'document_sequences', 'pos_master_data_usages', 'products',
@@ -426,6 +427,34 @@ class InventoryConcurrencyTest extends TestCase
     {
         return DB::table('customers')->insertGetId(['display_name' => 'Concurrent loyalty customer',
             'email' => 'loyalty-race-'.Str::uuid().'@example.invalid', 'public_id' => (string) Str::uuid()]);
+    }
+
+    public function test_separate_mysql_connections_cannot_double_consume_repair_parts(): void
+    {
+        $service = app(PaidRepairOperations::class);
+        $service->configure($this->actor, $this->outlet, (string) Str::uuid(), ['enabled' => true]);
+        $part = $this->product();
+        $this->acquire($part);
+        $job = $service->open($this->actor, $this->outlet, (string) Str::uuid(), [
+            'customer_name' => 'Repair race customer', 'device_label' => 'Race phone', 'identifier_type' => 'serial',
+            'identifier_value' => 'RACE-REPAIR-001', 'issue_description' => 'Synthetic repair race',
+        ]);
+        $service->update($this->actor, $this->outlet, $job['repair_id'], (string) Str::uuid(), [
+            'status' => 'diagnosing', 'diagnosis' => 'Synthetic part replacement',
+        ]);
+        $estimate = $service->estimate($this->actor, $this->outlet, $job['repair_id'], (string) Str::uuid(), ['lines' => [[
+            'type' => 'part', 'product_id' => $part->public_id, 'description' => 'Race part', 'quantity' => 1,
+        ]]]);
+        $service->decideEstimate($this->actor, $this->outlet, $job['repair_id'], $estimate['estimate_id'], (string) Str::uuid(), true);
+        $request = ['operation' => 'repair_parts', 'actor' => $this->actor->id, 'outlet' => $this->outlet->id,
+            'repair' => $job['repair_id'], 'barrier_product' => $part->id];
+        $results = $this->race([$part->id], [[...$request, 'key' => (string) Str::uuid()], [...$request, 'key' => (string) Str::uuid()]]);
+        $outcomes = array_column($results, 'outcome');
+        sort($outcomes);
+        $this->assertSame(['committed', 'committed'], $outcomes, json_encode($results));
+        $this->assertSame(1, DB::table('repair_part_consumptions')->count());
+        $this->assertSame(1, DB::table('stock_movements')->where('type', 'repair_part')->count());
+        $this->assertSame(0, $part->fresh()->qty);
     }
 
     private function submittedStocktake($product): array

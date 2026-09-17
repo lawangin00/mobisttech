@@ -10,6 +10,7 @@ use App\Models\Admin;
 use App\Models\Outlet;
 use App\Payments\PosPaymentOperations;
 use App\Procurement\SupplierProcurement;
+use App\Repairs\PaidRepairOperations;
 use App\Sales\SalesOperations;
 use App\Warranty\ClaimOperations;
 use Illuminate\Contracts\Console\Kernel;
@@ -59,6 +60,8 @@ try {
                 $input['key'], $input['input']),
             'cash_close' => app(CashSessionOperations::class)->close(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
                 $input['session'], $input['key'], $input['input']),
+            'repair_parts' => app(PaidRepairOperations::class)->consumeParts(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
+                $input['repair'], $input['key']),
             'loyalty_claim' => app(LoyaltyServices::class)->claim('pos', $input['customer'], $input['owner'], $input['points'], $input['max'], $input['bases']),
             'loyalty_earn' => app(LoyaltyServices::class)->earnInvoice($input['invoice']),
             'loyalty_reverse' => app(LoyaltyServices::class)->reverseReturn($input['return']),

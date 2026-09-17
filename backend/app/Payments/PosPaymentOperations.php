@@ -2,6 +2,7 @@
 
 namespace App\Payments;
 
+use App\Business\BusinessProfile;
 use App\Cash\CashSessionOperations;
 use App\Identity\Access;
 use App\Identity\IdentityAudit;
@@ -146,6 +147,81 @@ final class PosPaymentOperations
 
             return [...$sale, 'payments' => $allocationResults, 'paid_amount' => $total, 'remaining' => '0.00', 'cash_change_total' => $change];
         });
+    }
+
+    public function collectRepair(Admin $actor, Outlet $outlet, string $repairId, string $key, array $input): array
+    {
+        $this->fields($input, ['payments']);
+        Validator::make($input, ['payments' => 'required|array|min:1|max:10'])->validate();
+
+        return $this->mutate($actor, $outlet, 'repair.collect:'.$repairId, $key, $input, 'shop.repairs',
+            function (Admin $fresh) use ($outlet, $repairId, $input) {
+                $job = DB::table('repair_jobs')->where('public_id', $repairId)->where('outlet_id', $outlet->id)->lockForUpdate()->firstOrFail();
+                if (! in_array($job->status, ['approved', 'repairing', 'ready_for_collection'], true)) {
+                    throw new LogicException('Paid repair is not in a collectible state.');
+                }
+                $approval = DB::table('repair_estimate_approvals')->where('repair_job_id', $job->id)->lockForUpdate()->firstOrFail();
+                $estimate = DB::table('repair_estimates')->where('id', $approval->repair_estimate_id)->lockForUpdate()->firstOrFail();
+                $due = SourceRow::money((string) $estimate->grand_total);
+                if (bccomp($due, '0.00', 2) <= 0) {
+                    throw new LogicException('A zero-value repair does not require payment collection.');
+                }
+                $invoice = $job->invoice_id ? DB::table('invoices')->where('id', $job->invoice_id)->lockForUpdate()->firstOrFail() : null;
+                if (! $invoice) {
+                    $public = (string) Str::uuid();
+                    $business = ['contract' => 'paid-repair-invoice.v1', ...app(BusinessProfile::class)->current(),
+                        'outlet_id' => $outlet->public_id, 'outlet_code' => $outlet->outlet_code, 'outlet_name' => $outlet->name];
+                    $invoiceId = DB::table('invoices')->insertGetId([
+                        'outlet_id' => $outlet->id, 'total_bill' => $due, 'discount' => '0.00', 'final_bill' => $due,
+                        'customer_id' => $job->customer_id, 'customer_name' => $job->customer_name, 'customer_phone' => $job->customer_phone,
+                        'customer_info' => 'Paid repair '.$job->repair_number, 'salesperson_admin_id' => $fresh->id,
+                        'salesperson_name' => $fresh->name, 'business_snapshot' => json_encode($business, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+                        'invoice_number' => $job->repair_number.'-INV', 'public_id' => $public, 'currency' => 'PKR',
+                        'created_at' => now(), 'updated_at' => now(),
+                    ]);
+                    DB::table('repair_jobs')->where('id', $job->id)->update([
+                        'invoice_id' => $invoiceId, 'version' => $job->version + 1, 'updated_at' => now(),
+                    ]);
+                    $job = DB::table('repair_jobs')->where('id', $job->id)->lockForUpdate()->firstOrFail();
+                    $invoice = DB::table('invoices')->where('id', $invoiceId)->lockForUpdate()->firstOrFail();
+                }
+                if ($invoice->outlet_id !== $outlet->id || bccomp(SourceRow::money((string) $invoice->final_bill), $due, 2) !== 0) {
+                    throw new LogicException('Repair invoice no longer matches its approved estimate.');
+                }
+                if (DB::table('pos_tender_allocations')->where('invoice_id', $invoice->id)->lockForUpdate()->exists()) {
+                    throw new LogicException('Paid repair invoice was already collected under another request.');
+                }
+                $payments = collect($input['payments'])->values();
+                $requiresCash = $payments->contains(fn ($payment) => is_array($payment) && ($payment['method'] ?? null) === 'cash');
+                $cashSessionId = app(CashSessionOperations::class)->transactionSession($outlet, $requiresCash);
+                $prepared = [];
+                $total = '0.00';
+                foreach ($payments as $index => $payment) {
+                    if (! is_array($payment)) {
+                        throw ValidationException::withMessages(['payments.'.$index => 'Payment allocation must be an object.']);
+                    }
+                    $prepared[] = $this->prepareTender($fresh, $outlet, $payment, $index + 1);
+                    $total = bcadd($total, end($prepared)['amount'], 2);
+                }
+                if (bccomp($total, $due, 2) !== 0) {
+                    throw new LogicException('Repair tender allocations must exactly equal the approved estimate amount.');
+                }
+                $results = [];
+                foreach ($prepared as $row) {
+                    $result = $this->insertTender($fresh, $invoice, $row, $cashSessionId);
+                    $allocationId = DB::table('pos_tender_allocations')->where('public_id', $result['allocation_id'])->value('id');
+                    DB::table('repair_payment_links')->insert([
+                        'repair_job_id' => $job->id, 'tender_allocation_id' => $allocationId,
+                        'amount' => $result['amount'], 'created_at' => now(),
+                    ]);
+                    $results[] = $result;
+                }
+                $this->repairEvent($job->id, $fresh, 'payment_linked', ['invoice_id' => $invoice->public_id, 'amount' => $total]);
+                IdentityAudit::record('admin', $fresh->id, 'paid_repair_collected', 'repair:'.$repairId, $outlet->id);
+
+                return ['repair_id' => $repairId, 'invoice_id' => $invoice->public_id, 'paid_amount' => $total,
+                    'remaining' => '0.00', 'currency' => 'PKR', 'payments' => $results];
+            });
     }
 
     public function reconcile(Admin $actor, Outlet $outlet, string $allocationId, string $key, array $input): array
@@ -298,6 +374,22 @@ final class PosPaymentOperations
 
         return ['invoice_id' => $invoice->public_id, 'invoice_number' => $invoice->invoice_number, 'final_bill' => $invoice->final_bill,
             'currency' => $invoice->currency, 'payments' => $tenders, 'refunds' => $refunds];
+    }
+
+    private function repairEvent(int $jobId, Admin $actor, string $type, array $data): void
+    {
+        $job = DB::table('repair_jobs')->where('id', $jobId)->firstOrFail();
+        $sequence = ((int) DB::table('repair_events')->where('repair_job_id', $jobId)->lockForUpdate()->max('sequence')) + 1;
+        $snapshot = $this->canonical(['contract' => 'paid-repair-event.v1', 'repair_id' => $job->public_id,
+            'repair_number' => $job->repair_number, 'sequence' => $sequence, 'event_type' => $type,
+            'status' => $job->status, 'job_version' => (int) $job->version,
+            'actor' => ['id' => $actor->public_id, 'name' => $actor->name], 'data' => $data,
+            'occurred_at' => now()->utc()->format('Y-m-d H:i:s.u')]);
+        $json = json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        DB::table('repair_events')->insert(['repair_job_id' => $jobId, 'sequence' => $sequence,
+            'event_type' => $type, 'status' => $job->status, 'actor_admin_id' => $actor->id, 'actor_name' => $actor->name,
+            'snapshot' => $json, 'snapshot_sha256' => hash('sha256', json_encode($this->canonical($snapshot), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)),
+            'created_at' => now()]);
     }
 
     private function prepareTender(Admin $actor, Outlet $outlet, array $input, int $sequence): array

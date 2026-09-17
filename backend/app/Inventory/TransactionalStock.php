@@ -92,6 +92,43 @@ final class TransactionalStock
         return $movement;
     }
 
+    public function consumeRepairPart(int $estimateLineId): int
+    {
+        $this->transaction();
+        $line = DB::table('repair_estimate_lines')->where('id', $estimateLineId)->lockForUpdate()->firstOrFail();
+        if ($line->line_type !== 'part' || ! $line->product_id) {
+            throw new LogicException('Only an approved stock-backed repair part line can consume inventory.');
+        }
+        $estimate = DB::table('repair_estimates')->where('id', $line->repair_estimate_id)->lockForUpdate()->firstOrFail();
+        $approval = DB::table('repair_estimate_approvals')->where('repair_estimate_id', $estimate->id)->lockForUpdate()->first();
+        if (! $approval) {
+            throw new LogicException('Repair part consumption requires the approved estimate.');
+        }
+        $job = DB::table('repair_jobs')->where('id', $approval->repair_job_id)->lockForUpdate()->firstOrFail();
+        if (! in_array($job->status, ['approved', 'repairing'], true)) {
+            throw new LogicException('Repair job is not in a part-consumable state.');
+        }
+        $product = $this->stock->lock($line->product_id);
+        if ($product->outlet_id !== $job->outlet_id || $product->track_imei || $product->isDeleted) {
+            throw new LogicException('Repair parts must be active non-serialized stock from the repair outlet.');
+        }
+        $existing = DB::table('stock_movements')->where('reference_type', 'repair_estimate_line')
+            ->where('reference_id', $line->id)->lockForUpdate()->first();
+        if ($existing) {
+            if ($existing->product_id !== $product->id || -$existing->quantity_change !== $line->quantity || $existing->type !== 'repair_part') {
+                throw new LogicException('Previously consumed repair part changed.');
+            }
+
+            return $existing->id;
+        }
+        $this->stock->select($product, (int) $line->quantity);
+        $movement = $this->stock->movement($product, 'repair_part', -(int) $line->quantity, 'repair_estimate_line', $line->id,
+            'Approved paid repair part consumption');
+        $this->stock->snapshot($product->id);
+
+        return $movement;
+    }
+
     public function release(int $reservationId, bool $expire = false): void
     {
         $this->transaction();
