@@ -43,7 +43,9 @@ final class PosTransactionController extends Controller
                 }
             });
         }
-        $rows = $query->orderBy('name')->forPage($page, 20)->get();
+        $rows = $query->orderBy('name')->skip(($page - 1) * 20)->limit(21)->get();
+        $hasMore = $rows->count() > 20;
+        $rows = $rows->take(20)->values();
         $products = $rows->map(fn (Product $product) => $this->productPayload($product))->all();
         $destinations = [];
         if (app(Access::class)->allows($actor, 'shop.sales', $outlet)) {
@@ -66,7 +68,7 @@ final class PosTransactionController extends Controller
 
         return response()->json(['data' => [
             'outlet' => ['id' => $outlet->public_id, 'name' => $outlet->name],
-            'products' => $products, 'page' => $page, 'has_more' => $rows->count() === 20,
+            'products' => $products, 'page' => $page, 'has_more' => $hasMore,
             'payment_destinations' => $destinations, 'master_data' => $master,
         ]]);
     }
@@ -114,6 +116,14 @@ final class PosTransactionController extends Controller
         return response()->json(['data' => $result]);
     }
 
+    public function adjust(Request $request, string $product, InventoryOperations $inventory)
+    {
+        [$actor, $outlet] = $this->context($request, ['shop.inventory']);
+        $result = $inventory->adjust($actor, $outlet, $product, $this->key($request), $request->all());
+
+        return response()->json(['data' => $result]);
+    }
+
     public function unitAttributes(Request $request, string $unit, ProductDefinitions $products)
     {
         [$actor, $outlet] = $this->context($request, ['shop.inventory']);
@@ -147,7 +157,10 @@ final class PosTransactionController extends Controller
         $change = '0.00';
         foreach ($input['payments'] ?? [] as $index => $payment) {
             $destination = DB::table('pos_payment_destinations')->where('public_id', $payment['destination_id'])
-                ->where('outlet_id', $outlet->id)->where('active', true)->firstOrFail();
+                ->where('outlet_id', $outlet->id)->where('active', true)
+                ->where(fn ($b) => $b->whereNull('effective_from')->orWhere('effective_from', '<=', now()))
+                ->where(fn ($b) => $b->whereNull('effective_until')->orWhere('effective_until', '>', now()))
+                ->firstOrFail();
             if ($destination->method !== $payment['method']) {
                 throw ValidationException::withMessages(['payments.'.$index.'.method' => 'Payment Method does not match the selected destination.']);
             }

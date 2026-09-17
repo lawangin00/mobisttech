@@ -74,6 +74,7 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::post('/pos/inventory/products', [PosTransactionController::class, 'saveProduct'])->defaults('identity_realm', 'admin')->name('admin.pos.products.save');
     Route::post('/pos/inventory/products/{product}/acquire', [PosTransactionController::class, 'acquire'])->defaults('identity_realm', 'admin')->name('admin.pos.inventory.acquire');
     Route::post('/pos/inventory/products/{product}/imeis', [PosTransactionController::class, 'imeis'])->defaults('identity_realm', 'admin')->name('admin.pos.inventory.imeis');
+    Route::post('/pos/inventory/products/{product}/adjust', [PosTransactionController::class, 'adjust'])->defaults('identity_realm', 'admin')->name('admin.pos.inventory.adjust');
     Route::patch('/pos/inventory/units/{unit}', [PosTransactionController::class, 'unitAttributes'])->defaults('identity_realm', 'admin')->name('admin.pos.inventory.units');
     Route::post('/pos/sales/quote', [PosTransactionController::class, 'quote'])->defaults('identity_realm', 'admin')->name('admin.pos.sales.quote');
     Route::post('/pos/sales', [PosTransactionController::class, 'sell'])->defaults('identity_realm', 'admin')->name('admin.pos.sales.store');

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
 type Unit = { id: string; code: string; status: string; version: number; imeis: string[] };
-type Product = { id: string; code: string; name: string; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; units: Unit[] };
+type Product = { id: string; code: string; name: string; category?: string; model?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[] };
 type Destination = { public_id: string; method: string; display_name: string };
 type Master = { id: number; list_key: string; code: string; label: string; metadata: Record<string, unknown> };
-type Catalogue = { products: Product[]; payment_destinations: Destination[]; master_data: Master[] };
+type Catalogue = { products: Product[]; page: number; has_more: boolean; payment_destinations: Destination[]; master_data: Master[] };
 type Payment = { method: string; destination_id: string; amount: string; transaction_reference?: string; cash_tendered?: string };
 type Quote = { payable: string; payments_total: string; remaining: string; cash_change: string };
 
@@ -34,7 +34,12 @@ export default function PosTransactionWorkspace({ area }: { area: 'inventory' | 
     const [query, setQuery] = useState('');
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
-    const load = async (value = '') => setCatalogue(await api<Catalogue>('/internal/admin/pos/catalogue?q=' + encodeURIComponent(value)));
+    const [page, setPage] = useState(1);
+    const load = async (value = '', requestedPage = 1) => {
+        const data = await api<Catalogue>('/internal/admin/pos/catalogue?q=' + encodeURIComponent(value) + '&page=' + requestedPage);
+        setCatalogue(data);
+        setPage(data.page);
+    };
     useEffect(() => { void load(); }, []);
     const run = async (task: () => Promise<void>) => {
         setBusy(true); setMessage('');
@@ -52,12 +57,17 @@ export default function PosTransactionWorkspace({ area }: { area: 'inventory' | 
                     onKeyDown={(e) => { if (e.key === 'Enter') void lookup(); }}
                     placeholder="Scan barcode / QR / IMEI, or search product" className="min-w-0 flex-1 rounded-lg border px-3 py-2 text-sm" />
                 <button disabled={busy} onClick={() => void lookup()} className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white">Lookup</button>
-                <button disabled={busy} onClick={() => void run(() => load(query))} className="rounded-lg border px-4 py-2 text-sm font-semibold">Search</button>
+                <button disabled={busy} onClick={() => void run(() => load(query, 1))} className="rounded-lg border px-4 py-2 text-sm font-semibold">Search</button>
             </div>
             {message && <p role="alert" className="mt-3 text-sm">{message}</p>}
+            <div className="mt-3 flex items-center justify-end gap-2 text-xs">
+                <button disabled={busy || page <= 1} onClick={() => void run(() => load(query, page - 1))} className="rounded border px-2 py-1 disabled:opacity-40">Previous</button>
+                <span>Page {page}</span>
+                <button disabled={busy || !catalogue?.has_more} onClick={() => void run(() => load(query, page + 1))} className="rounded border px-2 py-1 disabled:opacity-40">Next</button>
+            </div>
         </section>
         {area === 'inventory'
-            ? <Inventory catalogue={catalogue} busy={busy} run={run} reload={() => load(query)} />
+            ? <Inventory catalogue={catalogue} busy={busy} run={run} reload={() => load(query, page)} />
             : <Sales catalogue={catalogue} busy={busy} run={run} />}
     </div>;
 }
@@ -74,9 +84,25 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
     const [unitId, setUnitId] = useState('');
     const [imei1, setImei1] = useState('');
     const [imei2, setImei2] = useState('');
+    const [newName, setNewName] = useState('');
+    const [categoryId, setCategoryId] = useState('');
+    const [brandId, setBrandId] = useState('');
+    const [newModel, setNewModel] = useState('');
+    const [newPurchase, setNewPurchase] = useState('');
+    const [newSale, setNewSale] = useState('');
+    const [newTrack, setNewTrack] = useState(false);
+    const [adjustType, setAdjustType] = useState('correction_in');
+    const [adjustQty, setAdjustQty] = useState('1');
+    const [adjustReason, setAdjustReason] = useState('POS stock correction');
+    const [conditionId, setConditionId] = useState('');
+    const [ptaId, setPtaId] = useState('');
     const product = catalogue?.products.find((p) => p.id === productId);
     const unit = product?.units.find((u) => u.id === unitId);
     const sources = catalogue?.master_data.filter((m) => m.list_key === 'acquisition_source_type') ?? [];
+    const categories = catalogue?.master_data.filter((m) => m.list_key === 'product_category') ?? [];
+    const brands = catalogue?.master_data.filter((m) => m.list_key === 'product_brand') ?? [];
+    const conditions = catalogue?.master_data.filter((m) => m.list_key === 'unit_condition') ?? [];
+    const ptaStatuses = catalogue?.master_data.filter((m) => m.list_key === 'unit_pta_status') ?? [];
     const printLabel = async (kind: string, id: string) => {
         const label = await api<Record<string, unknown>>('/internal/admin/pos/labels/' + kind + '/' + id);
         const popup = window.open('', '_blank', 'width=520,height=420');
@@ -93,6 +119,28 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
             </div>)}</div>
         </section>
         <div className="grid gap-5">
+            <section className="rounded-2xl border bg-white p-5"><h3 className="font-semibold">Product definition</h3>
+                <div className="mt-3 grid gap-2">
+                    <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Product name" className="rounded border p-2 text-sm" />
+                    <div className="grid grid-cols-2 gap-2">
+                        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="rounded border p-2 text-sm"><option value="">Category</option>{categories.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                        <select value={brandId} onChange={(e) => setBrandId(e.target.value)} className="rounded border p-2 text-sm"><option value="">Brand (if device)</option>{brands.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                    </div>
+                    <input value={newModel} onChange={(e) => setNewModel(e.target.value)} placeholder="Model" className="rounded border p-2 text-sm" />
+                    <div className="grid grid-cols-2 gap-2"><input value={newPurchase} onChange={(e) => setNewPurchase(e.target.value)} placeholder="Purchase price" className="rounded border p-2 text-sm" /><input value={newSale} onChange={(e) => setNewSale(e.target.value)} placeholder="Sale price" className="rounded border p-2 text-sm" /></div>
+                    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={newTrack} onChange={(e) => setNewTrack(e.target.checked)} /> Track IMEI</label>
+                    <button data-testid="product-save" disabled={busy || !newName || !categoryId || !newPurchase || !newSale} onClick={() => void run(async () => {
+                        const category = categories.find((m) => String(m.id) === categoryId);
+                        if (!category) throw new Error('Choose a valid category.');
+                        await api('/internal/admin/pos/inventory/products', { method: 'POST', body: JSON.stringify({
+                            name: newName, category: category.code, category_master_data_id: Number(categoryId),
+                            brand_master_data_id: brandId ? Number(brandId) : null, model: newModel || null,
+                            purchase_price: newPurchase, sale_price: newSale, track_imei: newTrack, warranty_type: 'no_warranty',
+                        }) });
+                        setNewName(''); setNewModel(''); setNewPurchase(''); setNewSale(''); setBrandId(''); setNewTrack(false); await reload();
+                    })} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">Save product</button>
+                </div>
+            </section>
             <section className="rounded-2xl border bg-white p-5"><h3 className="font-semibold">Receive stock</h3>
                 <div className="mt-3 grid gap-2">
                     <select value={productId} onChange={(e) => setProductId(e.target.value)} className="rounded border p-2 text-sm"><option value="">Product</option>{catalogue?.products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
@@ -111,13 +159,33 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
                     })} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">Receive</button>
                 </div>
             </section>
+            {product && <section className="rounded-2xl border bg-white p-5"><h3 className="font-semibold">Stock adjustment</h3>
+                <div className="mt-3 grid gap-2">
+                    <select value={adjustType} onChange={(e) => setAdjustType(e.target.value)} className="rounded border p-2 text-sm"><option value="correction_in">Correction in</option><option value="correction_out">Correction out</option><option value="damaged">Damaged</option><option value="lost">Lost</option></select>
+                    <input value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} placeholder="Quantity" className="rounded border p-2 text-sm" />
+                    <input value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} placeholder="Reason" className="rounded border p-2 text-sm" />
+                    <button data-testid="stock-adjust" disabled={busy || (product.track_imei && adjustType !== 'correction_in' && !unitId)} onClick={() => void run(async () => {
+                        await api('/internal/admin/pos/inventory/products/' + product.id + '/adjust', { method: 'POST', body: JSON.stringify({
+                            type: adjustType, quantity: Number(adjustQty), reason: adjustReason, unit_id: product.track_imei && adjustType !== 'correction_in' ? unitId : null,
+                        }) }); await reload();
+                    })} className="rounded border px-3 py-2 text-sm font-semibold disabled:opacity-40">Apply adjustment</button>
+                </div>
+            </section>}
             {product?.track_imei && <section className="rounded-2xl border bg-white p-5"><h3 className="font-semibold">Unit / IMEI</h3>
                 <select value={unitId} onChange={(e) => setUnitId(e.target.value)} className="mt-3 w-full rounded border p-2 text-sm"><option value="">Unit</option>{product.units.map((u) => <option key={u.id} value={u.id}>{u.code}</option>)}</select>
                 <div className="mt-2 grid grid-cols-2 gap-2"><input value={imei1} onChange={(e) => setImei1(e.target.value)} placeholder="IMEI 1" className="rounded border p-2 text-sm" /><input value={imei2} onChange={(e) => setImei2(e.target.value)} placeholder="IMEI 2" className="rounded border p-2 text-sm" /></div>
-                <div className="mt-3 flex gap-2"><button disabled={!unit} onClick={() => void run(async () => {
+                <div className="mt-2 grid grid-cols-2 gap-2"><select value={conditionId} onChange={(e) => setConditionId(e.target.value)} className="rounded border p-2 text-sm"><option value="">Condition</option>{conditions.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select><select value={ptaId} onChange={(e) => setPtaId(e.target.value)} className="rounded border p-2 text-sm"><option value="">PTA status</option>{ptaStatuses.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select></div>
+                <div className="mt-3 flex flex-wrap gap-2"><button disabled={!unit} onClick={() => void run(async () => {
                     const values = [imei1, imei2].filter(Boolean); const imeis = Object.fromEntries(values.map((v, i) => [String(i + 1), v]));
                     await api('/internal/admin/pos/inventory/products/' + productId + '/imeis', { method: 'POST', body: JSON.stringify({ unit_id: unitId, version: unit?.version, imeis }) }); await reload();
-                })} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white">Save IMEI</button>{unit && <button onClick={() => void run(() => printLabel('unit', unit.id))} className="rounded border px-3 py-2 text-sm">Print unit label</button>}</div>
+                })} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white">Save IMEI</button>
+                <button disabled={!unit || (!conditionId && !ptaId)} onClick={() => void run(async () => {
+                    const payload: Record<string, number> = {};
+                    if (conditionId) payload.condition_master_data_id = Number(conditionId);
+                    if (ptaId) payload.pta_status_master_data_id = Number(ptaId);
+                    await api('/internal/admin/pos/inventory/units/' + unitId, { method: 'PATCH', body: JSON.stringify(payload) }); await reload();
+                })} className="rounded border px-3 py-2 text-sm">Save unit attributes</button>
+                {unit && <button onClick={() => void run(() => printLabel('unit', unit.id))} className="rounded border px-3 py-2 text-sm">Print unit label</button>}</div>
             </section>}
         </div>
     </div>;
@@ -151,20 +219,48 @@ function Sales({ catalogue, busy, run }: { catalogue: Catalogue | null; busy: bo
             {quote && <div data-testid="authoritative-totals" className="mt-4 grid grid-cols-2 gap-2 rounded bg-slate-50 p-3 text-sm"><span>Invoice Total</span><strong>PKR {quote.payable}</strong><span>Payments</span><strong>PKR {quote.payments_total}</strong><span>Remaining</span><strong>PKR {quote.remaining}</strong><span>Cash change</span><strong>PKR {quote.cash_change}</strong></div>}
             {result && <div data-testid="sale-result" className="mt-4 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm"><strong>Sale complete: {String(result.invoice_number ?? '')}</strong><p>Final PKR {String(result.final_bill ?? '')} · Discount PKR {String(result.discount ?? '0.00')} · Change PKR {String(result.cash_change_total ?? '0.00')}</p></div>}
         </section>
-        <ReturnPanel busy={busy} run={run} />
+        <ReturnPanel busy={busy} run={run} destinations={destinations} />
     </div>;
 }
 
-function ReturnPanel({ busy, run }: { busy: boolean; run: (task: () => Promise<void>) => Promise<void> }) {
+function ReturnPanel({ busy, run, destinations }: { busy: boolean; run: (task: () => Promise<void>) => Promise<void>; destinations: Destination[] }) {
     const [invoiceId, setInvoiceId] = useState('');
     const [invoice, setInvoice] = useState<Record<string, unknown> | null>(null);
     const [saleId, setSaleId] = useState('');
     const [unitId, setUnitId] = useState('');
     const [result, setResult] = useState<Record<string, unknown> | null>(null);
+    const [refundDestination, setRefundDestination] = useState('');
+    const [refundAmount, setRefundAmount] = useState('');
+    const [refundResult, setRefundResult] = useState<Record<string, unknown> | null>(null);
+    const [originalTenderId, setOriginalTenderId] = useState('');
     const lines = (invoice?.lines as Array<Record<string, unknown>> | undefined) ?? [];
+    const tenders = (invoice?.payments as Array<Record<string, unknown>> | undefined) ?? [];
+    const originalTender = tenders.find((tender) => String(tender.allocation_id) === originalTenderId) ?? tenders[0];
     return <section className="rounded-2xl border bg-white p-5 xl:col-span-2"><h3 className="font-semibold">Return / refund</h3>
-        <div className="mt-3 flex gap-2"><input value={invoiceId} onChange={(e) => setInvoiceId(e.target.value)} placeholder="Invoice public ID" className="flex-1 rounded border p-2 text-sm" /><button disabled={!invoiceId || busy} onClick={() => void run(async () => setInvoice(await api('/internal/admin/pos/invoices/' + invoiceId)))} className="rounded border px-3 py-2 text-sm">Load invoice</button></div>
-        {lines.length > 0 && <div className="mt-3 grid gap-2 sm:grid-cols-4"><select value={saleId} onChange={(e) => { setSaleId(e.target.value); const line = lines.find((x) => x.sale_id === e.target.value); setUnitId(String(((line?.units as Array<Record<string, unknown>> | undefined) ?? [])[0]?.public_id ?? '')); }} className="rounded border p-2 text-sm"><option value="">Sale line</option>{lines.map((line) => <option key={String(line.sale_id)} value={String(line.sale_id)}>{String(line.name)}</option>)}</select><input value={unitId} onChange={(e) => setUnitId(e.target.value)} placeholder="Sold unit ID if serialized" className="rounded border p-2 text-sm" /><button disabled={!saleId || busy} onClick={() => void run(async () => setResult(await api('/internal/admin/pos/returns', { method: 'POST', body: JSON.stringify({ invoice_id: invoiceId, reason: 'POS accepted return', lines: [{ sale_id: saleId, quantity: 1, stock_unit_id: unitId || null, condition: 'returned', disposition: 'sellable' }] }) })))} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white">Accept return</button></div>}
-        {result && <p className="mt-3 rounded bg-slate-50 p-3 text-sm">Accepted return {String(result.return_id ?? '')}. Refund remains bound to MT-2.20 original-tender rules.</p>}
+        <div className="mt-3 flex gap-2"><input value={invoiceId} onChange={(e) => setInvoiceId(e.target.value)} placeholder="Invoice public ID" className="flex-1 rounded border p-2 text-sm" /><button disabled={!invoiceId || busy} onClick={() => void run(async () => {
+            const loaded = await api<Record<string, unknown>>('/internal/admin/pos/invoices/' + invoiceId);
+            setInvoice(loaded);
+            const loadedTenders = (loaded.payments as Array<Record<string, unknown>> | undefined) ?? [];
+            setOriginalTenderId(String(loadedTenders[0]?.allocation_id ?? ''));
+            setRefundDestination(String(loadedTenders[0]?.destination_id ?? ''));
+        })} className="rounded border px-3 py-2 text-sm">Load invoice</button></div>
+        {lines.length > 0 && <div className="mt-3 grid gap-2 sm:grid-cols-4"><select value={saleId} onChange={(e) => { setSaleId(e.target.value); const line = lines.find((x) => x.sale_id === e.target.value); setUnitId(String(((line?.units as Array<Record<string, unknown>> | undefined) ?? [])[0]?.public_id ?? '')); }} className="rounded border p-2 text-sm"><option value="">Sale line</option>{lines.map((line) => <option key={String(line.sale_id)} value={String(line.sale_id)}>{String(line.name)}</option>)}</select><input value={unitId} onChange={(e) => setUnitId(e.target.value)} placeholder="Sold unit ID if serialized" className="rounded border p-2 text-sm" /><button disabled={!saleId || busy} onClick={() => void run(async () => {
+            const accepted = await api<Record<string, unknown>>('/internal/admin/pos/returns', { method: 'POST', body: JSON.stringify({ invoice_id: invoiceId, reason: 'POS accepted return', lines: [{ sale_id: saleId, quantity: 1, stock_unit_id: unitId || null, condition: 'returned', disposition: 'sellable' }] }) });
+            setResult(accepted); setRefundAmount(String(accepted.refund_due ?? '')); setRefundDestination(String(originalTender?.destination_id ?? ''));
+        })} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white">Accept return</button></div>}
+        {result && <div className="mt-3 grid gap-2 rounded bg-slate-50 p-3 text-sm">
+            <p>Accepted return {String(result.return_id ?? '')}. Refund due: PKR {String(result.refund_due ?? '')}.</p>
+            {originalTender && <><div className="grid gap-2 sm:grid-cols-4"><select value={originalTenderId || String(originalTender.allocation_id)} onChange={(e) => {
+                const selected = tenders.find((tender) => String(tender.allocation_id) === e.target.value);
+                setOriginalTenderId(e.target.value); setRefundDestination(String(selected?.destination_id ?? ''));
+            }} className="rounded border bg-white p-2"><option value="">Original tender</option>{tenders.map((tender) => <option key={String(tender.allocation_id)} value={String(tender.allocation_id)}>{String(tender.destination_name)} · PKR {String(tender.amount)}</option>)}</select><select value={refundDestination} onChange={(e) => setRefundDestination(e.target.value)} className="rounded border bg-white p-2"><option value="">Refund destination</option>{destinations.map((d) => <option key={d.public_id} value={d.public_id}>{d.display_name} · {d.method}</option>)}</select><input value={refundAmount} onChange={(e) => setRefundAmount(e.target.value)} placeholder="Refund amount" className="rounded border bg-white p-2" /><button disabled={!refundDestination || !refundAmount || busy} onClick={() => void run(async () => {
+                const differs = refundDestination !== String(originalTender.destination_id);
+                const refunded = await api<Record<string, unknown>>('/internal/admin/pos/refunds', { method: 'POST', body: JSON.stringify({
+                    return_id: result.return_id, original_tender_id: originalTender.allocation_id, refund_destination_id: refundDestination,
+                    amount: refundAmount, override: differs, override_reason: differs ? 'POS operator requested alternate refund destination' : null,
+                }) }); setRefundResult(refunded);
+            })} className="rounded bg-slate-950 px-3 py-2 font-semibold text-white">Record refund</button></div><p className="text-xs text-slate-500">A different refund destination remains subject to MT-2.20 override permission/approval rules.</p></>}
+        </div>}
+        {refundResult && <p data-testid="refund-result" className="mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm">Refund recorded: PKR {String(refundResult.amount ?? '')} via {String(refundResult.refund_method ?? '')}.</p>}
     </section>;
 }
