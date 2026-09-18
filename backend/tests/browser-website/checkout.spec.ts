@@ -1,4 +1,18 @@
+import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
+
+function state(mode: 'hybrid' | 'digital_only' | 'commerce_only') {
+    execFileSync('php', [
+        'artisan', 'db:seed', '--class=Database\\Seeders\\WebsiteStorefrontE2eStateSeeder',
+        '--env=testing', '--force',
+    ], {
+        cwd: process.cwd(),
+        stdio: 'inherit',
+        env: { ...process.env, WEBSITE_E2E_MODE: mode, WEBSITE_E2E_ACTION: '' },
+    });
+}
+
+test.describe.configure({ mode: 'serial' });
 
 async function login(page: import('@playwright/test').Page) {
     await page.goto('/account');
@@ -56,4 +70,21 @@ test('MT-5.3 COD checkout exposes exactly four channels and preserves owned stat
 
     await page.goto('/cart');
     await expect(page.getByText('Your cart is empty.', { exact: true })).toBeVisible();
+});
+
+
+test('MT-5.3 digital-only mode prunes checkout while historical account stays available', async ({ page }) => {
+    test.setTimeout(60_000);
+    await login(page);
+    state('digital_only');
+
+    try {
+        const checkout = await page.goto('/checkout');
+        expect(checkout?.status()).toBe(404);
+        await page.goto('/account');
+        await expect(page.getByRole('heading', { name: 'MT52 Customer' })).toBeVisible();
+        await expect(page.getByText('MT52-E2E-ORDER', { exact: true })).toBeVisible();
+    } finally {
+        state('hybrid');
+    }
 });

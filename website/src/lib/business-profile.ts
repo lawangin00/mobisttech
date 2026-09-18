@@ -1,6 +1,9 @@
 import "server-only";
 import { cache } from "react";
 
+const BUSINESS_API_TIMEOUT_MS = Number(process.env.WEBSITE_API_TIMEOUT_MS ?? "3000");
+if (!Number.isFinite(BUSINESS_API_TIMEOUT_MS) || BUSINESS_API_TIMEOUT_MS < 1000 || BUSINESS_API_TIMEOUT_MS > 30000) throw new Error("WEBSITE_API_TIMEOUT_MS is invalid.");
+
 export type BusinessProfile = {
   business_name: string;
   business_email: string;
@@ -12,7 +15,7 @@ async function readBusinessProfileUncached(): Promise<BusinessProfile | null> {
   const origin = process.env.LARAVEL_API_ORIGIN ?? "http://127.0.0.1:18080";
   if (origin !== "http://127.0.0.1:18080") throw new Error("Website API origin must be the isolated Laravel target.");
   try {
-    const response = await fetch(`${origin}/api/v1/business-profile`, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(3000) });
+    const response = await fetch(`${origin}/api/v1/business-profile`, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(BUSINESS_API_TIMEOUT_MS) });
     if (!response.ok) return null;
     const body: unknown = await response.json();
     if (typeof body !== "object" || body === null || !("data" in body)) return null;
