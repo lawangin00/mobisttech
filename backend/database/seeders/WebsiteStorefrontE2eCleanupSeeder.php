@@ -15,7 +15,10 @@ class WebsiteStorefrontE2eCleanupSeeder extends Seeder
 
         DB::transaction(function () {
             $listings = DB::table('product_listings')->where('external_source', 'website-e2e')->get(['id', 'product_id']);
-            $ids = $listings->pluck('product_id')->all();
+            $ids = array_values(array_unique([
+                ...$listings->pluck('product_id')->all(),
+                ...DB::table('products')->where('name', 'like', 'MT51 %')->pluck('id')->all(),
+            ]));
             $listingIds = $listings->pluck('id')->all();
             $publicIds = $ids ? DB::table('products')->whereIn('id', $ids)->pluck('public_id')->all() : [];
             if ($ids) {

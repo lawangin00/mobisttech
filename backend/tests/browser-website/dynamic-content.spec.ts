@@ -30,7 +30,10 @@ test('MT-5.4 published CMS, digital enquiry and Software Product routes render w
     await page.goto('/services');
     await expect(page.getByRole('heading', { name: 'Digital Services' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'MT54 Web Development' })).toBeVisible();
-    await page.getByRole('link', { name: 'MT54 Web Development' }).click();
+    await Promise.all([
+        page.waitForURL('**/services/mt54-web-development'),
+        page.getByRole('link', { name: 'MT54 Web Development' }).click(),
+    ]);
     await expect(page.getByRole('heading', { name: 'MT54 Web Development' })).toBeVisible();
     await expect(page.getByText('Starter')).toBeVisible();
     await expect(page.getByText('PKR 10000.00')).toBeVisible();
@@ -38,6 +41,7 @@ test('MT-5.4 published CMS, digital enquiry and Software Product routes render w
     await page.goto('/enquiry?service=mt54-web-development');
     await page.getByLabel('Name').fill('MT54 Browser Lead');
     await page.getByLabel('Mobile').fill('03005554444');
+    await page.getByLabel('Package').selectOption({ label: 'Starter · PKR 10000.00' });
     await page.getByLabel('What do you need?').fill('Need a deterministic public Website project.');
     const submitted = page.waitForResponse((response) =>
         response.url().endsWith('/api/public/enquiries')

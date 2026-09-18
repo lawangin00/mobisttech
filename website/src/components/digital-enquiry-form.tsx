@@ -111,8 +111,8 @@ export function DigitalEnquiryForm({ services, defaultService, consultation }: P
       </label>
     </div>
 
-    {service.packages.length > 0 && <fieldset><legend className="font-semibold">Package <span className="font-normal text-slate-500">(optional)</span></legend>
-      <select name="package_public_id" defaultValue="" className="mt-2 w-full rounded-xl border p-3">
+    {service.packages.length > 0 && <fieldset><legend className="font-semibold">Package {service.price_type !== "package" && <span className="font-normal text-slate-500">(optional)</span>}</legend>
+      <select name="package_public_id" aria-label="Package" required={service.price_type === "package"} defaultValue="" className="mt-2 w-full rounded-xl border p-3">
         <option value="">No package selected</option>
         {service.packages.map((item) => <option key={item.public_id} value={item.public_id}>{item.name}{item.price ? " · PKR " + item.price : ""}</option>)}
       </select>

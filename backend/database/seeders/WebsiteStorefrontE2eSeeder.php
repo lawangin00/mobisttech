@@ -88,7 +88,10 @@ class WebsiteStorefrontE2eSeeder extends Seeder
 
     private function clearProducts(): void
     {
-        $ids = DB::table('product_listings')->where('external_source', 'website-e2e')->pluck('product_id')->all();
+        $ids = array_values(array_unique([
+            ...DB::table('product_listings')->where('external_source', 'website-e2e')->pluck('product_id')->all(),
+            ...DB::table('products')->where('name', 'like', 'MT51 %')->pluck('id')->all(),
+        ]));
         if (! $ids) {
             return;
         }

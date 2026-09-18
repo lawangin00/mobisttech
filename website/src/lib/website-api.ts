@@ -129,9 +129,9 @@ export function readCatalogue(input: { limit?: number; after?: string; category?
   if (input.q) query.set("q", input.q);
   return get<CataloguePage>(`/api/v1/catalogue/products?${query.toString()}`, "live");
 }
-export function readContentIndex() { return get<ContentIndex>("/api/v1/content", 60); }
+export function readContentIndex() { return get<ContentIndex>("/api/v1/content", "live"); }
 export function readManagedPage(slug: string) { return get<ManagedPage>(`/api/v1/content/pages/${encodeURIComponent(slug)}`, "live"); }
-export function readPolicies() { return get<{ items: Policy[] }>("/api/v1/content/policies", 300).then((value) => value.items); }
+export function readPolicies() { return get<{ items: Policy[] }>("/api/v1/content/policies", "live").then((value) => value.items); }
 export function readServices() { return get<{ items: DigitalService[] }>("/api/v1/services", "live").then((value) => value.items); }
 export function readConsultationAvailability() { return get<ConsultationAvailability>("/api/v1/consultation", 60); }
 export function readSoftware(slug: string) { return get<SoftwareOverview>(`/api/v1/software/${encodeURIComponent(slug)}`, "live"); }
