@@ -17,8 +17,14 @@ async function login(page: import('@playwright/test').Page, remember = false) {
     await page.getByLabel('Email').fill('mt52-customer@example.invalid');
     await page.getByLabel('Password').fill('SyntheticPass123!');
     if (remember) await page.getByLabel('Remember me on this device').check();
+    const accountReady = page.waitForResponse((response) => response.url().endsWith('/api/customer/account') && response.status() === 200);
+    const ordersReady = page.waitForResponse((response) => response.url().endsWith('/api/customer/orders') && response.status() === 200);
+    const wishlistReady = page.waitForResponse((response) => response.url().endsWith('/api/customer/wishlist') && response.status() === 200);
+    const reviewsReady = page.waitForResponse((response) => response.url().endsWith('/api/customer/reviews') && response.status() === 200);
     await page.locator('form').getByRole('button', { name: 'Sign in', exact: true }).click();
+    await accountReady;
     await expect(page.getByRole('heading', { name: 'MT52 Customer' })).toBeVisible();
+    await Promise.all([ordersReady, wishlistReady, reviewsReady]);
 }
 
 test.describe.configure({ mode: 'serial' });
@@ -37,7 +43,9 @@ test('MT-5.2 guest cart persists and saved ownership is claimed on remembered lo
     await page.reload();
     await expect(page.getByRole('link', { name: 'MT51 Alpha Phone', exact: true })).toBeVisible();
 
+    const claimReady = page.waitForResponse((response) => response.url().endsWith('/api/customer/wishlist/claim'));
     await login(page, true);
+    expect((await claimReady).status()).toBe(200);
     await expect(page.getByText('MT52-E2E-ORDER', { exact: true })).toBeVisible();
     await expect(page.getByText('42 points', { exact: true })).toBeVisible();
     await expect(page.getByText('Saved items', { exact: true }).locator('..')).toContainText('1');
@@ -45,7 +53,9 @@ test('MT-5.2 guest cart persists and saved ownership is claimed on remembered lo
     expect(cookies.some(cookie => cookie.name.startsWith('remember_customer_'))).toBe(true);
 
     await page.goto('/cart');
+    const quoteReady = page.waitForResponse((response) => response.url().endsWith('/api/customer/cart/quote'));
     await page.getByRole('button', { name: 'Validate cart' }).click();
+    expect((await quoteReady).status()).toBe(200);
     await expect(page.getByText(/Subtotal: PKR 50000\.00/)).toBeVisible();
 });
 

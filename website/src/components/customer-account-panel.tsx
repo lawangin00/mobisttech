@@ -13,12 +13,15 @@ export function CustomerAccountPanel() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
+  const [snapshotReady, setSnapshotReady] = useState(false);
   const [register, setRegister] = useState(false);
   const [recovery, setRecovery] = useState(false);
   const [message, setMessage] = useState("");
 
   const refresh = useCallback(async () => {
     const current = await customerRequest<CustomerAccount>("account");
+    setAccount(current);
+    setSnapshotReady(false);
     const guestToken = readGuestOwnerToken();
     if (guestToken) {
       await customerRequest("wishlist/claim", { method: "POST", body: JSON.stringify({ guest_token: guestToken }) })
@@ -32,7 +35,7 @@ export function CustomerAccountPanel() {
     setOrders(orderData.items);
     setWishlistCount(wishlist.items.length);
     setReviewCount(reviews.items.length);
-    setAccount(current);
+    setSnapshotReady(true);
   }, []);
 
   useEffect(() => {
@@ -84,7 +87,7 @@ export function CustomerAccountPanel() {
         }),
       });
       clearCustomerCsrf();
-      setAccount(null); setOrders([]); setWishlistCount(0); setReviewCount(0);
+      setAccount(null); setOrders([]); setWishlistCount(0); setReviewCount(0); setSnapshotReady(false);
       setMessage(result.message);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to change password.");
@@ -94,7 +97,7 @@ export function CustomerAccountPanel() {
   async function logout() {
     await customerRequest<{ message: string }>("auth/logout", { method: "POST", body: JSON.stringify({}) });
     clearCustomerCsrf();
-    setAccount(null); setOrders([]); setWishlistCount(0); setReviewCount(0);
+    setAccount(null); setOrders([]); setWishlistCount(0); setReviewCount(0); setSnapshotReady(false);
   }
 
   if (!account) return <div className="max-w-lg">
@@ -130,8 +133,8 @@ export function CustomerAccountPanel() {
       <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{account.name}</h2><p className="text-sm text-slate-600">{account.email} · {account.mobile}</p></div><button onClick={logout} className="rounded-xl border px-4 py-2">Sign out</button></div>
       <p className="mt-3 text-sm text-slate-500">Customer session inactivity: {account.session_policy.inactivity_minutes ?? 120} minutes.</p>
     </section>
-    <section><h2 className="text-xl font-bold">Orders</h2><div className="mt-3 space-y-3">{orders.length === 0 ? <p className="text-slate-600">No orders yet.</p> : orders.map((order) => <article key={order.id} className="rounded-2xl border bg-white p-4"><strong>{order.number}</strong><p className="text-sm text-slate-600">{order.status} · {order.payment_status} · {order.currency} {order.total}</p></article>)}</div></section>
-    <section className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border bg-white p-4"><strong>Saved items</strong><p className="mt-1 text-2xl font-bold">{wishlistCount}</p></div><div className="rounded-2xl border bg-white p-4"><strong>Your reviews</strong><p className="mt-1 text-2xl font-bold">{reviewCount}</p></div></section>
+    <section><h2 className="text-xl font-bold">Orders</h2><div className="mt-3 space-y-3">{!snapshotReady ? <p className="text-slate-600">Loading orders…</p> : orders.length === 0 ? <p className="text-slate-600">No orders yet.</p> : orders.map((order) => <article key={order.id} className="rounded-2xl border bg-white p-4"><strong>{order.number}</strong><p className="text-sm text-slate-600">{order.status} · {order.payment_status} · {order.currency} {order.total}</p></article>)}</div></section>
+    <section className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border bg-white p-4"><strong>Saved items</strong><p className="mt-1 text-2xl font-bold">{snapshotReady ? wishlistCount : "…"}</p></div><div className="rounded-2xl border bg-white p-4"><strong>Your reviews</strong><p className="mt-1 text-2xl font-bold">{snapshotReady ? reviewCount : "…"}</p></div></section>
     <section>
       <h2 className="text-xl font-bold">Change password</h2>
       <form onSubmit={changePassword} className="mt-3 grid gap-3 rounded-2xl border bg-white p-4 sm:grid-cols-3">
@@ -142,6 +145,6 @@ export function CustomerAccountPanel() {
       </form>
       {message && <p className="mt-2 text-sm text-slate-600">{message}</p>}
     </section>
-    <CustomerEngagementPanel />
+    {snapshotReady ? <CustomerEngagementPanel /> : <p className="text-sm text-slate-500">Loading account details…</p>}
   </div>;
 }
