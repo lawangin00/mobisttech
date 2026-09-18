@@ -12,7 +12,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use InvalidArgumentException;
 
 final class ResetAdministrationController extends Controller
 {
@@ -79,9 +81,13 @@ final class ResetAdministrationController extends Controller
             'domains.*' => 'required|string|max:80',
         ]);
 
-        return response()->json(['data' => $service->preview(
-            $this->actor(), $request, $data['level'], $data['domains'],
-        )]);
+        try {
+            $preview = $service->preview($this->actor(), $request, $data['level'], $data['domains']);
+        } catch (InvalidArgumentException $error) {
+            throw ValidationException::withMessages(['domains' => $error->getMessage()]);
+        }
+
+        return response()->json(['data' => $preview]);
     }
 
     public function execute(Request $request, string $operation, GuardedResetService $service)
