@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import PosStockControlWorkspace from './pos-stock-control-workspace';
+import { DocumentActions } from './pos-customer-reporting-workspace';
 
 type Unit = { id: string; code: string; status: string; version: number; imeis: string[] };
 type Product = { id: string; code: string; name: string; category?: string; model?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[] };
 type Destination = { public_id: string; method: string; display_name: string };
 type Master = { id: number; list_key: string; code: string; label: string; metadata: Record<string, unknown> };
-type Catalogue = { products: Product[]; page: number; has_more: boolean; payment_destinations: Destination[]; master_data: Master[] };
+type Catalogue = { products: Product[]; page: number; has_more: boolean; payment_destinations: Destination[]; master_data: Master[]; can_send_documents: boolean };
 type Payment = { method: string; destination_id: string; amount: string; transaction_reference?: string; cash_tendered?: string };
 type Quote = { payable: string; payments_total: string; remaining: string; cash_change: string };
 
@@ -201,8 +202,19 @@ function Sales({ catalogue, busy, run }: { catalogue: Catalogue | null; busy: bo
     const [payments, setPayments] = useState<Payment[]>([]);
     const [quote, setQuote] = useState<Quote | null>(null);
     const [result, setResult] = useState<Record<string, unknown> | null>(null);
+    const [customerName, setCustomerName] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('03');
+    const [customerEmail, setCustomerEmail] = useState('');
+    const [customerCnic, setCustomerCnic] = useState('');
+    const [outputFormat, setOutputFormat] = useState<'a4' | 'thermal80'>('a4');
     const destinations = catalogue?.payment_destinations ?? [];
-    const sale = useMemo(() => ({ discount, discount_reason: reason || null, promotion_codes: promotion ? [promotion] : [], loyalty_points: Number(loyalty || 0), lines: cart.map((x) => ({ product_id: x.product_id, quantity: x.quantity })) }), [cart, discount, reason, promotion, loyalty]);
+    const sale = useMemo(() => ({
+        new_customer: Boolean(customerName.trim()), customer_name: customerName || null,
+        customer_phone: customerPhone === '03' ? null : customerPhone || null,
+        customer_email: customerEmail || null, customer_cnic: customerCnic || null,
+        discount, discount_reason: reason || null, promotion_codes: promotion ? [promotion] : [],
+        loyalty_points: Number(loyalty || 0), lines: cart.map((x) => ({ product_id: x.product_id, quantity: x.quantity })),
+    }), [cart, discount, reason, promotion, loyalty, customerName, customerPhone, customerEmail, customerCnic]);
     const add = (p: Product) => setCart((old) => old.some((x) => x.product_id === p.id) ? old.map((x) => x.product_id === p.id ? { ...x, quantity: x.quantity + 1 } : x) : [...old, { product_id: p.id, name: p.name, quantity: 1 }]);
     const addPayment = () => { const d = destinations[0]; if (d) setPayments((old) => [...old, { method: d.method, destination_id: d.public_id, amount: '' }]); };
     const changePayment = (i: number, patch: Partial<Payment>) => setPayments((old) => old.map((p, index) => index === i ? { ...p, ...patch } : p));
@@ -210,15 +222,17 @@ function Sales({ catalogue, busy, run }: { catalogue: Catalogue | null; busy: bo
         <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Products</h3><div className="mt-3 grid gap-2">{catalogue?.products.map((p) => <button key={p.id} onClick={() => add(p)} className="rounded-xl border p-3 text-left"><strong>{p.name}</strong><span className="block text-xs text-slate-500">{p.code} · Available {p.qty} · PKR {p.sale_price}</span></button>)}</div></section>
         <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Sale & payment</h3>
             <div className="mt-3 grid gap-2">{cart.map((line, i) => <div key={line.product_id} className="flex items-center gap-2 rounded bg-slate-50 p-2"><span className="flex-1 text-sm">{line.name}</span><input aria-label={'Quantity ' + line.name} value={line.quantity} onChange={(e) => setCart((old) => old.map((x, index) => index === i ? { ...x, quantity: Math.max(1, Number(e.target.value) || 1) } : x))} className="w-20 rounded border p-1 text-sm" /></div>)}</div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2"><input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Customer name (optional)" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="03XXXXXXXXX" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="Customer email (optional)" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={customerCnic} onChange={(e) => setCustomerCnic(e.target.value)} placeholder="CNIC (optional)" className="w-full min-w-0 rounded border p-2 text-sm" /></div>
             <div className="mt-3 grid grid-cols-2 gap-2"><input value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="Manual discount" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Discount reason" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={promotion} onChange={(e) => setPromotion(e.target.value)} placeholder="Promotion code" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={loyalty} onChange={(e) => setLoyalty(e.target.value)} placeholder="Loyalty points" className="w-full min-w-0 rounded border p-2 text-sm" /></div>
             <div className="mt-4 flex justify-between"><h4 className="text-sm font-semibold">Payment editor</h4><button onClick={addPayment} className="rounded border px-2 py-1 text-xs">Add Payment</button></div>
             <div className="mt-2 grid gap-2">{payments.map((payment, i) => <div key={i} className="grid gap-2 rounded-xl border p-3 sm:grid-cols-2">
                 <select value={payment.destination_id} onChange={(e) => { const d = destinations.find((x) => x.public_id === e.target.value); changePayment(i, { destination_id: e.target.value, method: d?.method ?? payment.method }); }} className="w-full min-w-0 rounded border p-2 text-sm">{destinations.map((d) => <option key={d.public_id} value={d.public_id}>{d.display_name} · {d.method}</option>)}</select>
                 <input value={payment.amount} onChange={(e) => changePayment(i, { amount: e.target.value })} placeholder="Amount" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={payment.transaction_reference ?? ''} onChange={(e) => changePayment(i, { transaction_reference: e.target.value })} placeholder="Safe reference" className="w-full min-w-0 rounded border p-2 text-sm" />{payment.method === 'cash' && <input value={payment.cash_tendered ?? ''} onChange={(e) => changePayment(i, { cash_tendered: e.target.value })} placeholder="Cash tendered" className="w-full min-w-0 rounded border p-2 text-sm" />}
             </div>)}</div>
-            <div className="mt-4 flex gap-2"><button data-testid="server-totals" disabled={busy || cart.length === 0} onClick={() => void run(async () => setQuote(await api<Quote>('/internal/admin/pos/sales/quote', { method: 'POST', body: JSON.stringify({ ...sale, payments }) })))} className="rounded border px-3 py-2 text-sm font-semibold">Server totals</button><button data-testid="finalize-sale" disabled={busy || !quote || quote.remaining !== '0.00'} onClick={() => void run(async () => { const data = await api<Record<string, unknown>>('/internal/admin/pos/sales', { method: 'POST', body: JSON.stringify({ sale, payments }) }); setResult(data); setCart([]); setPayments([]); setQuote(null); })} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">Finalize sale</button></div>
+            <div className="mt-4 flex flex-wrap gap-2"><select value={outputFormat} onChange={(e) => setOutputFormat(e.target.value as 'a4' | 'thermal80')} className="rounded border p-2 text-sm"><option value="a4">A4 invoice</option><option value="thermal80">Thermal 80mm</option></select><button data-testid="server-totals" disabled={busy || cart.length === 0} onClick={() => void run(async () => setQuote(await api<Quote>('/internal/admin/pos/sales/quote', { method: 'POST', body: JSON.stringify({ ...sale, payments }) })))} className="rounded border px-3 py-2 text-sm font-semibold">Preview sale</button><button data-testid="finalize-sale" disabled={busy || !quote || quote.remaining !== '0.00'} onClick={() => void run(async () => { const data = await api<Record<string, unknown>>('/internal/admin/pos/sales', { method: 'POST', body: JSON.stringify({ sale, payments }) }); setResult(data); setCart([]); setPayments([]); setQuote(null); })} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">Finalize sale</button></div>
             {quote && <div data-testid="authoritative-totals" className="mt-4 grid grid-cols-2 gap-2 rounded bg-slate-50 p-3 text-sm"><span>Invoice Total</span><strong>PKR {quote.payable}</strong><span>Payments</span><strong>PKR {quote.payments_total}</strong><span>Remaining</span><strong>PKR {quote.remaining}</strong><span>Cash change</span><strong>PKR {quote.cash_change}</strong></div>}
-            {result && <div data-testid="sale-result" className="mt-4 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm"><strong>Sale complete: {String(result.invoice_number ?? '')}</strong><p>Final PKR {String(result.final_bill ?? '')} · Discount PKR {String(result.discount ?? '0.00')} · Change PKR {String(result.cash_change_total ?? '0.00')}</p></div>}
+            {result && <div data-testid="sale-result" className="mt-4 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm"><strong>Sale complete: {String(result.invoice_number ?? '')}</strong><p>Final PKR {String(result.final_bill ?? '')} · Discount PKR {String(result.discount ?? '0.00')} · Change PKR {String(result.cash_change_total ?? '0.00')}</p><button onClick={() => { setResult(null); setCustomerName(''); setCustomerPhone('03'); setCustomerEmail(''); setCustomerCnic(''); }} className="mt-2 rounded border bg-white px-3 py-1 text-xs">Done / New Invoice</button></div>}
+            {Boolean(result?.invoice_id) && <div className="mt-4"><DocumentActions type="invoice" documentId={String(result?.invoice_id ?? '')} canSend={catalogue?.can_send_documents ?? false} busy={busy} run={run} defaultFormat={outputFormat} /></div>}
         </section>
         <ReturnPanel busy={busy} run={run} destinations={destinations} />
     </div>;

@@ -70,6 +70,7 @@ final class PosTransactionController extends Controller
             'outlet' => ['id' => $outlet->public_id, 'name' => $outlet->name],
             'products' => $products, 'page' => $page, 'has_more' => $hasMore,
             'payment_destinations' => $destinations, 'master_data' => $master,
+            'can_send_documents' => app(Access::class)->allows($actor, 'shop.documents.send', $outlet),
         ]]);
     }
 

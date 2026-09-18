@@ -43,9 +43,9 @@ Active stage: MT-4 - React POS and administration (In Progress)
 
 Last completed stage: MT-3 - Administration, content and REST APIs
 
-Current In Progress point: None
+Current In Progress point: MT-4.3 - POS customer, warranty and reporting interfaces
 
-Status: MT-0 through MT-3 complete. MT-4 is in progress. 37/56 complete, 19 pending. No point is currently In Progress.
+Status: MT-0 through MT-3 complete. MT-4 is in progress. 37/56 complete, 19 pending. MT-4.3 is In Progress.
 
 Last completed point: MT-4.6 - Cash, trade-in and repair interfaces
 
@@ -388,7 +388,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-4.2 | POS inventory and transaction interfaces | Completed |
 | MT-4.5 | Procurement and stock control interfaces | Completed |
 | MT-4.6 | Cash, trade-in and repair interfaces | Completed |
-| MT-4.3 | POS customer, warranty and reporting interfaces | Pending |
+| MT-4.3 | POS customer, warranty and reporting interfaces | In Progress |
 | MT-4.4 | Website CMS and platform administration interfaces | Pending |
 | MT-4.8 | Digital operations administration interfaces | Pending |
 | MT-4.7 | Data reset administration interface | Pending |
@@ -640,3 +640,18 @@ No source-repository write, source-data migration, source runtime action, real p
 - Full Playwright acceptance passed 5/5 across MT-4.6 Operations, desktop Sales shell, mobile Inventory shell, MT-4.5 Stock Control and MT-4.2 transaction/refund journeys.
 - Final short closure gates: git diff check PASS; Composer validate --strict PASS; Composer platform requirements PASS; MT-4.6 changed PHP/seed/test files scoped Pint PASS; backend TypeScript typecheck PASS. Backend production Vite build had already passed with the current MT-4.6 product code; subsequent edits were browser-test locators and documentation only.
 - MT-4.6 closure: permission-aware Operations UI now provides cash opening/expense/payout/cash-in review and Day Closing reconciliation, non-cash provider settlement drill-down, individual-seller trade-in valuation/intake/sale-credit lifecycle and optional paid-repair intake/estimate/approval/parts/collection/history while preserving existing service authority, exact-money rules, privacy masking, outlet scope, approval, idempotency and audit history. Evidence is in docs/pos/MT-4.6_VERIFICATION.md. Next roadmap point by document order/dependency is MT-4.3 - POS customer, warranty and reporting interfaces.
+
+## MT-4.3 attempt tracking
+
+- Point started from clean synced commit 726112cce20b815149f60a952224ef9307bc76ac. Existing customer/history, invoice/document delivery, warranty/claim, reporting/export and POS payment services remain authoritative; UI must not duplicate delivery, document, permission, money or audit rules. LOOP_GUARD inactive.
+- Current durable implementation adds PosCustomerReportingController with 14 authenticated MT-4.3 routes for permission-scoped customer/invoice history, warranty/claim lifecycle, canonical document preview/print/PDF, controlled Email draft/send, assisted WhatsApp prepare/open tracking, delivery history, operational report summary and CSV export.
+- Existing POS shell areas Invoices & customers, Warranty, Claims and Reports are now bound to a shared React MT-4.3 workspace rather than placeholder panels.
+- Invoices & customers UI provides operational-customer history plus historical invoice selection and explicit Document Actions. Document delivery continues to delegate to CanonicalDocuments, preserving historical snapshots, truthful WhatsApp opened/not-sent state, Gmail error semantics and idempotent/intentional resend behavior.
+- Warranty/Claims UI now projects recent outlet-scoped sale occurrences, including serialized sold units and sale-time warranty snapshot metadata, supports claim intake/lifecycle/history through ClaimOperations and exposes Warranty Claim Receipt Document Actions. Warranty output remains A4-only because CanonicalDocuments rejects thermal warranty receipts.
+- Reports UI now provides compact outlet dashboard/report figures, date filtering, CSV export and Payment Mix with POS/Website separation plus destination drill-down instead of destination-card clutter.
+- Sales flow is aligned toward Prepare/Preview/output-choice/Finalize/Document Actions: optional customer name/mobile/email/CNIC capture feeds existing SalesOperations; A4/Thermal invoice output choice is selected before finalize; authoritative server totals act as Preview; successful finalization does not auto-download/send and exposes explicit Document Actions plus Done / New Invoice.
+- A permission-surface gap found during implementation was fixed: Sales Document Actions no longer hard-code send controls visible. PosTransactionController catalogue now projects can_send_documents from shop.documents.send and the UI hides Email/WhatsApp actions when the permission is absent; backend authorization remains authoritative.
+- Short verification completed: PosCustomerReportingController/route syntax and scoped Pint PASS; PosTransactionController scoped Pint PASS; backend TypeScript typecheck PASS after shell/workspace/Sales integration; 14 MT-4.3 routes registered.
+- One transient TypeScript issue was only a generic Record result narrowing problem around result.invoice_id; Boolean/String narrowing fixed it. A later PowerShell quoting helper failed before touching source; the safe Python replacement then passed typecheck.
+- Incomplete: focused HTTP/permission tests for invoice/customer projection, claim intake/lifecycle, canonical document actions/delivery failure/retry, report/export and Sales send-permission projection; browser acceptance for invoice A4/Thermal parity, explicit Print/Save PDF, controlled Email, assisted WhatsApp, historical resend/reprint/redownload, Warranty Claim Receipt, customer/claim/report areas and mobile layouts; affected/full backend, full Playwright and production build closure gates.
+- Next action: add focused MT-4.3 HTTP/permission fixtures -> run document/customer/claim/report/Sales-permission acceptance -> add disposable Playwright journey for invoice/warranty/report flows including A4/Thermal + no-auto-action assertions -> affected/full regression/build/style gates -> fix proven gaps -> completion evidence and final commit/push.

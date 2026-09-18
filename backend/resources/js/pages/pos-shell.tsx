@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import PosTransactionWorkspace from '../components/pos-transaction-workspace';
 import PosOperationsWorkspace from '../components/pos-operations-workspace';
+import PosCustomerReportingWorkspace from '../components/pos-customer-reporting-workspace';
 
 type NavigationItem = {
     key: string;
@@ -217,7 +218,9 @@ function Workspace({ shell, workspace }: {
             ? <PosTransactionWorkspace area={workspace.key} />
             : workspace.key === 'operations'
                 ? <PosOperationsWorkspace />
-                : <div className="mt-6 rounded-2xl bg-slate-50 p-5">
+                : ['invoices', 'warranty', 'claims', 'reports'].includes(workspace.key)
+                    ? <PosCustomerReportingWorkspace area={workspace.key as 'invoices' | 'warranty' | 'claims' | 'reports'} />
+                    : <div className="mt-6 rounded-2xl bg-slate-50 p-5">
                 <p className="font-medium">Shell boundary verified</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">This route is protected server-side by the required permission and active outlet assignment.</p>
                 <p className="mt-3 text-xs text-slate-500">Active outlet: {shell.active_outlet?.name ?? 'Not selected'}</p>
