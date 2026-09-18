@@ -20,6 +20,8 @@ export type WebsiteProfile = {
   };
   historical_access: Record<string, { allowed: boolean; authenticated_only: boolean; indexable: boolean }>;
   cache_namespace: string;
+  business: { business_name: string; business_email: string; public_website: string; version: number };
+  content: ContentIndex;
 };
 export type Category = { code: string; label: string; products: number };
 export type ProductVariant = {

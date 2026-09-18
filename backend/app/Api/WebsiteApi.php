@@ -3,6 +3,7 @@
 namespace App\Api;
 
 use App\Addendum\WebsiteCapabilities;
+use App\Business\BusinessProfile;
 use App\Cms\WebsiteCms;
 use App\Cms\WebsiteModePublication;
 use App\Digital\DigitalServiceLeads;
@@ -19,6 +20,7 @@ use Illuminate\Validation\ValidationException;
 final class WebsiteApi
 {
     public function __construct(
+        private BusinessProfile $business,
         private WebsiteCapabilities $capabilities,
         private WebsiteModePublication $modes,
         private WebsiteCms $cms,
@@ -45,6 +47,8 @@ final class WebsiteApi
             'seo_sitemap' => $profile['seo_sitemap'] ?? [],
             'historical_access' => $profile['historical_access'] ?? [],
             'cache_namespace' => $caps['cache_namespace'],
+            'business' => $this->business->current(),
+            'content' => $this->contentIndex(),
         ];
     }
 

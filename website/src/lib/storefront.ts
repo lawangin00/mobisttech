@@ -1,11 +1,10 @@
 import "server-only";
 import { cache } from "react";
-import { readBusinessProfile } from "@/lib/business-profile";
 import { readWebsiteProfile } from "@/lib/website-api";
 
 export const readStorefrontContext = cache(async function readStorefrontContext() {
-  const [business, website] = await Promise.all([readBusinessProfile(), readWebsiteProfile()]);
-  return { business, website };
+  const website = await readWebsiteProfile();
+  return { business: website?.business ?? null, website, content: website?.content ?? null };
 });
 export function money(value: string, currency = "PKR") {
   const numeric = Number(value);

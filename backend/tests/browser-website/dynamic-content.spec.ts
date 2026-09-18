@@ -14,6 +14,20 @@ function state(mode: 'hybrid' | 'digital_only' | 'commerce_only') {
 
 test.describe.configure({ mode: 'serial' });
 
+test.beforeAll(() => {
+    execFileSync('php', [
+        'artisan', 'db:seed', '--class=Database\\Seeders\\DynamicWebsiteE2eSeeder',
+        '--env=testing', '--force',
+    ], { cwd: process.cwd(), stdio: 'inherit' });
+});
+
+test.afterAll(() => {
+    execFileSync('php', [
+        'artisan', 'db:seed', '--class=Database\\Seeders\\DynamicWebsiteE2eCleanupSeeder',
+        '--env=testing', '--force',
+    ], { cwd: process.cwd(), stdio: 'inherit' });
+});
+
 test('MT-5.4 published CMS, digital enquiry and Software Product routes render without draft leakage', async ({ page, request }) => {
     test.setTimeout(120_000);
 
