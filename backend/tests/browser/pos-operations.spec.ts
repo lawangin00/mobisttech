@@ -203,7 +203,7 @@ test('operations UI covers cash settlement trade-in repair history and mobile co
     await expect(page.getByText('Individual seller trade-in')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Paid repairs' })).toBeVisible();
 
-    const cash = page.getByRole('heading', { name: 'Cash & Day Closing' }).locator('..');
+    const cash = page.getByRole('heading', { name: 'Cash & Day Closing' }).locator('xpath=ancestor::section[1]');
     await expect(cash).toContainText('PKR 100.00');
     await cash.getByRole('button', { name: 'Approve' }).click();
     await expect(cash).toContainText('approved');
@@ -223,9 +223,9 @@ test('operations UI covers cash settlement trade-in repair history and mobile co
     await trade.getByRole('button', { name: 'Approve valuation' }).click();
     await expect(trade).toContainText('approved');
 
-    const repair = page.getByRole('heading', { name: 'Paid repairs' }).locator('..');
+    const repair = page.getByRole('heading', { name: 'Paid repairs' }).locator('xpath=ancestor::section[1]');
     await expect(page.getByTestId('repair-open')).toBeDisabled();
-    await repair.locator('select').first().selectOption(repairId);
+    await repair.locator('select').nth(1).selectOption(repairId);
     await expect(repair).toContainText('RPR-E2E-46');
     await expect(repair.getByRole('button', { name: 'Approve estimate' })).toBeVisible();
     await repair.getByRole('button', { name: 'Approve estimate' }).click();
