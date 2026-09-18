@@ -43,9 +43,9 @@ Active stage: MT-4 - React POS and administration (In Progress)
 
 Last completed stage: MT-3 - Administration, content and REST APIs
 
-Current In Progress point: None
+Current In Progress point: MT-4.7 - Data reset administration interface
 
-Status: MT-0 through MT-3 complete. MT-4 is in progress. 40/56 complete, 16 pending. No point is currently In Progress.
+Status: MT-0 through MT-3 complete. MT-4 is in progress. 40/56 complete, 16 pending. MT-4.7 is In Progress.
 
 Last completed point: MT-4.8 - Digital operations administration interfaces
 
@@ -391,7 +391,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-4.3 | POS customer, warranty and reporting interfaces | Completed |
 | MT-4.4 | Website CMS and platform administration interfaces | Completed |
 | MT-4.8 | Digital operations administration interfaces | Completed |
-| MT-4.7 | Data reset administration interface | Pending |
+| MT-4.7 | Data reset administration interface | In Progress |
 | MT-5.1 | Storefront, catalogue and SEO migration | Pending |
 | MT-5.2 | Customer account, cart, orders and reviews | Pending |
 | MT-5.3 | Checkout and customer payment flows | Pending |
@@ -743,3 +743,15 @@ No source-repository write, source-data migration, source runtime action, real p
 - Final short gates PASS: git diff check, Composer validate --strict, Composer platform requirements, scoped Pint for Digital Operations services/controller/test/seeders/routes, backend TypeScript typecheck. Current production Vite build PASS with DigitalOperations included (577 transformed modules).
 - Verified scope includes services/packages/add-ons, consultation settings, lead ownership/follow-up and lead-to-project conversion, project/proposal/milestone lifecycle, approved monetary snapshot immutability, paid-history repricing rejection, integrity-checked private lead/project downloads without object-key leakage, mode-history preservation, aggregate-only conversion analytics and responsive Digital Operations UI.
 - Browser acceptance found only test/build-state issues after implementation: stale production bundle before DigitalOperations resolver inclusion, then textarea/proposal assertion locator mismatches. Fresh build plus contract-correct locators resolved them; no unresolved production defect remains. Evidence: docs/digital/MT-4.8_VERIFICATION.md. Next dependency-valid pending point: MT-4.7 - Data reset administration interface.
+
+## MT-4.7 attempt tracking
+
+- Point started from clean synced commit d6266dbbf261b6cdad02782b85eea5b66041faa9. Reset UI must delegate only to existing reset/backup/recovery authorities, preserve production HOLD, require recent re-authentication + verified backup + typed confirmation, and verify destructive paths only on disposable fixtures. LOOP_GUARD inactive.
+- Mapped existing reset authority: GuardedResetService + ResetPlanner + ResetDomains + ResetBackup/ResetObjectBackup/RecoveryManifest already enforce recent authentication, exact reset-level permissions, stale-preview detection, dependency barriers, typed confirmation, verified backup/rehearsal, SHA-scoped private-object backup, cleanup recovery and testing-only destructive execution. Production execution remains HOLD because reset.execution_environments contains testing only.
+- Reset policy exposes exactly three levels: transactional, business and factory. Factory requires the complete approved factory scope; transactional/business may select approved domains. ResetRetention preserves bootstrap, runtime and durable recovery/audit evidence according to its existing matrix.
+- Added ResetAdministrationController and four protected routes: page, data/status/history, preview and execute. The adapter delegates preview/execute directly to GuardedResetService; it does not duplicate destructive logic. Read projection exposes level/domain metadata, recent-auth status, production HOLD, minimum-bootstrap tables, reset operation outcomes, verified backup manifest/restore-rehearsal evidence and surviving reset audit events without backup paths/private object keys.
+- Added reset-administration Inertia resolver/page and Platform Administration cross-link. UI provides three clearly labeled reset levels, domain selection with factory lock, recent password confirmation, dry-run preview counts, preservation matrix, dependency barriers, exact typed confirmation, local preview cancellation (no backend execution/status mutation), production-HOLD execution blocking, verified-backup/outcome history, cleanup_pending recovery entry and surviving audit reporting.
+- Cancellation intentionally discards only the UI preview; the durable reset status enum has no fake cancelled state and the service remains the sole execution authority. Partial failure/recovery uses the existing cleanup_pending -> resumeCleanup path.
+- Short verification: backend TypeScript typecheck PASS; ResetAdministrationController/routes scoped Pint PASS; controller PHP syntax PASS; 4 reset administration routes registered. No destructive/focused acceptance was started near the 9-minute guard.
+- Incomplete: focused MT-4.7 HTTP acceptance for denied access, stale preview, failed backup, UI/API cancellation semantics, cleanup_pending recovery and minimum-bootstrap access on disposable testing fixtures; deterministic Reset Administration Playwright journey; affected GuardedReset/OperationalRecovery regressions; full backend + full Playwright + production build/final closure gates.
+- Next action: add/run focused MT-4.7 HTTP acceptance on disposable testing fixtures -> fix only proven gaps -> add Reset Administration Playwright journey -> affected reset/recovery regressions -> full backend + full Playwright + production build/style gates -> completion evidence and final commit/push.

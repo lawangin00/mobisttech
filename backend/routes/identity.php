@@ -11,6 +11,7 @@ use App\Http\Controllers\PosOperationsController;
 use App\Http\Controllers\PosShellController;
 use App\Http\Controllers\PosStockControlController;
 use App\Http\Controllers\PosTransactionController;
+use App\Http\Controllers\ResetAdministrationController;
 use App\Http\Controllers\TeamMemberController;
 use Illuminate\Support\Facades\Route;
 
@@ -153,6 +154,10 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::post('/digital-operations/projects/{project}/files', [DigitalOperationsController::class, 'delivery'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.projects.files.upload');
     Route::get('/digital-operations/projects/{project}/files/{file}', [DigitalOperationsController::class, 'projectFile'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.projects.files.download');
     Route::get('/digital-operations/conversions', [DigitalOperationsController::class, 'conversions'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.conversions');
+    Route::get('/reset-administration', [ResetAdministrationController::class, 'page'])->defaults('identity_realm', 'admin')->name('admin.reset.page');
+    Route::get('/reset-administration/data', [ResetAdministrationController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.reset.data');
+    Route::post('/reset-administration/preview', [ResetAdministrationController::class, 'preview'])->defaults('identity_realm', 'admin')->name('admin.reset.preview');
+    Route::post('/reset-administration/operations/{operation}/execute', [ResetAdministrationController::class, 'execute'])->defaults('identity_realm', 'admin')->name('admin.reset.execute');
     Route::get('/platform', [PlatformAdministrationController::class, 'page'])->defaults('identity_realm', 'admin')->name('admin.platform.page');
     Route::get('/platform/data', [PlatformAdministrationController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.platform.data');
     Route::post('/platform/pos-config/{domain}/preview', [PlatformAdministrationController::class, 'posConfigurationPreview'])->whereIn('domain', ['documents', 'theme', 'branding'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.preview');
