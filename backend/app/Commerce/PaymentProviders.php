@@ -21,11 +21,37 @@ final class PaymentProviders
     {
         $configuration = config('commerce.providers.'.$gateway);
         if (! is_array($configuration) || ! ($configuration['enabled'] ?? false)
-            || ($gateway !== 'cod' && ! isset($this->adapters[$gateway]))) {
+            || ($gateway !== 'cod' && (! isset($this->adapters[$gateway]) || trim((string) ($configuration['merchant'] ?? '')) === ''))) {
             throw new LogicException('provider_unavailable');
         }
 
         return $configuration;
+    }
+
+    public function checkoutChannels(): array
+    {
+        $labels = [
+            'cod' => 'Cash on Delivery',
+            'jazzcash' => 'JazzCash',
+            'easypaisa' => 'Easypaisa',
+            'card' => 'Credit / Debit Card',
+        ];
+
+        return collect($labels)->map(function (string $label, string $gateway) {
+            try {
+                $this->assertAvailable($gateway);
+                $available = true;
+            } catch (LogicException) {
+                $available = false;
+            }
+
+            return [
+                'code' => $gateway,
+                'label' => $label,
+                'available' => $available,
+                'kind' => $gateway === 'cod' ? 'cash_on_delivery' : 'hosted_or_provider',
+            ];
+        })->values()->all();
     }
 
     public function initiate(string $gateway, array $intent): array

@@ -51,6 +51,7 @@ Route::get('/internal/admin/pos/login', [PosShellController::class, 'login'])
 
 Route::prefix('/api/v1')->middleware(['identity', 'identity.auth', 'throttle:api-customer'])->group(function () {
     Route::post('/cart/quote', [CustomerApiController::class, 'cartQuote'])->defaults('identity_realm', 'customer')->name('api.customer.cart.quote');
+    Route::get('/checkout/channels', [CustomerApiController::class, 'checkoutChannels'])->defaults('identity_realm', 'customer')->name('api.customer.checkout.channels');
     Route::post('/orders', [CustomerApiController::class, 'checkout'])->defaults('identity_realm', 'customer')->name('api.customer.orders.store');
     Route::get('/orders', [CustomerApiController::class, 'orders'])->defaults('identity_realm', 'customer')->name('api.customer.orders.index');
     Route::get('/orders/{order}', [CustomerApiController::class, 'order'])->defaults('identity_realm', 'customer')->name('api.customer.orders.show');

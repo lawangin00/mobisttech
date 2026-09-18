@@ -9,6 +9,8 @@ const ALLOWED = [
   /^auth\/(?:csrf-cookie|register|login|logout|forgot-password|reset-password|password|activity|confirm-password)$/,
   /^account$/,
   /^cart\/quote$/,
+  /^checkout\/channels$/,
+  /^payments\/[0-9a-f-]+\/initiate$/,
   /^orders(?:\/[0-9a-f-]+(?:\/(?:cancel|payments\/retry))?)?$/,
   /^wishlist(?:\/[0-9a-f-]+)?$/,
   /^wishlist\/claim$/,

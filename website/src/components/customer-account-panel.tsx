@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { clearCustomerCsrf, CustomerAccount, customerRequest } from "@/lib/customer-api";
 import { clearGuestOwnerToken, readGuestOwnerToken } from "@/lib/customer-guest";
@@ -133,7 +134,7 @@ export function CustomerAccountPanel() {
       <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{account.name}</h2><p className="text-sm text-slate-600">{account.email} · {account.mobile}</p></div><button onClick={logout} className="rounded-xl border px-4 py-2">Sign out</button></div>
       <p className="mt-3 text-sm text-slate-500">Customer session inactivity: {account.session_policy.inactivity_minutes ?? 120} minutes.</p>
     </section>
-    <section><h2 className="text-xl font-bold">Orders</h2><div className="mt-3 space-y-3">{!snapshotReady ? <p className="text-slate-600">Loading orders…</p> : orders.length === 0 ? <p className="text-slate-600">No orders yet.</p> : orders.map((order) => <article key={order.id} className="rounded-2xl border bg-white p-4"><strong>{order.number}</strong><p className="text-sm text-slate-600">{order.status} · {order.payment_status} · {order.currency} {order.total}</p></article>)}</div></section>
+    <section><h2 className="text-xl font-bold">Orders</h2><div className="mt-3 space-y-3">{!snapshotReady ? <p className="text-slate-600">Loading orders…</p> : orders.length === 0 ? <p className="text-slate-600">No orders yet.</p> : orders.map((order) => <article key={order.id} className="rounded-2xl border bg-white p-4"><Link href={"/account/orders/" + order.id} className="font-semibold underline-offset-2 hover:underline">{order.number}</Link><p className="text-sm text-slate-600">{order.status} · {order.payment_status} · {order.currency} {order.total}</p></article>)}</div></section>
     <section className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border bg-white p-4"><strong>Saved items</strong><p className="mt-1 text-2xl font-bold">{snapshotReady ? wishlistCount : "…"}</p></div><div className="rounded-2xl border bg-white p-4"><strong>Your reviews</strong><p className="mt-1 text-2xl font-bold">{snapshotReady ? reviewCount : "…"}</p></div></section>
     <section>
       <h2 className="text-xl font-bold">Change password</h2>

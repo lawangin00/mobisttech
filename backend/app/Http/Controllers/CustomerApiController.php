@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Api\ApiResponse;
 use App\Api\WebsiteApi;
 use App\Commerce\OrderTransactions;
+use App\Commerce\PaymentProviders;
 use App\Commerce\ProductReviews;
 use App\Digital\ClientProjectServices;
 use App\Engagement\CustomerEngagement;
@@ -21,6 +22,13 @@ final class CustomerApiController extends Controller
     public function cartQuote(Request $request, WebsiteApi $api)
     {
         return $this->responses->private($api->cartQuote($request->all()), 'cart-quote.v1');
+    }
+
+    public function checkoutChannels(WebsiteApi $api, PaymentProviders $providers)
+    {
+        $api->assertCommerce();
+
+        return $this->responses->private(['items' => $providers->checkoutChannels()], 'checkout-channels.v1');
     }
 
     public function checkout(Request $request, WebsiteApi $api, OrderTransactions $orders)

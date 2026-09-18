@@ -43,9 +43,9 @@ Active stage: MT-5 - Next.js customer Website (In Progress)
 
 Last completed stage: MT-4 - React POS and administration
 
-Current In Progress point: None - MT-5.2 is completed; MT-5.3 has not started.
+Current In Progress point: MT-5.3 - Checkout and customer payment flows
 
-Status: MT-0 through MT-4 complete. MT-5 is in progress. 43/56 complete, 13 pending. MT-5.2 is Completed.
+Status: MT-0 through MT-4 complete. MT-5 is in progress. 43/56 complete, 13 pending. MT-5.3 is In Progress.
 
 Last completed point: MT-5.2 - Customer account, cart, orders and reviews
 
@@ -394,7 +394,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-4.7 | Data reset administration interface | Completed |
 | MT-5.1 | Storefront, catalogue and SEO migration | Completed |
 | MT-5.2 | Customer account, cart, orders and reviews | Completed |
-| MT-5.3 | Checkout and customer payment flows | Pending |
+| MT-5.3 | Checkout and customer payment flows | In Progress |
 | MT-5.4 | Dynamic public content and digital solutions | Pending |
 | MT-5.5 | Client project portal and digital conversion journeys | Pending |
 | MT-6.1 | Canonical branding and runtime assets | Pending |
@@ -894,3 +894,15 @@ No source-repository write, source-data migration, source runtime action, real p
 - Final residue verification PASS: exact zero for website-e2e listings, MT51 fixture products, Website-mode singleton domain events, relevant publication_versions, E2E Website mode revisions, MT52 Customer account/order/review/loyalty configuration and guest wishlist ownership residue.
 - Direct Customer reset-token revocation acceptance PASS: 1 test / 12 assertions; final affected Customer/security/loyalty regression PASS 28 tests / 394 assertions; refreshed clean full backend regression PASS 247 tests / 7,515 assertions.
 - MT-5.2 closure: Customer account/cart/orders/reviews is Completed. Dedicated Customer Playwright 3/3 PASS; full Website Playwright 4/4 PASS; default full Playwright 9/9 PASS; Website typecheck/lint/build, Composer strict/platform, scoped Pint and git diff gates PASS. Evidence: docs/website/MT-5.2_VERIFICATION.md. No unresolved MT-5.2 production or acceptance defect remains. Next dependency-valid point is MT-5.3 - Checkout and customer payment flows; it has not started.
+
+## MT-5.3 attempt tracking
+
+- Point started from clean synced commit 677ab92bdb085e7df92ed5601cf658e356aacf51. Scope is fixed to exactly four Website checkout channels: Cash on Delivery, one JazzCash integration, one Easypaisa integration and one approved hosted/tokenized Credit / Debit Card processor. Website Bank Transfer, split tender, multiple selectable merchant accounts and internal POS Payment Destinations remain prohibited.
+- Existing OrderTransactions/PaymentProviders/PromotionServices/LoyaltyServices authorities are reused; no parallel Website money, stock, discount or reconciliation engine is allowed. External provider availability remains truthful under H-02: JazzCash/Easypaisa/Card stay unavailable until authentic configuration plus a registered provider adapter exist.
+- First slice in progress: add a private Customer checkout-channel projection and enforce merchant identity in external provider readiness; then wire Checkout/order-status UI through the existing Customer order/payment endpoints.
+- First implementation slice completed: PaymentProviders now exposes only the fixed four Customer checkout channels and treats an external provider as available only when enabled, adapter-backed and bound to a non-empty merchant identity. Customer API adds the private `checkout-channels.v1` projection; no merchant credentials, internal POS Payment Destinations or selectable merchant accounts are exposed.
+- Website commerce now has `/checkout` with account-prefilled customer details, required delivery fields, coupon-or-loyalty input, live fixed-four channel availability, idempotent order creation and HTTPS-only hosted external-payment continuation. Cart links to Checkout. Owned order history links to `/account/orders/{order}` with item/payment status, pending hosted-payment continuation, failed-payment retry against currently available external channels, safe cancellation and account return.
+- Customer API proxy allowlist now includes `checkout/channels` and owned payment initiation while preserving existing order/cancel/retry allowlists. COD remains the only configured live Website channel; JazzCash/Easypaisa/Card are truthfully shown unavailable until authentic H-02 configuration plus adapters exist.
+- Short gates PASS: relevant PHP syntax, scoped Pint, Website typecheck, Website lint and git diff check. No long build/browser/backend suite was started after the 9-minute Finalization Fence.
+- Incomplete: focused HTTP tests for fixed-four projection/provider readiness and checkout orchestration; deterministic Website checkout Playwright for COD create/status/cancel plus disabled-external truth; external-provider fake journey for initiate/failure/retry/verified confirmation; promotion/coupon/loyalty tamper and usage-race acceptance; full regressions, production mode-specific checkout loading and closure evidence.
+- Next action: add focused MT-5.3 Customer API tests for fixed-four channels + provider readiness + owned create/cancel/retry/initiate/status -> extend deterministic Website fixtures/spec for COD checkout and external-provider states -> run affected/full regression and production checkout performance gates. Do not start MT-5.4.

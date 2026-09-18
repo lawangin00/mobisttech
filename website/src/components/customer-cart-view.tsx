@@ -43,6 +43,7 @@ export function CustomerCartView() {
       <div className="flex flex-wrap gap-3">
         <button className="rounded-xl bg-slate-950 px-4 py-2 text-white" onClick={validate}>Validate cart</button>
         <button className="rounded-xl border px-4 py-2" onClick={() => { clearCart(); setLines([]); setQuote(null); }}>Clear</button>
+        <Link href="/checkout" className="rounded-xl bg-slate-950 px-4 py-2 text-white">Checkout</Link>
         <Link href="/account" className="rounded-xl border px-4 py-2">Account</Link>
       </div>
     </div>}
