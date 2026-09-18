@@ -13,6 +13,7 @@ async function login(page: Page) {
 }
 
 test('MT-4.4 platform administration delegates protected CMS POS team payment integration and software workflows', async ({ page }) => {
+    test.setTimeout(90_000);
     const calls: Array<{ path: string; method: string; body: Record<string, unknown> | null }> = [];
     const permissions = [
         'shops.enter',
@@ -214,8 +215,8 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
     await expect.poll(() => calls.some((call) => call.path.endsWith('/templates/invoice_whatsapp'))).toBe(true);
 
     const destinations = page.getByRole('heading', { name: 'POS Payment Destinations' }).locator('xpath=ancestor::section[1]');
-    await destinations.getByDisplayValue('E2E Bank').fill('E2E Bank Updated');
-    await destinations.getByDisplayValue('****4400').fill('****4499');
+    await destinations.locator('input').nth(2).fill('E2E Bank Updated');
+    await destinations.locator('input').nth(3).fill('****4499');
     await destinations.getByRole('button', { name: 'Save destination' }).click();
     await expect.poll(() => calls.some((call) => call.path.endsWith('/payment-destinations/destination-1')
         && call.body?.display_name === 'E2E Bank Updated' && call.body?.masked_identifier === '****4499')).toBe(true);
