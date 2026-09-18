@@ -56,7 +56,7 @@ export default async function CategoryPage({
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
       <p className="text-sm text-slate-500">
-        <Link href="/categories">Categories</Link> /
+        <Link href="/categories" prefetch={false}>Categories</Link> /
       </p>
       <h1 className="mt-3 text-4xl font-bold">{found.label}</h1>
       <p className="mt-2 text-slate-600">{found.products} published products</p>
@@ -68,7 +68,7 @@ export default async function CategoryPage({
       {page.page.has_more && page.page.next_cursor && (
         <div className="mt-8">
           <Link
-            href={`/categories/${encodeURIComponent(category)}?after=${encodeURIComponent(page.page.next_cursor)}`}
+            href={`/categories/${encodeURIComponent(category)}?after=${encodeURIComponent(page.page.next_cursor)}`} prefetch={false}
             className="rounded-full border border-slate-300 bg-white px-5 py-3 font-semibold"
           >
             Next page →

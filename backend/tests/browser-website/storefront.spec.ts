@@ -27,9 +27,13 @@ test('MT-5.1 storefront keeps catalogue private fresh mode-aware SEO-safe and re
 
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Mobile products and digital solutions/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Products' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Products', exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Discuss a digital project' })).toBeVisible();
     await expect(page.getByText('MT51 Alpha Phone')).toBeVisible();
+
+    const profileBeforeProducts = await request.get('http://127.0.0.1:18080/api/v1/website-profile');
+    expect(profileBeforeProducts.ok()).toBe(true);
+    expect((await profileBeforeProducts.json()).data.mode).toBe('hybrid');
 
     await page.goto('/products');
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
@@ -92,7 +96,7 @@ test('MT-5.1 storefront keeps catalogue private fresh mode-aware SEO-safe and re
     browserRequests.length = 0;
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Digital solutions built around your business/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Products' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Products', exact: true })).toHaveCount(0);
     await expect(page.getByText('Live catalogue')).toHaveCount(0);
     const digitalHtml = (await page.content()).toLowerCase();
     expect(digitalHtml).not.toContain('mt51 alpha phone');
@@ -105,7 +109,7 @@ test('MT-5.1 storefront keeps catalogue private fresh mode-aware SEO-safe and re
     browserRequests.length = 0;
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Mobile technology, clearly available/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Products' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Products', exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Discuss a digital project' })).toHaveCount(0);
     expect(browserRequests.some(url => url.includes('/api/v1/'))).toBe(false);
     await noHorizontalOverflow(page);

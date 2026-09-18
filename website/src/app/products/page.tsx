@@ -100,7 +100,7 @@ export default async function Products({
       {page.page.has_more && (
         <div className="mt-8 flex justify-center">
           <Link
-            href={`/products?${next.toString()}`}
+            href={`/products?${next.toString()}`} prefetch={false}
             className="rounded-full border border-slate-300 bg-white px-5 py-3 font-semibold"
           >
             Next page →

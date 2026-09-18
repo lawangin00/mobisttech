@@ -39,7 +39,7 @@ export default async function Home() {
           <div className="mt-8 flex flex-wrap gap-3">
             {commerce && (
               <Link
-                href="/products"
+                href="/products" prefetch={false}
                 className="rounded-full bg-slate-950 px-5 py-3 font-semibold text-white"
               >
                 Browse products
@@ -66,7 +66,7 @@ export default async function Home() {
               </p>
               <h2 className="mt-1 text-3xl font-bold">Available products</h2>
             </div>
-            <Link href="/products" className="text-sm font-semibold">
+            <Link href="/products" prefetch={false} className="text-sm font-semibold">
               View all →
             </Link>
           </div>

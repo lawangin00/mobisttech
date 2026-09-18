@@ -51,7 +51,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <p className="text-sm text-slate-500"><Link href="/products">Products</Link> / {product.category.label}</p>
+      <p className="text-sm text-slate-500"><Link href="/products" prefetch={false}>Products</Link> / {product.category.label}</p>
       <div className="mt-5 grid gap-8 lg:grid-cols-2">
         <ProductImage src={product.image_url} alt={product.name} priority />
         <div>

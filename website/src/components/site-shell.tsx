@@ -21,17 +21,17 @@ export function SiteHeader({
             Home
           </Link>
           {routes.has("products") && (
-            <Link href="/products" className="rounded-full px-3 py-2 hover:bg-slate-100">
+            <Link href="/products" prefetch={false} className="rounded-full px-3 py-2 hover:bg-slate-100">
               Products
             </Link>
           )}
           {routes.has("categories") && (
-            <Link href="/categories" className="rounded-full px-3 py-2 hover:bg-slate-100">
+            <Link href="/categories" prefetch={false} className="rounded-full px-3 py-2 hover:bg-slate-100">
               Categories
             </Link>
           )}
           {routes.has("compare") && (
-            <Link href="/compare" className="rounded-full px-3 py-2 hover:bg-slate-100">
+            <Link href="/compare" prefetch={false} className="rounded-full px-3 py-2 hover:bg-slate-100">
               Compare
             </Link>
           )}

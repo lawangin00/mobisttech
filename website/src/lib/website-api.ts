@@ -62,8 +62,12 @@ async function get<T>(path: string, freshness: "live" | number = "live"): Promis
 }
 
 export async function readWebsiteProfile(): Promise<WebsiteProfile | null> {
-  try { return await get<WebsiteProfile>("/api/v1/website-profile", "live"); }
-  catch { return null; }
+  try {
+    return await get<WebsiteProfile>("/api/v1/website-profile", "live");
+  } catch (error) {
+    if (error instanceof WebsiteApiError && error.status === 404) return null;
+    throw error;
+  }
 }
 export function readCategories() { return get<Category[]>("/api/v1/catalogue/categories", 60); }
 export function readProduct(slug: string) { return get<ProductDetail>(`/api/v1/catalogue/products/${encodeURIComponent(slug)}`, "live"); }

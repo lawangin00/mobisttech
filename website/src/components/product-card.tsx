@@ -12,7 +12,7 @@ export function ProductCard({
 }) {
   return (
     <article className="min-w-0 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <Link href={`/products/${product.slug}`} aria-label={product.name}>
+      <Link href={`/products/${product.slug}`} prefetch={false} aria-label={product.name}>
         <ProductImage src={product.image_url} alt={product.name} priority={priority} />
       </Link>
       <div className="mt-4 flex items-start justify-between gap-3">
@@ -21,7 +21,7 @@ export function ProductCard({
             {product.brand ?? product.category.label}
           </p>
           <h2 className="mt-1 text-lg font-semibold text-slate-950">
-            <Link href={`/products/${product.slug}`}>{product.name}</Link>
+            <Link href={`/products/${product.slug}`} prefetch={false}>{product.name}</Link>
           </h2>
           {product.model && <p className="mt-1 text-sm text-slate-500">{product.model}</p>}
         </div>
@@ -40,7 +40,7 @@ export function ProductCard({
       <div className="mt-4 flex items-center justify-between gap-3">
         <strong className="text-lg">{money(product.price, product.currency)}</strong>
         <Link
-          href={`/products/${product.slug}`}
+          href={`/products/${product.slug}`} prefetch={false}
           className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
         >
           View

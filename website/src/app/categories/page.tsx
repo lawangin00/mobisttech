@@ -25,7 +25,7 @@ export default async function Categories() {
         {categories.map((category) => (
           <Link
             key={category.code}
-            href={`/categories/${encodeURIComponent(category.code)}`}
+            href={`/categories/${encodeURIComponent(category.code)}`} prefetch={false}
             className="rounded-2xl border border-slate-200 bg-white p-6 hover:border-slate-400"
           >
             <strong className="text-xl">{category.label}</strong>
