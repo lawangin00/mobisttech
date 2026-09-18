@@ -13,6 +13,10 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: business ? new URL(business.public_website) : undefined,
     robots: website?.mode ? { index: true, follow: true } : { index: false, follow: false },
     openGraph: { type: "website", siteName: brand },
+    icons: {
+      icon: [{ url: "/favicon.ico" }, { url: "/icon-192.png", type: "image/png", sizes: "192x192" }],
+      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
   };
 }
 

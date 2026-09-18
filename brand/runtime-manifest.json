@@ -1,0 +1,141 @@
+{
+    "schema":  1,
+    "canonical_root":  "brand",
+    "generator":  "scripts/generate-brand-assets.ps1",
+    "source_policy":  "Only brand/Logo and brand/Wordmark may feed runtime graphics. brand/Canva is retained reference-only.",
+    "masters":  [
+                    {
+                        "path":  "Canva/Logo_mobiST.svg",
+                        "sha256":  "ab19de501dca602b8df93335fe760a45890c0458711750434202953a2ec2c999",
+                        "runtime_source":  false,
+                        "role":  "reference-only Canva source"
+                    },
+                    {
+                        "path":  "Canva/Wordmark_mobiST.svg",
+                        "sha256":  "683b8b412ecc160c0202eaeafa1594966d9b15f2de13b66633b22959426e2515",
+                        "runtime_source":  false,
+                        "role":  "reference-only Canva source"
+                    },
+                    {
+                        "path":  "Logo/Logo_mobiST_Master.png",
+                        "sha256":  "97508b395193a9e3d26a09eca048a0dcf9595bba8c04b41345098bdce9a3c295",
+                        "runtime_source":  true,
+                        "role":  "high-resolution compact mark"
+                    },
+                    {
+                        "path":  "Logo/Logo_mobiST_Master_Editable.svg",
+                        "sha256":  "0864ad8406632db34bf9e4a7ddce64f6981c03001e3da9154dd45f82b6688227",
+                        "runtime_source":  true,
+                        "role":  "editable compact mark"
+                    },
+                    {
+                        "path":  "Logo/Logo_mobiST_Square.png",
+                        "sha256":  "4bc5066b123059b3c4576b902846d992600ddacb0cef66f52a624172ac3544db",
+                        "runtime_source":  true,
+                        "role":  "square compact mark"
+                    },
+                    {
+                        "path":  "Wordmark/Wordmark_mobiST_Editable.svg",
+                        "sha256":  "2e8f80c03110b00a756d00a4c17855b2e24d88c43639e5bae67105bf1b59659f",
+                        "runtime_source":  true,
+                        "role":  "editable full wordmark"
+                    },
+                    {
+                        "path":  "Wordmark/Wordmark_mobiST_Master.png",
+                        "sha256":  "c02ef9d3c60c504d6d3f7fda6a36ae91ab6312635edfcd71a076b273527488cf",
+                        "runtime_source":  true,
+                        "role":  "high-resolution full wordmark"
+                    },
+                    {
+                        "path":  "Wordmark/Wordmark_mobiST_Square.png",
+                        "sha256":  "588ce5a5826c2b999ab0a843cc0a0b47e7d3475b001d1401879883e8de8b9b0c",
+                        "runtime_source":  true,
+                        "role":  "square full wordmark"
+                    }
+                ],
+    "design_tokens":  {
+                          "path":  "design-tokens.css",
+                          "sha256":  "2da98b04d23e784af9f2d4a95202480b599bb6630a744ea80736bbf09bfec7e6",
+                          "font_fallback":  "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+                          "font_binary_policy":  "No legacy compiled WOFF/TTF build outputs are copied as brand masters.",
+                          "font_primary":  "Instrument Sans"
+                      },
+    "runtime_targets":  {
+                            "backend":  [
+                                            {
+                                                "sha256":  "2e8f80c03110b00a756d00a4c17855b2e24d88c43639e5bae67105bf1b59659f",
+                                                "path":  "public/brand/mobist-wordmark.svg"
+                                            },
+                                            {
+                                                "sha256":  "0864ad8406632db34bf9e4a7ddce64f6981c03001e3da9154dd45f82b6688227",
+                                                "path":  "public/brand/mobist-mark.svg"
+                                            },
+                                            {
+                                                "sha256":  "f3e07d80fe64780fd004ed63a913d0388a3a612adef70669769bdd6761a38ca3",
+                                                "path":  "public/brand/mobist-wordmark-print.png"
+                                            },
+                                            {
+                                                "sha256":  "7d12a858af24763831328146d4490ab938f76b0f38ee784e00473e8a01f6891b",
+                                                "path":  "public/brand/mobist-mark-watermark.png"
+                                            },
+                                            {
+                                                "sha256":  "af741b11c424429060495054ca12b63b1fff0a127a611434b0f1d7e8421a3b72",
+                                                "path":  "public/brand/mobist-icon-512.png"
+                                            },
+                                            {
+                                                "sha256":  "896775afaa6c2fa6b6ee66a28bb960cb99409ea5b4e0fc5180f5877f820b1c9a",
+                                                "path":  "public/favicon.ico"
+                                            },
+                                            {
+                                                "sha256":  "f29f75b6fbbcb19e86d4896458a7100eaacea8437193f2326a8ee8f23c23bce9",
+                                                "path":  "public/apple-touch-icon.png"
+                                            },
+                                            {
+                                                "sha256":  "1d5dc0cd73be75abfc9de3f4f15c2964db2a6a975d9fb91bc60080866773b431",
+                                                "path":  "public/icon-192.png"
+                                            },
+                                            {
+                                                "sha256":  "af741b11c424429060495054ca12b63b1fff0a127a611434b0f1d7e8421a3b72",
+                                                "path":  "public/icon-512.png"
+                                            }
+                                        ],
+                            "website":  [
+                                            {
+                                                "sha256":  "2e8f80c03110b00a756d00a4c17855b2e24d88c43639e5bae67105bf1b59659f",
+                                                "path":  "public/brand/mobist-wordmark.svg"
+                                            },
+                                            {
+                                                "sha256":  "0864ad8406632db34bf9e4a7ddce64f6981c03001e3da9154dd45f82b6688227",
+                                                "path":  "public/brand/mobist-mark.svg"
+                                            },
+                                            {
+                                                "sha256":  "f3e07d80fe64780fd004ed63a913d0388a3a612adef70669769bdd6761a38ca3",
+                                                "path":  "public/brand/mobist-wordmark-print.png"
+                                            },
+                                            {
+                                                "sha256":  "7d12a858af24763831328146d4490ab938f76b0f38ee784e00473e8a01f6891b",
+                                                "path":  "public/brand/mobist-mark-watermark.png"
+                                            },
+                                            {
+                                                "sha256":  "af741b11c424429060495054ca12b63b1fff0a127a611434b0f1d7e8421a3b72",
+                                                "path":  "public/brand/mobist-icon-512.png"
+                                            },
+                                            {
+                                                "sha256":  "896775afaa6c2fa6b6ee66a28bb960cb99409ea5b4e0fc5180f5877f820b1c9a",
+                                                "path":  "public/favicon.ico"
+                                            },
+                                            {
+                                                "sha256":  "f29f75b6fbbcb19e86d4896458a7100eaacea8437193f2326a8ee8f23c23bce9",
+                                                "path":  "public/apple-touch-icon.png"
+                                            },
+                                            {
+                                                "sha256":  "1d5dc0cd73be75abfc9de3f4f15c2964db2a6a975d9fb91bc60080866773b431",
+                                                "path":  "public/icon-192.png"
+                                            },
+                                            {
+                                                "sha256":  "af741b11c424429060495054ca12b63b1fff0a127a611434b0f1d7e8421a3b72",
+                                                "path":  "public/icon-512.png"
+                                            }
+                                        ]
+                        }
+}

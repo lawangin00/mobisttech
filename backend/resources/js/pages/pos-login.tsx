@@ -53,8 +53,9 @@ export default function PosLogin() {
 
     return <><Head title="Team Member sign in" /><main className="min-h-screen bg-slate-950 px-5 py-8 sm:px-8">
         <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl overflow-hidden rounded-3xl bg-white shadow-2xl lg:grid-cols-[1.1fr_0.9fr]">
-            <section className="hidden bg-slate-900 p-12 text-white lg:flex lg:flex-col lg:justify-between">
-                <div><p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-300">mobiST</p>
+            <section className="relative hidden overflow-hidden bg-slate-900 p-12 text-white lg:flex lg:flex-col lg:justify-between">
+                <img aria-hidden="true" src="/brand/mobist-mark-watermark.png" className="pointer-events-none absolute -bottom-16 -right-12 w-72 opacity-10" />
+                <div className="relative"><p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-300">mobiST</p>
                     <h1 className="mt-8 max-w-xl text-5xl font-semibold leading-tight">One Team Member identity for POS and administration.</h1>
                     <p className="mt-6 max-w-lg text-lg leading-8 text-slate-300">Permissions and outlet assignments are enforced by the Laravel backend. This screen never grants access by hiding or showing a menu.</p>
                 </div>
@@ -62,7 +63,8 @@ export default function PosLogin() {
             </section>
             <section className="flex items-center p-7 sm:p-12">
                 <div className="w-full max-w-md mx-auto">
-                    <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">mobiST POS</p>
+                    <img src="/brand/mobist-wordmark.svg" alt="mobiST Technologies" className="h-11 w-auto max-w-[184px]" />
+                    <p className="mt-4 text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">mobiST POS</p>
                     <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">Team Member sign in</h2>
                     <p className="mt-3 text-sm leading-6 text-slate-600">Use your individual work credential. Shared employee logins are not supported.</p>
                     {message && <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{message}</div>}

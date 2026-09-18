@@ -1,8 +1,9 @@
 @import 'tailwindcss';
+@import './brand-tokens.css';
 @source '../views/**/*.blade.php';
 @source '../js/**/*.{ts,tsx}';
 
 body {
     background: #f8fafc;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: var(--mobist-font-sans);
 }

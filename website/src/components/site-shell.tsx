@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { BusinessProfile } from "@/lib/business-profile";
 import type { ContentIndex, WebsiteProfile } from "@/lib/website-api";
@@ -49,8 +50,8 @@ export function SiteHeader({
   return (
     <header className="border-b border-slate-200 bg-white/95">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <Link href="/" className="text-xl font-bold tracking-tight">
-          {business?.business_name ?? "mobiST Technologies"}
+        <Link href="/" className="inline-flex items-center" aria-label={business?.business_name ?? "mobiST Technologies"}>
+          <Image src="/brand/mobist-wordmark.svg" alt={business?.business_name ?? "mobiST Technologies"} width={184} height={92} className="h-10 w-auto max-w-[184px]" priority />
         </Link>
         <nav aria-label="Primary" className="flex flex-wrap items-center gap-1 text-sm font-medium">
           {links.map((item) => item.external ? (

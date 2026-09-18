@@ -39,13 +39,13 @@ System 7.7 preserves the Git-backed bootstrap loading path and durable project/s
 
 ## Verified position
 
-Active stage: MT-5 - Next.js customer Website (Complete)
+Active stage: MT-6 - Shared brand and Windows Control (In Progress)
 
 Last completed stage: MT-5 - Next.js customer Website
 
-Current In Progress point: None
+Current In Progress point: MT-6.1 - Canonical branding and runtime assets
 
-Status: MT-0 through MT-5 complete. MT-6 is pending. 46/56 complete, 10 pending. No point is currently In Progress.
+Status: MT-0 through MT-5 complete. MT-6 is in progress. 46/56 complete, 10 pending. MT-6.1 is In Progress.
 
 Last completed point: MT-5.5 - Client project portal and digital conversion journeys
 
@@ -397,7 +397,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-5.3 | Checkout and customer payment flows | Completed |
 | MT-5.4 | Dynamic public content and digital solutions | Complete |
 | MT-5.5 | Client project portal and digital conversion journeys | Complete |
-| MT-6.1 | Canonical branding and runtime assets | Pending |
+| MT-6.1 | Canonical branding and runtime assets | In Progress |
 | MT-6.2 | Canonical mobiST Control migration | Pending |
 | MT-6.3 | Windows operator and local integration acceptance | Pending |
 | MT-7.1 | Data migration and rollback rehearsal | Pending |
@@ -1017,3 +1017,10 @@ No source-repository write, source-data migration, source runtime action, real p
 - Exact post-acceptance residue PASS: MT55 synthetic Digital Service 0, MT55 Client Project 0, MT52 Customer fixture 0.
 - MT-5.5 closure: Client project portal and digital conversion journeys is Complete. Evidence: `docs/website/MT-5.5_VERIFICATION.md` and `docs/website/MT-5.5_PERFORMANCE.md`. Clean full backend remains 251 tests / 7,618 assertions PASS; full production Website 9/9 PASS; default Playwright 9/9 PASS. No unresolved MT-5.5 defect remains.
 - Next action: MT-5.5 and stage MT-5 are Complete. Await explicit Proceed/Y before starting MT-6.1 - Canonical branding and runtime assets.
+- MT-6.1 manifest generation attempt 1: ORCHESTRATION_FAIL before writing the manifest because the short PowerShell helper name `H` collided with the built-in history alias and received the brand path as a history ID. No source/runtime asset was modified by the failed command. Material retry change: use an unambiguous `Get-Sha256` helper name.
+- MT-6.1 manifest generation attempt 2: ORCHESTRATION_FAIL at file encoding only because this Windows PowerShell host does not support the `utf8NoBOM` Set-Content enum. Manifest content had been constructed in memory but was not written. Material retry change: use .NET `UTF8Encoding($false)` with `File.WriteAllText`; no asset or runtime behavior changed.
+- MT-6.1 canonicalization slice: protected POS and Website Brandkit evidence confirmed eight byte-identical master/reference files. One byte-preserved copy now lives under root `brand/`; Canva assets are reference-only while Logo/Wordmark feed runtime generation. `brand/design-tokens.css`, `brand/runtime-manifest.json`, `brand/README.md` and `scripts/generate-brand-assets.ps1` define the canonical source, font fallback policy and backend/Website derivative mapping.
+- Generated runtime assets now exist for both applications: full wordmark/compact mark vectors, print wordmark, watermark, 512 icon, favicon, Apple touch icon, 192/512 PWA icons and copied brand tokens. Backend Blade and POS shell/login reference canonical derivatives; Website metadata/header reference canonical icon/wordmark assets; POS login uses the generated watermark; both CSS roots use the Instrument Sans/system fallback token stack.
+- Focused brand consistency regression PASS 2 tests / 55 assertions, including all eight approved source hashes and both runtime target mappings. Backend typecheck/Vite production build PASS. Website typecheck/lint/optimized production build PASS after replacing the header raw image with `next/image`; git diff check PASS.
+- Incomplete after the 9-minute guard: targeted backend/Website browser acceptance for visible logo/fallback/icon delivery, exact duplicate-master/runtime-reference scan, final generated-asset/hash/residue verification, MT-6.1 verification artifact and Complete transition.
+- Current next action: run focused default POS shell/login + Website production browser acceptance for brand rendering and icon requests -> exact duplicate/reference/hash scan -> final short gates -> write MT-6.1 verification and mark Complete. Do not start MT-6.2.
