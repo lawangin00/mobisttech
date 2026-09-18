@@ -8,9 +8,11 @@ use App\Commerce\OrderTransactions;
 use App\Commerce\ProductReviews;
 use App\Digital\ClientProjectServices;
 use App\Engagement\CustomerEngagement;
+use App\Identity\CustomerIdentity;
 use App\Models\CustomerAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 final class CustomerApiController extends Controller
 {
@@ -105,6 +107,13 @@ final class CustomerApiController extends Controller
         return $this->responses->private($engagement->removeSaved($this->customer(), null, $product), 'wishlist-item.v1');
     }
 
+    public function claimWishlist(Request $request, CustomerEngagement $engagement)
+    {
+        $token = $request->validate(['guest_token' => ['required', 'string', 'min:32', 'max:128']])['guest_token'];
+
+        return $this->responses->private(['items' => $engagement->claimGuestWishlist($this->customer(), $token)], 'wishlist.v1');
+    }
+
     public function notificationPreferences(CustomerEngagement $engagement)
     {
         return $this->responses->private($engagement->preferences($this->customer()), 'notification-preferences.v1');
@@ -135,6 +144,28 @@ final class CustomerApiController extends Controller
     public function reviews(ProductReviews $reviews)
     {
         return $this->responses->private(['items' => $reviews->mine($this->customer())], 'customer-reviews.v1');
+    }
+
+    public function reviewEligibility(ProductReviews $reviews)
+    {
+        return $this->responses->private(['items' => $reviews->eligible($this->customer())], 'customer-review-eligibility.v1');
+    }
+
+    public function loyalty(CustomerIdentity $identity)
+    {
+        $customer = $this->customer();
+        $owned = $identity->forAccount($customer);
+        $config = DB::table('loyalty_configurations')->orderByDesc('version')->first();
+        $account = DB::table('loyalty_accounts')->where('customer_id', $owned->id)->first();
+
+        return $this->responses->private([
+            'enabled' => (bool) ($config?->enabled ?? false),
+            'balance_points' => (int) ($account?->balance_points ?? 0),
+            'min_redeem_points' => $config ? (int) $config->min_redeem_points : null,
+            'max_redeem_points' => $config ? (int) $config->max_redeem_points : null,
+            'redemption_value' => $config ? (string) $config->redemption_value : null,
+            'expiry_days' => $config ? (int) $config->expiry_days : null,
+        ], 'customer-loyalty.v1');
     }
 
     public function submitReview(Request $request, ProductReviews $reviews)

@@ -11,9 +11,12 @@ const ALLOWED = [
   /^cart\/quote$/,
   /^orders(?:\/[0-9a-f-]+(?:\/(?:cancel|payments\/retry))?)?$/,
   /^wishlist(?:\/[0-9a-f-]+)?$/,
+  /^wishlist\/claim$/,
+  /^guest-wishlist(?:\/[0-9a-f-]+)?$/,
   /^notification-preferences$/,
   /^product-subscriptions(?:\/[0-9a-f-]+)?$/,
-  /^reviews$/,
+  /^reviews(?:\/eligible)?$/,
+  /^loyalty$/,
 ] as const;
 
 function allowed(path: string) {

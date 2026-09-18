@@ -24,6 +24,9 @@ Route::prefix('/v1')->middleware('throttle:api-public')->group(function () {
 
 Route::prefix('/v1')->middleware('throttle:api-write')->group(function () {
     Route::post('/enquiries', [WebsiteApiController::class, 'enquiry'])->name('api.enquiries.store');
+    Route::post('/guest-wishlist', [WebsiteApiController::class, 'guestWishlist'])->name('api.guest-wishlist.index');
+    Route::post('/guest-wishlist/{product}', [WebsiteApiController::class, 'saveGuestWishlist'])->whereUuid('product')->name('api.guest-wishlist.store');
+    Route::delete('/guest-wishlist/{product}', [WebsiteApiController::class, 'removeGuestWishlist'])->whereUuid('product')->name('api.guest-wishlist.destroy');
 });
 
 Route::post('/v1/payment-callbacks/{gateway}', [WebsiteApiController::class, 'paymentCallback'])

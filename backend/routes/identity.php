@@ -61,15 +61,18 @@ Route::prefix('/api/v1')->middleware(['identity', 'identity.auth', 'throttle:api
     Route::get('/projects/{project}', [CustomerApiController::class, 'project'])->defaults('identity_realm', 'customer')->name('api.customer.projects.show');
     Route::get('/projects/{project}/files/{file}', [CustomerApiController::class, 'projectFile'])->defaults('identity_realm', 'customer')->name('api.customer.projects.files');
     Route::get('/wishlist', [CustomerApiController::class, 'wishlist'])->defaults('identity_realm', 'customer')->name('api.customer.wishlist.index');
-    Route::post('/wishlist/{product}', [CustomerApiController::class, 'saveWishlist'])->defaults('identity_realm', 'customer')->name('api.customer.wishlist.store');
-    Route::delete('/wishlist/{product}', [CustomerApiController::class, 'removeWishlist'])->defaults('identity_realm', 'customer')->name('api.customer.wishlist.destroy');
+    Route::post('/wishlist/{product}', [CustomerApiController::class, 'saveWishlist'])->whereUuid('product')->defaults('identity_realm', 'customer')->name('api.customer.wishlist.store');
+    Route::delete('/wishlist/{product}', [CustomerApiController::class, 'removeWishlist'])->whereUuid('product')->defaults('identity_realm', 'customer')->name('api.customer.wishlist.destroy');
+    Route::post('/wishlist/claim', [CustomerApiController::class, 'claimWishlist'])->defaults('identity_realm', 'customer')->name('api.customer.wishlist.claim');
     Route::get('/notification-preferences', [CustomerApiController::class, 'notificationPreferences'])->defaults('identity_realm', 'customer')->name('api.customer.notifications.preferences');
     Route::put('/notification-preferences', [CustomerApiController::class, 'updateNotificationPreferences'])->defaults('identity_realm', 'customer')->name('api.customer.notifications.preferences.update');
     Route::get('/product-subscriptions', [CustomerApiController::class, 'subscriptions'])->defaults('identity_realm', 'customer')->name('api.customer.subscriptions.index');
     Route::post('/product-subscriptions/{product}', [CustomerApiController::class, 'subscribe'])->defaults('identity_realm', 'customer')->name('api.customer.subscriptions.store');
     Route::delete('/product-subscriptions/{product}', [CustomerApiController::class, 'unsubscribe'])->defaults('identity_realm', 'customer')->name('api.customer.subscriptions.destroy');
     Route::get('/reviews', [CustomerApiController::class, 'reviews'])->defaults('identity_realm', 'customer')->name('api.customer.reviews.index');
+    Route::get('/reviews/eligible', [CustomerApiController::class, 'reviewEligibility'])->defaults('identity_realm', 'customer')->name('api.customer.reviews.eligible');
     Route::post('/reviews', [CustomerApiController::class, 'submitReview'])->defaults('identity_realm', 'customer')->name('api.customer.reviews.store');
+    Route::get('/loyalty', [CustomerApiController::class, 'loyalty'])->defaults('identity_realm', 'customer')->name('api.customer.loyalty');
 });
 Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->group(function () {
     Route::get('/pos', [PosShellController::class, 'home'])->defaults('identity_realm', 'admin')->name('admin.pos.home');

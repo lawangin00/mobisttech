@@ -2,6 +2,8 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { clearCustomerCsrf, CustomerAccount, customerRequest } from "@/lib/customer-api";
+import { clearGuestOwnerToken, readGuestOwnerToken } from "@/lib/customer-guest";
+import { CustomerEngagementPanel } from "@/components/customer-engagement-panel";
 
 type Order = { id: string; number: string; status: string; fulfillment_status: string; payment_status: string; total: string; currency: string; created_at: string };
 type OrderPage = { items: Order[]; page: { has_more: boolean; next_cursor: string | null } };
@@ -17,6 +19,11 @@ export function CustomerAccountPanel() {
   const refresh = useCallback(async () => {
     const current = await customerRequest<CustomerAccount>("account");
     setAccount(current);
+    const guestToken = readGuestOwnerToken();
+    if (guestToken) {
+      await customerRequest("wishlist/claim", { method: "POST", body: JSON.stringify({ guest_token: guestToken }) })
+        .then(() => clearGuestOwnerToken()).catch(() => undefined);
+    }
     const [orderData, wishlist, reviews] = await Promise.all([
       customerRequest<OrderPage>("orders"),
       customerRequest<{ items: unknown[] }>("wishlist").catch(() => ({ items: [] })),
@@ -76,5 +83,6 @@ export function CustomerAccountPanel() {
     </section>
     <section><h2 className="text-xl font-bold">Orders</h2><div className="mt-3 space-y-3">{orders.length === 0 ? <p className="text-slate-600">No orders yet.</p> : orders.map((order) => <article key={order.id} className="rounded-2xl border bg-white p-4"><strong>{order.number}</strong><p className="text-sm text-slate-600">{order.status} · {order.payment_status} · {order.currency} {order.total}</p></article>)}</div></section>
     <section className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border bg-white p-4"><strong>Saved items</strong><p className="mt-1 text-2xl font-bold">{wishlistCount}</p></div><div className="rounded-2xl border bg-white p-4"><strong>Your reviews</strong><p className="mt-1 text-2xl font-bold">{reviewCount}</p></div></section>
+    <CustomerEngagementPanel />
   </div>;
 }

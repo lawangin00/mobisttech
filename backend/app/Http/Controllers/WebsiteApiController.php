@@ -6,6 +6,7 @@ use App\Api\ApiResponse;
 use App\Api\WebsiteApi;
 use App\Commerce\OrderTransactions;
 use App\Digital\DigitalServiceLeads;
+use App\Engagement\CustomerEngagement;
 use Illuminate\Http\Request;
 
 final class WebsiteApiController extends Controller
@@ -55,6 +56,27 @@ final class WebsiteApiController extends Controller
     public function services(Request $request, WebsiteApi $api)
     {
         return $this->responses->public($request, $api->services(), 'digital-services.v1', 30);
+    }
+
+    public function guestWishlist(Request $request, CustomerEngagement $engagement)
+    {
+        $token = $request->validate(['guest_token' => ['required', 'string', 'min:32', 'max:128']])['guest_token'];
+
+        return $this->responses->private(['items' => $engagement->wishlist(null, $token)], 'guest-wishlist.v1');
+    }
+
+    public function saveGuestWishlist(Request $request, CustomerEngagement $engagement, string $product)
+    {
+        $token = $request->validate(['guest_token' => ['required', 'string', 'min:32', 'max:128']])['guest_token'];
+
+        return $this->responses->private($engagement->saveForLater(null, $token, $product), 'guest-wishlist-item.v1', 201);
+    }
+
+    public function removeGuestWishlist(Request $request, CustomerEngagement $engagement, string $product)
+    {
+        $token = $request->validate(['guest_token' => ['required', 'string', 'min:32', 'max:128']])['guest_token'];
+
+        return $this->responses->private($engagement->removeSaved(null, $token, $product), 'guest-wishlist-item.v1');
     }
 
     public function enquiry(Request $request, DigitalServiceLeads $leads)

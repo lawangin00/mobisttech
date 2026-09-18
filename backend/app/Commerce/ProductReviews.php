@@ -57,6 +57,33 @@ final class ProductReviews
         }, 2);
     }
 
+    public function eligible(CustomerAccount $customer): array
+    {
+        $this->capabilities->assertHistoricalAllowed('order.status');
+
+        return DB::table('order_items as i')
+            ->join('orders as o', 'o.id', '=', 'i.order_id')
+            ->join('products as p', 'p.id', '=', 'i.product_id')
+            ->leftJoin('product_reviews as r', function ($join) use ($customer) {
+                $join->on('r.order_item_id', '=', 'i.id')->where('r.user_id', '=', $customer->id);
+            })
+            ->where('o.user_id', $customer->id)
+            ->whereNotNull('i.product_id')
+            ->where(function ($query) {
+                $query->whereIn('o.payment_status', ['paid', 'paid_reconciliation'])
+                    ->orWhere('o.fulfillment_status', 'completed');
+            })
+            ->orderByDesc('o.id')->orderBy('i.id')->limit(100)
+            ->get(['o.public_id as order_id', 'o.order_number', 'p.public_id as product_id', 'p.name as product_name',
+                'r.id as review_id', 'r.status as review_status'])
+            ->map(fn ($row) => [
+                'order_id' => $row->order_id, 'order_number' => $row->order_number,
+                'product_id' => $row->product_id, 'product_name' => $row->product_name,
+                'review_id' => $row->review_id ? (int) $row->review_id : null,
+                'review_status' => $row->review_status,
+            ])->all();
+    }
+
     public function mine(CustomerAccount $customer): array
     {
         return DB::table('product_reviews as r')->join('product_listings as l', 'l.id', '=', 'r.product_listing_id')
