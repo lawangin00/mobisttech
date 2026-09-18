@@ -11,6 +11,7 @@ use App\Inventory\StockLedger;
 use App\Migration\SourceRow;
 use App\Models\CustomerAccount;
 use App\Models\Product;
+use App\Support\ProductVariantKey;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -37,8 +38,12 @@ final class WebsiteApi
             'published_at' => $profile['published_at'] ?? null,
             'capabilities' => $profile['capabilities'],
             'content_scopes' => $profile['content_scopes'],
+            'copy_variant' => $profile['copy_variant'] ?? $profile['mode'],
             'routes' => $profile['routes'],
             'api_operations' => $profile['api_operations'],
+            'ctas' => $profile['ctas'] ?? [],
+            'seo_sitemap' => $profile['seo_sitemap'] ?? [],
+            'historical_access' => $profile['historical_access'] ?? [],
             'cache_namespace' => $caps['cache_namespace'],
         ];
     }
@@ -95,6 +100,7 @@ final class WebsiteApi
                 $payload = $this->productProjection($row);
                 $payload['description'] = $row->description;
                 $payload['warranty_summary'] = $row->warranty_summary;
+                $payload['variants'] = $this->publicVariants(Product::findOrFail($row->product_id));
 
                 return $payload;
             }, 2);
@@ -280,6 +286,44 @@ final class WebsiteApi
             'warranty_type' => $row->warranty_type,
             'image_url' => $row->image_url,
         ];
+    }
+
+    private function publicVariants(Product $product): array
+    {
+        $snapshot = $this->stock->snapshot($product->id);
+        if (! $product->track_imei) {
+            return [[
+                'key' => 'standard',
+                'label' => 'Standard',
+                'color' => null,
+                'condition' => null,
+                'pta_status' => null,
+                'carrier_lock_status' => null,
+                'mdm_status' => null,
+                'availability' => ['in_stock' => $snapshot['available'] > 0, 'quantity' => $snapshot['available']],
+            ]];
+        }
+
+        return $snapshot['units']
+            ->groupBy(fn ($unit) => ProductVariantKey::forUnit($unit))
+            ->map(function ($units, string $key) {
+                $first = $units->first();
+
+                return [
+                    'key' => $key,
+                    'label' => collect([$first->color, $first->condition, $first->pta_status, $first->carrier_lock_status, $first->mdm_status])
+                        ->filter(fn ($value) => filled($value))->implode(' · '),
+                    'color' => $first->color,
+                    'condition' => $first->condition,
+                    'pta_status' => $first->pta_status,
+                    'carrier_lock_status' => $first->carrier_lock_status,
+                    'mdm_status' => $first->mdm_status,
+                    'availability' => ['in_stock' => $units->isNotEmpty(), 'quantity' => $units->count()],
+                ];
+            })
+            ->sortBy('label')
+            ->values()
+            ->all();
     }
 
     private function approvedReviews(int $listingId, int $limit): array

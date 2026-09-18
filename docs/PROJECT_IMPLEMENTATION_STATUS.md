@@ -43,9 +43,9 @@ Active stage: MT-4 - React POS and administration (In Progress)
 
 Last completed stage: MT-3 - Administration, content and REST APIs
 
-Current In Progress point: None
+Current In Progress point: MT-5.1 - Storefront, catalogue and SEO migration
 
-Status: MT-0 through MT-4 complete. MT-5 is pending. 41/56 complete, 15 pending. No point is currently In Progress.
+Status: MT-0 through MT-4 complete. MT-5 is in progress. 41/56 complete, 15 pending. MT-5.1 is In Progress.
 
 Last completed point: MT-4.7 - Data reset administration interface
 
@@ -392,7 +392,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-4.4 | Website CMS and platform administration interfaces | Completed |
 | MT-4.8 | Digital operations administration interfaces | Completed |
 | MT-4.7 | Data reset administration interface | Completed |
-| MT-5.1 | Storefront, catalogue and SEO migration | Pending |
+| MT-5.1 | Storefront, catalogue and SEO migration | In Progress |
 | MT-5.2 | Customer account, cart, orders and reviews | Pending |
 | MT-5.3 | Checkout and customer payment flows | Pending |
 | MT-5.4 | Dynamic public content and digital solutions | Pending |
@@ -784,3 +784,14 @@ No source-repository write, source-data migration, source runtime action, real p
 - Verified behavior includes three reset levels, approved domain scoping with factory full-scope lock, recent re-authentication, dry-run counts/preservation/barriers, local preview cancellation with no execute mutation, stale-preview rejection, typed confirmation, verified-backup stop-on-failure, production HOLD, cleanup_pending recovery, minimum-bootstrap preservation, surviving audit/outcome evidence and strict 390px responsive containment.
 - Browser acceptance found and fixed three UI/build-state issues without weakening reset safety: stale production bundle before resolver inclusion; preview state cleared by reload/effect coupling; cleanup recovery state cleared by level effect. Final responsive diagnosis found intrinsic min-width in Reset outcomes cards; product CSS now constrains/wraps content and the original strict overflow assertion passes.
 - No unresolved MT-4.7 production or acceptance defect remains. Evidence: docs/reset/MT-4.7_VERIFICATION.md. MT-4 is complete; next dependency-valid point is MT-5.1 - Storefront, catalogue and SEO migration.
+
+## MT-5.1 attempt tracking
+
+- Point started from clean synced commit 2fe886b411fd9eb6aa3ffb65702e0e14cd752e5e. Storefront migration must consume existing public/backend authorities, preserve public-payload privacy and zero-stock semantics, respect digital_only/hybrid/commerce_only capability pruning, and measure production performance without inventing unavailable provider state. LOOP_GUARD inactive.
+- Mapped current Website state: Next.js 16.3.3 / React 19.2.8 / TypeScript 5.9.3 foundation exists under website/, but only a placeholder home/layout was present. Laravel already owns mode-aware public catalogue/category/product APIs, cursor pagination, live stock availability, CMS/mode publication, cache/ETag contracts and public privacy boundaries.
+- Proven MT-5.1 backend gaps fixed: Website profile now exposes canonical copy_variant, CTAs, seo_sitemap and historical_access from the published Website mode snapshot so Next does not derive/guess capability navigation/SEO behavior. Product detail now exposes safe aggregated variants from StockLedger/ProductVariantKey (key, public attributes, availability only); no IMEI, unit number, purchase price or internal stock identifiers are projected.
+- ApiContractTest expanded for authoritative Website profile mode/CTA/SEO behavior and safe product variants. Synthetic publishMode fixture was corrected to match canonical CTA/excluded-route semantics. Focused API contract result: 5 tests / 183 assertions PASS.
+- Next first-slice server-only helpers written: website/src/lib/website-api.ts provides typed fixed-origin API access with live catalogue/product freshness and bounded cached category reads; website/src/lib/storefront.ts provides shared storefront context/money/mode helpers. No client-side data fetch authority or provider/database secret is introduced.
+- Planned first route slice (not yet written due guard): mode-aware shared shell/home, products search/category/cursor pages, product detail + structured metadata/variants, compare, robots/sitemap and responsive media. In digital_only these commerce components must not fetch/render; zero-stock published listings remain visible as out-of-stock.
+- Incomplete: finish Next route/components first slice -> typecheck/lint/build -> focused Website browser/API acceptance for privacy/metadata/search/pagination/zero-stock/POS freshness/mode pruning -> production builds in digital_only/hybrid/commerce_only with bundle/request audits -> mobile performance/Lighthouse measurements -> closure regressions/evidence.
+- Next action: finish website Server Component route/components slice from the existing typed helpers -> run website typecheck/lint/build -> add focused MT-5.1 Website acceptance.

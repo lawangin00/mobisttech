@@ -42,6 +42,11 @@ class ApiContractTest extends TestCase
 
         $detail = $this->getJson('/api/v1/catalogue/products/alpha-phone')->assertOk();
         $this->assertSame(1, $detail->json('data.availability.quantity'));
+        $this->assertSame('standard', $detail->json('data.variants.0.key'));
+        $this->assertSame(1, $detail->json('data.variants.0.availability.quantity'));
+        $variantJson = json_encode($detail->json('data.variants'), JSON_THROW_ON_ERROR);
+        $this->assertStringNotContainsString('imei', strtolower($variantJson));
+        $this->assertStringNotContainsString('unit_no', strtolower($variantJson));
         $this->acquire($first);
         $this->getJson('/api/v1/catalogue/products/alpha-phone')->assertOk()
             ->assertJsonPath('data.availability.quantity', 2);
@@ -51,6 +56,29 @@ class ApiContractTest extends TestCase
         $this->publishMode('digital_only', 2);
         $this->getJson('/api/v1/catalogue/products')->assertNotFound()
             ->assertJsonPath('error.code', 'api_404');
+    }
+
+    public function test_website_profile_exposes_authoritative_mode_navigation_cta_and_seo_plan(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $profile = $this->getJson('/api/v1/website-profile')->assertOk()
+            ->assertJsonPath('contract', 'website-profile.v1')
+            ->assertJsonPath('data.mode', 'hybrid')
+            ->assertJsonPath('data.capabilities.commerce', true)
+            ->assertJsonPath('data.capabilities.digital', true)
+            ->assertJsonPath('data.copy_variant', 'hybrid')
+            ->assertJsonPath('data.seo_sitemap.historical_routes_indexable', false)
+            ->assertJsonPath('data.seo_sitemap.inactive_capabilities_indexable', false);
+        $this->assertContains('products', $profile->json('data.routes'));
+        $this->assertContains('services', $profile->json('data.routes'));
+        $this->assertContains('browse_products', $profile->json('data.ctas'));
+        $this->assertContains('service_enquiry', $profile->json('data.ctas'));
+
+        $this->publishMode('digital_only', 2);
+        $digital = $this->getJson('/api/v1/website-profile')->assertOk();
+        $this->assertNotContains('products', $digital->json('data.routes'));
+        $this->assertNotContains('browse_products', $digital->json('data.ctas'));
+        $this->assertContains('products', $digital->json('data.seo_sitemap.excluded_routes'));
     }
 
     public function test_software_api_exposes_published_revision_and_release_only(): void
@@ -209,9 +237,16 @@ class ApiContractTest extends TestCase
             'contract' => 'website-mode.v1', 'mode' => $mode,
             'capabilities' => ['digital' => $digital, 'commerce' => $commerce],
             'content_scopes' => $scopes, 'copy_variant' => $mode, 'routes' => $routes,
-            'api_operations' => $operations, 'ctas' => [],
-            'seo_sitemap' => ['discoverable_routes' => $routes, 'excluded_routes' => [],
-                'historical_routes_indexable' => false, 'inactive_capabilities_indexable' => false],
+            'api_operations' => $operations,
+            'ctas' => [...($digital ? ['service_enquiry', 'consultation'] : []), ...($commerce ? ['browse_products', 'add_to_cart', 'checkout'] : [])],
+            'seo_sitemap' => [
+                'discoverable_routes' => $routes,
+                'excluded_routes' => [
+                    ...($digital ? [] : ['services', 'case-studies', 'enquiry', 'consultation']),
+                    ...($commerce ? [] : ['products', 'categories', 'compare', 'cart', 'checkout']),
+                ],
+                'historical_routes_indexable' => false, 'inactive_capabilities_indexable' => false,
+            ],
             'historical_access' => $historical,
         ];
         $revision = DB::table('site_configuration_revisions')->insertGetId([
