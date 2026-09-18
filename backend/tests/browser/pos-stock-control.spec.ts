@@ -8,8 +8,14 @@ async function loginInventory(page: Page) {
     await page.getByTestId('login-password').fill(password);
     await page.getByTestId('login-submit').click();
     await page.waitForURL('**/internal/admin/pos');
+    const selected = page.waitForResponse((response) =>
+        response.url().endsWith('/internal/admin/outlets/select')
+        && response.request().method() === 'POST'
+        && response.ok()
+    );
     await page.getByTestId('outlet-select').selectOption({ label: 'E2E Inventory Outlet' });
-    await page.waitForURL('**/internal/admin/pos');
+    await selected;
+    await expect(page.getByTestId('outlet-required')).toHaveCount(0);
 }
 
 test('stock control UI exposes permission-scoped procurement count transfer and bulk journeys', async ({ page }) => {
@@ -60,7 +66,7 @@ test('stock control UI exposes permission-scoped procurement count transfer and 
         }
     });
     await page.route('**/internal/admin/pos/stock-control/transfers', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { transfer_id: transferId, transfer_number: 'TR-E2E-45', status: 'draft', version: 1 } }) }));
-    await page.route('**/internal/admin/pos/stock-control/transfers/*', async (route) => {
+    await page.route('**/internal/admin/pos/stock-control/transfers/**', async (route) => {
         if (route.request().method() === 'GET') {
             await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { transfer_id: transferId, transfer_number: 'TR-E2E-45', source_outlet_id: 'inventory-outlet', destination_outlet_id: destinationOutletId, status: transferStatus, version: transferVersion, lines: [{ line_id: transferLineId, source_product_id: productId, destination_product_id: destinationProductId, tracked_serialized: false, quantity: 2, received_quantity: 0, rejected_quantity: 0, version: 1, units: [] }] } }) });
         } else {
@@ -114,4 +120,7 @@ test('stock control UI exposes permission-scoped procurement count transfer and 
     await page.setViewportSize({ width: 390, height: 844 });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     expect(overflow).toBe(false);
+
+    await page.getByTestId('logout').click();
+    await page.waitForURL('**/internal/admin/pos/login');
 });

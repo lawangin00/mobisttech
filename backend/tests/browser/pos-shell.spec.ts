@@ -42,8 +42,14 @@ test('mobile inventory manager selects outlet and receives responsive permission
 
     await expect(page.getByTestId('outlet-required')).toBeVisible();
     await expect(page.getByTestId('outlet-select')).toBeVisible();
+    const selected = page.waitForResponse((response) =>
+        response.url().endsWith('/internal/admin/outlets/select')
+        && response.request().method() === 'POST'
+        && response.ok()
+    );
     await page.getByTestId('outlet-select').selectOption({ label: 'E2E Inventory Outlet' });
-    await page.waitForURL('**/internal/admin/pos');
+    await selected;
+    await expect(page.getByTestId('outlet-required')).toHaveCount(0);
 
     await page.getByText('Menu', { exact: true }).click();
     await expect(page.getByRole('link', { name: 'Inventory', exact: true })).toBeVisible();
@@ -60,4 +66,7 @@ test('mobile inventory manager selects outlet and receives responsive permission
     await expect(page.getByTestId('workspace-inventory')).toBeVisible();
     await expect(page.getByTestId('acquire-submit')).toBeVisible();
     await expect(page.getByTestId('outlet-select').locator('option:checked')).toHaveText('E2E Inventory Outlet');
+
+    await page.getByTestId('logout').click();
+    await page.waitForURL('**/internal/admin/pos/login');
 });
