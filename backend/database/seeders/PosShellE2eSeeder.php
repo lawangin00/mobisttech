@@ -26,6 +26,11 @@ class PosShellE2eSeeder extends Seeder
             $mt43Role = $this->role('E2E MT43 Manager', 'e2e-mt43-manager', [
                 'shops.enter', 'shop.sales', 'shop.invoices', 'shop.warranty', 'shop.claims', 'reports.view', 'shop.documents.send',
             ]);
+            $digitalRole = $this->role('E2E Digital Operations Manager', 'e2e-digital-operations-manager', [
+                'website.services.manage', 'website.consultations.manage', 'website.digital-leads.manage',
+                'website.digital-projects.manage', 'website.proposals.approve', 'website.client-files.manage',
+                'website.conversions.view',
+            ]);
             $platformRole = $this->role('E2E Platform Administrator', 'e2e-platform-administrator', [
                 'shops.enter',
                 'config.documents.manage', 'config.theme.manage', 'config.branding.manage', 'config.payments.manage',
@@ -41,12 +46,14 @@ class PosShellE2eSeeder extends Seeder
             $operations = $this->member('E2E Operations Manager', 'e2e-operations@example.invalid', 'Operations Manager');
             $mt43 = $this->member('E2E MT43 Manager', 'e2e-mt43@example.invalid', 'MT43 Manager');
             $platform = $this->member('E2E Platform Administrator', 'e2e-platform@example.invalid', 'Platform Administrator');
+            $digital = $this->member('E2E Digital Operations Manager', 'e2e-digital-operations@example.invalid', 'Digital Operations Manager');
 
             $this->assign($sales, $salesRole, [$salesOutlet]);
             $this->assign($inventory, $inventoryRole, [$salesOutlet, $inventoryOutlet]);
             $this->assign($operations, $operationsRole, [$salesOutlet]);
             $this->assign($mt43, $mt43Role, [$salesOutlet]);
             $this->assign($platform, $platformRole, [$salesOutlet]);
+            $this->assign($digital, $digitalRole, [$salesOutlet]);
         });
     }
 
