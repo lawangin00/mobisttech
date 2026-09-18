@@ -1,15 +1,33 @@
 import type { Metadata } from "next";
-import { readBusinessProfile } from "@/lib/business-profile";
+import { SiteFooter, SiteHeader } from "@/components/site-shell";
+import { readStorefrontContext } from "@/lib/storefront";
 import "./globals.css";
+
 export async function generateMetadata(): Promise<Metadata> {
-  const profile = await readBusinessProfile();
+  const { business, website } = await readStorefrontContext();
+  const brand = business?.business_name ?? "mobiST Technologies";
+
   return {
-    title: profile ? `${profile.business_name} | Website foundation` : "Website foundation",
-    description: "Isolated application foundation. Business migration is pending.",
-    metadataBase: profile ? new URL(profile.public_website) : undefined,
-    robots: { index: false, follow: false },
+    title: { default: brand, template: `%s | ${brand}` },
+    description: "Mobile products and digital solutions from mobiST Technologies.",
+    metadataBase: business ? new URL(business.public_website) : undefined,
+    robots: website?.mode ? { index: true, follow: true } : { index: false, follow: false },
+    openGraph: { type: "website", siteName: brand },
   };
 }
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}</body></html>;
+
+export default async function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  const { business, website } = await readStorefrontContext();
+
+  return (
+    <html lang="en">
+      <body>
+        <SiteHeader business={business} profile={website} />
+        {children}
+        <SiteFooter business={business} profile={website} />
+      </body>
+    </html>
+  );
 }
