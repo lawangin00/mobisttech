@@ -17,4 +17,8 @@ export default async function globalSetup() {
         'artisan', 'db:seed', '--class=Database\\Seeders\\CustomerWebsiteE2eSeeder',
         '--env=testing', '--force',
     ], { cwd: process.cwd(), stdio: 'inherit' });
+    execFileSync('php', [
+        'artisan', 'db:seed', '--class=Database\\Seeders\\DynamicWebsiteE2eSeeder',
+        '--env=testing', '--force',
+    ], { cwd: process.cwd(), stdio: 'inherit' });
 }

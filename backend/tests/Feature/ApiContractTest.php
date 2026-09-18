@@ -6,6 +6,7 @@ use App\Addendum\WebsiteCapabilities;
 use App\Cms\WebsiteCms;
 use App\Commerce\PaymentProvider;
 use App\Commerce\PaymentProviders;
+use App\Digital\DigitalServiceLeads;
 use App\Loyalty\LoyaltyServices;
 use App\Models\CustomerAccount;
 use Illuminate\Cookie\CookieValuePrefix;
@@ -307,6 +308,104 @@ class ApiContractTest extends TestCase
         $this->send($client, 'GET', '/api/v1/orders/'.$gatewayOrder)->assertOk()
             ->assertJsonPath('data.payment_status', 'paid')
             ->assertJsonPath('data.status', 'confirmed');
+    }
+
+    public function test_mt_5_4_public_content_services_enquiry_and_software_contracts_are_published_and_mode_aware(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $cms = app(WebsiteCms::class);
+        $digital = app(DigitalServiceLeads::class);
+
+        $service = $digital->configureService($this->actor, [
+            'slug' => 'mt54-web-development', 'name' => 'MT54 Web Development',
+            'short_description' => 'Synthetic published Website service', 'description' => 'Published service detail',
+            'price_type' => 'package', 'price' => null, 'is_active' => true,
+            'packages' => [['code' => 'starter', 'name' => 'Starter', 'pricing_type' => 'fixed', 'price' => '10000.00']],
+            'addons' => [['code' => 'seo', 'name' => 'SEO Setup', 'pricing_type' => 'fixed', 'price' => '2500.00']],
+        ]);
+        $digital->configureConsultation($this->actor, [
+            'enabled' => true, 'timezone' => 'Asia/Karachi',
+            'weekly_availability' => [['day' => 1, 'start' => '09:00', 'end' => '17:00']],
+        ]);
+
+        $presentation = $cms->savePresentationDraft($this->actor, [
+            'navigation' => [
+                ['key' => 'services', 'label' => 'Services', 'destination_type' => 'route', 'destination_key' => 'services', 'capability_scope' => 'digital'],
+            ],
+        ]);
+        $cms->publishPresentation($this->actor, $presentation['id']);
+
+        $page = $cms->savePageDraft($this->actor, null, [
+            'title' => 'MT54 Service Landing', 'slug' => 'mt54-service-landing',
+            'content' => '<p>Published MT54 service landing.</p>', 'content_purpose' => 'service_landing',
+            'capability_scope' => 'digital', 'service_slugs' => ['mt54-web-development'],
+            'structured_content' => ['hero_heading' => 'Published digital work'],
+        ]);
+        $cms->publishPage($this->actor, $page['id']);
+        $privatePage = $cms->savePageDraft($this->actor, $page['page_public_id'], [
+            'title' => 'MT54 Service Landing', 'slug' => 'mt54-service-landing',
+            'content' => '<p>Private draft must not leak.</p>', 'content_purpose' => 'service_landing',
+            'capability_scope' => 'digital', 'service_slugs' => ['mt54-web-development'],
+        ]);
+
+        $software = $cms->saveSoftwareDraft($this->actor, null, $this->softwareInput('Published MT54 overview'));
+        $cms->publishSoftware($this->actor, $software['id']);
+        $privateSoftware = $cms->saveSoftwareDraft($this->actor, $software['software_public_id'], $this->softwareInput('Private MT54 overview'));
+        $release = $cms->saveReleaseDraft($this->actor, $software['software_public_id'], [
+            'version' => '5.4.0', 'release_date' => '2026-09-18', 'summary' => 'MT54 public release',
+            'notes' => ['added' => ['Published reusable software routes']], 'impact_review' => $this->releaseImpact(),
+        ]);
+        $releaseId = DB::table('software_releases')->where('public_id', $release['public_id'])->value('id');
+        $cms->publishRelease($this->actor, (int) $releaseId);
+
+        $index = $this->getJson('/api/v1/content')->assertOk()
+            ->assertJsonPath('contract', 'content-index.v1')
+            ->assertJsonPath('data.pages.0.slug', 'mt54-service-landing')
+            ->assertJsonPath('data.navigation.0.destination_key', 'services')
+            ->assertJsonPath('data.software.0.slug', 'mobist-pos');
+        $this->assertStringNotContainsString('Private draft must not leak', json_encode($index->json(), JSON_THROW_ON_ERROR));
+
+        $this->getJson('/api/v1/content/pages/mt54-service-landing')->assertOk()
+            ->assertJsonPath('data.snapshot.content', '<p>Published MT54 service landing.</p>');
+        $this->assertSame('draft', DB::table('site_page_revisions')->where('id', $privatePage['id'])->value('state'));
+
+        $this->getJson('/api/v1/services')->assertOk()
+            ->assertJsonPath('data.items.0.slug', 'mt54-web-development')
+            ->assertJsonPath('data.items.0.packages.0.price', '10000.00');
+        $this->getJson('/api/v1/consultation')->assertOk()
+            ->assertJsonPath('data.enabled', true)
+            ->assertJsonPath('data.timezone', 'Asia/Karachi');
+
+        $lead = [
+            'service_slug' => 'mt54-web-development', 'customer_name' => 'MT54 Lead',
+            'customer_mobile' => '03005550000', 'requirements' => 'Need a deterministic Website project',
+            'package_public_id' => $service['packages'][0]['public_id'],
+        ];
+        $first = $this->withHeader('Idempotency-Key', 'mt54-enquiry')->postJson('/api/v1/enquiries', $lead)
+            ->assertCreated()->assertJsonPath('contract', 'digital-enquiry.v1');
+        $second = $this->withHeader('Idempotency-Key', 'mt54-enquiry')->postJson('/api/v1/enquiries', $lead)
+            ->assertCreated();
+        $this->assertSame($first->json('data.public_id'), $second->json('data.public_id'));
+        $this->assertSame(1, DB::table('service_requests')->where('customer_mobile', '03005550000')->count());
+
+        $overview = $this->getJson('/api/v1/software/mobist-pos')->assertOk()
+            ->assertJsonPath('data.overview.overview', 'Published MT54 overview')
+            ->assertJsonPath('data.current_version', '5.4.0');
+        $this->assertStringNotContainsString('Private MT54 overview', json_encode($overview->json(), JSON_THROW_ON_ERROR));
+        $this->getJson('/api/v1/software/mobist-pos/privacy')->assertOk()->assertJsonPath('data.slug', 'mobist-pos');
+        $this->getJson('/api/v1/software/mobist-pos/terms')->assertOk()->assertJsonPath('data.slug', 'mobist-pos');
+        $this->getJson('/api/v1/software/mobist-pos/faq')->assertOk()->assertJsonPath('data.slug', 'mobist-pos');
+        $this->getJson('/api/v1/software/mobist-pos/releases')->assertOk()->assertJsonPath('data.items.0.version', '5.4.0');
+        $this->assertSame('draft', DB::table('software_product_revisions')->where('id', $privateSoftware['id'])->value('state'));
+
+        $this->publishMode('commerce_only', 2);
+        $this->getJson('/api/v1/services')->assertNotFound();
+        $this->getJson('/api/v1/consultation')->assertNotFound();
+        $this->getJson('/api/v1/content/pages/mt54-service-landing')->assertNotFound();
+        $commerceIndex = $this->getJson('/api/v1/content')->assertOk();
+        $this->assertSame([], $commerceIndex->json('data.pages'));
+        $this->assertSame([], $commerceIndex->json('data.navigation'));
+        $this->getJson('/api/v1/software/mobist-pos')->assertOk();
     }
 
     private function customer(string $email, string $mobile): CustomerAccount
