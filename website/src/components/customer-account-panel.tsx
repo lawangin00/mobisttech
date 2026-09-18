@@ -19,7 +19,6 @@ export function CustomerAccountPanel() {
 
   const refresh = useCallback(async () => {
     const current = await customerRequest<CustomerAccount>("account");
-    setAccount(current);
     const guestToken = readGuestOwnerToken();
     if (guestToken) {
       await customerRequest("wishlist/claim", { method: "POST", body: JSON.stringify({ guest_token: guestToken }) })
@@ -33,6 +32,7 @@ export function CustomerAccountPanel() {
     setOrders(orderData.items);
     setWishlistCount(wishlist.items.length);
     setReviewCount(reviews.items.length);
+    setAccount(current);
   }, []);
 
   useEffect(() => {
@@ -49,6 +49,7 @@ export function CustomerAccountPanel() {
       : { email: form.get("email"), password: form.get("password"), remember: form.get("remember") === "on" };
     try {
       await customerRequest<CustomerAccount>(register ? "auth/register" : "auth/login", { method: "POST", body: JSON.stringify(body) });
+      clearCustomerCsrf();
       await refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Authentication failed.");
@@ -102,7 +103,7 @@ export function CustomerAccountPanel() {
       <form onSubmit={requestRecovery} className="space-y-3 rounded-2xl border bg-white p-5">
         <h2 className="text-xl font-bold">Reset password</h2>
         <p className="text-sm text-slate-600">Enter your customer-account email. A secure reset link is sent only when recovery delivery is configured.</p>
-        <input name="email" type="email" required placeholder="Email" className="w-full rounded-xl border p-3" />
+        <input name="email" aria-label="Recovery email" type="email" required placeholder="Email" className="w-full rounded-xl border p-3" />
         <button className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">Send reset link</button>
         {message && <p className="text-sm text-slate-600">{message}</p>}
       </form>
@@ -113,8 +114,8 @@ export function CustomerAccountPanel() {
       </div>
       <form onSubmit={submit} className="space-y-3 rounded-2xl border bg-white p-5">
         {register && <><input name="name" required placeholder="Name" className="w-full rounded-xl border p-3" /><input name="mobile" required pattern="03[0-9]{9}" placeholder="03XXXXXXXXX" className="w-full rounded-xl border p-3" /></>}
-        <input name="email" type="email" required placeholder="Email" className="w-full rounded-xl border p-3" />
-        <input name="password" type="password" required minLength={8} placeholder="Password" className="w-full rounded-xl border p-3" />
+        <input name="email" aria-label="Email" type="email" required placeholder="Email" className="w-full rounded-xl border p-3" />
+        <input name="password" aria-label="Password" type="password" required minLength={8} placeholder="Password" className="w-full rounded-xl border p-3" />
         {register && <input name="password_confirmation" type="password" required minLength={8} placeholder="Confirm password" className="w-full rounded-xl border p-3" />}
         {!register && <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="remember" /> Remember me on this device</label>}
         <button className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">{register ? "Create account" : "Sign in"}</button>

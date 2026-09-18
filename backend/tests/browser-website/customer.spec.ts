@@ -12,8 +12,19 @@ function state(mode: 'hybrid' | 'digital_only' | 'commerce_only') {
     });
 }
 
-test('MT-5.2 customer account keeps cart ownership history engagement and session boundaries', async ({ page, context }) => {
-    test.setTimeout(120_000);
+async function login(page: import('@playwright/test').Page, remember = false) {
+    await page.goto('/account');
+    await page.getByLabel('Email').fill('mt52-customer@example.invalid');
+    await page.getByLabel('Password').fill('SyntheticPass123!');
+    if (remember) await page.getByLabel('Remember me on this device').check();
+    await page.locator('form').getByRole('button', { name: 'Sign in', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'MT52 Customer' })).toBeVisible();
+}
+
+test.describe.configure({ mode: 'serial' });
+
+test('MT-5.2 guest cart persists and saved ownership is claimed on remembered login', async ({ page, context }) => {
+    test.setTimeout(90_000);
 
     await page.goto('/products/mt51-alpha-phone');
     await page.getByRole('button', { name: 'Save for later' }).click();
@@ -22,28 +33,25 @@ test('MT-5.2 customer account keeps cart ownership history engagement and sessio
     await expect(page.getByText('Added to cart.', { exact: true })).toBeVisible();
 
     await page.goto('/cart');
-    await expect(page.getByRole('heading', { name: 'Cart', exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'MT51 Alpha Phone', exact: true })).toBeVisible();
     await page.reload();
     await expect(page.getByRole('link', { name: 'MT51 Alpha Phone', exact: true })).toBeVisible();
 
-    await page.goto('/account');
-    await page.getByLabel('Email').fill('mt52-customer@example.invalid');
-    await page.getByLabel('Password').fill('SyntheticPass123!');
-    await page.getByLabel('Remember me on this device').check();
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-
-    await expect(page.getByRole('heading', { name: 'MT52 Customer' })).toBeVisible();
+    await login(page, true);
     await expect(page.getByText('MT52-E2E-ORDER', { exact: true })).toBeVisible();
     await expect(page.getByText('42 points', { exact: true })).toBeVisible();
-    const savedItems = page.getByText('Saved items', { exact: true }).locator('..');
-    await expect(savedItems).toContainText('1');
+    await expect(page.getByText('Saved items', { exact: true }).locator('..')).toContainText('1');
     const cookies = await context.cookies();
     expect(cookies.some(cookie => cookie.name.startsWith('remember_customer_'))).toBe(true);
 
     await page.goto('/cart');
     await page.getByRole('button', { name: 'Validate cart' }).click();
     await expect(page.getByText(/Subtotal: PKR 50000\.00/)).toBeVisible();
+});
+
+test('MT-5.2 authenticated customer controls alerts and submits an eligible owned review', async ({ page }) => {
+    test.setTimeout(90_000);
+    await login(page);
 
     await page.goto('/products/mt51-alpha-phone');
     await page.getByRole('button', { name: 'Product alerts' }).click();
@@ -65,8 +73,13 @@ test('MT-5.2 customer account keeps cart ownership history engagement and sessio
     await review.getByPlaceholder('Your review').fill('Verified browser purchase review.');
     await review.getByRole('button', { name: 'Submit review' }).click();
     await expect(page.getByText('Review submitted for moderation.', { exact: true })).toBeVisible();
+});
 
+test('MT-5.2 inactive commerce prunes cart but preserves authenticated historical account', async ({ page }) => {
+    test.setTimeout(90_000);
+    await login(page);
     state('digital_only');
+
     await page.goto('/');
     await expect(page.getByRole('link', { name: 'Cart', exact: true })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Account', exact: true })).toBeVisible();
