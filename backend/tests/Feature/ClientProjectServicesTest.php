@@ -10,6 +10,7 @@ use App\Digital\ClientProjectServices;
 use App\Digital\DigitalServiceLeads;
 use App\Models\Admin;
 use App\Models\CustomerAccount;
+use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -31,7 +32,7 @@ class ClientProjectServicesTest extends TestCase
         parent::setUp();
         $this->inventoryFixture();
         Storage::fake('local');
-        config(['infrastructure.private_disk' => 'local']);
+        config(['infrastructure.private_disk' => 'local', 'session.driver' => 'database']);
         $draft = app(WebsiteModePublication::class)->saveDraft($this->actor, 'digital_only');
         app(WebsiteModePublication::class)->publish($this->actor, $draft['id']);
 
@@ -155,6 +156,48 @@ class ClientProjectServicesTest extends TestCase
         $this->reject(fn () => $projects->portal($other, $project['public_id']));
     }
 
+    public function test_customer_project_api_is_owner_scoped_and_exposes_only_configured_project_payment_channels(): void
+    {
+        $projects = app(ClientProjectServices::class);
+        $project = $this->project($projects);
+        $draft = $projects->createProposal($this->actor, $project['public_id'], $this->proposalInput($project['version'], '1000.00'));
+        $approved = $projects->approveProposal($this->actor, $draft['public_id']);
+        $this->fakeProvider();
+
+        $client = $this->customerClient();
+        $this->customerLogin($client, $this->customer->email)->assertOk();
+
+        $this->customerSend($client, 'GET', '/api/v1/projects')
+            ->assertOk()->assertJsonPath('data.items.0.public_id', $project['public_id']);
+        $this->customerSend($client, 'GET', '/api/v1/projects/'.$project['public_id'])
+            ->assertOk()->assertJsonPath('data.public_id', $project['public_id']);
+
+        $channels = $this->customerSend($client, 'GET', '/api/v1/project-payment-channels')->assertOk();
+        $channels->assertJsonMissing(['code' => 'cod'])->assertJsonFragment(['code' => 'jazzcash']);
+
+        $upload = $this->customerSend($client, 'POST', '/api/v1/projects/'.$project['public_id'].'/files/reference', [
+            'name' => 'api-brief.txt', 'base64' => base64_encode('private API brief'),
+        ])->assertCreated()->assertJsonPath('data.name', 'api-brief.txt');
+        $fileId = $upload->json('data.id');
+        $download = $this->customerSend($client, 'GET', '/api/v1/projects/'.$project['public_id'].'/files/'.$fileId)->assertOk();
+        $this->assertSame('private API brief', $download->getContent());
+
+        $milestone = $approved['milestones'][0]['id'];
+        $payment = $this->customerSend($client, 'POST', '/api/v1/project-milestones/pay', [
+            'milestone_id' => $milestone, 'gateway' => 'jazzcash',
+        ], ['Idempotency-Key' => $this->key('api-payment')])->assertCreated();
+        $this->assertNotNull($payment->json('data.payment_id'));
+
+        $other = $this->customer('api-other@example.invalid', '03006660000');
+        $otherClient = $this->customerClient();
+        $this->customerLogin($otherClient, $other->email)->assertOk();
+        $this->customerSend($otherClient, 'GET', '/api/v1/projects')->assertOk()->assertJsonCount(0, 'data.items');
+        $this->customerSend($otherClient, 'GET', '/api/v1/projects/'.$project['public_id'])->assertNotFound();
+        $this->customerSend($otherClient, 'POST', '/api/v1/projects/'.$project['public_id'].'/files/reference', [
+            'name' => 'forbidden.txt', 'base64' => base64_encode('blocked'),
+        ])->assertNotFound();
+    }
+
     public function test_conversion_reporting_is_aggregate_and_permissions_are_separate(): void
     {
         $projects = app(ClientProjectServices::class);
@@ -211,6 +254,42 @@ class ClientProjectServicesTest extends TestCase
         ])->save();
 
         return $customer;
+    }
+
+    private function customerClient(): array
+    {
+        $client = ['cookies' => [], 'tokens' => [], 'agent' => 'MT-5.5 customer API'];
+        $response = $this->customerSend($client, 'GET', '/api/v1/auth/csrf-cookie')->assertOk();
+        $client['token'] = $response->json('data.csrf_token');
+
+        return $client;
+    }
+
+    private function customerLogin(array &$client, string $email)
+    {
+        return $this->customerSend($client, 'POST', '/api/v1/auth/login', [
+            'email' => $email, 'password' => 'SyntheticPass123!',
+        ]);
+    }
+
+    private function customerSend(array &$client, string $method, string $uri, array $data = [], array $headers = [])
+    {
+        $server = ['HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json', 'HTTP_USER_AGENT' => $client['agent']];
+        if (isset($client['tokens']['XSRF-TOKEN'])) {
+            $server['HTTP_X_CSRF_TOKEN'] = $client['tokens']['XSRF-TOKEN'];
+        }
+        foreach ($headers as $name => $value) {
+            $server['HTTP_'.strtoupper(str_replace('-', '_', $name))] = $value;
+        }
+        $response = $this->call($method, $uri, [], $client['cookies'], [], $server, json_encode($data));
+        foreach ($response->headers->getCookies() as $cookie) {
+            $client['cookies'][$cookie->getName()] = $cookie->getValue();
+            if ($cookie->getName() === 'XSRF-TOKEN') {
+                $client['tokens']['XSRF-TOKEN'] = CookieValuePrefix::remove(app('encrypter')->decrypt($cookie->getValue(), false));
+            }
+        }
+
+        return $response;
     }
 
     private function adminWith(array $permissions): Admin

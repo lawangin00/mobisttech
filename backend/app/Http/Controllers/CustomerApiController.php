@@ -127,7 +127,7 @@ final class CustomerApiController extends Controller
         unset($payload['contents']);
 
         return response($contents)->header('Content-Type', $payload['mime_type'])
-            ->header('Content-Disposition', 'attachment; filename="'.addslashes($payload['original_name']).'"')
+            ->header('Content-Disposition', 'attachment; filename="'.addslashes($payload['name']).'"')
             ->header('Cache-Control', 'private, no-store')->header('X-Content-Type-Options', 'nosniff');
     }
 
