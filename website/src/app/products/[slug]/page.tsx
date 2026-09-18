@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AddToCart } from "@/components/add-to-cart";
 import { ProductImage } from "@/components/product-image";
 import { money } from "@/lib/storefront";
 import { readProduct, readWebsiteProfile, WebsiteApiError } from "@/lib/website-api";
@@ -62,6 +63,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <p className={`mt-3 font-semibold ${product.availability.in_stock ? "text-emerald-700" : "text-slate-500"}`}>
             {product.availability.in_stock ? `${product.availability.quantity} available` : "Out of stock"}
           </p>
+          <AddToCart product={{ id: product.id, slug: product.slug, name: product.name, price: product.price, available: product.availability.in_stock }} />
           {product.description && <p className="mt-6 whitespace-pre-wrap leading-7 text-slate-700">{product.description}</p>}
           {product.warranty_summary && <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm"><strong>Warranty</strong><p className="mt-1">{product.warranty_summary}</p></div>}
         </div>

@@ -43,9 +43,9 @@ Active stage: MT-5 - Next.js customer Website (In Progress)
 
 Last completed stage: MT-4 - React POS and administration
 
-Current In Progress point: None
+Current In Progress point: MT-5.2 - Customer account, cart, orders and reviews
 
-Status: MT-0 through MT-4 complete. MT-5 is in progress. 42/56 complete, 14 pending. MT-5.1 is Completed.
+Status: MT-0 through MT-4 complete. MT-5 is in progress. 42/56 complete, 14 pending. MT-5.2 is In Progress.
 
 Last completed point: MT-5.1 - Storefront, catalogue and SEO migration
 
@@ -393,7 +393,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-4.8 | Digital operations administration interfaces | Completed |
 | MT-4.7 | Data reset administration interface | Completed |
 | MT-5.1 | Storefront, catalogue and SEO migration | Completed |
-| MT-5.2 | Customer account, cart, orders and reviews | Pending |
+| MT-5.2 | Customer account, cart, orders and reviews | In Progress |
 | MT-5.3 | Checkout and customer payment flows | Pending |
 | MT-5.4 | Dynamic public content and digital solutions | Pending |
 | MT-5.5 | Client project portal and digital conversion journeys | Pending |
@@ -838,3 +838,12 @@ No source-repository write, source-data migration, source runtime action, real p
 - Next action: with ports 18080/13000 verified free, run default Playwright -> dedicated Website Playwright -> final short/build gates -> MT-5.1 verification/Completed closure.
 - Final MT-5.1 closure gates PASS: default full Playwright 9/9; dedicated Website Playwright 1/1; Website typecheck/lint/production build; relevant PHP syntax; scoped Pint; Composer strict validation and platform requirements; git diff check. Post-acceptance testing residue is zero for domain_events, publication_versions, website-e2e listings and e2e roles.
 - MT-5.1 closure: storefront/catalogue/SEO migration is Completed with authoritative three-mode capability pruning, safe public catalogue/product projections, zero-stock visibility, contains search, POS-to-Website stock freshness, SEO/structured metadata, responsive acceptance and 90+ representative mobile Lighthouse performance across all three modes. Evidence: docs/website/MT-5.1_VERIFICATION.md. No unresolved MT-5.1 production or acceptance defect remains. Next dependency-valid point is MT-5.2 - Customer account, cart, orders and reviews.
+
+## MT-5.2 attempt tracking
+
+- Point started from clean synced commit b620788bac14bdb545e7859f6ee1feb6c053d35d. Existing Laravel Customer-realm/session, order, wishlist, notification and review authorities are reused; no parallel business engine is allowed.
+- Orchestration attempt-note append 1 hit a transient PROJECT_IMPLEMENTATION_STATUS.md file lock after the In Progress/table transition had already succeeded. Material change: retire Add-Content for this checkpoint and reconcile notes through targeted ledger edit instead of retrying the locked append path.
+- First implementation slice adds an allowlisted same-origin Next Customer API proxy, typed CSRF/session client, device-durable multi-line cart storage, mode-aware Cart route/navigation, Add-to-Cart on live product detail, and Account UI for register/login/logout plus owned orders/saved-item/review summaries. Customer historical Account remains available when commerce is inactive; Cart is capability-pruned.
+- Short-gate attempt 1: TypeScript passed; lint found only two React set-state-in-effect patterns in initial account/cart hydration. Material change: account refresh now uses a stable callback scheduled from the effect and cart hydration uses scheduled client storage read. The same synchronous-effect pattern is not rerun.
+- Incomplete: rerun short gates after the mode/historical corrections; add guest wishlist claim path and optional owned loyalty projection; notification preference/subscription UI; eligible review submission; account password/recovery UX; deterministic MT-5.2 API/Playwright fixtures including durable cart recovery, guest-to-account ownership, session/remember/password revocation and inactive-mode bundle checks; affected/full closure regressions.
+- Next action: rerun Website typecheck/lint -> checkpoint this first slice -> next turn implement remaining account/wishlist/notification/review/loyalty surfaces and acceptance harness before browser/regression closure.

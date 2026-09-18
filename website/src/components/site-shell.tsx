@@ -35,6 +35,8 @@ export function SiteHeader({
               Compare
             </Link>
           )}
+          {routes.has("cart") && <Link href="/cart" className="rounded-full px-3 py-2 hover:bg-slate-100">Cart</Link>}
+          <Link href="/account" className="rounded-full px-3 py-2 hover:bg-slate-100">Account</Link>
           {business?.business_email && (
             <a
               href={`mailto:${business.business_email}`}
