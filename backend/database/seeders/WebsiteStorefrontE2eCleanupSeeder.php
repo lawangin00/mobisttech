@@ -14,9 +14,20 @@ class WebsiteStorefrontE2eCleanupSeeder extends Seeder
         }
 
         DB::transaction(function () {
-            $ids = DB::table('product_listings')->where('external_source', 'website-e2e')->pluck('product_id')->all();
+            $listings = DB::table('product_listings')->where('external_source', 'website-e2e')->get(['id', 'product_id']);
+            $ids = $listings->pluck('product_id')->all();
+            $listingIds = $listings->pluck('id')->all();
             $publicIds = $ids ? DB::table('products')->whereIn('id', $ids)->pluck('public_id')->all() : [];
             if ($ids) {
+                $subscriptionIds = DB::table('product_notification_subscriptions')->whereIn('product_id', $ids)->pluck('id')->all();
+                if ($subscriptionIds) {
+                    DB::table('notification_delivery_attempts')->whereIn('subscription_id', $subscriptionIds)->delete();
+                }
+                DB::table('product_notification_subscriptions')->whereIn('product_id', $ids)->delete();
+                DB::table('wishlist_items')->whereIn('product_id', $ids)->delete();
+                if ($listingIds) {
+                    DB::table('product_reviews')->whereIn('product_listing_id', $listingIds)->delete();
+                }
                 DB::table('stock_movements')->whereIn('product_id', $ids)->delete();
                 DB::table('product_listings')->where('external_source', 'website-e2e')->delete();
                 if ($publicIds) {

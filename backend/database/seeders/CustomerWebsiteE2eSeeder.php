@@ -39,6 +39,10 @@ class CustomerWebsiteE2eSeeder extends Seeder
             ])->save();
             $customer = app(CustomerIdentity::class)->forAccount($account);
 
+            $adminId = DB::table('admins')->where('email', 'e2e-platform@example.invalid')->value('id');
+            if (! $adminId) {
+                throw new \RuntimeException('MT-5.2 customer E2E requires the platform E2E admin fixture.');
+            }
             DB::table('loyalty_configurations')->insert([
                 'public_id' => '00000000-0000-4000-8000-000000005201',
                 'version' => 5201,
@@ -52,6 +56,7 @@ class CustomerWebsiteE2eSeeder extends Seeder
                 'expiry_days' => 30,
                 'snapshot' => '{}',
                 'snapshot_sha256' => hash('sha256', '{}'),
+                'created_by_admin_id' => $adminId,
                 'created_at' => now(),
             ]);
             DB::table('loyalty_accounts')->insert([
