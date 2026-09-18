@@ -348,9 +348,9 @@ class ApiContractTest extends TestCase
             'capability_scope' => 'digital', 'service_slugs' => ['mt54-web-development'],
         ]);
 
-        $software = $cms->saveSoftwareDraft($this->actor, null, $this->softwareInput('Published MT54 overview'));
+        $software = $cms->saveSoftwareDraft($this->actor, null, $this->softwareInput('Published MT54 overview', 'mt54-api-software', 'MT54 API Software'));
         $cms->publishSoftware($this->actor, $software['id']);
-        $privateSoftware = $cms->saveSoftwareDraft($this->actor, $software['software_public_id'], $this->softwareInput('Private MT54 overview'));
+        $privateSoftware = $cms->saveSoftwareDraft($this->actor, $software['software_public_id'], $this->softwareInput('Private MT54 overview', 'mt54-api-software', 'MT54 API Software'));
         $release = $cms->saveReleaseDraft($this->actor, $software['software_public_id'], [
             'version' => '5.4.0', 'release_date' => '2026-09-18', 'summary' => 'MT54 public release',
             'notes' => ['added' => ['Published reusable software routes']], 'impact_review' => $this->releaseImpact(),
@@ -362,7 +362,7 @@ class ApiContractTest extends TestCase
             ->assertJsonPath('contract', 'content-index.v1')
             ->assertJsonPath('data.pages.0.slug', 'mt54-service-landing')
             ->assertJsonPath('data.navigation.0.destination_key', 'services')
-            ->assertJsonPath('data.software.0.slug', 'mobist-pos');
+            ->assertJsonPath('data.software.0.slug', 'mt54-api-software');
         $this->assertStringNotContainsString('Private draft must not leak', json_encode($index->json(), JSON_THROW_ON_ERROR));
 
         $this->getJson('/api/v1/content/pages/mt54-service-landing')->assertOk()
@@ -388,14 +388,14 @@ class ApiContractTest extends TestCase
         $this->assertSame($first->json('data.public_id'), $second->json('data.public_id'));
         $this->assertSame(1, DB::table('service_requests')->where('customer_mobile', '03005550000')->count());
 
-        $overview = $this->getJson('/api/v1/software/mobist-pos')->assertOk()
+        $overview = $this->getJson('/api/v1/software/mt54-api-software')->assertOk()
             ->assertJsonPath('data.overview.overview', 'Published MT54 overview')
             ->assertJsonPath('data.current_version', '5.4.0');
         $this->assertStringNotContainsString('Private MT54 overview', json_encode($overview->json(), JSON_THROW_ON_ERROR));
-        $this->getJson('/api/v1/software/mobist-pos/privacy')->assertOk()->assertJsonPath('data.slug', 'mobist-pos');
-        $this->getJson('/api/v1/software/mobist-pos/terms')->assertOk()->assertJsonPath('data.slug', 'mobist-pos');
-        $this->getJson('/api/v1/software/mobist-pos/faq')->assertOk()->assertJsonPath('data.slug', 'mobist-pos');
-        $this->getJson('/api/v1/software/mobist-pos/releases')->assertOk()->assertJsonPath('data.items.0.version', '5.4.0');
+        $this->getJson('/api/v1/software/mt54-api-software/privacy')->assertOk()->assertJsonPath('data.slug', 'mt54-api-software');
+        $this->getJson('/api/v1/software/mt54-api-software/terms')->assertOk()->assertJsonPath('data.slug', 'mt54-api-software');
+        $this->getJson('/api/v1/software/mt54-api-software/faq')->assertOk()->assertJsonPath('data.slug', 'mt54-api-software');
+        $this->getJson('/api/v1/software/mt54-api-software/releases')->assertOk()->assertJsonPath('data.items.0.version', '5.4.0');
         $this->assertSame('draft', DB::table('software_product_revisions')->where('id', $privateSoftware['id'])->value('state'));
 
         $this->publishMode('commerce_only', 2);
@@ -405,7 +405,7 @@ class ApiContractTest extends TestCase
         $commerceIndex = $this->getJson('/api/v1/content')->assertOk();
         $this->assertSame([], $commerceIndex->json('data.pages'));
         $this->assertSame([], $commerceIndex->json('data.navigation'));
-        $this->getJson('/api/v1/software/mobist-pos')->assertOk();
+        $this->getJson('/api/v1/software/mt54-api-software')->assertOk();
     }
 
     private function customer(string $email, string $mobile): CustomerAccount
@@ -419,10 +419,10 @@ class ApiContractTest extends TestCase
         return $customer;
     }
 
-    private function softwareInput(string $overview): array
+    private function softwareInput(string $overview, string $slug = 'mobist-pos', string $name = 'mobiST POS'): array
     {
         return [
-            'name' => 'mobiST POS', 'slug' => 'mobist-pos', 'summary' => 'Synthetic public product summary',
+            'name' => $name, 'slug' => $slug, 'summary' => 'Synthetic public product summary',
             'overview' => $overview,
             'features' => [['title' => 'Inventory', 'description' => 'Shared backend authority']],
             'platforms' => ['Windows 10 x64', 'Windows 11 x64'],
