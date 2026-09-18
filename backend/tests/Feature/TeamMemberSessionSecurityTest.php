@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
@@ -149,6 +150,36 @@ class TeamMemberSessionSecurityTest extends TestCase
         $this->send($adminClient, 'POST', '/internal/admin/roles', ['name' => 'Stale Attempt', 'permissions' => []])->assertForbidden();
         $this->send($adminClient, 'POST', '/internal/admin/auth/confirm-password', ['password' => 'SyntheticPass123!'])->assertOk();
         $this->send($adminClient, 'POST', '/internal/admin/roles', ['name' => 'Recent Role', 'permissions' => ['shops.enter']])->assertCreated();
+    }
+
+    public function test_customer_password_reset_revokes_existing_sessions_and_rotates_credentials(): void
+    {
+        $customer = $this->customer('reset-customer@example.invalid');
+        $first = $this->client();
+        $second = $this->client();
+        $reset = $this->client();
+        $this->login($first, 'customer', $customer->email)->assertOk();
+        $this->login($second, 'customer', $customer->email)->assertOk();
+        $beforeVersion = $customer->fresh()->auth_version;
+        $beforeRemember = $customer->fresh()->remember_token;
+        $token = Password::broker('customer')->createToken($customer);
+
+        $this->send($reset, 'POST', '/api/v1/auth/reset-password', [
+            'email' => $customer->email,
+            'token' => $token,
+            'password' => 'ResetPass123!',
+            'password_confirmation' => 'ResetPass123!',
+        ])->assertOk()->assertJsonPath('data.message', 'Password reset. Sign in again.');
+
+        $fresh = $customer->fresh();
+        $this->assertSame($beforeVersion + 1, $fresh->auth_version);
+        $this->assertNotSame($beforeRemember, $fresh->remember_token);
+        $this->send($first, 'GET', '/api/v1/account')->assertUnauthorized();
+        $this->send($second, 'GET', '/api/v1/account')->assertUnauthorized();
+        $this->send($reset, 'POST', '/api/v1/auth/login', [
+            'email' => $customer->email,
+            'password' => 'ResetPass123!',
+        ])->assertOk();
     }
 
     public function test_disabled_and_revoked_admin_sessions_fail_promptly(): void

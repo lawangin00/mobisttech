@@ -1,0 +1,23 @@
+# MT-5.2 Verification
+
+- Point: MT-5.2 - Customer account, cart, orders and reviews.
+- Customer account registration, login, account history and security remain inside the separate Customer realm and reuse the existing Laravel identity/session authority; no parallel authentication engine was introduced.
+- Customer session policy is preserved at 120 minutes of true inactivity. Remembered Customer login is optional and capped at 30 days; Admin remember behavior remains unavailable.
+- Password change revocation is verified, and direct Customer reset-token acceptance now verifies that password reset increments auth_version, rotates the remember credential, revokes existing Customer sessions and permits sign-in only with the new password.
+- Website security UX exposes create account/sign in, truthful forgot-password delivery handling, signed-in password change and a single-use /reset-password token/email form matching the owned recovery-link contract.
+- The Next Customer API bridge is same-origin allowlisted, credentials-aware, private/no-store and preserves multiple Set-Cookie headers independently so Laravel Customer session and XSRF cookies remain authoritative.
+- Cart state is durable on the device, supports multiple lines and quantity changes, survives reload, and is server-quoted after authentication without trusting client prices.
+- Guest Save for later uses a device owner token; authenticated claim transfers/deduplicates that guest wishlist into the Customer owner scope. Unavailable-product and mode isolation remain enforced by the existing engagement authority.
+- Customer order history is owner-scoped and remains available when commerce is inactive. Inactive commerce prunes Cart/public commerce capability without deleting required order/invoice/history.
+- Review eligibility is owner-scoped to paid/reconciled or completed purchased items; review submission reuses the existing moderation authority and does not expose internal IDs.
+- Product availability/price alert subscriptions require owned Customer context and consent. Email preference toggle and per-event unsubscribe are owned/idempotent; inactive delivery remains stopped without deleting historical data.
+- Optional loyalty exposure is a read-only owned projection over existing loyalty authority and does not leak internal identifiers.
+- Dedicated MT-5.2 Customer Playwright acceptance: 3/3 PASS covering durable guest cart, remembered login, guest wishlist claim, owned order/loyalty/saved state, authoritative quote, alert consent/preferences/unsubscribe, eligible review submission, and inactive-mode historical-account preservation.
+- Full Website Playwright regression: 4/4 PASS, including all MT-5.2 Customer journeys plus the completed MT-5.1 storefront acceptance.
+- Default full Playwright regression: 9/9 PASS.
+- Clean affected Customer/security/loyalty backend regression: 28 tests / 394 assertions PASS.
+- Clean full backend regression after the direct reset-revocation acceptance was added: 247 tests / 7,515 assertions PASS.
+- Website final gates: typecheck PASS; lint PASS; production build PASS. Backend final gates: Composer validate --strict PASS; Composer platform requirements PASS; scoped Pint PASS; git diff check PASS.
+- Post-acceptance testing residue is exact zero for website-e2e listings, MT51 fixture products, Website-mode domain events, relevant publication_versions, E2E Website mode revisions, MT52 Customer account/order/review/loyalty configuration and guest wishlist ownership residue.
+- Recovery history and LOOP_GUARD diagnostics remain preserved in the implementation ledger. No acceptance assertion, production timeout or authorization boundary was weakened to obtain PASS.
+- No unresolved MT-5.2 production or acceptance defect remains.
