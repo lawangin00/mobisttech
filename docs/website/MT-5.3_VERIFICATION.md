@@ -1,0 +1,24 @@
+# MT-5.3 Verification
+
+- Point: MT-5.3 - Checkout and customer payment flows.
+- Website checkout exposes exactly four customer-facing channels: Cash on Delivery, one JazzCash integration, one Easypaisa integration and one approved hosted/tokenized Credit / Debit Card processor. Website Bank Transfer, split tender, multiple selectable merchant accounts and internal POS Payment Destinations are not exposed.
+- Provider availability is truthful: COD is live; JazzCash/Easypaisa/Card remain unavailable unless configuration is enabled, a provider adapter is registered and a non-empty merchant identity exists. Merchant credentials/identities are not projected to the browser.
+- Checkout reuses the existing OrderTransactions, PaymentProviders, PromotionServices and LoyaltyServices authorities. The Website does not own price, stock, discount, loyalty, payment or reconciliation calculations.
+- Checkout uses server-authoritative repricing and stock reservation; client totals are rejected. Coupon and loyalty calculations reuse shared authority, including usage limits, expiry, stacking and cancellation/reversal behavior.
+- Order creation is idempotent and Customer-owned. COD create/status/cancel and cart clearing are verified through the production Website. In digital_only mode, Checkout is pruned while historical authenticated order/account access remains available.
+- Hosted external payment continuation is restricted to backend-returned HTTPS URLs. Failed external payments may retry only against currently available provider channels. Provider callbacks remain signed/verified/replay-safe and preserve late/unknown outcomes for reconciliation.
+- MT-5.3 acceptance exposed and fixed one real retry defect: receipt handling previously selected the first order reservation, which could classify a successful retry as paid_reconciliation after the original failed reservation had been released. Receipt processing now selects the reservation linked to the current payment via website_payment_id, restoring failed -> retry -> verified paid/confirmed behavior.
+- Focused MT-5.3 Customer API acceptance: 1 test / 36 assertions PASS. It covers exact fixed-four projection, readiness, no merchant leakage, COD idempotency, owned status/cancel/release, client-total tampering rejection, JazzCash hosted initiation, verified failure, retry and verified paid confirmation.
+- Shared commerce authority regression: 12 tests / 100 assertions PASS across OrderPaymentTransactions, PromotionServices and LoyaltyServices.
+- Dedicated production Website Checkout acceptance after final performance remediation: 2/2 PASS.
+- Full production Website regression after final performance remediation: 6/6 PASS (MT-5.3 Checkout 2/2, MT-5.2 Customer 3/3, MT-5.1 storefront 1/1).
+- Clean full backend regression remains PASS at 248 tests / 7,551 assertions. No backend code changed after that clean full PASS. Default full Playwright regression remains PASS 9/9.
+- Final Website gates after the performance remediation: production build PASS, typecheck PASS, lint PASS. Relevant Composer strict/platform, scoped Pint and git diff gates were PASS in the MT-5.3 closure sequence.
+- Performance evidence: docs/website/MT-5.3_PERFORMANCE.md.
+  - Representative settled authenticated 390x844 Edge lab Checkout: LCP 1,172 ms; CLS 0; max recorded interaction-event duration 32 ms; TTFB 1,141 ms; 8 JS requests / 144,208 encoded bytes; 2 Customer API requests.
+  - Representative owned order detail: LCP 1,176 ms; CLS 0; max recorded interaction-event duration 24 ms; TTFB 1,146 ms; 8 JS requests / 143,287 encoded bytes; 2 Customer API requests.
+  - Authenticated mobile Lighthouse on production /checkout: Performance 95; LCP 1,510 ms; CLS 0; TBT 233 ms; FCP 760 ms; Speed Index 2,955 ms.
+  - The recorded interaction-event durations are lab evidence and are not represented as field INP. Published LCP <=2.5 s, CLS <=0.1, interaction <=200 ms lab target and representative mobile Lighthouse >=90 are met in this environment.
+- The initial contended single-threaded test-server diagnostic was not accepted as performance evidence. Stable layout reservation reduced Checkout/order-detail CLS to 0, and request-local storefront context is memoized. Production timeout defaults were not loosened to obtain PASS.
+- Post-acceptance residue is exact zero for MT52 Customer fixture, website-e2e listings, WEB-* checkout orders, mobist-website reservations and commerce.checkout idempotency rows.
+- No unresolved MT-5.3 production, acceptance, performance or residue defect remains.

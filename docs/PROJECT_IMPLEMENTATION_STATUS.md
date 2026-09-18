@@ -43,13 +43,13 @@ Active stage: MT-5 - Next.js customer Website (In Progress)
 
 Last completed stage: MT-4 - React POS and administration
 
-Current In Progress point: MT-5.3 - Checkout and customer payment flows
+Current In Progress point: None - MT-5.3 is completed; MT-5.4 has not started.
 
-Status: MT-0 through MT-4 complete. MT-5 is in progress. 43/56 complete, 13 pending. MT-5.3 is In Progress.
+Status: MT-0 through MT-4 complete. MT-5 is in progress. 44/56 complete, 12 pending. MT-5.3 is Completed.
 
-Last completed point: MT-5.2 - Customer account, cart, orders and reviews
+Last completed point: MT-5.3 - Checkout and customer payment flows
 
-Next pending point: MT-5.3 - Checkout and customer payment flows
+Next pending point: MT-5.4 - Dynamic public content and digital solutions
 
 Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, unified Admin/customer authorization, Team Member Role/delegation authority, centralized Admin/Customer session policy, product/master-data, inventory/acquisition/stock transactions, internal POS sale/invoice/accepted-return authority, warranty/claim authority, supplier/purchase-order/partial-receipt authority, reorder recommendations, stocktake/cycle-count authority, inter-outlet transfer/custody authority, POS Payment Methods/Destinations and split-tender/refund/settlement authority, customer loyalty earn/redeem/history authority, paid repair intake/estimate/parts/payment/history authority, canonical business profile and secure Google integration/backup services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales/claim/procurement/stocktake mapping uses synthetic rows only. Transfer verification also uses synthetic target rows only. Real MySQL stock, return, claim, procurement, stocktake, transfer, POS payment, loyalty and paid-repair-part concurrency and the existing `mobisttech-drive:` temporary read/write/delete check are verified. Canonical Invoice/Warranty delivery, optional sale-email capture, six managed communication templates, truthful delivery audit, scoped operational reporting and retail-label backend projections now exist. The typed Website CMS, policy revision/publication authority and reusable Software Product backend publication model now exist. Final business-specific policy copy/sign-off, licensing/notice review, Admin/public UI realization and the complete product user manual remain approved future work at their named points. The versioned Website operating-mode publication workflow now exists with preview/diff, capability gates, audit/revisions, rollback and cache revalidation. The Digital Service catalogue now owns authoritative quote/fixed/starting-from/package and add-on pricing, progressive mode-gated enquiries, private reference uploads, timezone-safe consultation preferences and a permission-scoped lightweight lead pipeline with immutable history. Client project services now own explicit Customer-account project ownership, versioned lifecycle, immutable proposal revisions, canonical exact milestone schedules, private reference/delivery files and aggregate conversion reporting while reusing the existing payment authority. Actual private-data migration, authentic Gmail OAuth consent/test send, production Google verification, authentic provider payment/refund execution, production reset authorization, transfer/POS interfaces and complete POS/Website interfaces, rendered warranty documents, brand, Control and CI remain pending. Backend tests do not constitute live Gmail/provider, payment/refund, complete UI, rendered-document or private-data import acceptance.
 
@@ -394,7 +394,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-4.7 | Data reset administration interface | Completed |
 | MT-5.1 | Storefront, catalogue and SEO migration | Completed |
 | MT-5.2 | Customer account, cart, orders and reviews | Completed |
-| MT-5.3 | Checkout and customer payment flows | In Progress |
+| MT-5.3 | Checkout and customer payment flows | Completed |
 | MT-5.4 | Dynamic public content and digital solutions | Pending |
 | MT-5.5 | Client project portal and digital conversion journeys | Pending |
 | MT-6.1 | Canonical branding and runtime assets | Pending |
@@ -410,7 +410,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 
 ## Recovery and next action
 
-Do not re-execute completed roadmap points or prior reconciliations/closures. The project is 43/56 complete with 13 pending. MT-4 is complete and MT-5 is in progress. The next applicable Y/Proceed executes only `MT-5.3 - Checkout and customer payment flows`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r15 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` and adopts Universal Registry 1.20 / System 7.7 without changing application position. Roadmap v1.10 and its same-basename DOCX are the verified structural plan. Sessions using an older loaded registry must refresh before project-control aliases; new/unbound sessions resolve the Project ID and load the canonical current registry through the bootstrap. Approved addendum, consolidated-requirement and Software Product publishing workflows remain assigned to their named later points.
+Do not re-execute completed roadmap points or prior reconciliations/closures. The project is 44/56 complete with 12 pending. MT-4 is complete and MT-5 is in progress. The next applicable Y/Proceed executes only `MT-5.4 - Dynamic public content and digital solutions`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r15 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` and adopts Universal Registry 1.20 / System 7.7 without changing application position. Roadmap v1.10 and its same-basename DOCX are the verified structural plan. Sessions using an older loaded registry must refresh before project-control aliases; new/unbound sessions resolve the Project ID and load the canonical current registry through the bootstrap. Approved addendum, consolidated-requirement and Software Product publishing workflows remain assigned to their named later points.
 
 ## HOLD / decisions
 
@@ -922,3 +922,5 @@ No source-repository write, source-data migration, source runtime action, real p
 - Performance fixtures/processes were cleaned after collection; exact residue is zero for MT52 Customer, website-e2e listings, WEB-* checkout orders, mobist-website reservations and commerce.checkout idempotency rows.
 - Because the performance remediation changed Website loading layout and storefront request memoization after the prior full Website regression, MT-5.3 remains In Progress. The 12-minute Finalization Fence prevents starting another long browser run in this turn; backend/default Playwright evidence remains valid because no backend code changed after those PASS runs.
 - Next action: run post-optimization dedicated Checkout 2/2 and full Website 6-test production acceptance -> on PASS rerun short Website typecheck/lint/build if needed, verify zero residue, write final MT-5.3 verification doc, mark Complete and push. Do not start MT-5.4.
+- Final post-optimization acceptance refresh PASS: dedicated MT-5.3 Checkout 2/2 and full Website production suite 6/6. Final Website typecheck/lint PASS and exact targeted checkout/Customer/Website residue counts remain zero.
+- MT-5.3 closure: Checkout and customer payment flows is Completed. Evidence: docs/website/MT-5.3_VERIFICATION.md and docs/website/MT-5.3_PERFORMANCE.md. Final accepted evidence includes focused API 1 test / 36 assertions, shared commerce 12 tests / 100 assertions, full backend 248 tests / 7,551 assertions, default Playwright 9/9, dedicated Checkout 2/2, full Website 6/6, mobile Lighthouse 95 and representative authenticated LCP/CLS/interaction budgets within target. No unresolved MT-5.3 defect remains. MT-5.4 is the next dependency-valid pending point and has not started.
