@@ -82,11 +82,11 @@ export function CustomerCheckoutForm() {
     }
   }
 
-  if (account === undefined) return <p className="text-slate-600">Loading checkout…</p>;
+  if (account === undefined) return <div className="min-h-[1050px] rounded-2xl bg-slate-50 p-5 text-slate-600">Loading checkout…</div>;
   if (account === null) return <div className="rounded-2xl border bg-white p-5"><p>Sign in before checkout.</p><Link href="/account" className="mt-3 inline-block rounded-xl bg-slate-950 px-4 py-2 text-white">Customer account</Link></div>;
   if (lines.length === 0) return <div className="rounded-2xl border bg-white p-5"><p>Your cart is empty.</p><Link href="/products" className="mt-3 inline-block underline">Browse products</Link></div>;
 
-  return <form onSubmit={submit} onChange={() => { keyRef.current = null; }} className="space-y-6">
+  return <form onSubmit={submit} onChange={() => { keyRef.current = null; }} className="min-h-[1050px] space-y-6">
     <section className="grid gap-3 rounded-2xl border bg-white p-5 sm:grid-cols-2">
       <input name="customer_name" required defaultValue={account.name} aria-label="Customer name" className="rounded-xl border p-3" />
       <input name="customer_mobile" required defaultValue={account.mobile} aria-label="Customer mobile" className="rounded-xl border p-3" />

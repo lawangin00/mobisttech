@@ -63,12 +63,12 @@ export function CustomerOrderDetail({ orderId }: { orderId: string }) {
     } finally { setBusy(false); }
   }
 
-  if (!order) return <p className="text-slate-600">{message || "Loading order…"}</p>;
+  if (!order) return <div className="min-h-[620px] rounded-2xl bg-slate-50 p-5 text-slate-600">{message || "Loading order…"}</div>;
   const latest = order.payments.at(-1);
   const retryChannels = channels.filter((item) => item.available && item.code !== "cod");
   const canCancel = !["cancelled", "completed"].includes(order.status) && !["paid", "paid_reconciliation"].includes(order.payment_status);
 
-  return <div className="space-y-6">
+  return <div className="min-h-[620px] space-y-6">
     <section className="rounded-2xl border bg-white p-5">
       <div className="flex flex-wrap justify-between gap-3"><div><h2 className="text-xl font-bold">{order.number}</h2><p className="text-sm text-slate-600">{order.status} · {order.fulfillment_status} · {order.payment_status}</p></div><strong>{order.currency} {order.total}</strong></div>
     </section>

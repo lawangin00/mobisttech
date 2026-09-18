@@ -1,11 +1,12 @@
 import "server-only";
+import { cache } from "react";
 import { readBusinessProfile } from "@/lib/business-profile";
 import { readWebsiteProfile } from "@/lib/website-api";
 
-export async function readStorefrontContext() {
+export const readStorefrontContext = cache(async function readStorefrontContext() {
   const [business, website] = await Promise.all([readBusinessProfile(), readWebsiteProfile()]);
   return { business, website };
-}
+});
 export function money(value: string, currency = "PKR") {
   const numeric = Number(value);
   return Number.isFinite(numeric)
