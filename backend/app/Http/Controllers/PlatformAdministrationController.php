@@ -66,14 +66,16 @@ final class PlatformAdministrationController extends Controller
         $policies = DB::table('cms_policies as p')
             ->leftJoin('cms_policy_revisions as r', 'r.id', '=', 'p.current_revision_id')
             ->orderBy('p.policy_type')->get([
-                'p.policy_type', 'p.title', 'p.requirement', 'p.footer_destination',
+                'p.policy_type', 'p.title', 'p.requirement_state as requirement', 'p.footer_destination',
                 'r.id as revision_id', 'r.version', 'r.state', 'r.effective_date',
             ])->map(fn ($row) => (array) $row)->all();
 
-        $policyHistory = DB::table('cms_policy_revisions')->orderByDesc('id')->limit(50)->get([
-            'id', 'policy_type', 'version', 'state', 'effective_date', 'approval_state',
-            'factual_review_state', 'published_at', 'created_at',
-        ])->map(fn ($row) => (array) $row)->all();
+        $policyHistory = DB::table('cms_policy_revisions as r')
+            ->join('cms_policies as p', 'p.id', '=', 'r.cms_policy_id')
+            ->orderByDesc('r.id')->limit(50)->get([
+                'r.id', 'p.policy_type', 'r.version', 'r.state', 'r.effective_date', 'r.approval_state',
+                'r.factual_review_state', 'r.published_at', 'r.created_at',
+            ])->map(fn ($row) => (array) $row)->all();
 
         $templates = DB::table('document_template_revisions as d')
             ->whereIn('d.template_key', self::TEMPLATE_KEYS)

@@ -56,6 +56,17 @@ final class PosConfiguration
         'branding.desktop_app_icon_media_id' => ['domain' => 'branding', 'group' => 'branding', 'label' => 'Desktop / app icon', 'type' => 'integer', 'input' => 'media', 'default' => 0, 'sort' => 350],
     ];
 
+    private const BRANDING_CONSTRAINTS = [
+        'branding.full_wordmark_media_id' => [600, 200, 1.5, 3.0],
+        'branding.app_icon_media_id' => [256, 256, 0.9, 1.1],
+        'branding.header_logo_media_id' => [600, 200, 1.5, 3.0],
+        'branding.login_logo_media_id' => [600, 200, 1.5, 3.0],
+        'branding.invoice_logo_media_id' => [900, 300, 1.5, 3.0],
+        'branding.warranty_logo_media_id' => [900, 300, 1.5, 3.0],
+        'branding.favicon_media_id' => [128, 128, 0.9, 1.1],
+        'branding.desktop_app_icon_media_id' => [256, 256, 0.9, 1.1],
+    ];
+
     private const DOMAIN_PERMISSION = [
         'documents' => 'config.documents.manage',
         'theme' => 'config.theme.manage',
@@ -181,12 +192,12 @@ final class PosConfiguration
             throw ValidationException::withMessages(['media' => 'The POS branding file is not a valid image.']);
         }
         $mime = $image['mime'] ?? '';
-        $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        $allowed = ['image/png' => 'png', 'image/webp' => 'webp'];
         if (! isset($allowed[$mime])) {
-            throw ValidationException::withMessages(['media' => 'Only validated JPEG, PNG and WebP images are supported.']);
+            throw ValidationException::withMessages(['media' => 'POS branding supports validated PNG and WebP images only.']);
         }
         $extension = strtolower(trim($extension));
-        if (! in_array($extension, [$allowed[$mime], $mime === 'image/jpeg' ? 'jpeg' : $allowed[$mime]], true)) {
+        if ($extension !== $allowed[$mime]) {
             throw ValidationException::withMessages(['media' => 'File extension does not match the validated image type.']);
         }
         [$width, $height] = $image;
@@ -318,13 +329,30 @@ final class PosConfiguration
 
     private function validateBranding(array $values): void
     {
-        $ids = array_values(array_filter(array_map('intval', $values)));
-        if ($ids === []) {
-            return;
-        }
-        $found = DB::table('pos_media_assets')->whereIn('id', array_unique($ids))->where('status', 'active')->count();
-        if ($found !== count(array_unique($ids))) {
-            throw ValidationException::withMessages(['branding' => 'One or more branding assets are missing or inactive.']);
+        foreach (self::BRANDING_CONSTRAINTS as $key => [$minWidth, $minHeight, $ratioMin, $ratioMax]) {
+            $id = (int) ($values[$key] ?? 0);
+            if ($id < 1) {
+                continue;
+            }
+
+            $asset = DB::table('pos_media_assets')->where('id', $id)->where('status', 'active')->first();
+            if (! $asset || $asset->disk !== 'public' || ! str_starts_with(str_replace('\\', '/', $asset->path), 'dynamic-media/branding/')) {
+                throw ValidationException::withMessages([$key => 'The selected POS branding asset is missing or does not belong to POS branding.']);
+            }
+            if (! in_array($asset->mime_type, ['image/png', 'image/webp'], true)) {
+                throw ValidationException::withMessages([$key => 'POS branding assignments require validated PNG or WebP images.']);
+            }
+            if (! Storage::disk($asset->disk)->exists($asset->path)) {
+                throw ValidationException::withMessages([$key => 'The selected POS branding file is missing from storage.']);
+            }
+
+            $ratio = (float) $asset->aspect_ratio;
+            if ((int) $asset->width < $minWidth || (int) $asset->height < $minHeight) {
+                throw ValidationException::withMessages([$key => 'The selected POS branding image is too small for this surface.']);
+            }
+            if ($ratio < $ratioMin || $ratio > $ratioMax) {
+                throw ValidationException::withMessages([$key => 'The selected POS branding image has an unsupported aspect ratio for this surface.']);
+            }
         }
     }
 
