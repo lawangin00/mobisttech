@@ -119,7 +119,8 @@ final class ClientProjectServices
                 return $this->proposalPayload((int) $proposal->id, true);
             }
             abort_unless($proposal->state === 'draft', 409, 'Only a draft proposal may be approved.');
-            abort_if(now()->gte($proposal->valid_until), 409, 'Expired proposal cannot be approved.');
+            $snapshot = $this->verifiedProposalSnapshot($proposal);
+            abort_if(now()->gte(CarbonImmutable::parse($proposal->valid_until)), 409, 'Expired proposal cannot be approved.');
             abort_if(in_array($project->status, ['in_progress', 'review', 'delivered', 'completed', 'closed'], true), 409, 'Project lifecycle no longer permits proposal approval.');
             abort_unless($project->customer_account_id, 409, 'Explicit client account ownership is required before approval.');
             $customer = CustomerAccount::query()->whereKey($project->customer_account_id)->firstOrFail();
@@ -142,7 +143,6 @@ final class ClientProjectServices
                 DB::table('project_quotes')->where('id', $previous->quote_id)->update(['status' => 'superseded', 'updated_at' => now()]);
             }
             $request = DB::table('service_requests')->where('id', $project->service_request_id)->firstOrFail();
-            $snapshot = json_decode($proposal->snapshot, true, flags: JSON_THROW_ON_ERROR);
             $quotePublicId = (string) Str::uuid();
             $quoteReference = 'QTE-'.now()->format('ymd').'-'.Str::upper(Str::random(10));
             $quoteId = (int) DB::table('project_quotes')->insertGetId([
@@ -584,6 +584,26 @@ final class ClientProjectServices
         }
 
         return $value;
+    }
+
+    private function verifiedProposalSnapshot(object $proposal): array
+    {
+        try {
+            $snapshot = json_decode((string) $proposal->snapshot, true, flags: JSON_THROW_ON_ERROR);
+            $snapshotExpiry = CarbonImmutable::parse((string) ($snapshot['valid_until'] ?? ''))->utc();
+            $proposalExpiry = CarbonImmutable::parse((string) $proposal->valid_until)->utc();
+            $matches = isset($snapshot['title'], $snapshot['amount'], $snapshot['currency'], $snapshot['scope'], $snapshot['schedule'])
+                && hash_equals((string) $proposal->snapshot_sha256, $this->digest($snapshot))
+                && (string) $proposal->title === (string) $snapshot['title']
+                && bccomp((string) $proposal->amount, (string) $snapshot['amount'], 2) === 0
+                && (string) $proposal->currency === (string) $snapshot['currency']
+                && $proposalExpiry->equalTo($snapshotExpiry);
+        } catch (\Throwable) {
+            abort(409, 'Proposal snapshot integrity check failed.');
+        }
+        abort_unless($matches, 409, 'Proposal snapshot integrity check failed.');
+
+        return $snapshot;
     }
 
     private function digest(array $value): string

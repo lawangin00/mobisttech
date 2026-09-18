@@ -80,6 +80,37 @@ class ClientProjectServicesTest extends TestCase
         $this->assertSame(2, DB::table('project_quotes')->count());
     }
 
+    public function test_expired_or_tampered_proposals_cannot_be_approved(): void
+    {
+        $service = app(ClientProjectServices::class);
+        $project = $this->project($service);
+
+        $snapshotTampered = $service->createProposal($this->actor, $project['public_id'], $this->proposalInput($project['version'], '1000.00'));
+        $snapshot = json_decode(DB::table('project_proposals')->where('public_id', $snapshotTampered['public_id'])->value('snapshot'), true, flags: JSON_THROW_ON_ERROR);
+        $snapshot['scope'] = 'Tampered scope';
+        DB::table('project_proposals')->where('public_id', $snapshotTampered['public_id'])->update([
+            'snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+        ]);
+        $this->reject(fn () => $service->approveProposal($this->actor, $snapshotTampered['public_id']));
+        $this->assertSame(0, DB::table('project_quotes')->count());
+
+        $current = $service->adminProject($this->actor, $project['public_id']);
+        $columnTampered = $service->createProposal($this->actor, $project['public_id'], $this->proposalInput($current['version'], '1000.00'));
+        DB::table('project_proposals')->where('public_id', $columnTampered['public_id'])->update(['amount' => '999.00']);
+        $this->reject(fn () => $service->approveProposal($this->actor, $columnTampered['public_id']));
+        $this->assertSame(0, DB::table('project_quotes')->count());
+
+        $current = $service->adminProject($this->actor, $project['public_id']);
+        $expired = $service->createProposal($this->actor, $project['public_id'], $this->proposalInput($current['version'], '1000.00'));
+        $this->travel(15)->days();
+        try {
+            $this->reject(fn () => $service->approveProposal($this->actor, $expired['public_id']));
+        } finally {
+            $this->travelBack();
+        }
+        $this->assertSame(0, DB::table('project_quotes')->count());
+    }
+
     public function test_payment_replay_owner_binding_and_paid_history_block_repricing(): void
     {
         $projects = app(ClientProjectServices::class);
