@@ -49,7 +49,8 @@ export function CustomerEngagementPanel() {
 
   async function submitReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const selected = eligible.find((item) => `${item.order_id}|${item.product_id}` === form.get("selection"));
     if (!selected) return;
     setMessage("");
@@ -65,8 +66,8 @@ export function CustomerEngagementPanel() {
         }),
       });
       setMessage("Review submitted for moderation.");
-      event.currentTarget.reset();
-      await load();
+      formElement.reset();
+      void load().catch(() => undefined);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to submit review.");
     }

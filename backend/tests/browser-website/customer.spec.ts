@@ -124,12 +124,16 @@ test('MT-5.2 inactive commerce prunes cart but preserves authenticated historica
     await login(page);
     state('digital_only');
 
-    await page.goto('/');
-    await expect(page.getByRole('link', { name: 'Cart', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Account', exact: true })).toBeVisible();
-    const cart = await page.goto('/cart');
-    expect(cart?.status()).toBe(404);
-    await page.goto('/account');
-    await expect(page.getByRole('heading', { name: 'MT52 Customer' })).toBeVisible();
-    await expect(page.getByText('MT52-E2E-ORDER', { exact: true })).toBeVisible();
+    try {
+        await page.goto('/');
+        await expect(page.getByRole('link', { name: 'Cart', exact: true })).toHaveCount(0);
+        await expect(page.getByRole('link', { name: 'Account', exact: true })).toBeVisible();
+        const cart = await page.goto('/cart');
+        expect(cart?.status()).toBe(404);
+        await page.goto('/account');
+        await expect(page.getByRole('heading', { name: 'MT52 Customer' })).toBeVisible();
+        await expect(page.getByText('MT52-E2E-ORDER', { exact: true })).toBeVisible();
+    } finally {
+        state('hybrid');
+    }
 });
