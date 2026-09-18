@@ -43,9 +43,9 @@ Active stage: MT-4 - React POS and administration (In Progress)
 
 Last completed stage: MT-3 - Administration, content and REST APIs
 
-Current In Progress point: None
+Current In Progress point: MT-4.8 - Digital operations administration interfaces
 
-Status: MT-0 through MT-3 complete. MT-4 is in progress. 39/56 complete, 17 pending. No point is currently In Progress.
+Status: MT-0 through MT-3 complete. MT-4 is in progress. 39/56 complete, 17 pending. MT-4.8 is In Progress.
 
 Last completed point: MT-4.4 - Website CMS and platform administration interfaces
 
@@ -390,7 +390,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-4.6 | Cash, trade-in and repair interfaces | Completed |
 | MT-4.3 | POS customer, warranty and reporting interfaces | Completed |
 | MT-4.4 | Website CMS and platform administration interfaces | Completed |
-| MT-4.8 | Digital operations administration interfaces | Pending |
+| MT-4.8 | Digital operations administration interfaces | In Progress |
 | MT-4.7 | Data reset administration interface | Pending |
 | MT-5.1 | Storefront, catalogue and SEO migration | Pending |
 | MT-5.2 | Customer account, cart, orders and reviews | Pending |
@@ -719,3 +719,15 @@ No source-repository write, source-data migration, source runtime action, real p
 - Full Playwright PASS: 7/7, including MT-4.4 plus all existing POS journeys.
 - Final short closure gates PASS: git diff check, Composer validate --strict, Composer platform requirements, scoped Pint for MT-4.4 PHP/seed/test/routes, backend TypeScript typecheck. Current production Vite build PASS with PlatformAdmin included in the Inertia resolver/client graph.
 - MT-4.4 closure: separate permissions, delegated Team/Role controls, Full Access protection, revision preview/publish/rollback, safe media/branding, masked destination metadata, policy/Gmail recent-auth boundaries, Dynamic Platform mode parity, historical preservation and software reusable-template/release-impact workflows are verified. Evidence: docs/platform/MT-4.4_VERIFICATION.md. Next dependency-valid roadmap point: MT-4.8 - Digital operations administration interfaces.
+
+## MT-4.8 attempt tracking
+
+- Point started from clean synced commit 402366ccbd63e116cad165ce2d13dfd28baded92. Existing digital-domain services remain authoritative; UI must preserve ownership, private-client data boundaries, approved monetary snapshots, paid milestone immutability, safe file handling, mode history and analytics privacy. LOOP_GUARD inactive.
+- Current durable implementation adds DigitalOperationsController, 15 authenticated Digital Operations routes, the digital-operations Inertia resolver/page and a Platform Administration cross-link. The UI provides mode/history overview; Digital Service/package/add-on configuration; consultation timezone/weekly availability; lead ownership/status/follow-up/consultation administration; lead-to-project conversion; project lifecycle; proposal revisions/approval with approved milestone snapshots; private client file exchange; and aggregate conversion reporting.
+- Existing DigitalServiceLeads and ClientProjectServices remain authoritative. Added only missing admin-side private download methods to those services: enquiry reference-file and project-file downloads require the existing digital lead/client-file permissions, read through PrivateObjects, verify SHA-256 integrity, audit access, and return no storage object key.
+- Digital Operations list/data projections deliberately separate operational PII from analytics: authorized lead/project workflows may display client contact/requirements for operations, while conversion reporting delegates only to ClientProjectServices::conversionSummary aggregate-only output. List projections never expose object_key/private storage paths.
+- Website mode history is visible in Digital Operations; current backend capability contracts continue to block new digital creation when inactive while preserving approved historical projects/proposals/files.
+- Short verification completed: DigitalOperationsController PHP syntax PASS; DigitalOperationsController/DigitalServiceLeads/ClientProjectServices/routes scoped Pint PASS; backend TypeScript typecheck PASS after aligning the nested canonical lead-detail payload; 15 Digital Operations routes registered.
+- One compile issue was found and fixed before checkpoint: the controller's public consultation mutation and private consultation projection helper had the same method name; the helper is now consultationPayload(). One TypeScript contract mismatch was also fixed by using canonical nested lead detail plus the flat list projection for assigned-owner/project presence.
+- Incomplete: focused MT-4.8 HTTP permission/ownership/private-download/integrity/approved-snapshot/paid-milestone/mode-history/analytics-privacy tests; deterministic Digital Operations Playwright fixture/journey including responsive containment; affected DigitalServiceLeads/ClientProjectServices/WebsiteMode/Order milestone regressions; full backend/full Playwright/production build/style closure gates.
+- Next action: add focused MT-4.8 HTTP acceptance -> fix only proven gaps -> add Digital Operations Playwright journey -> affected regressions -> full backend + full Playwright + production build/style gates -> completion evidence and final commit/push.

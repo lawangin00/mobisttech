@@ -261,6 +261,22 @@ final class DigitalServiceLeads
         return $this->leadPayload((int) $requestId);
     }
 
+    public function downloadReference(Admin $actor, string $publicId, string $fileId): array
+    {
+        $this->authorize($actor, 'website.digital-leads.manage');
+        $request = DB::table('service_requests')->where('public_id', $publicId)->firstOrFail();
+        $file = DB::table('service_request_files')->where('id', $fileId)
+            ->where('service_request_id', $request->id)->firstOrFail();
+        $contents = $this->objects->get($file->object_key);
+        abort_unless(hash_equals($file->sha256, hash('sha256', $contents)), 500, 'Private enquiry file integrity check failed.');
+        IdentityAudit::record('admin', $actor->id, 'digital_lead_file_downloaded', 'service-request-file:'.$file->id);
+
+        return [
+            'id' => $file->id, 'name' => $file->original_name, 'mime_type' => $file->mime_type,
+            'byte_size' => (int) $file->byte_size, 'sha256' => $file->sha256, 'contents' => $contents,
+        ];
+    }
+
     private function syncOffers(string $table, int $serviceId, array $rows): void
     {
         $seen = [];

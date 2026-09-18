@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BusinessProfileController;
 use App\Http\Controllers\CustomerApiController;
+use App\Http\Controllers\DigitalOperationsController;
 use App\Http\Controllers\IdentityController;
 use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\PlatformAdministrationController;
@@ -137,6 +138,21 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::post('/pos/stock-control/bulk/preview', [PosStockControlController::class, 'bulkPreview'])->defaults('identity_realm', 'admin')->name('admin.pos.stock-control.bulk.preview');
     Route::post('/pos/stock-control/bulk/import', [PosStockControlController::class, 'bulkImport'])->defaults('identity_realm', 'admin')->name('admin.pos.stock-control.bulk.import');
     Route::post('/pos/stock-control/bulk/export', [PosStockControlController::class, 'bulkExport'])->defaults('identity_realm', 'admin')->name('admin.pos.stock-control.bulk.export');
+    Route::get('/digital-operations', [DigitalOperationsController::class, 'page'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.page');
+    Route::get('/digital-operations/data', [DigitalOperationsController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.data');
+    Route::post('/digital-operations/services', [DigitalOperationsController::class, 'service'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.services.save');
+    Route::put('/digital-operations/consultation', [DigitalOperationsController::class, 'consultation'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.consultation.save');
+    Route::get('/digital-operations/leads/{lead}', [DigitalOperationsController::class, 'lead'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.leads.show');
+    Route::patch('/digital-operations/leads/{lead}', [DigitalOperationsController::class, 'leadUpdate'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.leads.update');
+    Route::get('/digital-operations/leads/{lead}/files/{file}', [DigitalOperationsController::class, 'leadFile'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.leads.files');
+    Route::post('/digital-operations/leads/{lead}/projects', [DigitalOperationsController::class, 'projectCreate'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.projects.create');
+    Route::get('/digital-operations/projects/{project}', [DigitalOperationsController::class, 'project'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.projects.show');
+    Route::patch('/digital-operations/projects/{project}', [DigitalOperationsController::class, 'projectTransition'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.projects.transition');
+    Route::post('/digital-operations/projects/{project}/proposals', [DigitalOperationsController::class, 'proposal'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.proposals.create');
+    Route::post('/digital-operations/proposals/{proposal}/approve', [DigitalOperationsController::class, 'approveProposal'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.proposals.approve');
+    Route::post('/digital-operations/projects/{project}/files', [DigitalOperationsController::class, 'delivery'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.projects.files.upload');
+    Route::get('/digital-operations/projects/{project}/files/{file}', [DigitalOperationsController::class, 'projectFile'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.projects.files.download');
+    Route::get('/digital-operations/conversions', [DigitalOperationsController::class, 'conversions'])->defaults('identity_realm', 'admin')->name('admin.digital-operations.conversions');
     Route::get('/platform', [PlatformAdministrationController::class, 'page'])->defaults('identity_realm', 'admin')->name('admin.platform.page');
     Route::get('/platform/data', [PlatformAdministrationController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.platform.data');
     Route::post('/platform/pos-config/{domain}/preview', [PlatformAdministrationController::class, 'posConfigurationPreview'])->whereIn('domain', ['documents', 'theme', 'branding'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.preview');

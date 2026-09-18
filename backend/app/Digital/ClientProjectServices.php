@@ -284,6 +284,21 @@ final class ClientProjectServices
         return $this->filePayload($file->id) + ['contents' => $contents];
     }
 
+    public function adminDownload(Admin $actor, string $projectPublicId, string $fileId): array
+    {
+        $this->authorize($actor, 'website.client-files.manage');
+        $project = DB::table('client_projects')->where('public_id', $projectPublicId)->firstOrFail();
+        $file = DB::table('project_files')->where('id', $fileId)->where('client_project_id', $project->id)->firstOrFail();
+        $contents = $this->objects->get($file->object_key);
+        abort_unless(hash_equals($file->sha256, hash('sha256', $contents)), 500, 'Private project file integrity check failed.');
+        DB::transaction(fn () => $this->event((int) $project->id, 'project_file_downloaded', $actor->id, null, [
+            'file_id' => $file->id, 'file_type' => $file->file_type,
+        ]));
+        IdentityAudit::record('admin', $actor->id, 'digital_project_file_downloaded', 'project-file:'.$file->id);
+
+        return $this->filePayload($file->id) + ['contents' => $contents];
+    }
+
     public function adminProject(Admin $actor, string $projectPublicId): array
     {
         $this->authorize($actor, 'website.digital-projects.manage');
