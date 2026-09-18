@@ -1,0 +1,21 @@
+# MT-5.1 Verification
+
+- Point: MT-5.1 - Storefront, catalogue and SEO migration
+- The public Website storefront now runs on Next.js 16.3.3 Server Components and consumes the existing Laravel public APIs as the authoritative source for Website mode, catalogue, categories, product detail, stock availability and business profile data.
+- Implemented routes: home, products/search/filter/cursor pagination, categories/category detail, product detail, compare, robots.txt and sitemap.xml.
+- Mode behavior is authoritative and capability-pruned: hybrid exposes digital and commerce journeys, digital_only does not fetch or expose commerce catalogue routes, and commerce_only removes digital CTAs without deleting historical backend data.
+- Public product detail exposes safe aggregated variants only. Private values such as purchase price, stock-unit identifiers, IMEI, private object keys and internal unit numbers remain absent from the public payload/render.
+- Published zero-stock listings remain visible as out of stock. Search supports escaped contains matching, including mid-name queries such as Alpha within MT51 Alpha Phone.
+- Live catalogue/product links disable Next speculative prefetch where it would create unnecessary live API fan-out. Request-scoped React cache deduplicates repeated Website/business profile reads within one render.
+- Dedicated Website Playwright acceptance: 1/1 PASS.
+- Default full Playwright regression: 9/9 PASS.
+- Clean affected backend regression: 87 tests / 2,365 assertions PASS.
+- Clean full backend regression: 245 tests / 7,479 assertions PASS.
+- Three-mode 390x844 lab audit: browser API requests 0 in every mode; JS 7 requests / 144,736 transferred bytes in every mode; media requests 0; only the same-root RSC request was marked as router prefetch, with no inactive-capability route prefetch.
+- Lab LCP: hybrid 2,040 ms; digital_only 1,420 ms; commerce_only 1,972 ms. CLS is 0 in every mode. Maximum recorded interaction-event duration is 16 ms; this is lab interaction evidence and is not represented as field INP.
+- Representative mobile Lighthouse Performance: hybrid 94 (LCP 1,510 ms, CLS 0, TBT 253 ms); digital_only 94 (LCP 1,508 ms, CLS 0, TBT 269 ms); commerce_only 91 (LCP 2,305 ms, CLS 0, TBT 295 ms).
+- Website final gates: npm run typecheck PASS; npm run lint PASS; npm run build PASS.
+- Backend final gates: relevant PHP syntax PASS; scoped Pint PASS; Composer validate --strict PASS; Composer platform requirements PASS; git diff check PASS.
+- The Website/POS E2E cleanup path is restricted to mobisttech_test and removes Website-mode domain events and publication-version residue created by acceptance fixtures. Post-acceptance residue verification is exact zero for domain_events, publication_versions, website-e2e product listings and e2e roles.
+- Recovery history is preserved in the implementation ledger. No acceptance assertion or production safety boundary was weakened to obtain PASS.
+- No unresolved MT-5.1 production or acceptance defect remains.
