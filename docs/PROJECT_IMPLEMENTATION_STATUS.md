@@ -43,13 +43,13 @@ Active stage: MT-4 - React POS and administration (In Progress)
 
 Last completed stage: MT-3 - Administration, content and REST APIs
 
-Current In Progress point: MT-4.7 - Data reset administration interface
+Current In Progress point: None
 
-Status: MT-0 through MT-3 complete. MT-4 is in progress. 40/56 complete, 16 pending. MT-4.7 is In Progress.
+Status: MT-0 through MT-4 complete. MT-5 is pending. 41/56 complete, 15 pending. No point is currently In Progress.
 
-Last completed point: MT-4.8 - Digital operations administration interfaces
+Last completed point: MT-4.7 - Data reset administration interface
 
-Next pending point: MT-4.7 - Data reset administration interface
+Next pending point: MT-5.1 - Storefront, catalogue and SEO migration
 
 Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, unified Admin/customer authorization, Team Member Role/delegation authority, centralized Admin/Customer session policy, product/master-data, inventory/acquisition/stock transactions, internal POS sale/invoice/accepted-return authority, warranty/claim authority, supplier/purchase-order/partial-receipt authority, reorder recommendations, stocktake/cycle-count authority, inter-outlet transfer/custody authority, POS Payment Methods/Destinations and split-tender/refund/settlement authority, customer loyalty earn/redeem/history authority, paid repair intake/estimate/parts/payment/history authority, canonical business profile and secure Google integration/backup services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales/claim/procurement/stocktake mapping uses synthetic rows only. Transfer verification also uses synthetic target rows only. Real MySQL stock, return, claim, procurement, stocktake, transfer, POS payment, loyalty and paid-repair-part concurrency and the existing `mobisttech-drive:` temporary read/write/delete check are verified. Canonical Invoice/Warranty delivery, optional sale-email capture, six managed communication templates, truthful delivery audit, scoped operational reporting and retail-label backend projections now exist. The typed Website CMS, policy revision/publication authority and reusable Software Product backend publication model now exist. Final business-specific policy copy/sign-off, licensing/notice review, Admin/public UI realization and the complete product user manual remain approved future work at their named points. The versioned Website operating-mode publication workflow now exists with preview/diff, capability gates, audit/revisions, rollback and cache revalidation. The Digital Service catalogue now owns authoritative quote/fixed/starting-from/package and add-on pricing, progressive mode-gated enquiries, private reference uploads, timezone-safe consultation preferences and a permission-scoped lightweight lead pipeline with immutable history. Client project services now own explicit Customer-account project ownership, versioned lifecycle, immutable proposal revisions, canonical exact milestone schedules, private reference/delivery files and aggregate conversion reporting while reusing the existing payment authority. Actual private-data migration, authentic Gmail OAuth consent/test send, production Google verification, authentic provider payment/refund execution, production reset authorization, transfer/POS interfaces and complete POS/Website interfaces, rendered warranty documents, brand, Control and CI remain pending. Backend tests do not constitute live Gmail/provider, payment/refund, complete UI, rendered-document or private-data import acceptance.
 
@@ -391,7 +391,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-4.3 | POS customer, warranty and reporting interfaces | Completed |
 | MT-4.4 | Website CMS and platform administration interfaces | Completed |
 | MT-4.8 | Digital operations administration interfaces | Completed |
-| MT-4.7 | Data reset administration interface | In Progress |
+| MT-4.7 | Data reset administration interface | Completed |
 | MT-5.1 | Storefront, catalogue and SEO migration | Pending |
 | MT-5.2 | Customer account, cart, orders and reviews | Pending |
 | MT-5.3 | Checkout and customer payment flows | Pending |
@@ -410,7 +410,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 
 ## Recovery and next action
 
-Do not re-execute completed roadmap points or prior reconciliations/closures. The project is 40/56 complete with 16 pending. MT-3 is complete and MT-4 is in progress. The next applicable Y/Proceed executes only `MT-4.4 - Website CMS and platform administration interfaces`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r15 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` and adopts Universal Registry 1.20 / System 7.7 without changing application position. Roadmap v1.10 and its same-basename DOCX are the verified structural plan. Sessions using an older loaded registry must refresh before project-control aliases; new/unbound sessions resolve the Project ID and load the canonical current registry through the bootstrap. Approved addendum, consolidated-requirement and Software Product publishing workflows remain assigned to their named later points.
+Do not re-execute completed roadmap points or prior reconciliations/closures. The project is 41/56 complete with 15 pending. MT-3 is complete and MT-4 is in progress. The next applicable Y/Proceed executes only `MT-4.4 - Website CMS and platform administration interfaces`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r15 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` and adopts Universal Registry 1.20 / System 7.7 without changing application position. Roadmap v1.10 and its same-basename DOCX are the verified structural plan. Sessions using an older loaded registry must refresh before project-control aliases; new/unbound sessions resolve the Project ID and load the canonical current registry through the bootstrap. Approved addendum, consolidated-requirement and Software Product publishing workflows remain assigned to their named later points.
 
 ## HOLD / decisions
 
@@ -778,3 +778,9 @@ No source-repository write, source-data migration, source runtime action, real p
 - Fresh production Vite build with the responsive fix: PASS, 578 modules transformed. Final short gates also PASS: git diff check, Composer validate --strict, Composer platform requirements, scoped Pint for reset controller/test/seeders/routes, backend TypeScript typecheck.
 - No unresolved MT-4.7 production or acceptance defect remains. The hard Finalization Fence was reached immediately after final short gates, so MT-4.7 intentionally remains In Progress until the next turn performs closure-only evidence doc + ledger Completed reconciliation + final commit/push/state recheck.
 - Next action: closure-only finalization: create docs/reset/MT-4.7_VERIFICATION.md from the recorded evidence -> mark MT-4.7 Completed and advance the ledger to the next dependency-valid pending point -> commit/push -> verify HEAD/origin clean -> fresh timestamp.
+
+- MT-4.7 final closure: Reset Administration acceptance is complete. Focused HTTP 3 tests / 56 assertions PASS; targeted Reset Administration Playwright 1/1 PASS; affected reset/recovery regression 11 tests / 123 assertions PASS; full backend 244 tests / 7457 assertions PASS; full Playwright 9/9 PASS.
+- Production Vite build PASS with ResetAdministration included (578 modules). Final closure gates PASS: git diff check, Composer validate --strict, Composer platform requirements, scoped Pint for reset controller/test/seeders/routes, backend TypeScript typecheck.
+- Verified behavior includes three reset levels, approved domain scoping with factory full-scope lock, recent re-authentication, dry-run counts/preservation/barriers, local preview cancellation with no execute mutation, stale-preview rejection, typed confirmation, verified-backup stop-on-failure, production HOLD, cleanup_pending recovery, minimum-bootstrap preservation, surviving audit/outcome evidence and strict 390px responsive containment.
+- Browser acceptance found and fixed three UI/build-state issues without weakening reset safety: stale production bundle before resolver inclusion; preview state cleared by reload/effect coupling; cleanup recovery state cleared by level effect. Final responsive diagnosis found intrinsic min-width in Reset outcomes cards; product CSS now constrains/wraps content and the original strict overflow assertion passes.
+- No unresolved MT-4.7 production or acceptance defect remains. Evidence: docs/reset/MT-4.7_VERIFICATION.md. MT-4 is complete; next dependency-valid point is MT-5.1 - Storefront, catalogue and SEO migration.
