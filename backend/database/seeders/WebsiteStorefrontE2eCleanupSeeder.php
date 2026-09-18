@@ -9,6 +9,10 @@ class WebsiteStorefrontE2eCleanupSeeder extends Seeder
 {
     public function run(): void
     {
+        if (DB::connection()->getDatabaseName() !== 'mobisttech_test') {
+            throw new \RuntimeException('Website storefront E2E cleanup is restricted to mobisttech_test.');
+        }
+
         DB::transaction(function () {
             $ids = DB::table('product_listings')->where('external_source', 'website-e2e')->pluck('product_id')->all();
             $publicIds = $ids ? DB::table('products')->whereIn('id', $ids)->pluck('public_id')->all() : [];
@@ -30,6 +34,9 @@ class WebsiteStorefrontE2eCleanupSeeder extends Seeder
                     DB::table('site_configuration_revisions')->whereIn('id', $revisionIds)->delete();
                 }
             }
+
+            DB::table('domain_events')->where('aggregate_type', 'website_mode')->where('aggregate_id', 'singleton')->delete();
+            DB::table('publication_versions')->whereIn('domain', ['website.mode', 'cms.pages', 'cms.presentation', 'catalogue'])->delete();
         });
     }
 }
