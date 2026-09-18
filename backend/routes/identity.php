@@ -143,6 +143,13 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::get('/platform/website-mode/{revision}/preview', [PlatformAdministrationController::class, 'modePreview'])->defaults('identity_realm', 'admin')->name('admin.platform.mode.preview');
     Route::post('/platform/website-mode/{revision}/publish', [PlatformAdministrationController::class, 'modePublish'])->defaults('identity_realm', 'admin')->name('admin.platform.mode.publish');
     Route::post('/platform/website-mode/{revision}/rollback', [PlatformAdministrationController::class, 'modeRollback'])->defaults('identity_realm', 'admin')->name('admin.platform.mode.rollback');
+    Route::post('/platform/presentation/draft', [PlatformAdministrationController::class, 'presentationDraft'])->defaults('identity_realm', 'admin')->name('admin.platform.presentation.draft');
+    Route::post('/platform/presentation/{revision}/publish', [PlatformAdministrationController::class, 'presentationPublish'])->defaults('identity_realm', 'admin')->name('admin.platform.presentation.publish');
+    Route::post('/platform/presentation/{revision}/rollback', [PlatformAdministrationController::class, 'presentationRollback'])->defaults('identity_realm', 'admin')->name('admin.platform.presentation.rollback');
+    Route::post('/platform/pages/draft', [PlatformAdministrationController::class, 'pageDraft'])->defaults('identity_realm', 'admin')->name('admin.platform.pages.draft');
+    Route::post('/platform/pages/{revision}/publish', [PlatformAdministrationController::class, 'pagePublish'])->defaults('identity_realm', 'admin')->name('admin.platform.pages.publish');
+    Route::post('/platform/pages/{revision}/rollback', [PlatformAdministrationController::class, 'pageRollback'])->defaults('identity_realm', 'admin')->name('admin.platform.pages.rollback');
+    Route::post('/platform/media', [PlatformAdministrationController::class, 'mediaRegister'])->defaults('identity_realm', 'admin')->name('admin.platform.media.register');
     Route::post('/platform/policies/{type}/draft', [PlatformAdministrationController::class, 'policyDraft'])->defaults('identity_realm', 'admin')->name('admin.platform.policies.draft');
     Route::post('/platform/policies/{revision}/publish', [PlatformAdministrationController::class, 'policyPublish'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.platform.policies.publish');
     Route::post('/platform/policies/{revision}/rollback', [PlatformAdministrationController::class, 'policyRollback'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.platform.policies.rollback');
