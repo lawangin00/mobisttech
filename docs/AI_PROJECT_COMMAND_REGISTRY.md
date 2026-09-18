@@ -1,11 +1,11 @@
 # mobiST Tech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r15
-**Universal baseline:** Registry 1.20 / System 7.7
-**Bootstrap baseline:** 1.3
-**Adopted universal commit:** `eaf3035f43d79153ca120c9e202c9051d46316de`
-**Roadmap specification:** 1.5
-**Date:** 2026-09-03
+**Registry version:** MT-1.1-r16
+**Universal baseline (review provenance):** Registry 1.33 / System 7.12
+**Bootstrap baseline (review provenance):** 1.12
+**Last-reviewed universal commit:** `c9e1050db1ce498c509dfefc3f77d911c8d41b7d`
+**Roadmap specification:** 1.11
+**Date:** 2026-09-18
 **Repository root:** `C:\mobisttech`
 **Remote:** `lawangin00/mobisttech` (independent, private)
 **Project ID:** `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`
@@ -21,7 +21,7 @@
 
 ## Purpose
 
-This is a **delta-only** project registry. It inherits Universal Registry 1.20 / System 7.7 from the pinned universal release above and contains only mobiST Tech-specific rules. It must not embed a copied Universal Registry snapshot.
+This is a **delta-only** project registry. At runtime it inherits the current canonical Universal Registry; the version/commit fields above record only the last compatibility review and do not freeze older universal semantics. It contains only mobiST Tech-specific rules and must not embed a copied Universal Registry snapshot.
 
 ## Project-specific rules
 
@@ -31,6 +31,7 @@ This is a **delta-only** project registry. It inherits Universal Registry 1.20 /
 - Current user instruction has highest authority. Project Goal defines required functionality; approved Preferences and requirements addendum define implementation boundaries. Legacy source documents are technical evidence only; old architecture/command semantics do not carry into this project.
 - `Initialize Project` for this project completes only MT-0.1. Do not rerun initialization merely because Goal/Preferences/addendum/control files are reconciled later.
 - `Y` / `Proceed`: continue an active `In Progress` point, otherwise execute the first verified Pending point. After one point is fully completed, verified, committed and pushed, stop; do not automatically start the next point.
+- Surface-switch/handoff recommendations are optional. If Work/Local Work or another surface is recommended and the user declines, continue the same authorized objective in the current chat/surface with available tools (including RDC/Desktop Commander for local filesystem/terminal/Git/build/test/process work). Never pause the whole objective solely because a recommended handoff was declined; only an exact genuinely unavailable substep may be isolated as blocked.
 - Audit/Verify/Sync/Checkpoint/handoff mutation scope is limited to this monorepo. Never synchronize, repair, pull/fetch, repoint or mutate protected legacy source repositories as a side effect of this project's commands.
 - Authorized local implementation plus intended commit/push to this project's remote are within point scope. Destructive operations, live production/customer-data cutover, real external messaging and provider activation require separate authorization.
 - Never replace/repoint/overwrite this remote with an existing repository. Never force-push.
@@ -42,9 +43,9 @@ This is a **delta-only** project registry. It inherits Universal Registry 1.20 /
 - Detailed evidence belongs in Git-tracked documentation; normal user-facing completion/status output remains concise.
 - Roman Urdu is default only for assistant chat/UI; Git-tracked project docs/technical artifacts use standard English unless explicitly overridden.
 
-## System 7.7 performance specialization
+## Project performance specialization
 
-- Use the universal first-bind/session-cache fast path. After successful binding, later aliases reuse loaded universal + this project delta; do not reread control registries on each alias.
+- Use the current canonical universal first-bind/session-cache fast path. After successful binding, later aliases reuse the loaded current universal + this project delta; do not reread control registries on each alias except where the universal Refresh/new-session contract requires it.
 - On local-capable surfaces, verify remote HEAD once when first-bind/Refresh requires freshness, then read control files from the exact matching local Git commit.
 - `Refresh` reads only identity + universal bootstrap/registry + this delta registry and stops. It must not read Goal, Preferences, addendum, Source of Truth, roadmap, ledger, code or DOCX.
 - `Next` is ledger-first; roadmap only if exact next ID/title is missing/inconsistent.
@@ -57,6 +58,8 @@ This is a **delta-only** project registry. It inherits Universal Registry 1.20 /
 
 ## Universal inheritance and governance
 
-All aliases, collision rules, exact-alias execution-intent isolation, read-only mutation barriers, STOP/completion output, lazy evidence budgets, strict read-only handoff grammar, identity/session-lock semantics and final-audit defaults not explicitly overridden above are inherited from Registry 1.16 / System 7.7 at `ffe19168247b919bb2017f2dc79c3402cb0cd6d6`.
+All universal aliases, collision rules, execution-intent isolation, read-only mutation barriers, completion/output protocols, evidence budgets, handoff/surface continuity, identity/session-lock semantics, Loop-Guard and final-audit defaults not explicitly specialized above are inherited from the **current canonical Universal Registry** at runtime. The review-provenance fields at the top are informational only and never pin execution to an older universal release.
 
-Later universal releases do not auto-apply to this project. Update this declared baseline deliberately after compatibility review. A control-plane registry sync does not advance/reopen roadmap implementation.
+`COMPATIBILITY_HOLD: none`.
+
+Future universal control fixes auto-apply on canonical first-load/Refresh/new session. This does not advance/reopen mobiST Tech roadmap implementation, alter application data, or replace this project's genuine delta rules.
