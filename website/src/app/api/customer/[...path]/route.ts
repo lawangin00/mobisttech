@@ -61,6 +61,10 @@ async function forward(request: NextRequest, context: { params: Promise<{ path?:
   const responseHeaders = new Headers();
   const upstreamType = upstream.headers.get("content-type");
   if (upstreamType) responseHeaders.set("Content-Type", upstreamType);
+  const disposition = upstream.headers.get("content-disposition");
+  if (disposition) responseHeaders.set("Content-Disposition", disposition);
+  const contentTypeOptions = upstream.headers.get("x-content-type-options");
+  if (contentTypeOptions) responseHeaders.set("X-Content-Type-Options", contentTypeOptions);
   const cookieHeaders = (upstream.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.()
     ?? (upstream.headers.get("set-cookie") ? [upstream.headers.get("set-cookie") as string] : []);
   for (const cookieHeader of cookieHeaders) responseHeaders.append("Set-Cookie", cookieHeader);

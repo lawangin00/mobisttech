@@ -98,7 +98,8 @@ export function CustomerProjectPortal({ projectId }: { projectId: string }) {
   async function uploadReference(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const file = form.get("reference");
     if (!(file instanceof File) || file.size === 0) return;
     if (file.size > 10 * 1024 * 1024) {
@@ -113,7 +114,7 @@ export function CustomerProjectPortal({ projectId }: { projectId: string }) {
         body: JSON.stringify({ name: file.name, base64: await fileToBase64(file) }),
       });
       setMessage("Reference file uploaded.");
-      event.currentTarget.reset();
+      formElement.reset();
       await refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to upload reference.");

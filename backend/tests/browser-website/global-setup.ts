@@ -7,6 +7,7 @@ export default async function globalSetup() {
     });
     for (const seeder of [
         'Database\\Seeders\\DynamicWebsiteE2eCleanupSeeder',
+        'Database\\Seeders\\ClientProjectWebsiteE2eCleanupSeeder',
         'Database\\Seeders\\CustomerWebsiteE2eCleanupSeeder',
         'Database\\Seeders\\WebsiteStorefrontE2eCleanupSeeder',
         'Database\\Seeders\\PosShellE2eCleanupSeeder',
@@ -27,6 +28,10 @@ export default async function globalSetup() {
     ], { cwd: process.cwd(), stdio: 'inherit' });
     execFileSync('php', [
         'artisan', 'db:seed', '--class=Database\\Seeders\\CustomerWebsiteE2eSeeder',
+        '--env=testing', '--force',
+    ], { cwd: process.cwd(), stdio: 'inherit' });
+    execFileSync('php', [
+        'artisan', 'db:seed', '--class=Database\\Seeders\\ClientProjectWebsiteE2eSeeder',
         '--env=testing', '--force',
     ], { cwd: process.cwd(), stdio: 'inherit' });
 }
