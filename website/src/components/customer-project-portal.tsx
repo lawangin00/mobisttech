@@ -123,9 +123,9 @@ export function CustomerProjectPortal({ projectId }: { projectId: string }) {
     }
   }
 
-  if (!project) return <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6"><p>{message || "Loading project…"}</p></main>;
+  if (!project) return <main className="mx-auto min-h-screen max-w-5xl px-4 py-10 sm:px-6"><p>{message || "Loading project…"}</p></main>;
 
-  return <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+  return <main className="mx-auto min-h-screen max-w-5xl px-4 py-10 sm:px-6">
     <Link href="/account" className="text-sm font-medium text-slate-600 hover:text-slate-950">← Account</Link>
     <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
       <div><p className="text-sm text-slate-500">{project.reference}</p><h1 className="text-3xl font-bold">{project.title}</h1><p className="mt-2 text-slate-600">{project.service.name ?? "Client project"} · {pretty(project.status)}</p></div>
