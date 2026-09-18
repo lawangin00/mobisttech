@@ -43,9 +43,9 @@ Active stage: MT-4 - React POS and administration (In Progress)
 
 Last completed stage: MT-3 - Administration, content and REST APIs
 
-Current In Progress point: None
+Current In Progress point: MT-4.4 - Website CMS and platform administration interfaces
 
-Status: MT-0 through MT-3 complete. MT-4 is in progress. 38/56 complete, 18 pending. No point is currently In Progress.
+Status: MT-0 through MT-3 complete. MT-4 is in progress. 38/56 complete, 18 pending. MT-4.4 is In Progress.
 
 Last completed point: MT-4.3 - POS customer, warranty and reporting interfaces
 
@@ -389,7 +389,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-4.5 | Procurement and stock control interfaces | Completed |
 | MT-4.6 | Cash, trade-in and repair interfaces | Completed |
 | MT-4.3 | POS customer, warranty and reporting interfaces | Completed |
-| MT-4.4 | Website CMS and platform administration interfaces | Pending |
+| MT-4.4 | Website CMS and platform administration interfaces | In Progress |
 | MT-4.8 | Digital operations administration interfaces | Pending |
 | MT-4.7 | Data reset administration interface | Pending |
 | MT-5.1 | Storefront, catalogue and SEO migration | Pending |
@@ -671,3 +671,14 @@ No source-repository write, source-data migration, source runtime action, real p
 - Full Playwright acceptance passed 6/6 across MT-4.3 customer/warranty/reporting, MT-4.6 Operations, desktop/mobile POS shell, MT-4.5 Stock Control and MT-4.2 transaction/refund journeys.
 - Final short closure gates: git diff check PASS; Composer validate --strict PASS; Composer platform requirements PASS; MT-4.3 changed PHP/seed/test files scoped Pint PASS; backend TypeScript typecheck PASS. Backend production TypeScript/Vite build had already passed with the current MT-4.3 product code; subsequent changes were browser-test locator/navigation synchronization only.
 - MT-4.3 closure: role-scoped historical customer/invoice, warranty/claim, report/export and canonical document-delivery interfaces now satisfy explicit Preview/Print/Save PDF/Email/WhatsApp behavior, historical delivery actions, Thermal/A4 invoice parity, A4-only warranty receipts, truthful delivery failures/retries and Website/POS Payment Mix separation without bypassing existing Laravel service authority. Evidence is in docs/pos/MT-4.3_VERIFICATION.md. Next roadmap point by document order/dependency is MT-4.4 - Website CMS and platform administration interfaces.
+
+## MT-4.4 attempt tracking
+
+- Point started from clean synced commit f858715573f5bc83ec3d52a82e89a9f3fab78797. Existing Website CMS/mode, policy publication, Team Member/Role, document-template/destination/integration, promotion/loyalty and reusable Software Product backend services remain authoritative; UI must not duplicate authorization, recent-auth, secret, revision, publish or rollback rules. LOOP_GUARD inactive.
+- Current durable implementation adds PlatformAdministrationController plus 22 authenticated Platform Administration routes and a protected platform-admin React page. Existing WebsiteCms, WebsiteModePublication, CanonicalDocuments, PosPaymentOperations, PromotionServices, LoyaltyServices, TeamMemberAdministration and IntegrationManager remain authoritative.
+- Platform page currently provides permission-aware Website operating-mode draft/impact preview/publish/rollback; typed policy draft plus recent-auth protected publish/rollback history; all six Invoice/Warranty Email/WhatsApp template revision editors; masked outlet-scoped POS Payment Destination list/create; Team Member/Role visibility plus existing Google integration status/entry point; and reusable Software Product list/status/revision history plus New Software draft, publish/rollback and archive controls.
+- Platform data projection exposes only safe destination metadata and IntegrationManager safe statuses; provider credentials/tokens are not projected. Publication and policy recent-auth enforcement remains backend/middleware-owned.
+- A local orchestration wrapper variable typo occurred after the MT-4.4 ledger-start helper; verification proved the ledger had been updated successfully, so mutation was not repeated. LOOP_GUARD inactive.
+- Short verification completed: 22 Platform routes registered; PlatformAdministrationController/routes PHP syntax and scoped Pint PASS; platform-admin React TypeScript typecheck PASS.
+- Incomplete: Team Member create/edit/disable and Custom Role create/edit/delete UI with delegated outlet/Full Access safety; Website presentation/pages/case-studies/testimonials/knowledge/media/branding/theme/SEO administration; promotions/coupons and optional loyalty controls; POS output/default configuration; Payment Destination edit/version UX; complete Software Overview/features/media/platform/documentation/privacy/terms/FAQ edit UX, release/version impact review/publish, slug-change, preview and archive-history UX; Gmail connection/recent-auth acceptance; focused permission/recent-auth/secret-masking/cache-revalidation tests; Dynamic Platform parity; Playwright; affected/full regressions and production build closure gates.
+- Next action: finish missing MT-4.4 admin UI surfaces on the existing Platform page -> add focused HTTP/permission/recent-auth/secret-masking/publication/cache tests -> disposable Playwright admin journey -> affected/full backend + full Playwright + production build/style gates -> fix proven gaps -> completion evidence and final commit/push.
