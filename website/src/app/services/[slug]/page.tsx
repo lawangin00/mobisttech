@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { readServices, readWebsiteProfile } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
 
-async function service(slug: string) {
+const service = cache(async function service(slug: string) {
   const profile = await readWebsiteProfile();
   if (!profile?.capabilities.digital) return null;
   return (await readServices()).find((item) => item.slug === slug) ?? null;
-}
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

@@ -1,20 +1,27 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { readManagedPage, readPolicies, WebsiteApiError } from "@/lib/website-api";
+import { cache } from "react";
+import { readManagedPage, readPolicies, readWebsiteProfile, WebsiteApiError } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
 
-async function resolve(slug: string) {
-  const policies = await readPolicies().catch(() => []);
-  const policy = policies.find((item) => item.slug === slug);
-  if (policy) return { kind: "policy" as const, policy };
+const resolve = cache(async function resolve(slug: string) {
+  const profile = await readWebsiteProfile();
+  const isPolicy = profile?.content.policies.some((item) => item.slug === slug) ?? false;
+
+  if (isPolicy) {
+    const policies = await readPolicies();
+    const policy = policies.find((item) => item.slug === slug);
+    return policy ? { kind: "policy" as const, policy } : null;
+  }
+
   try {
     return { kind: "page" as const, page: await readManagedPage(slug) };
   } catch (error) {
     if (error instanceof WebsiteApiError && error.status === 404) return null;
     throw error;
   }
-}
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

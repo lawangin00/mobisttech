@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { readSoftware, WebsiteApiError } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
 
-async function load(slug: string) {
+const load = cache(async function load(slug: string) {
   try { return await readSoftware(slug); }
   catch (error) { if (error instanceof WebsiteApiError && error.status === 404) return null; throw error; }
-}
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

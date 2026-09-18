@@ -1,6 +1,6 @@
 # mobiST Tech - Project Implementation Status
 
-Last reconciled: 2026-09-18
+Last reconciled: 2026-09-19
 
 ## Identity and authority
 
@@ -43,13 +43,13 @@ Active stage: MT-5 - Next.js customer Website (In Progress)
 
 Last completed stage: MT-4 - React POS and administration
 
-Current In Progress point: MT-5.4 - Dynamic public content and digital solutions
+Current In Progress point: None
 
-Status: MT-0 through MT-4 complete. MT-5 is in progress. 44/56 complete, 12 pending. MT-5.4 is In Progress.
+Status: MT-0 through MT-4 complete. MT-5 is in progress. 45/56 complete, 11 pending. MT-5.4 is Complete.
 
-Last completed point: MT-5.3 - Checkout and customer payment flows
+Last completed point: MT-5.4 - Dynamic public content and digital solutions
 
-Next pending point: MT-5.4 - Dynamic public content and digital solutions
+Next pending point: MT-5.5 - Client project portal and digital conversion journeys
 
 Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, unified Admin/customer authorization, Team Member Role/delegation authority, centralized Admin/Customer session policy, product/master-data, inventory/acquisition/stock transactions, internal POS sale/invoice/accepted-return authority, warranty/claim authority, supplier/purchase-order/partial-receipt authority, reorder recommendations, stocktake/cycle-count authority, inter-outlet transfer/custody authority, POS Payment Methods/Destinations and split-tender/refund/settlement authority, customer loyalty earn/redeem/history authority, paid repair intake/estimate/parts/payment/history authority, canonical business profile and secure Google integration/backup services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales/claim/procurement/stocktake mapping uses synthetic rows only. Transfer verification also uses synthetic target rows only. Real MySQL stock, return, claim, procurement, stocktake, transfer, POS payment, loyalty and paid-repair-part concurrency and the existing `mobisttech-drive:` temporary read/write/delete check are verified. Canonical Invoice/Warranty delivery, optional sale-email capture, six managed communication templates, truthful delivery audit, scoped operational reporting and retail-label backend projections now exist. The typed Website CMS, policy revision/publication authority and reusable Software Product backend publication model now exist. Final business-specific policy copy/sign-off, licensing/notice review, Admin/public UI realization and the complete product user manual remain approved future work at their named points. The versioned Website operating-mode publication workflow now exists with preview/diff, capability gates, audit/revisions, rollback and cache revalidation. The Digital Service catalogue now owns authoritative quote/fixed/starting-from/package and add-on pricing, progressive mode-gated enquiries, private reference uploads, timezone-safe consultation preferences and a permission-scoped lightweight lead pipeline with immutable history. Client project services now own explicit Customer-account project ownership, versioned lifecycle, immutable proposal revisions, canonical exact milestone schedules, private reference/delivery files and aggregate conversion reporting while reusing the existing payment authority. Actual private-data migration, authentic Gmail OAuth consent/test send, production Google verification, authentic provider payment/refund execution, production reset authorization, transfer/POS interfaces and complete POS/Website interfaces, rendered warranty documents, brand, Control and CI remain pending. Backend tests do not constitute live Gmail/provider, payment/refund, complete UI, rendered-document or private-data import acceptance.
 
@@ -395,7 +395,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-5.1 | Storefront, catalogue and SEO migration | Completed |
 | MT-5.2 | Customer account, cart, orders and reviews | Completed |
 | MT-5.3 | Checkout and customer payment flows | Completed |
-| MT-5.4 | Dynamic public content and digital solutions | In Progress |
+| MT-5.4 | Dynamic public content and digital solutions | Complete |
 | MT-5.5 | Client project portal and digital conversion journeys | Pending |
 | MT-6.1 | Canonical branding and runtime assets | Pending |
 | MT-6.2 | Canonical mobiST Control migration | Pending |
@@ -980,4 +980,5 @@ No source-repository write, source-data migration, source runtime action, real p
 - Representative MT-5.4 performance methodology was aligned to MT-5.1/MT-5.3: production build, Edge, 390x844 mobile viewport, LCP <=2.5 s, CLS <=0.1 and lab interaction-event evidence <=200 ms. The first cold direct managed-page sample recorded LCP 2,508 ms, CLS 0, TTFB 2,452 ms, DOMContentLoaded/load 3,063 ms. Because LCP exceeded the published budget by 8 ms and the sample was dominated by cold single-thread TTFB, it is retained as diagnostic evidence only and is NOT accepted as a PASS.
 - The temporary performance spec was removed after the diagnostic run; global cleanup completed and exact residue returned to zero. The accepted rerun must use the same published thresholds but follow the established settled methodology (warm prior page/network-idle before each representative target), then cover managed content, Digital Service detail and Software overview. Thresholds must not be loosened.
 - Finalization Fence reached. MT-5.4 remains In Progress only because accepted settled performance evidence and final verification/ledger closure are pending; no current functional, regression, build, platform or residue defect is known.
-- Next action: run the settled 390x844 production performance sample for managed content + Digital Service detail + Software overview at unchanged budgets -> on PASS write MT-5.4 performance/verification evidence, mark MT-5.4 Complete, commit/push/fresh recheck. Do not start MT-5.5.
+- MT-5.4 closure: Dynamic public content and digital solutions is Complete. Evidence: docs/website/MT-5.4_VERIFICATION.md and docs/website/MT-5.4_PERFORMANCE.md. Post-remediation production acceptance PASS: dedicated MT-5.4 functional 2/2; performance 1/1 with managed page LCP 1,360 ms, Digital Service LCP 1,240 ms and Software overview LCP 1,240 ms, all CLS 0 and max interaction 16 ms. Clean full backend remains 249 tests / 7,591 assertions PASS; default Playwright 9/9 PASS; full Website regression 8/8 PASS before the final MT-5.4-only request-deduplication optimization, with every changed route family re-exercised post-change. No unresolved MT-5.4 defect remains.
+- Next action: MT-5.4 is Complete. Await explicit Proceed/Y before starting MT-5.5 - Client project portal and digital conversion journeys.
