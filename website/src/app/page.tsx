@@ -1,21 +1,31 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
 import { readBusinessProfile } from "@/lib/business-profile";
-import { readCatalogue, readWebsiteProfile } from "@/lib/website-api";
+import { readCatalogue, readManagedPage, readWebsiteProfile, WebsiteApiError } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [profile, business] = await Promise.all([readWebsiteProfile(), readBusinessProfile()]);
+  const [profile, business, publishedHome] = await Promise.all([
+    readWebsiteProfile(),
+    readBusinessProfile(),
+    readManagedPage("home").catch((error) => {
+      if (error instanceof WebsiteApiError && error.status === 404) return null;
+      throw error;
+    }),
+  ]);
   const commerce = profile?.capabilities.commerce ?? false;
   const digital = profile?.capabilities.digital ?? false;
   const featured = commerce ? await readCatalogue({ limit: 6 }).catch(() => null) : null;
-  const heading =
-    profile?.mode === "digital_only"
+  const homeStructured = publishedHome?.snapshot.content_purpose === "homepage" ? publishedHome.snapshot.structured_content : {};
+  const managedHeading = typeof homeStructured.hero_heading === "string" ? homeStructured.hero_heading : null;
+  const managedIntro = typeof homeStructured.hero_body === "string" ? homeStructured.hero_body : null;
+  const heading = managedHeading ??
+    (profile?.mode === "digital_only"
       ? "Digital solutions built around your business."
       : profile?.mode === "commerce_only"
         ? "Mobile technology, clearly available."
-        : "Mobile products and digital solutions in one place.";
+        : "Mobile products and digital solutions in one place.");
 
   return (
     <main>
@@ -28,13 +38,13 @@ export default async function Home() {
             {heading}
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-            {digital && commerce
+            {managedIntro ?? (digital && commerce
               ? "Shop current mobile inventory or start a digital project through the same trusted platform."
               : digital
                 ? "Plan, scope and deliver digital work with a clear project journey."
                 : commerce
                   ? "Browse live catalogue availability backed by the same inventory authority used in-store."
-                  : "Website publishing is being configured."}
+                  : "Website publishing is being configured.")}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {commerce && (
@@ -56,6 +66,12 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {publishedHome?.snapshot.content_purpose === "homepage" && publishedHome.snapshot.content && (
+        <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+          <article className="text-slate-700" dangerouslySetInnerHTML={{ __html: publishedHome.snapshot.content }} />
+        </section>
+      )}
 
       {commerce && featured && (
         <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6">

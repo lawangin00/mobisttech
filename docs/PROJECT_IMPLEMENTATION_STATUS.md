@@ -43,9 +43,9 @@ Active stage: MT-5 - Next.js customer Website (In Progress)
 
 Last completed stage: MT-4 - React POS and administration
 
-Current In Progress point: None - MT-5.3 is completed; MT-5.4 has not started.
+Current In Progress point: MT-5.4 - Dynamic public content and digital solutions
 
-Status: MT-0 through MT-4 complete. MT-5 is in progress. 44/56 complete, 12 pending. MT-5.3 is Completed.
+Status: MT-0 through MT-4 complete. MT-5 is in progress. 44/56 complete, 12 pending. MT-5.4 is In Progress.
 
 Last completed point: MT-5.3 - Checkout and customer payment flows
 
@@ -395,7 +395,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-5.1 | Storefront, catalogue and SEO migration | Completed |
 | MT-5.2 | Customer account, cart, orders and reviews | Completed |
 | MT-5.3 | Checkout and customer payment flows | Completed |
-| MT-5.4 | Dynamic public content and digital solutions | Pending |
+| MT-5.4 | Dynamic public content and digital solutions | In Progress |
 | MT-5.5 | Client project portal and digital conversion journeys | Pending |
 | MT-6.1 | Canonical branding and runtime assets | Pending |
 | MT-6.2 | Canonical mobiST Control migration | Pending |
@@ -924,3 +924,14 @@ No source-repository write, source-data migration, source runtime action, real p
 - Next action: run post-optimization dedicated Checkout 2/2 and full Website 6-test production acceptance -> on PASS rerun short Website typecheck/lint/build if needed, verify zero residue, write final MT-5.3 verification doc, mark Complete and push. Do not start MT-5.4.
 - Final post-optimization acceptance refresh PASS: dedicated MT-5.3 Checkout 2/2 and full Website production suite 6/6. Final Website typecheck/lint PASS and exact targeted checkout/Customer/Website residue counts remain zero.
 - MT-5.3 closure: Checkout and customer payment flows is Completed. Evidence: docs/website/MT-5.3_VERIFICATION.md and docs/website/MT-5.3_PERFORMANCE.md. Final accepted evidence includes focused API 1 test / 36 assertions, shared commerce 12 tests / 100 assertions, full backend 248 tests / 7,551 assertions, default Playwright 9/9, dedicated Checkout 2/2, full Website 6/6, mobile Lighthouse 95 and representative authenticated LCP/CLS/interaction budgets within target. No unresolved MT-5.3 defect remains. MT-5.4 is the next dependency-valid pending point and has not started.
+
+## MT-5.4 attempt tracking
+
+- Point started from clean synced commit 5b6cbde1967ad55c1f0a881e8b1fa7570c1dfd4f. Scope is limited to published/approved CMS content, digital services/enquiries, applicable legal policy routes and reusable Software Product public routes; drafts/placeholders/unapproved legal or commercial content must remain non-public.
+- Existing WebsiteCms, WebsiteApi and DigitalServiceLeads authorities are reused. Public APIs already expose published managed pages, approved applicable policies, published Software Product overview/sections, active Digital Services and idempotent enquiries; MT-5.4 Website work consumes these contracts instead of creating parallel content/business authority.
+- First slice in progress: root managed-page/policy renderer + footer policy destinations; Services catalogue/detail + low-friction enquiry; reusable /software/{slug} Overview/Privacy/Terms/FAQ/Releases templates; sitemap/metadata discovery. Then deterministic publication/approval/mode/browser acceptance and performance gates.
+- First MT-5.4 Website slice implemented but not yet accepted: public content index (published/indexable managed pages, approved applicable policies, published Software Products, capability-filtered managed navigation), read-only consultation availability, root managed-page/policy rendering, published homepage copy/content consumption, managed navigation + approved policy footer destinations, Digital Services catalogue/detail, same-origin idempotent enquiry proxy/form, reusable Software Product Overview/Privacy/Terms/FAQ/Releases/version routes, and expanded mode-aware sitemap discovery.
+- Safety boundaries preserved: managed pages cannot replace protected application/policy roots; public policy API exposes only published applicable revisions; Digital testimonials/case studies remain governed by existing consent/disclosure validation; external managed URLs are rendered only for safe HTTPS; enquiry stays within existing DigitalServiceLeads idempotency/rate/capability authority; no draft/unapproved legal/commercial content is promoted by the Website layer.
+- Short gates this turn: PHP syntax PASS for WebsiteApi/WebsiteApiController/api routes; scoped Pint PASS; Website typecheck PASS; git diff check PASS. Website lint is incomplete/failing only on 23 `react-hooks/error-boundaries` findings in the newly added Software Privacy/Terms/FAQ/Releases/version pages because JSX is returned inside try/catch blocks. No backend/API/type error is known.
+- Finalization Fence reached before that localized lint structure could be corrected. No production build, focused API acceptance, browser acceptance, CMS publication/revision fixture, policy approval route test, enquiry journey, Software route test, mode/sitemap audit, full regressions or performance work has started for MT-5.4 yet.
+- Next action: refactor the five Software section pages so only data fetching is inside try/catch and JSX renders outside -> rerun Website lint/typecheck + PHP/Pint -> add deterministic MT-5.4 CMS/digital/software fixtures/API/browser acceptance -> then full regression/performance/closure evidence. Do not start MT-5.5.

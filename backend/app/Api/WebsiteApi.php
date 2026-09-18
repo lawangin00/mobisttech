@@ -123,6 +123,43 @@ final class WebsiteApi
                 'products' => (int) $row->products])->all());
     }
 
+    public function contentIndex(): array
+    {
+        $pages = DB::table('site_managed_pages')
+            ->where('publish_state', 'published')->whereNotNull('current_revision_id')->where('is_indexable', true)
+            ->orderBy('title')->get(['slug', 'title', 'content_purpose', 'capability_scope', 'show_in_navigation'])
+            ->filter(fn ($row) => $this->capabilities->allowsScope((string) $row->capability_scope))
+            ->map(fn ($row) => [
+                'slug' => $row->slug, 'title' => $row->title, 'purpose' => $row->content_purpose,
+                'scope' => $row->capability_scope, 'show_in_navigation' => (bool) $row->show_in_navigation,
+            ])->values()->all();
+
+        $software = DB::table('software_products')->where('lifecycle_state', 'published')->whereNotNull('current_revision_id')
+            ->orderBy('name')->get(['slug', 'name'])->map(fn ($row) => [
+                'slug' => $row->slug, 'name' => $row->name, 'routes' => $this->cms->publicSoftware($row->slug)['routes'],
+            ])->all();
+
+        $navigation = DB::table('site_navigation_items')->where('is_visible', true)->where('is_enabled', true)
+            ->orderBy('sort_order')->orderBy('id')->get(['key', 'label', 'destination_type', 'destination_key',
+                'destination_payload', 'target_behavior', 'capability_scope'])
+            ->filter(fn ($row) => $this->capabilities->allowsScope((string) $row->capability_scope))
+            ->map(fn ($row) => [
+                'key' => $row->key, 'label' => $row->label, 'destination_type' => $row->destination_type,
+                'destination_key' => $row->destination_key,
+                'destination_payload' => $row->destination_payload ? json_decode($row->destination_payload, true, flags: JSON_THROW_ON_ERROR) : null,
+                'target_behavior' => $row->target_behavior, 'scope' => $row->capability_scope,
+            ])->values()->all();
+
+        return [
+            'pages' => $pages,
+            'policies' => array_map(fn ($policy) => array_intersect_key($policy, array_flip([
+                'type', 'slug', 'title', 'footer_destination', 'effective_date', 'version',
+            ])), $this->cms->publicPolicies()),
+            'software' => $software,
+            'navigation' => $navigation,
+        ];
+    }
+
     public function page(string $slug): array
     {
         $payload = $this->cache->remember('cms.pages', 'api:v1:page:'.$slug, fn () => $this->cms->publicPage($slug));
@@ -166,6 +203,21 @@ final class WebsiteApi
         }
 
         return ['slug' => $public['slug'], 'revision' => $public['revision'], $section => $public['snapshot'][$section] ?? ($section === 'faq' ? [] : '')];
+    }
+
+    public function consultation(): array
+    {
+        $this->assertScope('digital');
+        $row = DB::table('digital_consultation_settings')->where('id', 1)->first();
+        if (! $row) {
+            return ['enabled' => false, 'timezone' => null, 'weekly_availability' => []];
+        }
+
+        return [
+            'enabled' => (bool) $row->enabled,
+            'timezone' => $row->timezone,
+            'weekly_availability' => json_decode($row->weekly_availability ?: '[]', true, flags: JSON_THROW_ON_ERROR),
+        ];
     }
 
     public function services(): array

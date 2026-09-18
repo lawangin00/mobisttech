@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteFooter, SiteHeader } from "@/components/site-shell";
 import { readStorefrontContext } from "@/lib/storefront";
+import { readContentIndex } from "@/lib/website-api";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,14 +20,17 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { business, website } = await readStorefrontContext();
+  const [{ business, website }, content] = await Promise.all([
+    readStorefrontContext(),
+    readContentIndex().catch(() => null),
+  ]);
 
   return (
     <html lang="en">
       <body>
-        <SiteHeader business={business} profile={website} />
+        <SiteHeader business={business} profile={website} content={content} />
         {children}
-        <SiteFooter business={business} profile={website} />
+        <SiteFooter business={business} profile={website} content={content} />
       </body>
     </html>
   );

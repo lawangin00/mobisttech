@@ -33,6 +33,11 @@ final class WebsiteApiController extends Controller
         return $this->responses->public($request, $api->categories(), 'catalogue-categories.v1', 60);
     }
 
+    public function contentIndex(Request $request, WebsiteApi $api)
+    {
+        return $this->responses->public($request, $api->contentIndex(), 'content-index.v1', 60);
+    }
+
     public function page(Request $request, WebsiteApi $api, string $slug)
     {
         return $this->responses->public($request, $api->page($slug), 'published-page.v1', 60);
@@ -51,6 +56,11 @@ final class WebsiteApiController extends Controller
     public function softwareSection(Request $request, WebsiteApi $api, string $slug, string $section)
     {
         return $this->responses->public($request, $api->softwareSection($slug, $section), 'software-'.$section.'.v1', 60);
+    }
+
+    public function consultation(Request $request, WebsiteApi $api)
+    {
+        return $this->responses->public($request, $api->consultation(), 'consultation-availability.v1', 60);
     }
 
     public function services(Request $request, WebsiteApi $api)

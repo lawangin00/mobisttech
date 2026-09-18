@@ -14,12 +14,14 @@ Route::prefix('/v1')->middleware('throttle:api-public')->group(function () {
     Route::get('/catalogue/products', [WebsiteApiController::class, 'catalogue'])->name('api.catalogue.index');
     Route::get('/catalogue/products/{slug}', [WebsiteApiController::class, 'product'])->name('api.catalogue.show');
     Route::get('/catalogue/categories', [WebsiteApiController::class, 'categories'])->name('api.categories.index');
+    Route::get('/content', [WebsiteApiController::class, 'contentIndex'])->name('api.content.index');
     Route::get('/content/pages/{slug}', [WebsiteApiController::class, 'page'])->where('slug', '[a-z0-9-]+')->name('api.pages.show');
     Route::get('/content/policies', [WebsiteApiController::class, 'policies'])->name('api.policies.index');
     Route::get('/software/{slug}', [WebsiteApiController::class, 'software'])->name('api.software.show');
     Route::get('/software/{slug}/{section}', [WebsiteApiController::class, 'softwareSection'])
         ->where('section', 'privacy|terms|faq|releases')->name('api.software.section');
     Route::get('/services', [WebsiteApiController::class, 'services'])->name('api.services.index');
+    Route::get('/consultation', [WebsiteApiController::class, 'consultation'])->name('api.consultation.show');
 });
 
 Route::prefix('/v1')->middleware('throttle:api-write')->group(function () {
