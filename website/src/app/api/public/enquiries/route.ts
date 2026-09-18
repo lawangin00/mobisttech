@@ -2,9 +2,14 @@ const BACKEND = process.env.LARAVEL_API_ORIGIN ?? "http://127.0.0.1:18080";
 if (BACKEND !== "http://127.0.0.1:18080") throw new Error("Public API proxy must use the isolated Laravel target.");
 
 export async function POST(request: Request) {
-  const ownOrigin = new URL(request.url).origin;
+  const url = new URL(request.url);
   const origin = request.headers.get("origin");
-  if (origin && origin !== ownOrigin) return new Response("Origin mismatch.", { status: 403 });
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || request.headers.get("host")?.trim();
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const protocol = forwardedProto || url.protocol.replace(":", "");
+  const expectedOrigin = host ? protocol + "://" + host : url.origin;
+  if (origin && origin !== expectedOrigin) return new Response("Origin mismatch.", { status: 403 });
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
     return new Response("JSON body required.", { status: 415 });
   }
