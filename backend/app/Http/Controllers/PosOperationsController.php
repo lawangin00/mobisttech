@@ -34,6 +34,25 @@ final class PosOperationsController extends Controller
             $open = DB::table('cash_sessions')->where('outlet_id', $outlet->id)->where('status', 'open')->first();
             if ($open && $canCash) {
                 $cashSession = $cash->session($actor, $outlet, $open->public_id);
+            } elseif ($open && $canCashApprove) {
+                $cashSession = [
+                    'session_id' => $open->public_id,
+                    'business_date' => (string) $open->business_date,
+                    'status' => $open->status,
+                    'version' => (int) $open->version,
+                    'opening_cash' => (string) $open->opening_cash,
+                    'summary' => null,
+                    'entries' => DB::table('cash_entries')->where('cash_session_id', $open->id)->orderBy('id')->get()
+                        ->map(fn ($entry) => [
+                            'entry_id' => $entry->public_id,
+                            'type' => $entry->type,
+                            'amount' => (string) $entry->amount,
+                            'reason' => $entry->reason,
+                            'reference' => $entry->reference,
+                            'status' => $entry->status,
+                            'review_notes' => $entry->review_notes,
+                        ])->all(),
+                ];
             }
             $cashHistory = DB::table('cash_sessions')->where('outlet_id', $outlet->id)->orderByDesc('id')->limit(20)
                 ->get(['public_id', 'business_date', 'status', 'opening_cash', 'expected_cash', 'actual_cash',
@@ -248,7 +267,9 @@ final class PosOperationsController extends Controller
     {
         [$actor, $outlet] = $this->context($request);
 
-        return response()->json(['data' => $service->estimate($actor, $outlet, $repair, $this->key($request), $request->all())]);
+        $service->estimate($actor, $outlet, $repair, $this->key($request), $request->all());
+
+        return response()->json(['data' => $service->view($actor, $outlet, $repair)]);
     }
 
     public function repairEstimateDecision(Request $request, string $repair, string $estimate, PaidRepairOperations $service)
@@ -263,7 +284,9 @@ final class PosOperationsController extends Controller
     {
         [$actor, $outlet] = $this->context($request);
 
-        return response()->json(['data' => $service->consumeParts($actor, $outlet, $repair, $this->key($request))]);
+        $service->consumeParts($actor, $outlet, $repair, $this->key($request));
+
+        return response()->json(['data' => $service->view($actor, $outlet, $repair)]);
     }
 
     public function repairCollect(Request $request, string $repair, PosPaymentOperations $service)
