@@ -43,9 +43,9 @@ Active stage: MT-4 - React POS and administration (In Progress)
 
 Last completed stage: MT-3 - Administration, content and REST APIs
 
-Current In Progress point: None
+Current In Progress point: MT-4.6 - Cash, trade-in and repair interfaces
 
-Status: MT-0 through MT-3 complete. MT-4 is in progress. 36/56 complete, 20 pending. No point is currently In Progress.
+Status: MT-0 through MT-3 complete. MT-4 is in progress. 36/56 complete, 20 pending. MT-4.6 is In Progress.
 
 Last completed point: MT-4.5 - Procurement and stock control interfaces
 
@@ -387,7 +387,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-4.1 | POS shell, authentication and navigation | Completed |
 | MT-4.2 | POS inventory and transaction interfaces | Completed |
 | MT-4.5 | Procurement and stock control interfaces | Completed |
-| MT-4.6 | Cash, trade-in and repair interfaces | Pending |
+| MT-4.6 | Cash, trade-in and repair interfaces | In Progress |
 | MT-4.3 | POS customer, warranty and reporting interfaces | Pending |
 | MT-4.4 | Website CMS and platform administration interfaces | Pending |
 | MT-4.8 | Digital operations administration interfaces | Pending |
@@ -612,3 +612,15 @@ No source-repository write, source-data migration, source runtime action, real p
 - Full browser-suite attempt after the responsive fix revealed test session leakage: the preceding mobile Inventory shell test did not sign out, so the next test's same-account login was blocked by the active-session policy. Material change: add explicit logout to browser tests instead of weakening production session policy. Full Playwright acceptance then passed 4/4.
 - Final closure gates: focused MT-4.5 HTTP acceptance 2 tests / 44 assertions PASS; affected regression 30 tests / 309 assertions PASS; full backend regression 229 tests / 7108 assertions PASS; full Playwright 4/4 PASS; backend TypeScript/Vite production build PASS; Composer strict validation/platform requirements PASS; scoped MT-4.5 PHP Pint PASS; git diff check PASS.
 - MT-4.5 closure: permission-aware Stock Control UI now exposes supplier/PO/partial receipt flows, versioned low-stock reorder controls, stocktake count/recount/approval, transfer draft/dispatch/in-transit receive/reject, scanner-friendly serialized entry and validated bulk preview/import/export without bypassing existing procurement, stocktake, transfer, inventory or bulk service authority. Evidence is in docs/pos/MT-4.5_VERIFICATION.md. Next roadmap point by document order/dependency is MT-4.6 - Cash, trade-in and repair interfaces.
+
+## MT-4.6 attempt tracking
+
+- Point started from clean synced commit 283ed677f7408cf76ad5f0a84dd87a6a160daa87. Existing cash session/reconciliation, payment settlement, trade-in and paid-repair services remain authoritative; UI must not duplicate money, approval, privacy, outlet or audit rules. LOOP_GUARD inactive.
+- Current durable implementation adds a mixed-permission Operations POS area authorized by any of shop.cash, shop.cash.approve, shop.trade-in, shop.repairs or shop.payments.reconcile without granting unrelated Inventory/Sales access.
+- Added PosOperationsController and 20 authenticated Operations routes. Mutations delegate to CashSessionOperations, PosPaymentOperations, TradeInOperations and PaidRepairOperations; controller list/detail projections retain outlet scope and safe/masked payment/trade-in/repair metadata.
+- Operations UI now covers cash opening, expense/payout/cash-in entries, entry approval/rejection, authoritative Day Closing expected/actual/variance, closing-history drill-down, non-cash destination summaries and settlement fee/adjustment/net/variance reconciliation.
+- Trade-in UI now covers individual-seller valuation/intake, serialized IMEI slots, purchase vs sale-credit invoice reservation, masked history, approve/receive/cancel lifecycle and audit drill-down.
+- Paid-repair UI now covers enable/disable intake, historical access while disabled, device/customer intake, lifecycle/diagnosis, labor/part estimates, estimate approval/rejection, part consumption, exact approved-estimate payment collection using safe Payment Destinations, and linked event history. Warranties remain outside this workspace.
+- Verification completed this turn: backend TypeScript typecheck PASS; PosOperationsController/PosShell/routes PHP syntax PASS; scoped Pint PASS; 20 Operations routes registered.
+- Incomplete: focused HTTP acceptance for cash/settlement/trade-in/repair, Operations-area permission-boundary tests, Playwright desktop/mobile journey, affected/full backend regression, production build and final MT-4.6 evidence were not started after the 9-minute long-operation guard.
+- Next action: add focused MT-4.6 HTTP/permission fixtures -> run cash/settlement/trade-in/repair acceptance -> build disposable Operations Playwright journey including mobile/no-overflow -> affected/full regression/build/style gates -> fix proven gaps -> completion evidence and final commit/push.

@@ -4,6 +4,7 @@ use App\Http\Controllers\BusinessProfileController;
 use App\Http\Controllers\CustomerApiController;
 use App\Http\Controllers\IdentityController;
 use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\PosOperationsController;
 use App\Http\Controllers\PosShellController;
 use App\Http\Controllers\PosStockControlController;
 use App\Http\Controllers\PosTransactionController;
@@ -68,7 +69,7 @@ Route::prefix('/api/v1')->middleware(['identity', 'identity.auth', 'throttle:api
 });
 Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->group(function () {
     Route::get('/pos', [PosShellController::class, 'home'])->defaults('identity_realm', 'admin')->name('admin.pos.home');
-    Route::get('/pos/workspace/{area}', [PosShellController::class, 'workspace'])->whereIn('area', ['sales', 'inventory', 'invoices', 'warranty', 'claims', 'reports'])
+    Route::get('/pos/workspace/{area}', [PosShellController::class, 'workspace'])->whereIn('area', ['sales', 'inventory', 'invoices', 'warranty', 'claims', 'reports', 'operations'])
         ->defaults('identity_realm', 'admin')->name('admin.pos.workspace');
     Route::get('/pos/catalogue', [PosTransactionController::class, 'catalogue'])->defaults('identity_realm', 'admin')->name('admin.pos.catalogue');
     Route::get('/pos/lookup', [PosTransactionController::class, 'lookup'])->defaults('identity_realm', 'admin')->name('admin.pos.lookup');
@@ -83,6 +84,26 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::post('/pos/returns', [PosTransactionController::class, 'acceptReturn'])->defaults('identity_realm', 'admin')->name('admin.pos.returns.store');
     Route::post('/pos/refunds', [PosTransactionController::class, 'refund'])->defaults('identity_realm', 'admin')->name('admin.pos.refunds.store');
     Route::get('/pos/labels/{kind}/{id}', [PosTransactionController::class, 'label'])->defaults('identity_realm', 'admin')->name('admin.pos.labels.show');
+    Route::get('/pos/operations', [PosOperationsController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.pos.operations');
+    Route::post('/pos/operations/cash/open', [PosOperationsController::class, 'cashOpen'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.cash.open');
+    Route::get('/pos/operations/cash/{session}', [PosOperationsController::class, 'cashSession'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.cash.show');
+    Route::post('/pos/operations/cash/{session}/entries', [PosOperationsController::class, 'cashEntry'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.cash.entries');
+    Route::post('/pos/operations/cash/{session}/entries/{entry}/review', [PosOperationsController::class, 'cashReview'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.cash.review');
+    Route::post('/pos/operations/cash/{session}/close', [PosOperationsController::class, 'cashClose'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.cash.close');
+    Route::post('/pos/operations/settlements/{allocation}', [PosOperationsController::class, 'settle'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.settlements');
+    Route::post('/pos/operations/trade-ins/{product}', [PosOperationsController::class, 'tradeCreate'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.trade-ins.create');
+    Route::get('/pos/operations/trade-ins/{tradeIn}', [PosOperationsController::class, 'tradeShow'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.trade-ins.show');
+    Route::post('/pos/operations/trade-ins/{tradeIn}/approve', [PosOperationsController::class, 'tradeApprove'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.trade-ins.approve');
+    Route::post('/pos/operations/trade-ins/{tradeIn}/receive', [PosOperationsController::class, 'tradeReceive'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.trade-ins.receive');
+    Route::post('/pos/operations/trade-ins/{tradeIn}/cancel', [PosOperationsController::class, 'tradeCancel'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.trade-ins.cancel');
+    Route::post('/pos/operations/repairs/configure', [PosOperationsController::class, 'repairConfigure'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.repairs.configure');
+    Route::post('/pos/operations/repairs', [PosOperationsController::class, 'repairOpen'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.repairs.open');
+    Route::get('/pos/operations/repairs/{repair}', [PosOperationsController::class, 'repairShow'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.repairs.show');
+    Route::post('/pos/operations/repairs/{repair}/status', [PosOperationsController::class, 'repairUpdate'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.repairs.update');
+    Route::post('/pos/operations/repairs/{repair}/estimate', [PosOperationsController::class, 'repairEstimate'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.repairs.estimate');
+    Route::post('/pos/operations/repairs/{repair}/estimate/{estimate}/decision', [PosOperationsController::class, 'repairEstimateDecision'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.repairs.estimate.decision');
+    Route::post('/pos/operations/repairs/{repair}/parts', [PosOperationsController::class, 'repairConsumeParts'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.repairs.parts');
+    Route::post('/pos/operations/repairs/{repair}/collect', [PosOperationsController::class, 'repairCollect'])->defaults('identity_realm', 'admin')->name('admin.pos.operations.repairs.collect');
     Route::get('/pos/stock-control', [PosStockControlController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.pos.stock-control');
     Route::post('/pos/stock-control/suppliers', [PosStockControlController::class, 'supplier'])->defaults('identity_realm', 'admin')->name('admin.pos.stock-control.suppliers');
     Route::post('/pos/stock-control/orders', [PosStockControlController::class, 'order'])->defaults('identity_realm', 'admin')->name('admin.pos.stock-control.orders');

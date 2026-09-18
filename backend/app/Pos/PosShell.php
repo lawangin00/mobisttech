@@ -17,6 +17,8 @@ final class PosShell
         'warranty' => ['label' => 'Warranty', 'description' => 'Warranty intake and supporting records.', 'permission' => 'shop.warranty'],
         'claims' => ['label' => 'Claims', 'description' => 'Warranty claim lifecycle and history.', 'permission' => 'shop.claims'],
         'reports' => ['label' => 'Reports', 'description' => 'Outlet-scoped business reports and figures.', 'permission' => 'reports.view'],
+        'operations' => ['label' => 'Operations', 'description' => 'Cash closing, trade-ins and paid repairs.',
+            'permissions_any' => ['shop.cash', 'shop.cash.approve', 'shop.trade-in', 'shop.repairs', 'shop.payments.reconcile']],
     ];
 
     public function contract(Request $request, Admin $actor, ?string $area = null): array
@@ -27,7 +29,7 @@ final class PosShell
         $navigation = [];
         if ($actor->hasPermission('shops.enter') && $outlets->isNotEmpty()) {
             foreach (self::AREAS as $key => $definition) {
-                if ($actor->hasPermission($definition['permission'])) {
+                if ($this->navigationAllowed($actor, $definition)) {
                     $navigation[] = [
                         'key' => $key,
                         'label' => $definition['label'],
@@ -62,7 +64,7 @@ final class PosShell
         $definition = $this->area($area);
         $active = $this->activeOutlet($request, $actor,
             $actor->shops()->where('outlets.status', false)->whereNull('outlets.archived_at')->get()->all());
-        abort_unless($active && app(Access::class)->allows($actor, $definition['permission'], $active), 403);
+        abort_unless($active && $this->areaAllowed($actor, $active, $definition), 403);
 
         return $definition;
     }
@@ -72,6 +74,28 @@ final class PosShell
         abort_unless(array_key_exists($area, self::AREAS), 404);
 
         return ['key' => $area, ...self::AREAS[$area]];
+    }
+
+    private function navigationAllowed(Admin $actor, array $definition): bool
+    {
+        if (isset($definition['permission'])) {
+            return $actor->hasPermission($definition['permission']);
+        }
+
+        return collect($definition['permissions_any'] ?? [])->contains(
+            fn (string $permission) => $actor->hasPermission($permission),
+        );
+    }
+
+    private function areaAllowed(Admin $actor, Outlet $outlet, array $definition): bool
+    {
+        if (isset($definition['permission'])) {
+            return app(Access::class)->allows($actor, $definition['permission'], $outlet);
+        }
+
+        return collect($definition['permissions_any'] ?? [])->contains(
+            fn (string $permission) => app(Access::class)->allows($actor, $permission, $outlet),
+        );
     }
 
     private function activeOutlet(Request $request, Admin $actor, array $outlets): ?Outlet

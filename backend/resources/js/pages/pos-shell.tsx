@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import PosTransactionWorkspace from '../components/pos-transaction-workspace';
+import PosOperationsWorkspace from '../components/pos-operations-workspace';
 
 type NavigationItem = {
     key: string;
@@ -24,12 +25,12 @@ type ShellContract = {
     active_outlet: Outlet | null;
     navigation: NavigationItem[];
     current_area: string | null;
-    workspace: (NavigationItem & { permission: string }) | null;
+    workspace: (NavigationItem & { permission?: string; permissions_any?: string[] }) | null;
 };
 
 type View =
     | { kind: 'home' }
-    | { kind: 'workspace'; workspace: NavigationItem & { permission: string } };
+    | { kind: 'workspace'; workspace: NavigationItem & { permission?: string; permissions_any?: string[] } };
 
 async function csrfToken(): Promise<string> {
     const response = await fetch('/internal/admin/auth/csrf-cookie', {
@@ -205,7 +206,7 @@ function Home({ shell }: { shell: ShellContract }) {
 
 function Workspace({ shell, workspace }: {
     shell: ShellContract;
-    workspace: NavigationItem & { permission: string };
+    workspace: NavigationItem & { permission?: string; permissions_any?: string[] };
 }) {
     return <section data-testid={'workspace-' + workspace.key}
         className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 sm:p-8">
@@ -214,7 +215,9 @@ function Workspace({ shell, workspace }: {
         <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">{workspace.description}</p>
         {workspace.key === 'inventory' || workspace.key === 'sales'
             ? <PosTransactionWorkspace area={workspace.key} />
-            : <div className="mt-6 rounded-2xl bg-slate-50 p-5">
+            : workspace.key === 'operations'
+                ? <PosOperationsWorkspace />
+                : <div className="mt-6 rounded-2xl bg-slate-50 p-5">
                 <p className="font-medium">Shell boundary verified</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">This route is protected server-side by the required permission and active outlet assignment.</p>
                 <p className="mt-3 text-xs text-slate-500">Active outlet: {shell.active_outlet?.name ?? 'Not selected'}</p>
