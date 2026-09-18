@@ -64,24 +64,58 @@ test('MT-5.2 authenticated customer controls alerts and submits an eligible owne
     await login(page);
 
     await page.goto('/products/mt51-alpha-phone');
+    const alertsCreated = page.waitForResponse((response) =>
+        response.url().includes('/api/customer/product-subscriptions/')
+        && response.request().method() === 'POST'
+        && response.status() === 201);
     await page.getByRole('button', { name: 'Product alerts' }).click();
+    await alertsCreated;
     await expect(page.getByText('Product alerts enabled.', { exact: true })).toBeVisible();
 
+    const subscriptionsReady = page.waitForResponse((response) =>
+        response.url().endsWith('/api/customer/product-subscriptions')
+        && response.request().method() === 'GET'
+        && response.status() === 200);
+    const eligibilityReady = page.waitForResponse((response) =>
+        response.url().endsWith('/api/customer/reviews/eligible')
+        && response.status() === 200);
     await page.goto('/account');
+    await Promise.all([subscriptionsReady, eligibilityReady]);
     await expect(page.getByRole('heading', { name: 'Product alerts' })).toBeVisible();
     await expect(page.getByText(/MT51 Alpha Phone · back in stock/)).toBeVisible();
     await expect(page.getByText(/MT51 Alpha Phone · price drop/)).toBeVisible();
+
+    const preferencesUpdated = page.waitForResponse((response) =>
+        response.url().endsWith('/api/customer/notification-preferences')
+        && response.request().method() === 'PUT'
+        && response.status() === 200);
     await page.getByRole('button', { name: 'Toggle email alerts' }).click();
+    await preferencesUpdated;
     await expect(page.getByText('Disabled', { exact: true })).toBeVisible();
+
+    const unsubscribeReady = page.waitForResponse((response) =>
+        response.url().includes('/api/customer/product-subscriptions/')
+        && response.request().method() === 'DELETE'
+        && response.status() === 200);
+    const subscriptionsReloaded = page.waitForResponse((response) =>
+        response.url().endsWith('/api/customer/product-subscriptions')
+        && response.request().method() === 'GET'
+        && response.status() === 200);
     await page.getByRole('button', { name: 'Unsubscribe' }).first().click();
+    await Promise.all([unsubscribeReady, subscriptionsReloaded]);
     await expect(page.getByRole('button', { name: 'Unsubscribe' })).toHaveCount(1);
 
     const review = page.getByRole('heading', { name: 'Review a purchase' }).locator('..');
-    await review.getByRole('combobox').first().selectOption({ label: /MT52-E2E-ORDER · MT51 Alpha Phone/ });
+    await review.getByRole('combobox').first().selectOption({ label: 'MT52-E2E-ORDER · MT51 Alpha Phone' });
     await review.getByRole('combobox').nth(1).selectOption('5');
     await review.getByPlaceholder('Review title (optional)').fill('Excellent');
     await review.getByPlaceholder('Your review').fill('Verified browser purchase review.');
+    const reviewSubmitted = page.waitForResponse((response) =>
+        response.url().endsWith('/api/customer/reviews')
+        && response.request().method() === 'POST'
+        && response.status() === 201);
     await review.getByRole('button', { name: 'Submit review' }).click();
+    await reviewSubmitted;
     await expect(page.getByText('Review submitted for moderation.', { exact: true })).toBeVisible();
 });
 

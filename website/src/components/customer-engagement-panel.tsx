@@ -16,13 +16,13 @@ export function CustomerEngagementPanel() {
   const [message, setMessage] = useState("");
 
   const load = useCallback(async () => {
-    const [prefs, subs, loyaltyState, reviewEligibility] = await Promise.all([
-      customerRequest<Preferences>("notification-preferences"),
-      customerRequest<{ items: Subscription[] }>("product-subscriptions").catch(() => ({ items: [] })),
-      customerRequest<Loyalty>("loyalty"),
-      customerRequest<{ items: Eligibility[] }>("reviews/eligible"),
+    await Promise.all([
+      customerRequest<Preferences>("notification-preferences").then(setPreferences),
+      customerRequest<{ items: Subscription[] }>("product-subscriptions")
+        .then((value) => setSubscriptions(value.items)).catch(() => setSubscriptions([])),
+      customerRequest<Loyalty>("loyalty").then(setLoyalty),
+      customerRequest<{ items: Eligibility[] }>("reviews/eligible").then((value) => setEligible(value.items)),
     ]);
-    setPreferences(prefs); setSubscriptions(subs.items); setLoyalty(loyaltyState); setEligible(reviewEligibility.items);
   }, []);
 
   useEffect(() => {
