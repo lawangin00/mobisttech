@@ -37,6 +37,8 @@ class ApiContractTest extends TestCase
             ->assertJsonPath('data.page.has_more', true);
         $this->assertNotNull($page->json('data.page.next_cursor'));
         $this->assertArrayNotHasKey('purchase_price', $page->json('data.items.0'));
+        $this->getJson('/api/v1/catalogue/products?q=ock')->assertOk()
+            ->assertJsonCount(2, 'data.items');
         $etag = $page->headers->get('ETag');
         $this->withHeader('If-None-Match', $etag)->get('/api/v1/catalogue/products?limit=1')->assertStatus(304);
 

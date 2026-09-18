@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 
 export type BusinessProfile = {
   business_name: string;
@@ -7,7 +8,7 @@ export type BusinessProfile = {
   version: number;
 };
 
-export async function readBusinessProfile(): Promise<BusinessProfile | null> {
+async function readBusinessProfileUncached(): Promise<BusinessProfile | null> {
   const origin = process.env.LARAVEL_API_ORIGIN ?? "http://127.0.0.1:18080";
   if (origin !== "http://127.0.0.1:18080") throw new Error("Website API origin must be the isolated Laravel target.");
   try {
@@ -23,3 +24,4 @@ export async function readBusinessProfile(): Promise<BusinessProfile | null> {
     return candidate as BusinessProfile;
   } catch { return null; }
 }
+export const readBusinessProfile = cache(readBusinessProfileUncached);

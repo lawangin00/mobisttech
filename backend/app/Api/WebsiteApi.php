@@ -69,7 +69,7 @@ final class WebsiteApi
                     ->where('l.is_online', true)->where('p.isDeleted', false)->whereNull('p.archived_at')
                     ->when($after !== null, fn ($q) => $q->where('l.id', '>', $after))
                     ->when($category, fn ($q) => $q->where('p.category', $category))
-                    ->when($query, fn ($q) => $q->where('l.name', 'like', $this->escapeLike($query).'%'))
+                    ->when($query, fn ($q) => $q->where('l.name', 'like', '%'.$this->escapeLike($query).'%'))
                     ->orderBy('l.id')->limit($limit + 1)
                     ->get(['l.id as listing_id', 'l.public_id as listing_public_id', 'l.slug', 'l.image_url',
                         'p.id as product_id', 'p.public_id as product_public_id', 'p.name', 'p.brand', 'p.model',

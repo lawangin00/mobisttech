@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 
 export type WebsiteMode = "digital_only" | "hybrid" | "commerce_only" | null;
 export type WebsiteProfile = {
@@ -61,7 +62,7 @@ async function get<T>(path: string, freshness: "live" | number = "live"): Promis
   return (body as Envelope<T>).data;
 }
 
-export async function readWebsiteProfile(): Promise<WebsiteProfile | null> {
+async function readWebsiteProfileUncached(): Promise<WebsiteProfile | null> {
   try {
     return await get<WebsiteProfile>("/api/v1/website-profile", "live");
   } catch (error) {
@@ -69,6 +70,7 @@ export async function readWebsiteProfile(): Promise<WebsiteProfile | null> {
     throw error;
   }
 }
+export const readWebsiteProfile = cache(readWebsiteProfileUncached);
 export function readCategories() { return get<Category[]>("/api/v1/catalogue/categories", 60); }
 export function readProduct(slug: string) { return get<ProductDetail>(`/api/v1/catalogue/products/${encodeURIComponent(slug)}`, "live"); }
 export function readCatalogue(input: { limit?: number; after?: string; category?: string; q?: string } = {}) {
