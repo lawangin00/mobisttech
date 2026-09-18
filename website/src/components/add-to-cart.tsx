@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { customerRequest } from "@/lib/customer-api";
+import { useEffect, useState } from "react";
+import { customerRequest, ensureCustomerCsrf } from "@/lib/customer-api";
 import { readCart, writeCart } from "@/lib/customer-cart";
 import { ensureGuestOwnerToken } from "@/lib/customer-guest";
 
 export function AddToCart({ product }: { product: { id: string; slug: string; name: string; price: string; available: boolean } }) {
   const [message, setMessage] = useState("");
+  useEffect(() => {
+    void ensureCustomerCsrf().catch(() => undefined);
+  }, []);
   function add() {
     const lines = readCart();
     const existing = lines.find((line) => line.product_id === product.id);

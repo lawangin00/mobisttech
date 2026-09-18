@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { clearCustomerCsrf, CustomerAccount, customerRequest } from "@/lib/customer-api";
+import { clearCustomerCsrf, CustomerAccount, customerRequest, ensureCustomerCsrf } from "@/lib/customer-api";
 import { clearGuestOwnerToken, readGuestOwnerToken } from "@/lib/customer-guest";
 import { CustomerEngagementPanel } from "@/components/customer-engagement-panel";
 
@@ -40,6 +40,7 @@ export function CustomerAccountPanel() {
   }, []);
 
   useEffect(() => {
+    void ensureCustomerCsrf().catch(() => undefined);
     const timer = window.setTimeout(() => { void refresh().catch(() => setAccount(null)); }, 0);
     return () => window.clearTimeout(timer);
   }, [refresh]);

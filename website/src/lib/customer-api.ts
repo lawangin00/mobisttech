@@ -15,6 +15,7 @@ export type CustomerAccount = {
 type Envelope<T> = { data: T };
 
 let csrfToken: string | null = null;
+let csrfPromise: Promise<string> | null = null;
 
 async function readEnvelope<T>(response: Response): Promise<T> {
   const body = (await response.json().catch(() => ({}))) as Partial<Envelope<T>> & {
@@ -31,14 +32,22 @@ async function readEnvelope<T>(response: Response): Promise<T> {
 
 export async function ensureCustomerCsrf(): Promise<string> {
   if (csrfToken) return csrfToken;
-  const response = await fetch("/api/customer/auth/csrf-cookie", {
-    method: "GET",
-    credentials: "same-origin",
-    cache: "no-store",
-  });
-  const data = await readEnvelope<{ csrf_token: string }>(response);
-  csrfToken = data.csrf_token;
-  return csrfToken;
+  if (csrfPromise) return csrfPromise;
+  csrfPromise = (async () => {
+    const response = await fetch("/api/customer/auth/csrf-cookie", {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    const data = await readEnvelope<{ csrf_token: string }>(response);
+    csrfToken = data.csrf_token;
+    return csrfToken;
+  })();
+  try {
+    return await csrfPromise;
+  } finally {
+    csrfPromise = null;
+  }
 }
 
 export async function customerRequest<T>(
@@ -66,4 +75,5 @@ export async function customerRequest<T>(
 
 export function clearCustomerCsrf() {
   csrfToken = null;
+  csrfPromise = null;
 }
