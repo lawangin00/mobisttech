@@ -43,6 +43,8 @@ export type CataloguePage = {
 
 type Envelope<T> = { contract: string; data: T };
 const ORIGIN = process.env.LARAVEL_API_ORIGIN ?? "http://127.0.0.1:18080";
+const API_TIMEOUT_MS = Number(process.env.WEBSITE_API_TIMEOUT_MS ?? "4000");
+if (!Number.isFinite(API_TIMEOUT_MS) || API_TIMEOUT_MS < 1000 || API_TIMEOUT_MS > 30000) throw new Error("WEBSITE_API_TIMEOUT_MS is invalid.");
 if (ORIGIN !== "http://127.0.0.1:18080") throw new Error("Website API origin must be the isolated Laravel target.");
 
 export class WebsiteApiError extends Error {
@@ -53,7 +55,7 @@ async function get<T>(path: string, freshness: "live" | number = "live"): Promis
   const response = await fetch(`${ORIGIN}${path}`, {
     redirect: "error",
     headers: { Accept: "application/json" },
-    signal: AbortSignal.timeout(4000),
+    signal: AbortSignal.timeout(API_TIMEOUT_MS),
     ...(freshness === "live" ? { cache: "no-store" as const } : { next: { revalidate: freshness } }),
   });
   if (!response.ok) throw new WebsiteApiError(response.status, `Website API request failed: ${path}`);

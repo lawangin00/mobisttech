@@ -23,8 +23,9 @@ export default defineConfig({
             timeout: 30_000,
         },
         {
-            command: 'npm --prefix ../website run start',
+            command: 'npm --prefix ../website run build && npm --prefix ../website run start',
             url: 'http://127.0.0.1:13000/',
+            env: { ...process.env, WEBSITE_API_TIMEOUT_MS: '12000' },
             reuseExistingServer: false,
             timeout: 30_000,
         },
