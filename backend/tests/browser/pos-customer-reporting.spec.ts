@@ -301,7 +301,11 @@ test('MT-4.3 customer warranty reporting document flow is explicit role scoped a
 
     await page.setViewportSize({ width: 390, height: 844 });
     for (const name of ['Invoices & customers', 'Warranty', 'Reports']) {
-        await page.getByRole('link', { name, exact: true }).click();
+        const mobileLink = page.locator('header').getByRole('link', { name, exact: true });
+        if (!(await mobileLink.isVisible())) {
+            await page.getByText('Menu', { exact: true }).click();
+        }
+        await mobileLink.click();
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
         expect(overflow).toBe(false);
     }
