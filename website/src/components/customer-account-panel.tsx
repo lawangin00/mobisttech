@@ -14,6 +14,7 @@ export function CustomerAccountPanel() {
   const [wishlistCount, setWishlistCount] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
   const [register, setRegister] = useState(false);
+  const [recovery, setRecovery] = useState(false);
   const [message, setMessage] = useState("");
 
   const refresh = useCallback(async () => {
@@ -54,6 +55,41 @@ export function CustomerAccountPanel() {
     }
   }
 
+  async function requestRecovery(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setMessage("");
+    try {
+      const result = await customerRequest<{ message: string }>("auth/forgot-password", {
+        method: "POST", body: JSON.stringify({ email: form.get("email") }),
+      });
+      setMessage(result.message);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Recovery delivery is unavailable.");
+    }
+  }
+
+  async function changePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setMessage("");
+    try {
+      const result = await customerRequest<{ message: string }>("auth/password", {
+        method: "PATCH",
+        body: JSON.stringify({
+          current_password: form.get("current_password"),
+          password: form.get("password"),
+          password_confirmation: form.get("password_confirmation"),
+        }),
+      });
+      clearCustomerCsrf();
+      setAccount(null); setOrders([]); setWishlistCount(0); setReviewCount(0);
+      setMessage(result.message);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to change password.");
+    }
+  }
+
   async function logout() {
     await customerRequest<{ message: string }>("auth/logout", { method: "POST", body: JSON.stringify({}) });
     clearCustomerCsrf();
@@ -61,19 +97,31 @@ export function CustomerAccountPanel() {
   }
 
   if (!account) return <div className="max-w-lg">
-    <div className="mb-5 flex gap-2">
-      <button className={"rounded-xl px-4 py-2 " + (!register ? "bg-slate-950 text-white" : "border")} onClick={() => setRegister(false)}>Sign in</button>
-      <button className={"rounded-xl px-4 py-2 " + (register ? "bg-slate-950 text-white" : "border")} onClick={() => setRegister(true)}>Create account</button>
-    </div>
-    <form onSubmit={submit} className="space-y-3 rounded-2xl border bg-white p-5">
-      {register && <><input name="name" required placeholder="Name" className="w-full rounded-xl border p-3" /><input name="mobile" required pattern="03[0-9]{9}" placeholder="03XXXXXXXXX" className="w-full rounded-xl border p-3" /></>}
-      <input name="email" type="email" required placeholder="Email" className="w-full rounded-xl border p-3" />
-      <input name="password" type="password" required minLength={8} placeholder="Password" className="w-full rounded-xl border p-3" />
-      {register && <input name="password_confirmation" type="password" required minLength={8} placeholder="Confirm password" className="w-full rounded-xl border p-3" />}
-      {!register && <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="remember" /> Remember me on this device</label>}
-      <button className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">{register ? "Create account" : "Sign in"}</button>
-      {message && <p className="text-sm text-red-700">{message}</p>}
-    </form>
+    {recovery ? <>
+      <button className="mb-4 text-sm font-medium text-slate-700" onClick={() => { setRecovery(false); setMessage(""); }}>← Back to sign in</button>
+      <form onSubmit={requestRecovery} className="space-y-3 rounded-2xl border bg-white p-5">
+        <h2 className="text-xl font-bold">Reset password</h2>
+        <p className="text-sm text-slate-600">Enter your customer-account email. A secure reset link is sent only when recovery delivery is configured.</p>
+        <input name="email" type="email" required placeholder="Email" className="w-full rounded-xl border p-3" />
+        <button className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">Send reset link</button>
+        {message && <p className="text-sm text-slate-600">{message}</p>}
+      </form>
+    </> : <>
+      <div className="mb-5 flex gap-2">
+        <button className={"rounded-xl px-4 py-2 " + (!register ? "bg-slate-950 text-white" : "border")} onClick={() => { setRegister(false); setMessage(""); }}>Sign in</button>
+        <button className={"rounded-xl px-4 py-2 " + (register ? "bg-slate-950 text-white" : "border")} onClick={() => { setRegister(true); setMessage(""); }}>Create account</button>
+      </div>
+      <form onSubmit={submit} className="space-y-3 rounded-2xl border bg-white p-5">
+        {register && <><input name="name" required placeholder="Name" className="w-full rounded-xl border p-3" /><input name="mobile" required pattern="03[0-9]{9}" placeholder="03XXXXXXXXX" className="w-full rounded-xl border p-3" /></>}
+        <input name="email" type="email" required placeholder="Email" className="w-full rounded-xl border p-3" />
+        <input name="password" type="password" required minLength={8} placeholder="Password" className="w-full rounded-xl border p-3" />
+        {register && <input name="password_confirmation" type="password" required minLength={8} placeholder="Confirm password" className="w-full rounded-xl border p-3" />}
+        {!register && <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="remember" /> Remember me on this device</label>}
+        <button className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">{register ? "Create account" : "Sign in"}</button>
+        {!register && <button type="button" className="block text-sm font-medium text-slate-700" onClick={() => { setRecovery(true); setMessage(""); }}>Forgot password?</button>}
+        {message && <p className="text-sm text-slate-600">{message}</p>}
+      </form>
+    </>}
   </div>;
 
   return <div className="space-y-6">
@@ -83,6 +131,16 @@ export function CustomerAccountPanel() {
     </section>
     <section><h2 className="text-xl font-bold">Orders</h2><div className="mt-3 space-y-3">{orders.length === 0 ? <p className="text-slate-600">No orders yet.</p> : orders.map((order) => <article key={order.id} className="rounded-2xl border bg-white p-4"><strong>{order.number}</strong><p className="text-sm text-slate-600">{order.status} · {order.payment_status} · {order.currency} {order.total}</p></article>)}</div></section>
     <section className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border bg-white p-4"><strong>Saved items</strong><p className="mt-1 text-2xl font-bold">{wishlistCount}</p></div><div className="rounded-2xl border bg-white p-4"><strong>Your reviews</strong><p className="mt-1 text-2xl font-bold">{reviewCount}</p></div></section>
+    <section>
+      <h2 className="text-xl font-bold">Change password</h2>
+      <form onSubmit={changePassword} className="mt-3 grid gap-3 rounded-2xl border bg-white p-4 sm:grid-cols-3">
+        <input name="current_password" type="password" required placeholder="Current password" className="rounded-xl border p-3" />
+        <input name="password" type="password" required minLength={8} placeholder="New password" className="rounded-xl border p-3" />
+        <input name="password_confirmation" type="password" required minLength={8} placeholder="Confirm new password" className="rounded-xl border p-3" />
+        <button className="rounded-xl bg-slate-950 px-4 py-2 text-white sm:col-span-3 sm:w-fit">Update password</button>
+      </form>
+      {message && <p className="mt-2 text-sm text-slate-600">{message}</p>}
+    </section>
     <CustomerEngagementPanel />
   </div>;
 }

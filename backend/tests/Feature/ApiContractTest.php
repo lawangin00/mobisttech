@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Addendum\WebsiteCapabilities;
 use App\Cms\WebsiteCms;
+use App\Loyalty\LoyaltyServices;
 use App\Models\CustomerAccount;
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -144,6 +145,64 @@ class ApiContractTest extends TestCase
         $this->login($otherClient, $other->email)->assertOk();
         $this->send($otherClient, 'GET', '/api/v1/orders/'.$orderId)->assertNotFound()
             ->assertJsonPath('error.code', 'api_404');
+    }
+
+    public function test_mt_5_2_customer_adapters_preserve_guest_ownership_loyalty_and_review_eligibility(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $product = $this->listedProduct('mt52-phone');
+        $this->acquire($product, 2);
+        $guestToken = str_repeat('g', 64);
+
+        $this->postJson('/api/v1/guest-wishlist/'.$product->public_id, ['guest_token' => $guestToken])
+            ->assertCreated()->assertJsonPath('contract', 'guest-wishlist-item.v1');
+        $this->postJson('/api/v1/guest-wishlist', ['guest_token' => $guestToken])
+            ->assertOk()->assertJsonCount(1, 'data.items');
+
+        $customer = $this->customer('mt52-owner@example.invalid', '03001112224');
+        $client = $this->client();
+        $this->login($client, $customer->email)->assertOk();
+        $this->send($client, 'POST', '/api/v1/wishlist/claim', ['guest_token' => $guestToken])
+            ->assertOk()->assertJsonCount(1, 'data.items');
+        $this->send($client, 'GET', '/api/v1/wishlist')->assertOk()->assertJsonCount(1, 'data.items');
+        $this->assertSame(0, DB::table('wishlist_items')->whereNotNull('guest_owner_hash')->count());
+
+        app(LoyaltyServices::class)->configure($this->actor, [
+            'enabled' => true, 'earn_basis_amount' => '100.00', 'earn_points' => 10,
+            'redemption_value' => '1.00', 'min_redeem_points' => 5, 'max_redeem_points' => 100,
+            'daily_redeem_points' => 100, 'expiry_days' => 30,
+        ]);
+        $ownedCustomerId = (int) DB::table('customers')->where('website_user_id', $customer->id)->value('id');
+        DB::table('loyalty_accounts')->insert([
+            'customer_id' => $ownedCustomerId, 'balance_points' => 42, 'version' => 1,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->send($client, 'GET', '/api/v1/loyalty')->assertOk()
+            ->assertJsonPath('data.enabled', true)
+            ->assertJsonPath('data.balance_points', 42)
+            ->assertJsonPath('data.min_redeem_points', 5);
+
+        $payload = [
+            'customer_name' => $customer->name, 'customer_mobile' => $customer->mobile,
+            'customer_email' => $customer->email, 'city' => 'Karachi', 'delivery_address' => 'Synthetic address',
+            'gateway' => 'cod', 'lines' => [['product_id' => $product->public_id, 'quantity' => 1]],
+        ];
+        $created = $this->send($client, 'POST', '/api/v1/orders', $payload, true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'mt52-order-'.Str::uuid(),
+        ])->assertCreated();
+        $orderId = $created->json('data.order_id');
+        DB::table('orders')->where('public_id', $orderId)->update(['payment_status' => 'paid', 'updated_at' => now()]);
+
+        $this->send($client, 'GET', '/api/v1/reviews/eligible')->assertOk()
+            ->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.order_id', $orderId)
+            ->assertJsonPath('data.items.0.product_id', $product->public_id);
+        $this->send($client, 'POST', '/api/v1/reviews', [
+            'order_id' => $orderId, 'product_id' => $product->public_id,
+            'rating' => 5, 'title' => 'Synthetic review', 'body' => 'Verified purchase review.',
+        ])->assertCreated()->assertJsonPath('data.status', 'pending');
+        $this->send($client, 'GET', '/api/v1/reviews')->assertOk()
+            ->assertJsonCount(1, 'data.items');
     }
 
     public function test_public_rate_limit_and_error_contract_are_enforced(): void
