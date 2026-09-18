@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\CustomerAccount;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -19,13 +20,28 @@ class CustomerWebsiteE2eCleanupSeeder extends Seeder
                 $customerId = DB::table('customers')->where('website_user_id', $userId)->value('id');
                 $orderIds = DB::table('orders')->where('user_id', $userId)->pluck('id')->all();
                 $itemIds = $orderIds ? DB::table('order_items')->whereIn('order_id', $orderIds)->pluck('id')->all() : [];
+                $reservationIds = $orderIds ? DB::table('reservations')->whereIn('order_id', $orderIds)->pluck('id')->all() : [];
+                $reservationLineIds = $reservationIds ? DB::table('reservation_lines')->whereIn('reservation_id', $reservationIds)->pluck('id')->all() : [];
+                $paymentIds = $orderIds ? DB::table('payments')->whereIn('order_id', $orderIds)->pluck('id')->all() : [];
                 if ($itemIds) {
                     DB::table('product_reviews')->whereIn('order_item_id', $itemIds)->delete();
                 }
+                if ($reservationLineIds) {
+                    DB::table('reservation_allocations')->whereIn('reservation_line_id', $reservationLineIds)->delete();
+                }
+                if ($reservationIds) {
+                    DB::table('reservation_lines')->whereIn('reservation_id', $reservationIds)->delete();
+                }
+                if ($paymentIds) {
+                    DB::table('payment_receipts')->whereIn('payment_id', $paymentIds)->delete();
+                }
                 if ($orderIds) {
+                    DB::table('reservations')->whereIn('order_id', $orderIds)->delete();
+                    DB::table('payments')->whereIn('order_id', $orderIds)->delete();
                     DB::table('order_items')->whereIn('order_id', $orderIds)->delete();
                     DB::table('orders')->whereIn('id', $orderIds)->delete();
                 }
+                DB::table('idempotency_requests')->where('actor_scope', CustomerAccount::class.':'.$userId)->delete();
                 DB::table('wishlist_items')->where('customer_account_id', $userId)->delete();
                 DB::table('product_notification_subscriptions')->where('customer_account_id', $userId)->delete();
                 DB::table('notification_preferences')->where('customer_account_id', $userId)->delete();

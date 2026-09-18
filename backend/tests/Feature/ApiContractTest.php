@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Addendum\WebsiteCapabilities;
 use App\Cms\WebsiteCms;
+use App\Commerce\PaymentProvider;
+use App\Commerce\PaymentProviders;
 use App\Loyalty\LoyaltyServices;
 use App\Models\CustomerAccount;
 use Illuminate\Cookie\CookieValuePrefix;
@@ -229,6 +231,84 @@ class ApiContractTest extends TestCase
         return $product;
     }
 
+    public function test_mt_5_3_checkout_http_contract_is_fixed_owned_idempotent_and_provider_verified(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $product = $this->listedProduct('mt53-checkout-phone');
+        $this->acquire($product, 3);
+        $customer = $this->customer('mt53-owner@example.invalid', '03001112225');
+        $client = $this->client();
+        $this->login($client, $customer->email)->assertOk();
+
+        $channels = $this->send($client, 'GET', '/api/v1/checkout/channels')->assertOk()
+            ->assertJsonPath('contract', 'checkout-channels.v1')
+            ->assertJsonCount(4, 'data.items');
+        $this->assertSame(['cod', 'jazzcash', 'easypaisa', 'card'], array_column($channels->json('data.items'), 'code'));
+        $this->assertTrue($channels->json('data.items.0.available'));
+        $this->assertFalse($channels->json('data.items.1.available'));
+        $this->assertArrayNotHasKey('merchant', $channels->json('data.items.0'));
+
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+        $this->assertFalse($this->send($client, 'GET', '/api/v1/checkout/channels')->json('data.items.1.available'));
+
+        $fake = new Mt53ApiPaymentProvider;
+        $registry = new PaymentProviders;
+        $registry->register('jazzcash', $fake);
+        $this->app->instance(PaymentProviders::class, $registry);
+        $this->assertTrue($this->send($client, 'GET', '/api/v1/checkout/channels')->json('data.items.1.available'));
+
+        $payload = [
+            'customer_name' => $customer->name, 'customer_mobile' => $customer->mobile,
+            'customer_email' => $customer->email, 'city' => 'Karachi', 'delivery_address' => 'Synthetic checkout address',
+            'gateway' => 'cod', 'coupon_codes' => [], 'loyalty_points' => 0,
+            'lines' => [['product_id' => $product->public_id, 'quantity' => 1]],
+        ];
+        $key = 'mt53-cod-'.Str::uuid();
+        $created = $this->send($client, 'POST', '/api/v1/orders', $payload, true, ['HTTP_IDEMPOTENCY_KEY' => $key])
+            ->assertCreated()->assertJsonPath('data.payment_status', 'pending_collection');
+        $orderId = $created->json('data.order_id');
+        $this->assertSame($orderId, $this->send($client, 'POST', '/api/v1/orders', $payload, true, ['HTTP_IDEMPOTENCY_KEY' => $key])
+            ->assertCreated()->json('data.order_id'));
+        $this->assertSame(1, DB::table('orders')->where('public_id', $orderId)->count());
+        $this->send($client, 'GET', '/api/v1/orders/'.$orderId)->assertOk()
+            ->assertJsonPath('data.payments.0.gateway', 'cod')
+            ->assertJsonPath('data.payment_status', 'unpaid');
+
+        $this->send($client, 'POST', '/api/v1/orders/'.$orderId.'/cancel', [], true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'mt53-cancel-'.Str::uuid(),
+        ])->assertOk()->assertJsonPath('data.status', 'cancelled');
+        $this->assertSame(0, DB::table('reservation_allocations')->whereNull('released_at')->count());
+
+        $tampered = [...$payload, 'total' => '0.01'];
+        $this->send($client, 'POST', '/api/v1/orders', $tampered, true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'mt53-tamper-'.Str::uuid(),
+        ])->assertUnprocessable();
+
+        $gatewayPayload = [...$payload, 'gateway' => 'jazzcash'];
+        $gateway = $this->send($client, 'POST', '/api/v1/orders', $gatewayPayload, true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'mt53-gateway-'.Str::uuid(),
+        ])->assertCreated();
+        $gatewayOrder = $gateway->json('data.order_id');
+        $payment = $gateway->json('data.payment_id');
+        $init = $this->send($client, 'POST', '/api/v1/payments/'.$payment.'/initiate', [])
+            ->assertOk()->assertJsonPath('contract', 'payment-initiation.v1');
+        $reference = $init->json('data.reference');
+        $this->assertStringStartsWith('https://pay.example.invalid/', $init->json('data.redirect_url'));
+
+        $this->postJson('/api/v1/payment-callbacks/jazzcash', $fake->event('MT53-FAILED', $reference, $gateway->json('data.amount'), 'failed'))
+            ->assertOk()->assertJsonPath('data.payment_status', 'failed');
+        $retry = $this->send($client, 'POST', '/api/v1/orders/'.$gatewayOrder.'/payments/retry', ['gateway' => 'jazzcash'], true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'mt53-retry-'.Str::uuid(),
+        ])->assertCreated();
+        $retryPayment = $retry->json('data.payment_id');
+        $retryInit = $this->send($client, 'POST', '/api/v1/payments/'.$retryPayment.'/initiate', [])->assertOk();
+        $this->postJson('/api/v1/payment-callbacks/jazzcash', $fake->event('MT53-PAID', $retryInit->json('data.reference'), $retry->json('data.amount'), 'paid'))
+            ->assertOk()->assertJsonPath('data.payment_status', 'paid');
+        $this->send($client, 'GET', '/api/v1/orders/'.$gatewayOrder)->assertOk()
+            ->assertJsonPath('data.payment_status', 'paid')
+            ->assertJsonPath('data.status', 'confirmed');
+    }
+
     private function customer(string $email, string $mobile): CustomerAccount
     {
         $customer = new CustomerAccount;
@@ -351,5 +431,43 @@ class ApiContractTest extends TestCase
         }
 
         return $response;
+    }
+}
+
+final class Mt53ApiPaymentProvider implements PaymentProvider
+{
+    public function initiate(array $intent): array
+    {
+        return [
+            'reference' => 'MT53-'.$intent['payment_id'],
+            'redirect_url' => 'https://pay.example.invalid/'.$intent['payment_id'],
+        ];
+    }
+
+    public function verify(array $payload): array
+    {
+        $signature = $payload['signature'] ?? '';
+        $unsigned = array_diff_key($payload, ['signature' => true]);
+        if (! hash_equals(hash_hmac('sha256', json_encode($unsigned, JSON_THROW_ON_ERROR), 'mt53-secret'), $signature)) {
+            throw new \LogicException('Invalid synthetic provider signature.');
+        }
+
+        return $unsigned;
+    }
+
+    public function event(string $event, string $reference, string $amount, string $status): array
+    {
+        $payload = [
+            'event_id' => $event,
+            'transaction_reference' => 'TX-'.$event,
+            'order_reference' => $reference,
+            'amount' => $amount,
+            'currency' => 'PKR',
+            'status' => $status,
+            'payload_hash' => hash('sha256', $event.'|'.$reference.'|'.$amount.'|'.$status),
+        ];
+        $payload['signature'] = hash_hmac('sha256', json_encode($payload, JSON_THROW_ON_ERROR), 'mt53-secret');
+
+        return $payload;
     }
 }

@@ -421,7 +421,7 @@ final class OrderTransactions
             'received_at' => now(), 'verified_at' => now()]);
         if ($event['status'] === 'failed') {
             if (! in_array($payment->status, ['paid', 'paid_reconciliation'], true)) {
-                $reservation = DB::table('reservations')->where('order_id', $order->id)->lockForUpdate()->first();
+                $reservation = DB::table('reservations')->where('order_id', $order->id)->where('website_payment_id', $payment->id)->lockForUpdate()->first();
                 if ($reservation && in_array($reservation->state, ['active', 'held_cod'], true)) {
                     $this->stock->release($reservation->id);
                 }
@@ -443,7 +443,7 @@ final class OrderTransactions
         if (in_array($payment->status, ['paid', 'paid_reconciliation'], true)) {
             throw new LogicException('A different verified event cannot collect an already completed payment.');
         }
-        $reservation = DB::table('reservations')->where('order_id', $order->id)->lockForUpdate()->first();
+        $reservation = DB::table('reservations')->where('order_id', $order->id)->where('website_payment_id', $payment->id)->lockForUpdate()->first();
         $late = $order->status === 'cancelled' || ($reservation && (! in_array($reservation->state, ['active', 'held_cod'], true)
             || ($reservation->state === 'active' && $reservation->reservation_expires_at && now()->gte($reservation->reservation_expires_at))));
         if ($late) {
