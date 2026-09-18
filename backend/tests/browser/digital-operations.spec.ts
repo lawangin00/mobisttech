@@ -137,7 +137,7 @@ test('MT-4.8 digital operations administers services leads projects private file
     await page.getByRole('button', { name: 'Projects' }).click();
     const projects = page.getByRole('heading', { name: 'Client projects' }).locator('xpath=ancestor::section[1]');
     await projects.getByRole('button', { name: /PRJ-E2E-001/ }).click();
-    await expect(page.getByText('E2E Proposal')).toBeVisible();
+    await expect(page.getByText(/Revision 1 · draft · PKR 100000\.00/)).toBeVisible();
     await expect(page.getByText(/Deposit · PKR 40000.00/)).toBeVisible();
     const transitionSelect = page.locator('select').filter({ has: page.locator('option[value="in_progress"]') }).first();
     await transitionSelect.selectOption('in_progress');

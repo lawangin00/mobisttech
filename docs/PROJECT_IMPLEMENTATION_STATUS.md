@@ -43,13 +43,13 @@ Active stage: MT-4 - React POS and administration (In Progress)
 
 Last completed stage: MT-3 - Administration, content and REST APIs
 
-Current In Progress point: MT-4.8 - Digital operations administration interfaces
+Current In Progress point: None
 
-Status: MT-0 through MT-3 complete. MT-4 is in progress. 39/56 complete, 17 pending. MT-4.8 is In Progress.
+Status: MT-0 through MT-3 complete. MT-4 is in progress. 40/56 complete, 16 pending. No point is currently In Progress.
 
-Last completed point: MT-4.4 - Website CMS and platform administration interfaces
+Last completed point: MT-4.8 - Digital operations administration interfaces
 
-Next pending point: MT-4.8 - Digital operations administration interfaces
+Next pending point: MT-4.7 - Data reset administration interface
 
 Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, unified Admin/customer authorization, Team Member Role/delegation authority, centralized Admin/Customer session policy, product/master-data, inventory/acquisition/stock transactions, internal POS sale/invoice/accepted-return authority, warranty/claim authority, supplier/purchase-order/partial-receipt authority, reorder recommendations, stocktake/cycle-count authority, inter-outlet transfer/custody authority, POS Payment Methods/Destinations and split-tender/refund/settlement authority, customer loyalty earn/redeem/history authority, paid repair intake/estimate/parts/payment/history authority, canonical business profile and secure Google integration/backup services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales/claim/procurement/stocktake mapping uses synthetic rows only. Transfer verification also uses synthetic target rows only. Real MySQL stock, return, claim, procurement, stocktake, transfer, POS payment, loyalty and paid-repair-part concurrency and the existing `mobisttech-drive:` temporary read/write/delete check are verified. Canonical Invoice/Warranty delivery, optional sale-email capture, six managed communication templates, truthful delivery audit, scoped operational reporting and retail-label backend projections now exist. The typed Website CMS, policy revision/publication authority and reusable Software Product backend publication model now exist. Final business-specific policy copy/sign-off, licensing/notice review, Admin/public UI realization and the complete product user manual remain approved future work at their named points. The versioned Website operating-mode publication workflow now exists with preview/diff, capability gates, audit/revisions, rollback and cache revalidation. The Digital Service catalogue now owns authoritative quote/fixed/starting-from/package and add-on pricing, progressive mode-gated enquiries, private reference uploads, timezone-safe consultation preferences and a permission-scoped lightweight lead pipeline with immutable history. Client project services now own explicit Customer-account project ownership, versioned lifecycle, immutable proposal revisions, canonical exact milestone schedules, private reference/delivery files and aggregate conversion reporting while reusing the existing payment authority. Actual private-data migration, authentic Gmail OAuth consent/test send, production Google verification, authentic provider payment/refund execution, production reset authorization, transfer/POS interfaces and complete POS/Website interfaces, rendered warranty documents, brand, Control and CI remain pending. Backend tests do not constitute live Gmail/provider, payment/refund, complete UI, rendered-document or private-data import acceptance.
 
@@ -390,7 +390,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-4.6 | Cash, trade-in and repair interfaces | Completed |
 | MT-4.3 | POS customer, warranty and reporting interfaces | Completed |
 | MT-4.4 | Website CMS and platform administration interfaces | Completed |
-| MT-4.8 | Digital operations administration interfaces | In Progress |
+| MT-4.8 | Digital operations administration interfaces | Completed |
 | MT-4.7 | Data reset administration interface | Pending |
 | MT-5.1 | Storefront, catalogue and SEO migration | Pending |
 | MT-5.2 | Customer account, cart, orders and reviews | Pending |
@@ -410,7 +410,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 
 ## Recovery and next action
 
-Do not re-execute completed roadmap points or prior reconciliations/closures. The project is 39/56 complete with 17 pending. MT-3 is complete and MT-4 is in progress. The next applicable Y/Proceed executes only `MT-4.4 - Website CMS and platform administration interfaces`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r15 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` and adopts Universal Registry 1.20 / System 7.7 without changing application position. Roadmap v1.10 and its same-basename DOCX are the verified structural plan. Sessions using an older loaded registry must refresh before project-control aliases; new/unbound sessions resolve the Project ID and load the canonical current registry through the bootstrap. Approved addendum, consolidated-requirement and Software Product publishing workflows remain assigned to their named later points.
+Do not re-execute completed roadmap points or prior reconciliations/closures. The project is 40/56 complete with 16 pending. MT-3 is complete and MT-4 is in progress. The next applicable Y/Proceed executes only `MT-4.4 - Website CMS and platform administration interfaces`. Follow document order and explicit dependencies, not numeric ID sorting. Registry MT-1.1-r15 is current under immutable Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c` and adopts Universal Registry 1.20 / System 7.7 without changing application position. Roadmap v1.10 and its same-basename DOCX are the verified structural plan. Sessions using an older loaded registry must refresh before project-control aliases; new/unbound sessions resolve the Project ID and load the canonical current registry through the bootstrap. Approved addendum, consolidated-requirement and Software Product publishing workflows remain assigned to their named later points.
 
 ## HOLD / decisions
 
@@ -738,3 +738,8 @@ No source-repository write, source-data migration, source runtime action, real p
 - Browser attempt 2 reached Services UI and failed only because test textarea indices assumed packages/add-ons at indexes 2/3; actual order is description/packages/add-ons at 0/1/2. Locator indices are corrected in source. No third browser rerun started near the hard Finalization Fence.
 - Current short gates: focused HTTP 3/55 PASS; backend TypeScript typecheck PASS; fresh production Vite build PASS; E2E seeder syntax/scoped Pint PASS. Incomplete: rerun corrected digital-operations.spec.ts -> fix only any new proven gap -> affected digital regressions -> full backend + full Playwright + final Composer/Pint/diff/state closure gates.
 - Next action: rerun digital-operations.spec.ts from corrected locator + fresh bundle -> on PASS run affected DigitalServiceLeads/ClientProjectServices/WebsiteMode/Order milestone regressions -> full backend + full Playwright -> final closure evidence/commit/push.
+
+- MT-4.8 final acceptance: focused HTTP 3 tests / 55 assertions PASS; targeted Digital Operations Playwright 1/1 PASS; affected digital regression 20 tests / 218 assertions PASS; full backend 241 tests / 7401 assertions PASS; full Playwright 8/8 PASS.
+- Final short gates PASS: git diff check, Composer validate --strict, Composer platform requirements, scoped Pint for Digital Operations services/controller/test/seeders/routes, backend TypeScript typecheck. Current production Vite build PASS with DigitalOperations included (577 transformed modules).
+- Verified scope includes services/packages/add-ons, consultation settings, lead ownership/follow-up and lead-to-project conversion, project/proposal/milestone lifecycle, approved monetary snapshot immutability, paid-history repricing rejection, integrity-checked private lead/project downloads without object-key leakage, mode-history preservation, aggregate-only conversion analytics and responsive Digital Operations UI.
+- Browser acceptance found only test/build-state issues after implementation: stale production bundle before DigitalOperations resolver inclusion, then textarea/proposal assertion locator mismatches. Fresh build plus contract-correct locators resolved them; no unresolved production defect remains. Evidence: docs/digital/MT-4.8_VERIFICATION.md. Next dependency-valid pending point: MT-4.7 - Data reset administration interface.
