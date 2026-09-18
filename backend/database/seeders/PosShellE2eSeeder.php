@@ -26,16 +26,27 @@ class PosShellE2eSeeder extends Seeder
             $mt43Role = $this->role('E2E MT43 Manager', 'e2e-mt43-manager', [
                 'shops.enter', 'shop.sales', 'shop.invoices', 'shop.warranty', 'shop.claims', 'reports.view', 'shop.documents.send',
             ]);
+            $platformRole = $this->role('E2E Platform Administrator', 'e2e-platform-administrator', [
+                'shops.enter',
+                'config.documents.manage', 'config.theme.manage', 'config.branding.manage', 'config.payments.manage',
+                'config.promotions.manage', 'config.loyalty.manage',
+                'admin.business-profile.manage', 'admin.integrations.manage',
+                'website.content.manage', 'website.publish', 'website.settings.manage', 'website.mode.preview', 'website.mode.publish',
+                'website.media.manage', 'website.theme.manage', 'website.branding.manage', 'website.navigation.manage', 'website.seo.manage',
+                'team-members.view', 'team-members.manage', 'team-members.roles.manage', 'team-members.full-access.assign',
+            ]);
 
             $sales = $this->member('E2E Salesperson', 'e2e-sales@example.invalid', 'Salesperson');
             $inventory = $this->member('E2E Inventory Manager', 'e2e-inventory@example.invalid', 'Inventory Manager');
             $operations = $this->member('E2E Operations Manager', 'e2e-operations@example.invalid', 'Operations Manager');
             $mt43 = $this->member('E2E MT43 Manager', 'e2e-mt43@example.invalid', 'MT43 Manager');
+            $platform = $this->member('E2E Platform Administrator', 'e2e-platform@example.invalid', 'Platform Administrator');
 
             $this->assign($sales, $salesRole, [$salesOutlet]);
             $this->assign($inventory, $inventoryRole, [$salesOutlet, $inventoryOutlet]);
             $this->assign($operations, $operationsRole, [$salesOutlet]);
             $this->assign($mt43, $mt43Role, [$salesOutlet]);
+            $this->assign($platform, $platformRole, [$salesOutlet]);
         });
     }
 
