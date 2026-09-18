@@ -72,7 +72,8 @@ export default function PosCustomerReportingWorkspace({ area }: { area: Area }) 
     return <div data-testid={'mt43-' + area} className="mt-6 grid min-w-0 gap-5">
         {message && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{message}</p>}
         {area === 'invoices' && <Invoices data={data} busy={busy} run={run} />}
-        {(area === 'warranty' || area === 'claims') && <Claims data={data} busy={busy} run={run} area={area} />}
+        {area === 'warranty' && <WarrantyHistory data={data} busy={busy} run={run} />}
+        {area === 'claims' && <Claims data={data} busy={busy} run={run} area={area} />}
         {area === 'reports' && <Reports data={data} busy={busy} run={run} from={from} to={to} setFrom={setFrom} setTo={setTo} reload={load} />}
     </div>;
 }
@@ -91,7 +92,16 @@ function Invoices({ data, busy, run }: { data: Data; busy: boolean; run: (task: 
     </>;
 }
 
-function Claims({ data, busy, run, area }: { data: Data; busy: boolean; run: (task: () => Promise<void>, reload?: boolean) => Promise<void>; area: 'warranty' | 'claims' }) {
+function WarrantyHistory({ data, busy, run }: { data: Data; busy: boolean; run: (task: () => Promise<void>, reload?: boolean) => Promise<void> }) {
+    const [selectedId, setSelectedId] = useState(data.claims[0]?.id ?? '');
+    const selected = data.claims.find((row) => row.id === selectedId);
+    return <>
+        <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Warranty Claim Receipts</h3><p className="mt-1 text-xs text-slate-500">Historical warranty receipts are outlet-scoped. Claim intake/lifecycle remains in Claims.</p><select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="mt-3 w-full min-w-0 rounded border p-2 text-sm"><option value="">Warranty claim</option>{data.claims.map((row) => <option key={row.id} value={row.id}>{row.number} · {row.product_name} · {row.status}</option>)}</select>{selected && <div className="mt-3 rounded bg-slate-50 p-3 text-sm"><p>{selected.number} · {selected.customer_name ?? '—'} · {selected.product_name}</p><p>{selected.invoice_number} · received {selected.received_at}</p></div>}</section>
+        {selected && <DocumentActions type="warranty" documentId={selected.id} canSend={data.can_send_documents} busy={busy} run={run} />}
+    </>;
+}
+
+function Claims({ data, busy, run, area: _area }: { data: Data; busy: boolean; run: (task: () => Promise<void>, reload?: boolean) => Promise<void>; area: 'claims' }) {
     const [selectedId, setSelectedId] = useState(data.claims[0]?.id ?? '');
     const [detail, setDetail] = useState<ClaimDetail | null>(null);
     const [saleId, setSaleId] = useState('');
@@ -112,7 +122,7 @@ function Claims({ data, busy, run, area }: { data: Data; busy: boolean; run: (ta
     } as Record<string,string[]>), []);
     const loadClaim = async (id: string) => { setSelectedId(id); setDetail(id ? await api<ClaimDetail>('/internal/admin/pos/customer-reporting/claims/' + id) : null); };
     return <>
-        <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">{area === 'warranty' ? 'Warranty intake' : 'Claim lifecycle'}</h3>
+        <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Claim lifecycle</h3>
             <div className="mt-3 grid gap-2 sm:grid-cols-2"><select value={saleId} onChange={(e) => { setSaleId(e.target.value); setUnitId(''); }} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Eligible sale occurrence</option>{data.sale_candidates.map((row) => <option key={row.sale_id} value={row.sale_id}>{row.invoice_number} · {row.product_name} · {row.customer_name ?? 'Walk-in'} · {row.warranty_type ?? 'no warranty'}</option>)}</select>{sale?.track_imei ? <select value={unitId} onChange={(e) => setUnitId(e.target.value)} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Sold unit</option>{sale.units.map((unit) => <option key={unit.id} value={unit.id}>{unit.code}</option>)}</select> : <input value="1" readOnly className="w-full min-w-0 rounded border bg-slate-50 p-2 text-sm" />}</div>
             <div className="mt-2 grid gap-2 sm:grid-cols-2"><textarea value={issue} onChange={(e) => setIssue(e.target.value)} placeholder="Issue description" rows={3} className="w-full min-w-0 rounded border p-2 text-sm" /><input value={receivedCondition} onChange={(e) => setReceivedCondition(e.target.value)} placeholder="Received condition" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={accessories} onChange={(e) => setAccessories(e.target.value)} placeholder="Accessories received" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={assigned} onChange={(e) => setAssigned(e.target.value)} placeholder="Assigned to" className="w-full min-w-0 rounded border p-2 text-sm" /></div>
             <button data-testid="claim-open" disabled={busy || !saleId || !issue || (sale?.track_imei === true && !unitId)} onClick={() => void run(async () => { const opened = await api<ClaimDetail>('/internal/admin/pos/customer-reporting/claims', { method: 'POST', body: JSON.stringify({ sale_id: saleId, stock_unit_id: unitId || null, quantity: 1, issue_description: issue, received_condition: receivedCondition || null, accessories_received: accessories || null, assigned_to: assigned || null, expected_completion_at: null }) }); await loadClaim(opened.claim_id); })} className="mt-3 rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">Open warranty claim</button>

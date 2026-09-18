@@ -23,14 +23,19 @@ class PosShellE2eSeeder extends Seeder
             $operationsRole = $this->role('E2E Operations Manager', 'e2e-operations-manager', [
                 'shops.enter', 'shop.cash', 'shop.cash.approve', 'shop.trade-in', 'shop.repairs', 'shop.payments.reconcile',
             ]);
+            $mt43Role = $this->role('E2E MT43 Manager', 'e2e-mt43-manager', [
+                'shops.enter', 'shop.sales', 'shop.invoices', 'shop.warranty', 'shop.claims', 'reports.view', 'shop.documents.send',
+            ]);
 
             $sales = $this->member('E2E Salesperson', 'e2e-sales@example.invalid', 'Salesperson');
             $inventory = $this->member('E2E Inventory Manager', 'e2e-inventory@example.invalid', 'Inventory Manager');
             $operations = $this->member('E2E Operations Manager', 'e2e-operations@example.invalid', 'Operations Manager');
+            $mt43 = $this->member('E2E MT43 Manager', 'e2e-mt43@example.invalid', 'MT43 Manager');
 
             $this->assign($sales, $salesRole, [$salesOutlet]);
             $this->assign($inventory, $inventoryRole, [$salesOutlet, $inventoryOutlet]);
             $this->assign($operations, $operationsRole, [$salesOutlet]);
+            $this->assign($mt43, $mt43Role, [$salesOutlet]);
         });
     }
 
