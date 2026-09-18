@@ -139,6 +139,12 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::post('/pos/stock-control/bulk/export', [PosStockControlController::class, 'bulkExport'])->defaults('identity_realm', 'admin')->name('admin.pos.stock-control.bulk.export');
     Route::get('/platform', [PlatformAdministrationController::class, 'page'])->defaults('identity_realm', 'admin')->name('admin.platform.page');
     Route::get('/platform/data', [PlatformAdministrationController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.platform.data');
+    Route::post('/platform/pos-config/{domain}/preview', [PlatformAdministrationController::class, 'posConfigurationPreview'])->whereIn('domain', ['documents', 'theme', 'branding'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.preview');
+    Route::post('/platform/pos-config/{domain}/draft', [PlatformAdministrationController::class, 'posConfigurationDraft'])->whereIn('domain', ['documents', 'theme', 'branding'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.draft');
+    Route::post('/platform/pos-config/revisions/{revision}/publish', [PlatformAdministrationController::class, 'posConfigurationPublish'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.publish');
+    Route::post('/platform/pos-config/revisions/{revision}/rollback', [PlatformAdministrationController::class, 'posConfigurationRollback'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.rollback');
+    Route::post('/platform/pos-config/branding/media', [PlatformAdministrationController::class, 'posBrandingMedia'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.branding.media');
+    Route::patch('/platform/business-profile', [PlatformAdministrationController::class, 'businessProfile'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.platform.business-profile');
     Route::post('/platform/website-mode/draft', [PlatformAdministrationController::class, 'modeDraft'])->defaults('identity_realm', 'admin')->name('admin.platform.mode.draft');
     Route::get('/platform/website-mode/{revision}/preview', [PlatformAdministrationController::class, 'modePreview'])->defaults('identity_realm', 'admin')->name('admin.platform.mode.preview');
     Route::post('/platform/website-mode/{revision}/publish', [PlatformAdministrationController::class, 'modePublish'])->defaults('identity_realm', 'admin')->name('admin.platform.mode.publish');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Business\BusinessProfile;
 use App\Cms\WebsiteCms;
 use App\Cms\WebsiteModePublication;
 use App\Documents\CanonicalDocuments;
@@ -12,6 +13,7 @@ use App\Loyalty\LoyaltyServices;
 use App\Models\Admin;
 use App\Models\Outlet;
 use App\Payments\PosPaymentOperations;
+use App\Pos\PosConfiguration;
 use App\Promotions\PromotionServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,6 +44,8 @@ final class PlatformAdministrationController extends Controller
         TeamMemberAdministration $team,
         IntegrationManager $integrations,
         PosPaymentOperations $payments,
+        PosConfiguration $posConfiguration,
+        BusinessProfile $businessProfile,
     ) {
         $actor = $this->actor();
         abort_unless($this->canEnter($actor), 403);
@@ -177,9 +181,48 @@ final class PlatformAdministrationController extends Controller
             'integrations' => $this->canIntegrations($actor) ? $integrations->statuses($actor) : [],
             'payment_destinations' => $outlet && $actor->hasPermission('config.payments.manage')
                 ? $payments->destinations($actor, $outlet, false) : [],
+            'pos_configuration' => $posConfiguration->catalogue($actor),
+            'business_profile' => $businessProfile->current(),
             'promotions' => $promotions,
             'loyalty' => $loyaltySafe,
         ]]);
+    }
+
+    public function posConfigurationPreview(Request $request, string $domain, PosConfiguration $service)
+    {
+        return response()->json(['data' => $service->preview($this->actor(), $domain, $request->input('settings', []))]);
+    }
+
+    public function posConfigurationDraft(Request $request, string $domain, PosConfiguration $service)
+    {
+        return response()->json(['data' => $service->draft($this->actor(), $domain, $request->input('settings', []))]);
+    }
+
+    public function posConfigurationPublish(int $revision, PosConfiguration $service)
+    {
+        return response()->json(['data' => $service->publish($this->actor(), $revision)]);
+    }
+
+    public function posConfigurationRollback(int $revision, PosConfiguration $service)
+    {
+        return response()->json(['data' => $service->rollback($this->actor(), $revision)]);
+    }
+
+    public function posBrandingMedia(Request $request, PosConfiguration $service)
+    {
+        $data = $request->validate([
+            'base64' => 'required|string|max:10485760', 'extension' => 'required|string|max:10',
+            'original_name' => 'required|string|max:255', 'alt_text' => 'nullable|string|max:500',
+        ]);
+
+        return response()->json(['data' => $service->uploadBranding(
+            $this->actor(), $data['base64'], $data['extension'], $data['original_name'], $data['alt_text'] ?? null,
+        )]);
+    }
+
+    public function businessProfile(Request $request, BusinessProfile $service)
+    {
+        return response()->json(['data' => $service->update($this->actor(), $request->all())]);
     }
 
     public function modeDraft(Request $request, WebsiteModePublication $service)
