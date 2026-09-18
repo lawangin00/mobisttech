@@ -59,7 +59,10 @@ Route::prefix('/api/v1')->middleware(['identity', 'identity.auth', 'throttle:api
     Route::post('/orders/{order}/payments/retry', [CustomerApiController::class, 'retryPayment'])->defaults('identity_realm', 'customer')->name('api.customer.payments.retry');
     Route::post('/payments/{payment}/initiate', [CustomerApiController::class, 'initiatePayment'])->defaults('identity_realm', 'customer')->name('api.customer.payments.initiate');
     Route::post('/project-milestones/pay', [CustomerApiController::class, 'milestone'])->defaults('identity_realm', 'customer')->name('api.customer.milestones.pay');
+    Route::get('/project-payment-channels', [CustomerApiController::class, 'projectPaymentChannels'])->defaults('identity_realm', 'customer')->name('api.customer.projects.payment-channels');
+    Route::get('/projects', [CustomerApiController::class, 'projects'])->defaults('identity_realm', 'customer')->name('api.customer.projects.index');
     Route::get('/projects/{project}', [CustomerApiController::class, 'project'])->defaults('identity_realm', 'customer')->name('api.customer.projects.show');
+    Route::post('/projects/{project}/files/reference', [CustomerApiController::class, 'projectReference'])->defaults('identity_realm', 'customer')->name('api.customer.projects.files.reference');
     Route::get('/projects/{project}/files/{file}', [CustomerApiController::class, 'projectFile'])->defaults('identity_realm', 'customer')->name('api.customer.projects.files');
     Route::get('/wishlist', [CustomerApiController::class, 'wishlist'])->defaults('identity_realm', 'customer')->name('api.customer.wishlist.index');
     Route::post('/wishlist/{product}', [CustomerApiController::class, 'saveWishlist'])->whereUuid('product')->defaults('identity_realm', 'customer')->name('api.customer.wishlist.store');

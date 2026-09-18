@@ -84,9 +84,40 @@ final class CustomerApiController extends Controller
         return $this->responses->private($result, 'milestone-payment.v1', 201);
     }
 
+    public function projects(ClientProjectServices $projects)
+    {
+        return $this->responses->private(['items' => $projects->customerProjects($this->customer())], 'client-projects.v1');
+    }
+
+    public function projectPaymentChannels(PaymentProviders $providers)
+    {
+        $items = array_values(array_filter(
+            $providers->checkoutChannels(),
+            fn (array $channel) => $channel['code'] !== 'cod',
+        ));
+
+        return $this->responses->private(['items' => $items], 'project-payment-channels.v1');
+    }
+
     public function project(ClientProjectServices $projects, string $project)
     {
         return $this->responses->private($projects->portal($this->customer(), $project), 'client-project.v1');
+    }
+
+    public function projectReference(Request $request, ClientProjectServices $projects, string $project)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'base64' => ['required', 'string', 'max:15728640'],
+        ]);
+        $contents = base64_decode($data['base64'], true);
+        abort_if($contents === false, 422, 'Private reference payload is not valid base64.');
+
+        return $this->responses->private(
+            $projects->uploadReference($this->customer(), $project, ['name' => $data['name'], 'contents' => $contents]),
+            'client-project-file.v1',
+            201,
+        );
     }
 
     public function projectFile(ClientProjectServices $projects, string $project, string $file)

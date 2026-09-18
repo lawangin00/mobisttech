@@ -43,9 +43,9 @@ Active stage: MT-5 - Next.js customer Website (In Progress)
 
 Last completed stage: MT-4 - React POS and administration
 
-Current In Progress point: None
+Current In Progress point: MT-5.5 - Client project portal and digital conversion journeys
 
-Status: MT-0 through MT-4 complete. MT-5 is in progress. 45/56 complete, 11 pending. MT-5.4 is Complete.
+Status: MT-0 through MT-4 complete. MT-5 is in progress. 45/56 complete, 11 pending. MT-5.5 is In Progress.
 
 Last completed point: MT-5.4 - Dynamic public content and digital solutions
 
@@ -396,7 +396,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-5.2 | Customer account, cart, orders and reviews | Completed |
 | MT-5.3 | Checkout and customer payment flows | Completed |
 | MT-5.4 | Dynamic public content and digital solutions | Complete |
-| MT-5.5 | Client project portal and digital conversion journeys | Pending |
+| MT-5.5 | Client project portal and digital conversion journeys | In Progress |
 | MT-6.1 | Canonical branding and runtime assets | Pending |
 | MT-6.2 | Canonical mobiST Control migration | Pending |
 | MT-6.3 | Windows operator and local integration acceptance | Pending |
@@ -982,3 +982,14 @@ No source-repository write, source-data migration, source runtime action, real p
 - Finalization Fence reached. MT-5.4 remains In Progress only because accepted settled performance evidence and final verification/ledger closure are pending; no current functional, regression, build, platform or residue defect is known.
 - MT-5.4 closure: Dynamic public content and digital solutions is Complete. Evidence: docs/website/MT-5.4_VERIFICATION.md and docs/website/MT-5.4_PERFORMANCE.md. Post-remediation production acceptance PASS: dedicated MT-5.4 functional 2/2; performance 1/1 with managed page LCP 1,360 ms, Digital Service LCP 1,240 ms and Software overview LCP 1,240 ms, all CLS 0 and max interaction 16 ms. Clean full backend remains 249 tests / 7,591 assertions PASS; default Playwright 9/9 PASS; full Website regression 8/8 PASS before the final MT-5.4-only request-deduplication optimization, with every changed route family re-exercised post-change. No unresolved MT-5.4 defect remains.
 - Next action: MT-5.4 is Complete. Await explicit Proceed/Y before starting MT-5.5 - Client project portal and digital conversion journeys.
+
+## MT-5.5 attempt tracking
+
+- Point started from clean synced commit b109a0b0803930b1a905365d253c18a6956f1c8e. Scope is private Customer project journeys, secure milestone payment continuation, private reference/delivery exchange, optional consultation continuity and privacy-conscious aggregate conversion evidence; external providers must remain inactive unless authentically configured.
+- Existing ClientProjectServices, OrderTransactions, PaymentProviders and Customer identity/session authorities are reused. Backend already enforces Customer project ownership, immutable approved/superseded proposal history, exact milestone schedules, milestone idempotency/replay/paid-history protection, private file integrity/ownership, historical project access across Website modes, and aggregate-only conversion reporting.
+- First slice in progress: Customer-owned project index/detail routes; private reference upload; external project-payment channel projection + milestone payment initiation; account project navigation and reusable project portal UI. Then deterministic API/browser acceptance across request/discussion/proposal/approved/in_progress/review/delivered/completed states, tamper/expiry/replay/file ownership/all-mode history, performance and closure gates.
+- First MT-5.5 implementation slice completed but not yet acceptance-closed: Customer-owned project index endpoint, private project detail endpoint reuse, non-COD project payment-channel projection, private reference upload endpoint, secure existing project-file download exposure, Customer proxy allowlist updates, account project cards, and `/account/projects/{project}` portal UI with proposal revision/milestone history, configured-provider milestone payment continuation, private file download/reference upload, and public project lifecycle history.
+- No parallel project/payment authority was introduced. The slice reuses ClientProjectServices ownership/history/file integrity rules, OrderTransactions milestone idempotency/ownership/expiry rules, PaymentProviders readiness and existing Customer identity/session/CSRF boundaries. External providers remain unavailable unless already authentically configured.
+- Short gates PASS: PHP syntax on ClientProjectServices/CustomerApiController/identity routes, scoped Pint PASS, Website typecheck/lint PASS and git diff check PASS. One localized React initial-refresh lint issue was corrected with the established zero-delay timer pattern; no backend/type error remains.
+- Incomplete MT-5.5 acceptance after the 9-minute Finalization Fence: focused Customer API ownership/list/upload/payment-channel tests; deterministic project browser fixtures covering request/discussion/proposal/approved/in_progress/review/delivered/completed; proposal expiry/tamper/replay; secure file cross-owner denial and reference/delivery exchange; milestone initiation/paid history with synthetic provider only; all-three-mode historical access; optional consultation continuity/conversion privacy checks; full regressions, production performance and closure evidence.
+- Next action: add focused MT-5.5 Customer API tests for project list/detail/reference upload/channel projection/milestone initiation ownership -> add deterministic Website client-project browser fixture/spec across lifecycle/history/files/payments/all modes -> then affected/full regressions and performance/closure. Do not start MT-6.1.

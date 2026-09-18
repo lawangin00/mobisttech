@@ -8,10 +8,15 @@ import { CustomerEngagementPanel } from "@/components/customer-engagement-panel"
 
 type Order = { id: string; number: string; status: string; fulfillment_status: string; payment_status: string; total: string; currency: string; created_at: string };
 type OrderPage = { items: Order[]; page: { has_more: boolean; next_cursor: string | null } };
+type ProjectSummary = {
+  public_id: string; reference: string; title: string; status: string; version: number; updated_at: string;
+  service: { slug: string | null; name: string | null };
+};
 
 export function CustomerAccountPanel() {
   const [account, setAccount] = useState<CustomerAccount | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
   const [snapshotReady, setSnapshotReady] = useState(false);
@@ -28,12 +33,14 @@ export function CustomerAccountPanel() {
       await customerRequest("wishlist/claim", { method: "POST", body: JSON.stringify({ guest_token: guestToken }) })
         .then(() => clearGuestOwnerToken()).catch(() => undefined);
     }
-    const [orderData, wishlist, reviews] = await Promise.all([
+    const [orderData, projectData, wishlist, reviews] = await Promise.all([
       customerRequest<OrderPage>("orders"),
+      customerRequest<{ items: ProjectSummary[] }>("projects").catch(() => ({ items: [] })),
       customerRequest<{ items: unknown[] }>("wishlist").catch(() => ({ items: [] })),
       customerRequest<{ items: unknown[] }>("reviews").catch(() => ({ items: [] })),
     ]);
     setOrders(orderData.items);
+    setProjects(projectData.items);
     setWishlistCount(wishlist.items.length);
     setReviewCount(reviews.items.length);
     setSnapshotReady(true);
@@ -89,7 +96,7 @@ export function CustomerAccountPanel() {
         }),
       });
       clearCustomerCsrf();
-      setAccount(null); setOrders([]); setWishlistCount(0); setReviewCount(0); setSnapshotReady(false);
+      setAccount(null); setOrders([]); setProjects([]); setWishlistCount(0); setReviewCount(0); setSnapshotReady(false);
       setMessage(result.message);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to change password.");
@@ -99,7 +106,7 @@ export function CustomerAccountPanel() {
   async function logout() {
     await customerRequest<{ message: string }>("auth/logout", { method: "POST", body: JSON.stringify({}) });
     clearCustomerCsrf();
-    setAccount(null); setOrders([]); setWishlistCount(0); setReviewCount(0); setSnapshotReady(false);
+    setAccount(null); setOrders([]); setProjects([]); setWishlistCount(0); setReviewCount(0); setSnapshotReady(false);
   }
 
   if (!account) return <div className="max-w-lg">
@@ -136,6 +143,7 @@ export function CustomerAccountPanel() {
       <p className="mt-3 text-sm text-slate-500">Customer session inactivity: {account.session_policy.inactivity_minutes ?? 120} minutes.</p>
     </section>
     <section><h2 className="text-xl font-bold">Orders</h2><div className="mt-3 space-y-3">{!snapshotReady ? <p className="text-slate-600">Loading orders…</p> : orders.length === 0 ? <p className="text-slate-600">No orders yet.</p> : orders.map((order) => <article key={order.id} className="rounded-2xl border bg-white p-4"><Link href={"/account/orders/" + order.id} className="font-semibold underline-offset-2 hover:underline">{order.number}</Link><p className="text-sm text-slate-600">{order.status} · {order.payment_status} · {order.currency} {order.total}</p></article>)}</div></section>
+    <section><h2 className="text-xl font-bold">Projects</h2><div className="mt-3 space-y-3">{!snapshotReady ? <p className="text-slate-600">Loading projects…</p> : projects.length === 0 ? <p className="text-slate-600">No client projects yet.</p> : projects.map((project) => <article key={project.public_id} className="rounded-2xl border bg-white p-4"><Link href={"/account/projects/" + project.public_id} className="font-semibold underline-offset-2 hover:underline">{project.title}</Link><p className="text-sm text-slate-600">{project.reference} · {project.status.replaceAll("_", " ")}</p>{project.service.name && <p className="mt-1 text-xs text-slate-500">{project.service.name}</p>}</article>)}</div></section>
     <section className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border bg-white p-4"><strong>Saved items</strong><p className="mt-1 text-2xl font-bold">{snapshotReady ? wishlistCount : "…"}</p></div><div className="rounded-2xl border bg-white p-4"><strong>Your reviews</strong><p className="mt-1 text-2xl font-bold">{snapshotReady ? reviewCount : "…"}</p></div></section>
     <section>
       <h2 className="text-xl font-bold">Change password</h2>

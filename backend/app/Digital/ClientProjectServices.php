@@ -264,6 +264,24 @@ final class ClientProjectServices
         return $this->filePayload($id);
     }
 
+    public function customerProjects(CustomerAccount $customer): array
+    {
+        abort_unless($customer->usable(), 404);
+        $this->capabilities->assertHistoricalAllowed('project.read');
+
+        return DB::table('client_projects as p')
+            ->leftJoin('digital_services as s', 's.id', '=', 'p.digital_service_id')
+            ->where('p.customer_account_id', $customer->id)
+            ->orderByDesc('p.updated_at')->orderByDesc('p.id')
+            ->get(['p.public_id', 'p.reference', 'p.title', 'p.status', 'p.version', 'p.updated_at',
+                's.slug as service_slug', 's.name as service_name'])
+            ->map(fn ($row) => [
+                'public_id' => $row->public_id, 'reference' => $row->reference, 'title' => $row->title,
+                'status' => $row->status, 'version' => (int) $row->version, 'updated_at' => $row->updated_at,
+                'service' => ['slug' => $row->service_slug, 'name' => $row->service_name],
+            ])->all();
+    }
+
     public function portal(CustomerAccount $customer, string $projectPublicId): array
     {
         $project = $this->ownedProject($customer, $projectPublicId);
