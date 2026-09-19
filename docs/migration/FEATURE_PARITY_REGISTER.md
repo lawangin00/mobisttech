@@ -211,7 +211,7 @@ Source coverage: 459 tracked files; 0 resolved routes. Target owner: brand canon
 
 ### C01 - Windows Control and developer launch tooling
 
-Source coverage: 28 tracked files; 0 resolved routes. Target owner: tools/mobist-control single Windows application. Gates: MT-6.2, MT-6.3. Target status: In Progress (MT-6.2 complete; MT-6.3 pending).
+Source coverage: 28 tracked files; 0 resolved routes. Target owner: tools/mobist-control single Windows application. Gates: MT-6.2, MT-6.3. Target status: Complete.
 
 **Preserve:** Preserve useful Start/Stop/Restart/Open/Status, LAN/QR, browser reuse and operator diagnostics; add required Start All/Stop All with current approved logo.
 

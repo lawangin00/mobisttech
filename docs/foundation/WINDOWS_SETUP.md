@@ -16,7 +16,7 @@ This runbook covers the isolated target foundation, not source-data or business-
 | TypeScript / Tailwind CSS | 5.9.3 / 4.3.3 |
 | Vite / Laravel Vite plugin / React plugin | 8.2.2 / 3.2.0 / 6.1.1 |
 
-Use PowerShell 7. The existing verified PHP executable is `C:\php\php.exe`; do not edit its configuration or the source project's separate PHP runtime. Composer's platform lock uses PHP 8.3.33. Both npm lockfiles record exact transitive versions, and the package manifests constrain Node/npm to the verified versions. Run `npm.cmd` on Windows to avoid execution-policy interception of `npm.ps1`.
+Use PowerShell 7 when it is available. The current Windows host does not expose `pwsh.exe` on PATH; the target lifecycle helpers used by this runbook have also been verified under Windows PowerShell 5.1, so `powershell -NoProfile -ExecutionPolicy Bypass -File <script>` is the supported local fallback. The existing verified PHP executable is `C:\php\php.exe`; do not edit its configuration or the source project's separate PHP runtime. Composer's platform lock uses PHP 8.3.33. Both npm lockfiles record exact transitive versions, and the package manifests constrain Node/npm to the verified versions. Run `npm.cmd` on Windows to avoid execution-policy interception of `npm.ps1`.
 
 Official references: [Laravel installation](https://laravel.com/framework/docs/13.x/installation), [Laravel starter stack](https://laravel.com/starter-kits), [Next.js installation](https://nextjs.org/docs/app/getting-started/installation), [MySQL Windows download](https://dev.mysql.com/downloads/mysql/8.4.html). This foundation uses the official Laravel 13.10.1 skeleton selectively, rather than importing an unrelated authentication starter kit over the approved source identity design.
 
