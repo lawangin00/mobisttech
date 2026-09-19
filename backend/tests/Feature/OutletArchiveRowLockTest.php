@@ -236,4 +236,194 @@ final class OutletArchiveRowLockTest extends TestCase
         }
     }
 
+    public function test_isolated_transfer_create_serializes_archived_destination_and_rejects_stale_retry(): void
+    {
+        // Synthetic two-outlet transfer service race: destination is archived only in the isolated
+        // transaction below. No actual product-bearing outlet, shipment or production archive occurs.
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test'
+            && (int) config('database.connections.mysql.port') === 13306, 403);
+        $tag = (string) Str::uuid();
+        $default = DB::getDefaultConnection();
+        $source = null;
+        $destination = null;
+        $actor = null;
+        $writer = null;
+        try {
+            $source = new Outlet;
+            $source->forceFill(['public_id' => (string) Str::uuid(),
+                'name' => 'D03 transfer source '.$tag, 'outlet_code' => '072',
+                'status' => false, 'version' => 1])->save();
+            $destination = new Outlet;
+            $destination->forceFill(['public_id' => (string) Str::uuid(),
+                'name' => 'D03 transfer destination '.$tag, 'outlet_code' => '073',
+                'status' => false, 'version' => 1])->save();
+            $actor = new \App\Models\Admin;
+            $actor->forceFill(['name' => 'D03 independent transfer actor',
+                'email' => 'd03-transfer-race-'.$tag.'@example.invalid',
+                'password' => 'not-a-live-password',
+                'permissions' => ['shops.enter', 'shop.transfers.dispatch']])->save();
+            $actor->shops()->attach($source);
+            $input = ['destination_outlet_id' => $destination->public_id,
+                'lines' => [['source_product_id' => (string) Str::uuid(),
+                    'destination_product_id' => (string) Str::uuid(), 'quantity' => 1]]];
+            config(['database.connections.d03_transfer_writer' => config('database.connections.mysql')]);
+            $writer = DB::connection('d03_transfer_writer');
+            $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
+            DB::connection('mysql')->beginTransaction();
+            try {
+                $locked = DB::connection('mysql')->table('outlets')->where('id', $destination->id)
+                    ->lockForUpdate()->firstOrFail();
+                $this->assertNull($locked->archived_at);
+                DB::connection('mysql')->table('outlets')->where('id', $destination->id)
+                    ->update(['archived_at' => now(), 'version' => 2]);
+                DB::setDefaultConnection('d03_transfer_writer');
+                $this->assertNull($writer->table('outlets')->where('id', $destination->id)->value('archived_at'));
+                $writerActor = \App\Models\Admin::on('d03_transfer_writer')->findOrFail($actor->id);
+                $writerSource = Outlet::on('d03_transfer_writer')->findOrFail($source->id);
+                $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                    $writerActor, 'shop.transfers.dispatch', $writerSource));
+                try {
+                    app(\App\Inventory\StockTransferOperations::class)->create(
+                        $writerActor, $writerSource, 'd03-transfer-wait-'.$tag, $input);
+                    $this->fail('Transfer create bypassed independent destination archive lock.');
+                } catch (QueryException $exception) {
+                    $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
+                } finally {
+                    DB::setDefaultConnection($default);
+                }
+                DB::connection('mysql')->commit();
+            } finally {
+                DB::setDefaultConnection($default);
+                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            }
+            $this->assertNotNull($destination->fresh()->archived_at);
+            DB::setDefaultConnection('d03_transfer_writer');
+            try {
+                app(\App\Inventory\StockTransferOperations::class)->create(
+                    $writerActor, $writerSource, 'd03-transfer-retry-'.$tag, $input);
+                $this->fail('Transfer create accepted a post-archive destination.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            } finally {
+                DB::setDefaultConnection($default);
+            }
+            $this->assertSame(0, DB::table('stock_transfers')
+                ->where('destination_outlet_id', $destination->id)->count());
+            $this->assertSame(0, DB::table('idempotency_requests')
+                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('operation', 'transfer.create')->where('key', 'like', 'd03-transfer-%'.$tag)->count());
+        } finally {
+            DB::setDefaultConnection($default);
+            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            if ($writer) { $writer->disconnect(); DB::purge('d03_transfer_writer'); }
+            if ($actor) {
+                DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
+                DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
+                DB::table('admins')->where('id', $actor->id)->delete();
+            }
+            foreach ([$source, $destination] as $outlet) {
+                if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
+                    ->where('name', 'like', 'D03 transfer %'.$tag)->delete(); }
+            }
+        }
+    }
+
+    public function test_isolated_transfer_receive_serializes_archived_source_and_rejects_stale_retry(): void
+    {
+        // A synthetic in-transit header suffices to exercise the real receive service's
+        // two-outlet gate; receipt/custody execution is intentionally never reached.
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test'
+            && (int) config('database.connections.mysql.port') === 13306, 403);
+        $tag = (string) Str::uuid();
+        $default = DB::getDefaultConnection();
+        $source = null;
+        $destination = null;
+        $actor = null;
+        $transferId = null;
+        $writer = null;
+        try {
+            $source = new Outlet;
+            $source->forceFill(['public_id' => (string) Str::uuid(),
+                'name' => 'D03 receipt source '.$tag, 'outlet_code' => '074',
+                'status' => false, 'version' => 1])->save();
+            $destination = new Outlet;
+            $destination->forceFill(['public_id' => (string) Str::uuid(),
+                'name' => 'D03 receipt destination '.$tag, 'outlet_code' => '075',
+                'status' => false, 'version' => 1])->save();
+            $actor = new \App\Models\Admin;
+            $actor->forceFill(['name' => 'D03 independent receipt actor',
+                'email' => 'd03-receipt-race-'.$tag.'@example.invalid',
+                'password' => 'not-a-live-password',
+                'permissions' => ['shops.enter', 'shop.transfers.receive']])->save();
+            $actor->shops()->attach($destination);
+            $transferPublic = (string) Str::uuid();
+            $transferId = DB::table('stock_transfers')->insertGetId([
+                'public_id' => $transferPublic, 'transfer_number' => 'D03-REC-'.Str::random(14),
+                'source_outlet_id' => $source->id, 'destination_outlet_id' => $destination->id,
+                'created_by_admin_id' => $actor->id, 'status' => 'in_transit', 'version' => 1]);
+            $input = ['transfer_version' => 1, 'lines' => [[
+                'line_id' => (string) Str::uuid(), 'receive_quantity' => 1, 'reject_quantity' => 0]]];
+            config(['database.connections.d03_transfer_receive_writer' => config('database.connections.mysql')]);
+            $writer = DB::connection('d03_transfer_receive_writer');
+            $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
+            DB::connection('mysql')->beginTransaction();
+            try {
+                $locked = DB::connection('mysql')->table('outlets')->where('id', $source->id)
+                    ->lockForUpdate()->firstOrFail();
+                $this->assertNull($locked->archived_at);
+                DB::connection('mysql')->table('outlets')->where('id', $source->id)
+                    ->update(['archived_at' => now(), 'version' => 2]);
+                DB::setDefaultConnection('d03_transfer_receive_writer');
+                $this->assertNull($writer->table('outlets')->where('id', $source->id)->value('archived_at'));
+                $writerActor = \App\Models\Admin::on('d03_transfer_receive_writer')->findOrFail($actor->id);
+                $writerDestination = Outlet::on('d03_transfer_receive_writer')->findOrFail($destination->id);
+                $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                    $writerActor, 'shop.transfers.receive', $writerDestination));
+                try {
+                    app(\App\Inventory\StockTransferOperations::class)->receive(
+                        $writerActor, $writerDestination, $transferPublic, 'd03-receipt-wait-'.$tag, $input);
+                    $this->fail('Transfer receive bypassed independent source archive lock.');
+                } catch (QueryException $exception) {
+                    $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
+                } finally {
+                    DB::setDefaultConnection($default);
+                }
+                DB::connection('mysql')->commit();
+            } finally {
+                DB::setDefaultConnection($default);
+                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            }
+            $this->assertNotNull($source->fresh()->archived_at);
+            DB::setDefaultConnection('d03_transfer_receive_writer');
+            try {
+                app(\App\Inventory\StockTransferOperations::class)->receive(
+                    $writerActor, $writerDestination, $transferPublic, 'd03-receipt-retry-'.$tag, $input);
+                $this->fail('Transfer receive accepted a post-archive source outlet.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            } finally {
+                DB::setDefaultConnection($default);
+            }
+            $this->assertSame('in_transit', DB::table('stock_transfers')->where('id', $transferId)->value('status'));
+            $this->assertSame(0, DB::table('stock_transfer_receipts')->where('stock_transfer_id', $transferId)->count());
+            $this->assertSame(0, DB::table('idempotency_requests')
+                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('operation', 'transfer.receive')->where('key', 'like', 'd03-receipt-%'.$tag)->count());
+        } finally {
+            DB::setDefaultConnection($default);
+            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            if ($writer) { $writer->disconnect(); DB::purge('d03_transfer_receive_writer'); }
+            if ($transferId) { DB::table('stock_transfers')->where('id', $transferId)->delete(); }
+            if ($actor) {
+                DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
+                DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
+                DB::table('admins')->where('id', $actor->id)->delete();
+            }
+            foreach ([$source, $destination] as $outlet) {
+                if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
+                    ->where('name', 'like', 'D03 receipt %'.$tag)->delete(); }
+            }
+        }
+    }
+
 }
