@@ -13,6 +13,13 @@ class SharedSchemaTest extends TestCase
 {
     use DatabaseTransactions;
 
+    public function test_mysql_session_enforces_utc_and_strict_sql(): void
+    {
+        $session = DB::selectOne('SELECT @@session.time_zone AS timezone, @@session.sql_mode AS sql_mode');
+        $this->assertSame('+00:00', $session->timezone);
+        $this->assertContains('STRICT_TRANS_TABLES', explode(',', $session->sql_mode));
+    }
+
     public function test_every_manifest_column_and_foreign_key_exists_on_mysql(): void
     {
         $spec = json_decode(file_get_contents(base_path('../docs/schema/TARGET_SCHEMA.json')), true, flags: JSON_THROW_ON_ERROR);
