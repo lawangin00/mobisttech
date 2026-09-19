@@ -16,11 +16,16 @@ async function login(page: import('@playwright/test').Page) {
     await page.goto('/account');
     await page.getByLabel('Email').fill('mt52-customer@example.invalid');
     await page.getByLabel('Password').fill('SyntheticPass123!');
+    const loginReady = page.waitForResponse((response) =>
+        response.url().endsWith('/api/customer/auth/login')
+        && response.request().method() === 'POST');
     const accountReady = page.waitForResponse((response) =>
         response.url().endsWith('/api/customer/account') && response.status() === 200);
     const projectsReady = page.waitForResponse((response) =>
         response.url().endsWith('/api/customer/projects') && response.status() === 200);
     await page.locator('form').getByRole('button', { name: 'Sign in', exact: true }).click();
+    const loginResponse = await loginReady;
+    expect(loginResponse.status(), 'customer login status').toBe(200);
     await Promise.all([accountReady, projectsReady]);
     await expect(page.getByRole('heading', { name: 'MT52 Customer' })).toBeVisible();
 }

@@ -148,9 +148,21 @@ jobs:
         working-directory: backend
         run: npx playwright test --config=playwright.config.ts
 
-      - name: Website production Playwright and performance budgets
+      - name: Website checkout Playwright
         working-directory: backend
-        run: npx playwright test --config=playwright.website.config.ts
+        run: npx playwright test tests/browser-website/checkout.spec.ts --config=playwright.website.config.ts
+
+      - name: Website customer and project Playwright
+        working-directory: backend
+        run: npx playwright test tests/browser-website/client-project.spec.ts tests/browser-website/customer.spec.ts --config=playwright.website.config.ts
+
+      - name: Website public content Playwright
+        working-directory: backend
+        run: npx playwright test tests/browser-website/brand-assets.spec.ts tests/browser-website/dynamic-content.spec.ts tests/browser-website/storefront.spec.ts --config=playwright.website.config.ts
+
+      - name: Website performance and request budgets
+        working-directory: backend
+        run: npx playwright test tests/browser-website/zz-ci-performance.spec.ts --config=playwright.website.config.ts
 
       - name: Final schema and cleanup gate
         working-directory: backend

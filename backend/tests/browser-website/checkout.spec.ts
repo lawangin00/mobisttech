@@ -20,12 +20,13 @@ async function login(page: import('@playwright/test').Page) {
     await page.getByLabel('Password').fill('SyntheticPass123!');
     const loginReady = page.waitForResponse((response) =>
         response.url().endsWith('/api/customer/auth/login')
-        && response.request().method() === 'POST'
-        && response.status() === 200);
+        && response.request().method() === 'POST');
     const accountReady = page.waitForResponse((response) =>
         response.url().endsWith('/api/customer/account') && response.status() === 200);
     await page.locator('form').getByRole('button', { name: 'Sign in', exact: true }).click();
-    await Promise.all([loginReady, accountReady]);
+    const loginResponse = await loginReady;
+    expect(loginResponse.status(), 'customer login status').toBe(200);
+    await accountReady;
     await expect(page.getByRole('heading', { name: 'MT52 Customer' })).toBeVisible();
 }
 
