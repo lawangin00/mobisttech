@@ -179,6 +179,17 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
     const policyHistory = page.getByRole('heading', { name: 'Policy revisions' }).locator('xpath=ancestor::section[1]');
     await policyHistory.getByRole('button', { name: 'Publish' }).click();
     await expect.poll(() => calls.some((call) => call.path.endsWith('/policies/21/publish'))).toBe(true);
+    // A newly saved unreviewed policy draft cannot be presented as publish-ready.
+    data.policy_history[0].approval_state = 'draft';
+    data.policy_history[0].factual_review_state = 'pending';
+    await page.reload();
+    await page.getByRole('button', { name: 'Content', exact: true }).click();
+    await expect(policyHistory.getByRole('button', { name: 'Publish' })).toBeDisabled();
+    data.policy_history[0].approval_state = 'owner_approved';
+    data.policy_history[0].factual_review_state = 'verified';
+    await page.reload();
+    await page.getByRole('button', { name: 'Content', exact: true }).click();
+    await expect(policyHistory.getByRole('button', { name: 'Publish' })).toBeEnabled();
 
     await page.getByRole('button', { name: 'POS configuration' }).click();
     const documents = page.getByRole('heading', { name: 'POS document & output defaults' }).locator('xpath=ancestor::section[1]');
