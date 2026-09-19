@@ -169,6 +169,68 @@ class PosCustomerReportingInterfaceTest extends TestCase
         $this->send($warrantyClient, 'GET', '/internal/admin/pos/customer-reporting/claims/'.$claimId)->assertForbidden();
     }
 
+    public function test_portal_preferences_drive_outlet_scoped_invoice_and_claim_page_search_beyond_100_rows(): void
+    {
+        [$sale, $product] = $this->saleWithPayments('history@example.invalid');
+        $original = (array) DB::table('invoices')->where('public_id', $sale['invoice_id'])->firstOrFail();
+        $base = $original; unset($base['id']);
+        $invoices = []; $claims = [];
+        for ($n = 1; $n <= 125; $n++) {
+            $invoice = [...$base, 'public_id' => (string) Str::uuid(), 'invoice_number' => sprintf('MT75-HISTORY-%03d', $n),
+                'customer_name' => sprintf('History Customer %03d', $n)];
+            $invoiceId = DB::table('invoices')->insertGetId($invoice);
+            $invoices[] = $invoiceId;
+            $claims[] = ['product_id' => $product->id, 'invoice_id' => $invoiceId,
+                'outlet_id' => $this->outlet->id, 'quantity' => 1, 'public_id' => (string) Str::uuid(),
+                'claim_number' => sprintf('MT75-CLAIM-%03d', $n), 'status' => 'received', 'assigned_to' => 'Test bench'];
+        }
+        DB::table('claims')->insert($claims);
+        $other = new \App\Models\Outlet;
+        $other->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Other synthetic outlet', 'outlet_code' => '089'])->save();
+        DB::table('invoices')->insert([...$base, 'outlet_id' => $other->id,
+            'public_id' => (string) Str::uuid(), 'invoice_number' => 'MT75-HISTORY-OTHER',
+            'customer_name' => 'History Customer 120']);
+        $client = $this->authenticatedClient($this->actor);
+        $baseUrl = '/internal/admin/pos/customer-reporting/';
+        $first = $this->send($client, 'GET', $baseUrl.'invoices')->assertOk();
+        $first->assertJsonPath('data.pagination.total', 126)->assertJsonPath('data.pagination.per_page', 15)
+            ->assertJsonPath('data.pagination.pages', 9)->assertJsonCount(15, 'data.invoices');
+        $this->send($client, 'GET', $baseUrl.'invoices?page=9')->assertOk()
+            ->assertJsonPath('data.pagination.page', 9)->assertJsonCount(6, 'data.invoices');
+
+        $found = $this->send($client, 'GET', $baseUrl.'invoices?q=History%20Customer%20120&category=customer_name')->assertOk();
+        $found->assertJsonPath('data.pagination.total', 1)->assertJsonPath('data.invoices.0.number', 'MT75-HISTORY-120');
+        $this->send($client, 'GET', $baseUrl.'invoices?q=History%20Customer%20120&category=all')->assertOk()
+            ->assertJsonPath('data.pagination.total', 1);
+        $this->send($client, 'GET', $baseUrl.'invoices?q='.rawurlencode($product->name).'&category=item')->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)->assertJsonPath('data.invoices.0.id', $sale['invoice_id']);
+        $this->send($client, 'GET', $baseUrl.'invoices?q=NO-SUCH-IMEI&category=imei')->assertOk()
+            ->assertJsonPath('data.pagination.total', 0);
+        $this->send($client, 'GET', $baseUrl.'invoices?category=invalid')->assertUnprocessable();
+        $this->send($client, 'GET', $baseUrl.'invoices?outlet=089')->assertUnprocessable();
+        $this->send($client, 'GET', $baseUrl.'invoices?page=0')->assertUnprocessable();
+        $this->send($client, 'GET', $baseUrl.'claims')->assertOk()
+            ->assertJsonPath('data.pagination.total', 125)->assertJsonPath('data.pagination.pages', 9)
+            ->assertJsonCount(15, 'data.claims');
+        $this->send($client, 'GET', $baseUrl.'claims?page=9')->assertOk()
+            ->assertJsonPath('data.pagination.page', 9)->assertJsonCount(5, 'data.claims');
+        $this->send($client, 'GET', $baseUrl.'claims?q=MT75-CLAIM-120&category=claim')->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)->assertJsonPath('data.claims.0.number', 'MT75-CLAIM-120');
+        $this->send($client, 'GET', $baseUrl.'claims?q=MT75-CLAIM-120&category=all')->assertOk()
+            ->assertJsonPath('data.pagination.total', 1);
+        foreach (['invoice_page_length' => '50', 'claims_page_length' => '25',
+            'invoice_search_category' => 'customer_name', 'claims_search_category' => 'claim'] as $key => $value) {
+            DB::table('pos_settings')->insert(['key' => 'portal.'.$key, 'value' => $value,
+                'group' => 'portal', 'label' => $key, 'input_type' => 'select', 'sort_order' => 200]);
+        }
+        $this->send($client, 'GET', $baseUrl.'invoices')->assertOk()
+            ->assertJsonPath('data.pagination.per_page', 50)->assertJsonPath('data.pagination.category', 'customer_name')
+            ->assertJsonPath('data.pagination.pages', 3)->assertJsonCount(50, 'data.invoices');
+        $this->send($client, 'GET', $baseUrl.'claims')->assertOk()
+            ->assertJsonPath('data.pagination.per_page', 25)->assertJsonPath('data.pagination.category', 'claim')
+            ->assertJsonPath('data.pagination.pages', 5)->assertJsonCount(25, 'data.claims');
+    }
+
     private function saleWithPayments(?string $email, bool $warranty = false): array
     {
         $product = $this->product();

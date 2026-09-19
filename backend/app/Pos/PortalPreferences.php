@@ -53,6 +53,11 @@ final class PortalPreferences
         return $values;
     }
 
+    public function catalogueOptions(): array
+    {
+        return self::OPTIONS;
+    }
+
     public function catalogue(Admin $actor): array
     {
         $this->authorize($actor);

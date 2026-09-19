@@ -6,6 +6,7 @@ use App\Documents\CanonicalDocuments;
 use App\Identity\Access;
 use App\Models\Admin;
 use App\Models\Outlet;
+use App\Pos\PosHistoryListing;
 use App\Reporting\OperationalReports;
 use App\Warranty\ClaimOperations;
 use Illuminate\Http\Request;
@@ -25,12 +26,13 @@ final class PosCustomerReportingController extends Controller
         $claims = [];
         $saleCandidates = [];
         $report = null;
+        $pagination = null;
 
         if ($area === 'invoices') {
-            $invoices = DB::table('invoices')->where('outlet_id', $outlet->id)->orderByDesc('id')->limit(100)
-                ->get(['public_id', 'invoice_number', 'customer_id', 'customer_name', 'customer_phone', 'customer_email',
-                    'customer_cnic', 'salesperson_name', 'final_bill', 'currency', 'created_at'])
-                ->map(fn ($row) => [
+            $listing = app(PosHistoryListing::class)->page($request, 'invoices',
+                DB::table('invoices as i')->where('i.outlet_id', $outlet->id));
+            $pagination = $listing['pagination'];
+            $invoices = collect($listing['rows'])->map(fn ($row) => [
                     'id' => $row->public_id, 'number' => $row->invoice_number, 'customer_id' => $row->customer_id,
                     'customer_name' => $row->customer_name, 'customer_phone' => $row->customer_phone,
                     'customer_email' => $row->customer_email, 'customer_cnic' => $row->customer_cnic,
@@ -53,13 +55,18 @@ final class PosCustomerReportingController extends Controller
         }
 
         if (in_array($area, ['warranty', 'claims'], true)) {
-            $claims = DB::table('claims as c')->join('invoices as i', 'i.id', '=', 'c.invoice_id')
+            $claimQuery = DB::table('claims as c')->join('invoices as i', 'i.id', '=', 'c.invoice_id')
                 ->join('products as p', 'p.id', '=', 'c.product_id')->where('c.outlet_id', $outlet->id)
-                ->orderByDesc('c.id')->limit(100)
-                ->get(['c.public_id', 'c.claim_number', 'c.status', 'c.version', 'c.quantity', 'c.received_at',
-                    'c.expected_completion_at', 'i.public_id as invoice_id', 'i.invoice_number',
-                    'i.customer_name', 'i.customer_phone', 'p.name as product_name'])
-                ->map(fn ($row) => [
+                ->whereColumn('i.outlet_id', 'c.outlet_id')->whereColumn('p.outlet_id', 'c.outlet_id');
+            if ($area === 'claims') {
+                $listing = app(PosHistoryListing::class)->page($request, 'claims', $claimQuery);
+                $pagination = $listing['pagination'];
+                $claimRows = collect($listing['rows']);
+            } else {
+                $claimRows = $claimQuery->orderByDesc('c.id')->limit(100)->get(['c.*', 'i.public_id as invoice_id',
+                    'i.invoice_number', 'i.customer_name', 'i.customer_phone', 'p.name as product_name']);
+            }
+            $claims = $claimRows->map(fn ($row) => [
                     'id' => $row->public_id, 'number' => $row->claim_number, 'status' => $row->status,
                     'version' => (int) $row->version, 'quantity' => (int) $row->quantity,
                     'received_at' => $row->received_at, 'expected_completion_at' => $row->expected_completion_at,
@@ -99,7 +106,7 @@ final class PosCustomerReportingController extends Controller
             'area' => $area, 'outlet' => ['id' => $outlet->public_id, 'name' => $outlet->name],
             'can_send_documents' => app(Access::class)->allows($actor, 'shop.documents.send', $outlet),
             'invoices' => $invoices, 'customers' => $customers, 'claims' => $claims,
-            'sale_candidates' => $saleCandidates, 'report' => $report,
+            'sale_candidates' => $saleCandidates, 'report' => $report, 'pagination' => $pagination,
         ]]);
     }
 

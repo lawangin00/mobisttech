@@ -1,0 +1,34 @@
+import {execFileSync} from 'node:child_process';
+import {expect,test} from '@playwright/test';
+
+ test('real owner-scoped invoice history search and pagination survive more than 100 records',async ({page})=>{
+    execFileSync('php',['artisan','db:seed','--class=Database\\Seeders\\PosHistoryE2eSeeder','--env=testing','--force'],{cwd:process.cwd(),stdio:'inherit'});
+    await page.goto('/internal/admin/pos/login');
+    await page.getByTestId('login-email').fill('e2e-history@example.invalid');
+    await page.getByTestId('login-password').fill('SyntheticPass123!');
+    await page.getByTestId('login-submit').click();
+    await page.waitForURL('**/internal/admin/pos');
+    await page.goto('/internal/admin/pos/workspace/invoices');
+    await expect(page.getByTestId('mt43-invoices')).toBeVisible();
+    await expect(page.getByTestId('history-total')).toContainText('122 records');
+    await expect(page.getByTestId('history-total')).toContainText('15 per page');
+    await expect(page.getByTestId('history-total')).toContainText('1/9');
+    await page.getByTestId('history-next').click();
+    await expect(page.getByTestId('history-total')).toContainText('2/9');
+    await page.getByTestId('history-search').fill('MT75 Synthetic Customer 001');
+    await page.getByTestId('history-category').selectOption('customer_name');
+    await page.getByTestId('history-apply').click();
+    await expect(page.getByTestId('history-total')).toContainText('1 records');
+    await expect(page.getByTestId('history-total')).toContainText('1/1');
+    await expect(page.getByTestId('mt43-invoices').locator('option').filter({hasText:'MT75-HIST-001'})).toHaveCount(1);
+    await page.goto('/internal/admin/pos/workspace/claims');
+    await expect(page.getByTestId('mt43-claims')).toBeVisible();
+    await expect(page.getByTestId('history-total')).toContainText('0 records');
+    await expect(page.getByTestId('history-total')).toContainText('15 per page');
+    await page.getByTestId('history-category').selectOption('claim');
+    await page.getByTestId('history-search').fill('MT75-NOT-FOUND');
+    await page.getByTestId('history-apply').click();
+    await expect(page.getByTestId('history-total')).toContainText('0 records');
+    expect(await page.getByTestId('history-prev').isDisabled()).toBe(true);
+    expect(await page.getByTestId('history-next').isDisabled()).toBe(true);
+});

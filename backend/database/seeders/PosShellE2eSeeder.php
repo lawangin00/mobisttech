@@ -56,11 +56,13 @@ class PosShellE2eSeeder extends Seeder
             $owner = $this->member('E2E Protected Owner', 'e2e-protected-owner@example.invalid', 'Protected Owner');
             $auditOwner = $this->member('E2E Audit Owner', 'e2e-audit-owner@example.invalid', 'Audit Owner');
             $prefOwner = $this->member('E2E Portal Preference Owner', 'e2e-pref-owner@example.invalid', 'Preference Owner');
+            $history = $this->member('E2E History Operator', 'e2e-history@example.invalid', 'History Operator');
 
             $this->assign($sales, $salesRole, [$salesOutlet]);
             $this->assign($inventory, $inventoryRole, [$salesOutlet, $inventoryOutlet]);
             $this->assign($operations, $operationsRole, [$salesOutlet]);
             $this->assign($mt43, $mt43Role, [$salesOutlet]);
+            $this->assign($history, $mt43Role, [$salesOutlet]);
             $this->assign($platform, $platformRole, [$salesOutlet]);
             $this->assign($digital, $digitalRole, [$salesOutlet]);
             $this->assign($reset, $resetRole, [$salesOutlet]);

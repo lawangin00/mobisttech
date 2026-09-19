@@ -15,7 +15,8 @@ type Report = {
     };
     activity: Record<string, number>;
 };
-type Data = { area: Area; outlet: { id: string; name: string }; can_send_documents: boolean; invoices: Invoice[]; customers: Customer[]; claims: ClaimRow[]; sale_candidates: SaleCandidate[]; report: Report | null };
+type Paging = {page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean};
+type Data = { area: Area; outlet: { id: string; name: string }; can_send_documents: boolean; invoices: Invoice[]; customers: Customer[]; claims: ClaimRow[]; sale_candidates: SaleCandidate[]; report: Report | null; pagination: Paging | null };
 type ClaimDetail = Record<string, unknown> & { claim_id: string; claim_number: string; status: string; invoice_id: string; invoice_number: string; activity_log: Array<Record<string, unknown>>; warranty: Record<string, unknown> };
 type DocRender = { document_type: string; format: string; filename: string; document_sha256: string; html?: string; pdf_base64?: string; action?: string };
 type EmailDraft = DocRender & { to: string; subject: string; message: string };
@@ -57,9 +58,14 @@ export default function PosCustomerReportingWorkspace({ area }: { area: Area }) 
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
     const [from, setFrom] = useState(''); const [to, setTo] = useState('');
-    const load = async () => {
-        const q = area === 'reports' ? '?' + new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) }).toString() : '';
-        setData(await api<Data>('/internal/admin/pos/customer-reporting/' + area + q));
+    const [query, setQuery] = useState(''); const [category, setCategory] = useState('');
+    const [filter, setFilter] = useState({q:'',category:'',page:1});
+    const load = async (next = filter) => {
+        const q = area === 'reports' ? '?' + new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) }).toString()
+            : (area === 'invoices' || area === 'claims') ? '?' + new URLSearchParams({q:next.q,...(next.category?{category:next.category}:{}),page:String(next.page)}).toString() : '';
+        const result = await api<Data>('/internal/admin/pos/customer-reporting/' + area + q);
+        setData(result); setFilter(next);
+        if(result.pagination){setQuery(next.q);setCategory(result.pagination.category);}
     };
     useEffect(() => { void load(); }, [area]);
     const run = async (task: () => Promise<void>, reload = true) => {
@@ -70,6 +76,7 @@ export default function PosCustomerReportingWorkspace({ area }: { area: Area }) 
     };
     if (!data) return <div className="mt-6 rounded-2xl border bg-slate-50 p-5 text-sm">Loading…</div>;
     return <div data-testid={'mt43-' + area} className="mt-6 grid min-w-0 gap-5">
+        {data.pagination && <section data-testid="history-controls" className="rounded-xl border bg-white p-3"><form className="flex flex-wrap items-center gap-2" onSubmit={(event)=>{event.preventDefault();void run(()=>load({q:query.trim(),category,page:1}),false);}}><input data-testid="history-search" autoFocus={data.pagination.auto_focus_search} value={query} onChange={(event)=>setQuery(event.target.value)} maxLength={100} aria-label="Search history" className="min-w-0 flex-1 rounded border p-2 text-sm" placeholder="Search history"/><select data-testid="history-category" aria-label="Search category" className="rounded border p-2 text-sm" value={category} onChange={(event)=>setCategory(event.target.value)}>{data.pagination.options.map((item)=><option key={item} value={item}>{item.replaceAll('_',' ')}</option>)}</select><button data-testid="history-apply" disabled={busy} className="rounded border p-2 text-sm" type="submit">Search</button></form><div className="mt-2 flex flex-wrap items-center gap-2 text-xs"><span data-testid="history-total">{data.pagination.total} records · {data.pagination.per_page} per page · {data.pagination.page}/{data.pagination.pages}</span><button data-testid="history-prev" className="rounded border px-2 py-1 disabled:opacity-40" disabled={busy||data.pagination.page<=1} onClick={()=>void run(()=>load({...filter,page:data.pagination!.page-1}),false)}>Previous</button><button data-testid="history-next" className="rounded border px-2 py-1 disabled:opacity-40" disabled={busy||data.pagination.page>=data.pagination.pages} onClick={()=>void run(()=>load({...filter,page:data.pagination!.page+1}),false)}>Next</button></div></section>}
         {message && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{message}</p>}
         {area === 'invoices' && <Invoices data={data} busy={busy} run={run} />}
         {area === 'warranty' && <WarrantyHistory data={data} busy={busy} run={run} />}
@@ -81,14 +88,14 @@ export default function PosCustomerReportingWorkspace({ area }: { area: Area }) 
 function Invoices({ data, busy, run }: { data: Data; busy: boolean; run: (task: () => Promise<void>, reload?: boolean) => Promise<void> }) {
     const [invoiceId, setInvoiceId] = useState(data.invoices[0]?.id ?? '');
     const [customerId, setCustomerId] = useState('');
-    const selected = data.invoices.find((row) => row.id === invoiceId);
+    const selected = data.invoices.find((row) => row.id === invoiceId) ?? data.invoices[0];
     const customer = data.customers.find((row) => row.id === customerId);
     return <>
         <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Customers & invoice history</h3>
             <div className="mt-3 grid gap-3 lg:grid-cols-2"><div><select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Customer history</option>{data.customers.map((row) => <option key={row.id} value={row.id}>{row.name} · {row.mobile ?? row.email ?? 'no contact'}</option>)}</select>{customer && <div className="mt-2 rounded bg-slate-50 p-3 text-sm"><p><strong>{customer.name}</strong> · {customer.mobile ?? '—'} · {customer.email ?? '—'}</p><div className="mt-2 grid gap-1">{customer.invoices.map((row) => <button key={row.id} onClick={() => setInvoiceId(row.id)} className="rounded border bg-white p-2 text-left text-xs">{row.number} · PKR {row.final_bill} · {row.created_at}</button>)}</div></div>}</div>
-            <div><select value={invoiceId} onChange={(e) => setInvoiceId(e.target.value)} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Invoice</option>{data.invoices.map((row) => <option key={row.id} value={row.id}>{row.number} · {row.customer_name ?? 'Walk-in'} · PKR {row.final_bill}</option>)}</select>{selected && <div className="mt-2 rounded bg-slate-50 p-3 text-sm"><p>{selected.customer_name ?? 'Walk-in'} · {selected.customer_phone ?? '—'} · {selected.customer_email ?? '—'}</p><p>{selected.salesperson_name ?? '—'} · {selected.created_at}</p></div>}</div></div>
+            <div><select value={selected?.id ?? ''} onChange={(e) => setInvoiceId(e.target.value)} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Invoice</option>{data.invoices.map((row) => <option key={row.id} value={row.id}>{row.number} · {row.customer_name ?? 'Walk-in'} · PKR {row.final_bill}</option>)}</select>{selected && <div className="mt-2 rounded bg-slate-50 p-3 text-sm"><p>{selected.customer_name ?? 'Walk-in'} · {selected.customer_phone ?? '—'} · {selected.customer_email ?? '—'}</p><p>{selected.salesperson_name ?? '—'} · {selected.created_at}</p></div>}</div></div>
         </section>
-        {selected && <DocumentActions type="invoice" documentId={selected.id} canSend={data.can_send_documents} busy={busy} run={run} />}
+        {selected && <DocumentActions key={selected.id} type="invoice" documentId={selected.id} canSend={data.can_send_documents} busy={busy} run={run} />}
     </>;
 }
 
@@ -97,7 +104,7 @@ function WarrantyHistory({ data, busy, run }: { data: Data; busy: boolean; run: 
     const selected = data.claims.find((row) => row.id === selectedId);
     return <>
         <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Warranty Claim Receipts</h3><p className="mt-1 text-xs text-slate-500">Historical warranty receipts are outlet-scoped. Claim intake/lifecycle remains in Claims.</p><select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="mt-3 w-full min-w-0 rounded border p-2 text-sm"><option value="">Warranty claim</option>{data.claims.map((row) => <option key={row.id} value={row.id}>{row.number} · {row.product_name} · {row.status}</option>)}</select>{selected && <div className="mt-3 rounded bg-slate-50 p-3 text-sm"><p>{selected.number} · {selected.customer_name ?? '—'} · {selected.product_name}</p><p>{selected.invoice_number} · received {selected.received_at}</p></div>}</section>
-        {selected && <DocumentActions type="warranty" documentId={selected.id} canSend={data.can_send_documents} busy={busy} run={run} />}
+        {selected && <DocumentActions key={selected.id} type="warranty" documentId={selected.id} canSend={data.can_send_documents} busy={busy} run={run} />}
     </>;
 }
 
@@ -120,6 +127,7 @@ function Claims({ data, busy, run, area: _area }: { data: Data; busy: boolean; r
         replaced: ['ready_for_collection'], rejected: ['ready_for_collection','closed'], ready_for_collection: ['delivered'],
         delivered: ['closed'], closed: [],
     } as Record<string,string[]>), []);
+    useEffect(() => { setSelectedId(''); setDetail(null); }, [data.pagination?.page, data.pagination?.q, data.pagination?.category]);
     const loadClaim = async (id: string) => { setSelectedId(id); setDetail(id ? await api<ClaimDetail>('/internal/admin/pos/customer-reporting/claims/' + id) : null); };
     return <>
         <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Claim lifecycle</h3>
@@ -127,12 +135,12 @@ function Claims({ data, busy, run, area: _area }: { data: Data; busy: boolean; r
             <div className="mt-2 grid gap-2 sm:grid-cols-2"><textarea value={issue} onChange={(e) => setIssue(e.target.value)} placeholder="Issue description" rows={3} className="w-full min-w-0 rounded border p-2 text-sm" /><input value={receivedCondition} onChange={(e) => setReceivedCondition(e.target.value)} placeholder="Received condition" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={accessories} onChange={(e) => setAccessories(e.target.value)} placeholder="Accessories received" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={assigned} onChange={(e) => setAssigned(e.target.value)} placeholder="Assigned to" className="w-full min-w-0 rounded border p-2 text-sm" /></div>
             <button data-testid="claim-open" disabled={busy || !saleId || !issue || (sale?.track_imei === true && !unitId)} onClick={() => void run(async () => { const opened = await api<ClaimDetail>('/internal/admin/pos/customer-reporting/claims', { method: 'POST', body: JSON.stringify({ sale_id: saleId, stock_unit_id: unitId || null, quantity: 1, issue_description: issue, received_condition: receivedCondition || null, accessories_received: accessories || null, assigned_to: assigned || null, expected_completion_at: null }) }); await loadClaim(opened.claim_id); })} className="mt-3 rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">Open warranty claim</button>
         </section>
-        <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Historical claims</h3><select value={selectedId} onChange={(e) => void loadClaim(e.target.value)} className="mt-3 w-full min-w-0 rounded border p-2 text-sm"><option value="">Claim</option>{data.claims.map((row) => <option key={row.id} value={row.id}>{row.number} · {row.product_name} · {row.status}</option>)}</select>
+        <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Historical claims</h3><select value={data.claims.some((row)=>row.id===selectedId)?selectedId:''} onChange={(e) => void loadClaim(e.target.value)} className="mt-3 w-full min-w-0 rounded border p-2 text-sm"><option value="">Claim</option>{data.claims.map((row) => <option key={row.id} value={row.id}>{row.number} · {row.product_name} · {row.status}</option>)}</select>
             {detail && <div className="mt-3 grid gap-3"><div className="rounded bg-slate-50 p-3 text-sm"><p>{String(detail.claim_number)} · <strong>{String(detail.status)}</strong> · {String(detail.invoice_number)}</p><p>{String(detail.customer_name ?? '')} · {String(detail.product_name ?? '')}</p></div>
             {(transitions[String(detail.status)] ?? []).length > 0 && <div className="grid gap-2 sm:grid-cols-4"><select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Next status</option>{(transitions[String(detail.status)] ?? []).map((value) => <option key={value} value={value}>{value}</option>)}</select><input value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} placeholder="Diagnosis" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={resolution} onChange={(e) => setResolution(e.target.value)} placeholder="Resolution" className="w-full min-w-0 rounded border p-2 text-sm" /><button disabled={busy || !status} onClick={() => void run(async () => { const updated = await api<ClaimDetail>('/internal/admin/pos/customer-reporting/claims/' + detail.claim_id, { method: 'POST', body: JSON.stringify({ status, assigned_to: assigned || null, diagnosis: diagnosis || null, resolution: resolution || null, internal_notes: null, expected_completion_at: null, customer_satisfied: null, follow_up_required: false, follow_up_at: null, follow_up_notes: null }) }); setDetail(updated); setStatus(''); })} className="rounded border px-3 py-2 text-sm">Update status</button></div>}
             <details className="rounded border p-3"><summary className="cursor-pointer text-sm font-semibold">Warranty & activity history</summary><pre className="mt-2 max-h-64 max-w-full overflow-auto rounded bg-slate-950 p-3 text-xs text-white">{JSON.stringify({ warranty: detail.warranty, activity: detail.activity_log }, null, 2)}</pre></details></div>}
         </section>
-        {detail && <DocumentActions type="warranty" documentId={detail.claim_id} canSend={data.can_send_documents} busy={busy} run={run} />}
+        {detail && <DocumentActions key={detail.claim_id} type="warranty" documentId={detail.claim_id} canSend={data.can_send_documents} busy={busy} run={run} />}
     </>;
 }
 
