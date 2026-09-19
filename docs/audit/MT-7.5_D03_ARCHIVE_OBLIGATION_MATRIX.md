@@ -1,0 +1,18 @@
+# MT-7.5 / 06-P01 / D03 â€” archival obligation matrix (20-Sep-2026)
+
+Owner decision D03=B authorizes history-preserving, audited, read-only archival after tests and migration checks. This matrix is a technical acceptance boundary, not authority to archive any real outlet. Current scope: synthetic data only.
+
+| Record family | Current policy | Required proof before expanding archive eligibility |
+| --- | --- | --- |
+| Closed cash sessions and reviewed cash entries | Allowed to remain in archive; never deleted or reassigned. | Protected read-only summary, amounts/closing hash preserved, no new session/tender/refund after archive; full cross-connection write interleaving remains open. |
+| Open cash session, pending cash entry | Block archive. | Demonstrate settlement/approval/closure before archival, not implicit cancellation. |
+| Sales, invoices, sale returns, tender/refund/settlement records | Block archive even if completed. | Preserve original outlet, customer documents, immutable amounts and linked stock, refund/warranty obligations; owner-only archived reporting and multi-path write barriers. |
+| Product definitions, stock units, stock movements, stocktake, stock acquisitions | Block archive, including zero-quantity product definition. | Reconcile physical/on-hand/reserved/transit stock; immutable location/history; no silent write-offs or reassignments; archived stock/report read paths and tested role boundaries. |
+| Claims, warranty intake, paid repairs, trade-ins | Block archive regardless of present status. | Prove terminal lifecycle and enforce historical read-only details, warranty liabilities and customer access policy. |
+| Purchase orders, suppliers, reorder policies, cash balances, promotions | Block archive; unpaid or future activity must not be hidden. | Resolve outstanding obligations and preserve account/audit history without treating historical records as deletable. |
+| Website orders, reservations, fulfillment, external callbacks | Block through direct outlet links/stock transfer or active obligation rules; external provider actions remain OFF. | Reconcile cross-outlet/cross-system references and in-flight writes before any eligible classification. |
+| Stock transfers (source/destination/receipt/lines) | Explicit block for either side even when `outlet_id` absent. | Source/destination histories, in-transit and receipt obligations and write race gates independently proved. |
+| Identity/outlet assignments, identity/team/operation audit | Preserve and audit; archived outlet excluded from operator selection/access. | Full Access read-only history, no membership reassignment/code reuse or audit record removal. |
+| Unknown/new outlet-linked table | Fail closed. | Explicit classification, immutable-history/read-only and concurrency acceptance first. |
+
+**Concurrency rule:** all business mutation paths capable of creating or altering archived-outlet records must serialize through the same outlet row lock as archival and re-read active status *after acquiring the lock*, including idempotent replay handling. Tested: cash session open and cash tender/refund session lookup reject a stale archived outlet snapshot; this is not a proof of parallel interleaving or of other sales/inventory/claim paths. No source-data migration, production archive, live payment, or automatic archival is authorized by this matrix.

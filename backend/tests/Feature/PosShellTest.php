@@ -288,6 +288,14 @@ class PosShellTest extends TestCase
             $this->assertSame(403, $exception->getStatusCode());
         }
         $this->assertSame(0, DB::table('cash_sessions')->where('outlet_id', $historical->id)->where('status', 'open')->count());
+        // Even a transaction holding a pre-archive outlet model cannot reuse cash history for tender/refund.
+        try {
+            DB::transaction(fn () => app(\App\Cash\CashSessionOperations::class)->transactionSession($historical, false));
+            $this->fail('Archived outlet unexpectedly offered a cash session to a payment workflow.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $this->assertSame(1, DB::table('cash_sessions')->where('outlet_id', $historical->id)->where('status', 'closed')->count());
     }
 
     public function test_account_and_recovery_pages_use_only_the_existing_admin_realm(): void

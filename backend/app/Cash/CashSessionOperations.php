@@ -171,7 +171,9 @@ final class CashSessionOperations
 
     public function transactionSession(Outlet $outlet, bool $required): ?int
     {
-        DB::table('outlets')->where('id', $outlet->id)->lockForUpdate()->firstOrFail();
+        $lockedOutlet = DB::table('outlets')->where('id', $outlet->id)->lockForUpdate()->firstOrFail();
+        // Serialize every tender/refund cash-session lookup with archival and reject stale outlet snapshots.
+        abort_if($lockedOutlet->status || $lockedOutlet->archived_at !== null, 403, 'Outlet is archived or unavailable.');
         $sessionId = $this->activeSessionId($outlet, true);
         if ($required && ! $sessionId) {
             throw new LogicException('Cash tender/refund requires an open cash session for this outlet.');
