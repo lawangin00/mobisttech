@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
-import { readBusinessProfile } from "@/lib/business-profile";
-import { readCatalogue, readManagedPage, readWebsiteProfile, WebsiteApiError } from "@/lib/website-api";
+import { readStorefrontContext } from "@/lib/storefront";
+import { readCatalogue, readManagedPage, WebsiteApiError } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [profile, business, publishedHome] = await Promise.all([
-    readWebsiteProfile(),
-    readBusinessProfile(),
+  const [{ website: profile, business }, publishedHome] = await Promise.all([
+    readStorefrontContext(),
     readManagedPage("home").catch((error) => {
       if (error instanceof WebsiteApiError && error.status === 404) return null;
       throw error;
