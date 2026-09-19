@@ -233,7 +233,7 @@ class PosShellTest extends TestCase
             'team-members.full-access.assign', 'admin.business-profile.manage']);
         $owner->shops()->attach($active);
         $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
-        $operator = $this->member('archive-operator@example.invalid', ['shops.enter', 'shop.sales']);
+        $operator = $this->member('archive-operator@example.invalid', ['shops.enter', 'shop.sales', 'shop.cash']);
         $operator->shops()->attach([$historical->id, $active->id]);
         $client = $this->client();
         $this->login($client, $owner->email)->assertOk();
@@ -280,6 +280,14 @@ class PosShellTest extends TestCase
         $this->login($archivedOnlyClient, $archivedOnly->email)->assertForbidden();
         $this->send($client, 'POST', $base.'/archive', ['version' => 2])->assertStatus(409);
         $this->assertSame($sessionId, (int) DB::table('cash_sessions')->where('outlet_id', $historical->id)->value('id'));
+        // A stale pre-archive model/actor must never reopen cash on this archived outlet.
+        try {
+            app(\App\Cash\CashSessionOperations::class)->open($operator, $historical, 'd03-archived-no-reopen', ['opening_cash' => '10.00']);
+            $this->fail('An archived outlet unexpectedly accepted a cash session.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $this->assertSame(0, DB::table('cash_sessions')->where('outlet_id', $historical->id)->where('status', 'open')->count());
     }
 
     public function test_account_and_recovery_pages_use_only_the_existing_admin_realm(): void

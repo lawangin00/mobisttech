@@ -19,7 +19,15 @@ class PosShellE2eCleanupSeeder extends Seeder
                     && preg_match('/^admin-profile-photos\/'.preg_quote($row->public_id, '/').'\/[a-f0-9-]{36}\.(jpg|png|webp)$/D', $row->profile_photo) === 1)
                 ->pluck('profile_photo')->all();
             $roleIds = DB::table('roles')->whereIn('slug', ['e2e-salesperson', 'e2e-inventory-manager', 'e2e-operations-manager', 'e2e-mt43-manager', 'e2e-platform-administrator', 'e2e-digital-operations-manager', 'e2e-reset-administrator'])->pluck('id')->all();
-            $outletIds = DB::table('outlets')->whereIn('outlet_code', ['E41', 'E42'])->pluck('id')->all();
+            $d03Outlet = DB::table('outlets')->where('outlet_code', 'E43')->where('name', 'E2E D03 Closed Cash Outlet')->first();
+            if ($d03Outlet) {
+                $d03Cash = DB::table('cash_sessions')->where('outlet_id', $d03Outlet->id)->get();
+                abort_unless($d03Cash->count() === 1 && $d03Cash[0]->status === 'closed'
+                    && str_contains((string) $d03Cash[0]->closing_snapshot, 'MT75-D03-CLOSED-CASH')
+                    && ! DB::table('cash_entries')->where('outlet_id', $d03Outlet->id)->exists(), 409);
+                DB::table('cash_sessions')->where('id', $d03Cash[0]->id)->delete();
+            }
+            $outletIds = DB::table('outlets')->whereIn('outlet_code', ['E41', 'E42', 'E43'])->pluck('id')->all();
             $outletIds = array_values(array_unique([...$outletIds, ...DB::table('outlets')->where('outlet_code', '908')->where('name', 'MT75 P02 Variant Outlet')->pluck('id')->all()]));
             $outletIds = array_values(array_unique([...$outletIds, ...DB::table('outlets')->where('outlet_code', '909')
                 ->where('name', 'MT75 P02 Linked Outlet')->pluck('id')->all()]));

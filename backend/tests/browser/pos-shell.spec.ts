@@ -148,6 +148,23 @@ test('protected Admin creates and archives an unused outlet and reads its histor
 
 });
 
+test('Full Access archives synthetic closed-cash outlet and views preserved read-only amount', async ({page}) => {
+    await login(page,'e2e-protected-owner@example.invalid');
+    expect((await page.goto('/internal/admin/outlet-management'))?.status()).toBe(200);
+    const row=page.getByText('E2E D03 Closed Cash Outlet',{exact:false}).locator('..').locator('..');
+    await expect(row.getByRole('button',{name:'Archive eligible outlet'})).toBeVisible();
+    await page.getByTestId('outlet-owner-password').fill(password);
+    const archive=page.waitForResponse(r=>r.url().endsWith('/archive')&&r.request().method()==='POST');
+    await row.getByRole('button',{name:'Archive eligible outlet'}).click();
+    expect((await archive).status()).toBe(200);
+    await page.getByTestId('outlet-history-E43').click();
+    await expect(page.getByTestId('outlet-archive-summary-E43')).toContainText('Closed cash sessions: 1; cash entries: 0');
+    await expect(page.getByTestId('outlet-archive-summary-E43')).toContainText('closed; expected 100.00; actual 100.00');
+    await expect(row.getByRole('button',{name:'Edit profile'})).toHaveCount(0);
+    await expect(row.getByRole('button',{name:'Archive eligible outlet'})).toHaveCount(0);
+    await expect(page.getByTestId('outlet-archive-summary-E43')).toContainText('Historical records are read-only');
+});
+
 test('operator cannot access archived outlet management or history',async ({page})=> {
     await login(page,'e2e-sales@example.invalid');
     await expect(page.getByTestId('manage-outlets-link')).toHaveCount(0);

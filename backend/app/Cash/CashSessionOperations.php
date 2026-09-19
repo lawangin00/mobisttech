@@ -21,7 +21,9 @@ final class CashSessionOperations
         $data = Validator::make($input, ['opening_cash' => 'required', 'business_date' => 'nullable|date'])->validate();
 
         return $this->mutate($actor, $outlet, 'open', $key, $input, 'shop.cash', function (Admin $fresh) use ($outlet, $data) {
-            DB::table('outlets')->where('id', $outlet->id)->lockForUpdate()->firstOrFail();
+            $lockedOutlet = DB::table('outlets')->where('id', $outlet->id)->lockForUpdate()->firstOrFail();
+            // Recheck under the archive's outlet row lock: pre-lock authorization can become stale.
+            abort_if($lockedOutlet->status || $lockedOutlet->archived_at !== null, 403, 'Outlet is archived or unavailable.');
             if (DB::table('cash_sessions')->where('outlet_id', $outlet->id)->where('status', 'open')->exists()) {
                 throw new LogicException('Outlet already has an open cash session.');
             }

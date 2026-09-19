@@ -77,6 +77,20 @@ class PosShellE2eSeeder extends Seeder
             $this->assign($owner, Role::where('name', 'Full Access')->firstOrFail(), [$salesOutlet]);
             $this->assign($auditOwner, Role::where('name', 'Full Access')->firstOrFail(), [$salesOutlet]);
             $this->assign($prefOwner, Role::where('name', 'Full Access')->firstOrFail(), [$salesOutlet]);
+            // D03: independent, synthetic closed-cash outlet for actual archived-history UI acceptance.
+            $d03Outlet = $this->outlet('E2E D03 Closed Cash Outlet', 'E43');
+            $d03Snapshot = json_encode(['contract' => 'MT75-D03-CLOSED-CASH', 'amount' => '100.00'], JSON_THROW_ON_ERROR);
+            abort_unless(! DB::table('cash_sessions')->where('outlet_id', $d03Outlet->id)->exists(), 409);
+            DB::table('cash_sessions')->insert([
+                'public_id' => (string) Str::uuid(), 'outlet_id' => $d03Outlet->id,
+                'opened_by_admin_id' => $owner->id, 'closed_by_admin_id' => $owner->id,
+                'business_date' => now()->toDateString(), 'status' => 'closed',
+                'opening_cash' => '100.00', 'expected_cash' => '100.00',
+                'actual_cash' => '100.00', 'variance_amount' => '0.00',
+                'closing_snapshot' => $d03Snapshot, 'snapshot_sha256' => hash('sha256', $d03Snapshot),
+                'opened_at' => now()->subHour(), 'closed_at' => now(),
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
             foreach ([[$salesOutlet, 'MT75 E2E North Audit', 'POST'], [$inventoryOutlet, 'MT75 E2E South Audit', 'GET']] as [$auditOutlet, $action, $method]) {
                 DB::table('pos_audit_logs')->insert(['actor_type' => 'admin', 'actor_id' => $owner->id,
                     'actor_name' => 'E2E Protected Owner', 'actor_email' => $owner->email,
