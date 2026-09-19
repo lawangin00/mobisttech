@@ -101,7 +101,7 @@ Source coverage: 148 tracked files; 32 resolved routes. Target owner: backend sh
 
 ### P08 - POS backup audit and operations
 
-Source coverage: 33 tracked files; 19 resolved routes. Target owner: backend shared services and protected React/Inertia POS administration. Gates: MT-3.3, MT-7.1, MT-7.4. Target status: In Progress (MT-3.3 and MT-7.1 complete; MT-7.4 pending).
+Source coverage: 33 tracked files; 19 resolved routes. Target owner: backend shared services and protected React/Inertia POS administration. Gates: MT-3.3, MT-7.1, MT-7.4. Target status: Complete (MT-3.3, MT-7.1 and MT-7.4 complete; authentic live-provider execution remains separately gated).
 
 **Preserve:** Preserve backup manifests/history, download/delete rights, verify-only restore, code/key/target guards, secret-safe audit and operational health.
 
@@ -191,7 +191,7 @@ Source coverage: 119 tracked files; 15 resolved routes. Target owner: backend se
 
 ### W08 - Website integration health and jobs
 
-Source coverage: 13 tracked files; 2 resolved routes. Target owner: backend integration jobs, audit and operational health. Gates: MT-3.3, MT-7.4. Target status: Pending.
+Source coverage: 13 tracked files; 2 resolved routes. Target owner: backend integration jobs, audit and operational health. Gates: MT-3.3, MT-7.4. Target status: Complete (infrastructure readiness only; live-provider activation is separately gated).
 
 **Preserve:** Preserve safe integration status, outbox/reconciliation job semantics, rate/retry limits and redacted audit; distinguish local test helpers from operational commands.
 
