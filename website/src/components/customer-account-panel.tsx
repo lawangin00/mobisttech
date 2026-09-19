@@ -47,8 +47,12 @@ export function CustomerAccountPanel() {
   }, []);
 
   useEffect(() => {
-    void ensureCustomerCsrf().catch(() => undefined);
-    const timer = window.setTimeout(() => { void refresh().catch(() => setAccount(null)); }, 0);
+    // Establish the session before account requests to prevent competing first-session cookies.
+    const timer = window.setTimeout(() => {
+      void ensureCustomerCsrf()
+        .then(() => refresh())
+        .catch(() => setAccount(null));
+    }, 0);
     return () => window.clearTimeout(timer);
   }, [refresh]);
 
