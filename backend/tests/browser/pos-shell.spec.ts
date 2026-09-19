@@ -117,7 +117,7 @@ test('Full Access edits an unassigned outlet only after explicit password confir
     expect(assigned.some(outlet=>outlet.name==='E2E Unassigned Profile Reviewed')).toBe(false);
 });
 
-test('protected Admin creates and archives an unused outlet in actual UI; operator denied', async ({page,browser}) => {
+test('protected Admin creates and archives an unused outlet and reads its history', async ({page}) => {
     await page.setViewportSize({width:1280,height:900});
     await login(page,'e2e-protected-owner@example.invalid');
     await expect(page.getByTestId('manage-outlets-link')).toBeVisible();
@@ -145,14 +145,15 @@ test('protected Admin creates and archives an unused outlet in actual UI; operat
     await page.getByTestId('outlet-history-'+createdCode).click();
     await expect(page.getByTestId('outlet-archive-summary-'+createdCode)).toContainText('Closed cash sessions: 0; cash entries: 0');
     await expect(row.getByRole('button',{name:'Edit profile'})).toHaveCount(0);
-    const guest=await browser.newContext();
-    try {const operator=await guest.newPage();await login(operator,'e2e-sales@example.invalid');
-        await expect(operator.getByTestId('manage-outlets-link')).toHaveCount(0);
-        expect((await operator.goto('/internal/admin/outlet-management'))?.status()).toBe(403);
-        await operator.goto('/internal/admin/pos');
-        await operator.getByTestId('logout').click();
-        await operator.waitForURL('**/internal/admin/pos/login');
-    } finally {await guest.close();}
+
+});
+
+test('operator cannot access archived outlet management or history',async ({page})=> {
+    await login(page,'e2e-sales@example.invalid');
+    await expect(page.getByTestId('manage-outlets-link')).toHaveCount(0);
+    expect((await page.goto('/internal/admin/outlet-management'))?.status()).toBe(403);
+    expect((await page.goto('/internal/admin/outlet-management/data'))?.status()).toBe(403);
+
 });
 
 
