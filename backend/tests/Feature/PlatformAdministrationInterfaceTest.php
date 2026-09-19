@@ -239,6 +239,32 @@ class PlatformAdministrationInterfaceTest extends TestCase
         $this->assertSame(3, DB::table('software_product_revisions')
             ->where('software_product_id', DB::table('software_products')->where('public_id', $productId)->value('id'))
             ->count());
+        // A second independent product must not inherit the first product's release or public state.
+        $otherInput = [...$this->mt75SoftwareInput('Independent second overview'),
+            'name' => 'MT75 Second Software', 'slug' => 'mt75-second-fixture'];
+        $other = $this->send($editorClient, 'POST', '/internal/admin/platform/software', $otherInput)
+            ->assertOk()->json('data');
+        $this->getJson('/api/v1/software/mt75-second-fixture')->assertNotFound();
+        $this->send($publisherClient, 'POST', '/internal/admin/platform/software/revisions/'.$other['id'].'/publish')
+            ->assertOk();
+        $this->getJson('/api/v1/software/mt75-second-fixture')->assertOk()
+            ->assertJsonPath('data.overview.name', 'MT75 Second Software')
+            ->assertJsonPath('data.overview.overview', 'Independent second overview');
+        $this->getJson('/api/v1/software/mt75-second-fixture/releases')->assertOk()->assertJsonCount(0, 'data.items');
+        $this->getJson('/api/v1/software/mt75-fixture/releases')->assertOk()
+            ->assertJsonPath('data.items.0.version', '1.0.0');
+        $this->send($editorClient, 'POST', '/internal/admin/platform/software/'.$other['software_public_id'].'/draft',
+            [...$otherInput, 'slug' => 'mt75-fixture'])->assertUnprocessable();
+        $this->send($editorClient, 'POST', '/internal/admin/platform/software/'.$other['software_public_id'].'/archive')
+            ->assertForbidden();
+        $this->send($publisherClient, 'POST', '/internal/admin/platform/software/'.$other['software_public_id'].'/archive')
+            ->assertOk();
+        $this->getJson('/api/v1/software/mt75-second-fixture')->assertNotFound();
+        $this->getJson('/api/v1/software/mt75-fixture')->assertOk()
+            ->assertJsonPath('data.overview.overview', 'Initial verified synthetic overview');
+        $this->assertSame(1, DB::table('software_product_revisions')
+            ->where('software_product_id', DB::table('software_products')->where('public_id', $other['software_public_id'])->value('id'))
+            ->count());
     }
 
     private function mt75SoftwareInput(string $overview): array
