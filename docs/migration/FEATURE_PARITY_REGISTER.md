@@ -201,7 +201,7 @@ Source coverage: 13 tracked files; 2 resolved routes. Target owner: backend inte
 
 ### B01 - Canonical brand and runtime assets
 
-Source coverage: 459 tracked files; 0 resolved routes. Target owner: brand canonical masters; generated backend/website runtime derivatives. Gates: MT-6.1. Target status: Pending.
+Source coverage: 459 tracked files; 0 resolved routes. Target owner: brand canonical masters; generated backend/website runtime derivatives. Gates: MT-6.1. Target status: Complete.
 
 **Preserve:** Preserve approved editable logo/wordmark, fonts/icons/favicon/watermark/print/runtime references and license requirements.
 

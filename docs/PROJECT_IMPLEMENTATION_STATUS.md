@@ -43,13 +43,13 @@ Active stage: MT-6 - Shared brand and Windows Control (In Progress)
 
 Last completed stage: MT-5 - Next.js customer Website
 
-Current In Progress point: MT-6.1 - Canonical branding and runtime assets
+Current In Progress point: None
 
-Status: MT-0 through MT-5 complete. MT-6 is in progress. 46/56 complete, 10 pending. MT-6.1 is In Progress.
+Status: MT-0 through MT-5 complete. MT-6 is in progress. 47/56 complete, 9 pending. MT-6.1 is Complete.
 
-Last completed point: MT-5.5 - Client project portal and digital conversion journeys
+Last completed point: MT-6.1 - Canonical branding and runtime assets
 
-Next pending point: MT-6.1 - Canonical branding and runtime assets
+Next pending point: MT-6.2 - Canonical mobiST Control migration
 
 Execution boundary: Backend/Website foundations, shared MySQL schema/infrastructure, unified Admin/customer authorization, Team Member Role/delegation authority, centralized Admin/Customer session policy, product/master-data, inventory/acquisition/stock transactions, internal POS sale/invoice/accepted-return authority, warranty/claim authority, supplier/purchase-order/partial-receipt authority, reorder recommendations, stocktake/cycle-count authority, inter-outlet transfer/custody authority, POS Payment Methods/Destinations and split-tender/refund/settlement authority, customer loyalty earn/redeem/history authority, paid repair intake/estimate/parts/payment/history authority, canonical business profile and secure Google integration/backup services exist. Addendum schema primitives, capability/financial-reference/retention contracts, explicit permissions and custody-aware stock exclusion are integrated. Identity/product/stock/sales/claim/procurement/stocktake mapping uses synthetic rows only. Transfer verification also uses synthetic target rows only. Real MySQL stock, return, claim, procurement, stocktake, transfer, POS payment, loyalty and paid-repair-part concurrency and the existing `mobisttech-drive:` temporary read/write/delete check are verified. Canonical Invoice/Warranty delivery, optional sale-email capture, six managed communication templates, truthful delivery audit, scoped operational reporting and retail-label backend projections now exist. The typed Website CMS, policy revision/publication authority and reusable Software Product backend publication model now exist. Final business-specific policy copy/sign-off, licensing/notice review, Admin/public UI realization and the complete product user manual remain approved future work at their named points. The versioned Website operating-mode publication workflow now exists with preview/diff, capability gates, audit/revisions, rollback and cache revalidation. The Digital Service catalogue now owns authoritative quote/fixed/starting-from/package and add-on pricing, progressive mode-gated enquiries, private reference uploads, timezone-safe consultation preferences and a permission-scoped lightweight lead pipeline with immutable history. Client project services now own explicit Customer-account project ownership, versioned lifecycle, immutable proposal revisions, canonical exact milestone schedules, private reference/delivery files and aggregate conversion reporting while reusing the existing payment authority. Actual private-data migration, authentic Gmail OAuth consent/test send, production Google verification, authentic provider payment/refund execution, production reset authorization, transfer/POS interfaces and complete POS/Website interfaces, rendered warranty documents, brand, Control and CI remain pending. Backend tests do not constitute live Gmail/provider, payment/refund, complete UI, rendered-document or private-data import acceptance.
 
@@ -397,7 +397,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-5.3 | Checkout and customer payment flows | Completed |
 | MT-5.4 | Dynamic public content and digital solutions | Complete |
 | MT-5.5 | Client project portal and digital conversion journeys | Complete |
-| MT-6.1 | Canonical branding and runtime assets | In Progress |
+| MT-6.1 | Canonical branding and runtime assets | Complete |
 | MT-6.2 | Canonical mobiST Control migration | Pending |
 | MT-6.3 | Windows operator and local integration acceptance | Pending |
 | MT-7.1 | Data migration and rollback rehearsal | Pending |
@@ -1024,3 +1024,11 @@ No source-repository write, source-data migration, source runtime action, real p
 - Focused brand consistency regression PASS 2 tests / 55 assertions, including all eight approved source hashes and both runtime target mappings. Backend typecheck/Vite production build PASS. Website typecheck/lint/optimized production build PASS after replacing the header raw image with `next/image`; git diff check PASS.
 - Incomplete after the 9-minute guard: targeted backend/Website browser acceptance for visible logo/fallback/icon delivery, exact duplicate-master/runtime-reference scan, final generated-asset/hash/residue verification, MT-6.1 verification artifact and Complete transition.
 - Current next action: run focused default POS shell/login + Website production browser acceptance for brand rendering and icon requests -> exact duplicate/reference/hash scan -> final short gates -> write MT-6.1 verification and mark Complete. Do not start MT-6.2.
+- MT-6.1 focused backend brand browser attempt 1: ORCHESTRATION_FAIL before test execution because Playwright timed out after 30 s waiting for its Laravel webServer on port 18080. No brand assertion ran and no product defect is inferred. Next action is exact port/process ownership inspection and cleanup only if the stale process belongs to this target harness; no blind rerun.
+- MT-6.1 focused backend brand browser attempt 2: INCOMPLETE after successful login and real asset load because the temporary assertion selected the first matching shell logo, which is intentionally hidden in the desktop viewport by the responsive `lg:hidden` mobile header. The desktop sidebar logo was present/visible. This is a test selector issue, not a product branding defect. Material retry change: scope the authenticated shell assertion to the visible desktop `<aside>` logo; asset URLs and runtime code remain unchanged.
+- MT-6.1 focused production Website brand browser attempt 1: ORCHESTRATION_FAIL before global setup/test execution because Playwright timed out waiting 30 s for its configured production webServer stack. No Website brand assertion ran and no product defect is inferred. Next action: inspect exact 18080/13000 process ownership and cold readiness, then retry only after a material harness-state correction.
+- MT-6.1 focused browser closure: backend brand acceptance PASS 1/1 and production Website brand acceptance PASS 1/1. Backend verifies login wordmark, watermark, authenticated POS shell wordmark, favicon and icon delivery; Website verifies rendered canonical wordmark plus favicon/touch/PWA assets.
+- Exact MT-6.1 closure scan PASS: no tracked duplicate Brand Kit path, no runtime Brandkit/Canva/protected-source reference, runtime manifest hashes PASS, both protected source repositories clean with all eight master hashes matching, and browser-fixture residue zero.
+- Final brand consistency regression remains PASS 2 tests / 55 assertions; backend and Website typecheck/lint gates PASS. Evidence: `docs/brand/MT-6.1_VERIFICATION.md`, `brand/runtime-manifest.json`.
+- MT-6.1 closure: Canonical branding and runtime assets is Complete. No unresolved branding/runtime asset defect remains.
+- Next action: MT-6.1 is Complete. Await explicit Proceed/Y before starting MT-6.2 - Canonical mobiST Control migration.
