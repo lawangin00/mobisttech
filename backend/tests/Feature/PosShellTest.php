@@ -356,6 +356,75 @@ class PosShellTest extends TestCase
             ->where('action', 'outlet_archived')->count());
     }
 
+    public function test_archived_invoice_and_claim_summaries_preserve_hashes_and_hide_customer_case_details(): void
+    {
+        $outlet = $this->outlet('Synthetic historical invoice claim', '070');
+        $fallback = $this->outlet('Historical invoice active fallback', '071');
+        $owner = $this->member('d03-invoice-claim-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($fallback);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
+        $limited = $this->member('d03-invoice-claim-limited@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $limited->shops()->attach($fallback);
+        $product = new \App\Models\Product;
+        $product->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Synthetic retained invoice product',
+            'outlet_id' => $outlet->id, 'category' => 'accessory', 'price' => '200.00', 'qty' => 0])->save();
+        $invoicePublicId = (string) Str::uuid();
+        $invoiceId = DB::table('invoices')->insertGetId(['outlet_id' => $outlet->id,
+            'public_id' => $invoicePublicId, 'invoice_number' => 'D03-INV-'.Str::random(12),
+            'total_bill' => '200.00', 'final_bill' => '200.00', 'currency' => 'PKR',
+            'customer_name' => 'PRIVATE-CUSTOMER-NAME', 'customer_phone' => '03008888888']);
+        $saleId = DB::table('sales')->insertGetId(['outlet_id' => $outlet->id,
+            'product_id' => $product->id, 'invoice_id' => $invoiceId, 'public_id' => (string) Str::uuid(),
+            'sale_date' => now()->toDateString(), 'sale_price' => '200.00', 'quantity' => 1,
+            'total_price' => '200.00', 'net_total_price' => '200.00']);
+        $claimPublicId = (string) Str::uuid();
+        $claimId = DB::table('claims')->insertGetId(['outlet_id' => $outlet->id,
+            'product_id' => $product->id, 'invoice_id' => $invoiceId, 'sale_id' => $saleId,
+            'public_id' => $claimPublicId, 'claim_number' => 'D03-CLM-'.Str::random(12),
+            'quantity' => 1, 'status' => 'closed', 'issue_description' => 'PRIVATE-ISSUE-DESCRIPTION',
+            'internal_notes' => 'PRIVATE-CASE-NOTES']);
+        $snapshot = json_encode(['contract' => 'd03-test-claim.v1', 'note' => 'PRIVATE-CLAIM-SNAPSHOT'], JSON_THROW_ON_ERROR);
+        $eventId = DB::table('claim_events')->insertGetId(['claim_id' => $claimId,
+            'public_id' => (string) Str::uuid(), 'sequence' => 1, 'status' => 'closed',
+            'note' => 'PRIVATE-CLAIM-EVENT-NOTE', 'occurred_at' => now(),
+            'snapshot' => $snapshot, 'snapshot_sha256' => hash('sha256', $snapshot)]);
+        $ownerClient = $this->client();
+        $this->login($ownerClient, $owner->email)->assertOk();
+        $uri = '/internal/admin/outlet-management/'.$outlet->public_id.'/history';
+        $this->send($ownerClient, 'GET', $uri)->assertStatus(409);
+        // Product/invoice/claim-bearing real outlet still MUST NOT be archived by the service.
+        $outlet->forceFill(['archived_at' => now()])->save();
+        $priorInvoice = DB::table('invoices')->where('id', $invoiceId)->firstOrFail();
+        $priorClaim = DB::table('claims')->where('id', $claimId)->firstOrFail();
+        $priorEvent = DB::table('claim_events')->where('id', $eventId)->firstOrFail();
+        $response = $this->send($ownerClient, 'GET', $uri)->assertOk()
+            ->assertJsonPath('data.sales_claim_history.invoice_count', 1)
+            ->assertJsonPath('data.sales_claim_history.sale_line_count', 1)
+            ->assertJsonPath('data.sales_claim_history.claim_count', 1)
+            ->assertJsonPath('data.sales_claim_history.claim_event_count', 1)
+            ->assertJsonPath('data.sales_claim_history.invoices.0.id', $invoicePublicId)
+            ->assertJsonPath('data.sales_claim_history.invoices.0.final_bill', '200.00')
+            ->assertJsonPath('data.sales_claim_history.claims.0.id', $claimPublicId)
+            ->assertJsonPath('data.sales_claim_history.claims.0.invoice_id', $invoicePublicId)
+            ->assertJsonPath('data.sales_claim_history.claims.0.status', 'closed');
+        foreach (['PRIVATE-CUSTOMER-NAME', '03008888888', 'PRIVATE-ISSUE-DESCRIPTION',
+            'PRIVATE-CASE-NOTES', 'PRIVATE-CLAIM-SNAPSHOT', 'PRIVATE-CLAIM-EVENT-NOTE'] as $private) {
+            $this->assertStringNotContainsString($private, $response->getContent());
+        }
+        $limitedClient = $this->client();
+        $this->login($limitedClient, $limited->email)->assertOk();
+        $this->send($limitedClient, 'GET', $uri)->assertForbidden();
+        $this->assertEquals($priorInvoice, DB::table('invoices')->where('id', $invoiceId)->firstOrFail());
+        $this->assertEquals($priorClaim, DB::table('claims')->where('id', $claimId)->firstOrFail());
+        $this->assertEquals($priorEvent, DB::table('claim_events')->where('id', $eventId)->firstOrFail());
+        // MySQL may canonicalize JSON on storage; the signed hash belongs to the original written snapshot bytes.
+        $this->assertSame(hash('sha256', $snapshot), $priorEvent->snapshot_sha256);
+        $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
+            ->where('action', 'outlet_archived')->count());
+    }
+
     public function test_account_and_recovery_pages_use_only_the_existing_admin_realm(): void
     {
         $guest = $this->client();

@@ -45,6 +45,27 @@ final class OutletLifecycleAdministration
             'cash_entry_count' => DB::table('cash_entries')->where('outlet_id', $outlet->id)->count(),
             // Read-only historical stock projection for protected Full Access archive review.
             // Never expose supplier identity, acquisition documents, unit IMEIs or private notes.
+            // Owner-only historical invoice/sale and warranty-claim summary, without customer PII,
+            // claim narratives, internal notes, payment instruments or event snapshot payloads.
+            'sales_claim_history' => [
+                'invoice_count' => DB::table('invoices')->where('outlet_id', $outlet->id)->count(),
+                'sale_line_count' => DB::table('sales')->where('outlet_id', $outlet->id)->count(),
+                'claim_count' => DB::table('claims')->where('outlet_id', $outlet->id)->count(),
+                'claim_event_count' => DB::table('claim_events as e')->join('claims as c', 'c.id', '=', 'e.claim_id')
+                    ->where('c.outlet_id', $outlet->id)->count(),
+                'invoices' => DB::table('invoices')->where('outlet_id', $outlet->id)
+                    ->orderByDesc('id')->limit(50)
+                    ->get(['public_id', 'invoice_number', 'currency', 'final_bill', 'created_at'])
+                    ->map(fn ($row) => ['id' => $row->public_id, 'number' => $row->invoice_number,
+                        'currency' => $row->currency, 'final_bill' => (string) $row->final_bill,
+                        'created_at' => $row->created_at])->all(),
+                'claims' => DB::table('claims as c')->join('invoices as i', 'i.id', '=', 'c.invoice_id')
+                    ->where('c.outlet_id', $outlet->id)->where('i.outlet_id', $outlet->id)
+                    ->orderByDesc('c.id')->limit(50)
+                    ->get(['c.public_id', 'c.claim_number', 'c.status', 'i.public_id as invoice_id'])
+                    ->map(fn ($row) => ['id' => $row->public_id, 'number' => $row->claim_number,
+                        'status' => $row->status, 'invoice_id' => $row->invoice_id])->all(),
+            ],
             'stock_history' => [
                 'product_count' => DB::table('products')->where('outlet_id', $outlet->id)->count(),
                 'unit_count' => DB::table('stock_units as u')->join('products as p', 'p.id', '=', 'u.product_id')
