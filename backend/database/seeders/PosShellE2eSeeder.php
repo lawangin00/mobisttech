@@ -57,12 +57,18 @@ class PosShellE2eSeeder extends Seeder
             $auditOwner = $this->member('E2E Audit Owner', 'e2e-audit-owner@example.invalid', 'Audit Owner');
             $prefOwner = $this->member('E2E Portal Preference Owner', 'e2e-pref-owner@example.invalid', 'Preference Owner');
             $history = $this->member('E2E History Operator', 'e2e-history@example.invalid', 'History Operator');
+            $iwInventory = $this->member('E2E IW Inventory', 'e2e-iw-inventory@example.invalid', 'IW Inventory');
+            $iwWarranty = $this->member('E2E IW Warranty', 'e2e-iw-warranty@example.invalid', 'IW Warranty');
+            $transaction = $this->member('E2E Transaction Sales', 'e2e-transaction@example.invalid', 'Transaction Sales');
 
             $this->assign($sales, $salesRole, [$salesOutlet]);
             $this->assign($inventory, $inventoryRole, [$salesOutlet, $inventoryOutlet]);
             $this->assign($operations, $operationsRole, [$salesOutlet]);
             $this->assign($mt43, $mt43Role, [$salesOutlet]);
             $this->assign($history, $mt43Role, [$salesOutlet]);
+            $this->assign($iwInventory, $inventoryRole, [$salesOutlet, $inventoryOutlet]);
+            $this->assign($iwWarranty, $mt43Role, [$salesOutlet]);
+            $this->assign($transaction, $salesRole, [$salesOutlet]);
             $this->assign($platform, $platformRole, [$salesOutlet]);
             $this->assign($digital, $digitalRole, [$salesOutlet]);
             $this->assign($reset, $resetRole, [$salesOutlet]);

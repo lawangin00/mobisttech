@@ -86,6 +86,49 @@ class PosTransactionInterfaceTest extends TestCase
         ])->assertOk()->assertJsonPath('data.id', $unit->public_id);
     }
 
+    public function test_inventory_portal_preferences_page_search_and_sales_catalogue_remain_independent(): void
+    {
+        $tracked = $this->product(true); $this->acquire($tracked); $this->imeis($tracked);
+        $base = $this->product(); $original = $base->getAttributes(); unset($original['id']);
+        $rows = [];
+        for ($i = 1; $i <= 110; $i++) {
+            $rows[] = [...$original, 'public_id' => (string) Str::uuid(), 'product_code' => null,
+                'sku' => null, 'name' => sprintf('MT75 Inventory %03d', $i)];
+        }
+        DB::table('products')->insert($rows);
+        $other = new \App\Models\Outlet;
+        $other->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Other outlet inventory',
+            'outlet_code' => '087'])->save();
+        DB::table('products')->insert([...$original, 'outlet_id' => $other->id,
+            'public_id' => (string) Str::uuid(), 'product_code' => null, 'sku' => null,
+            'name' => 'MT75 Inventory Other Outlet']);
+        $client = $this->authenticatedClient(); $url = '/internal/admin/pos/catalogue';
+        $first = $this->send($client, 'GET', $url.'?mode=inventory')->assertOk();
+        $first->assertJsonPath('data.pagination.total', 112)->assertJsonPath('data.pagination.per_page', 10)
+            ->assertJsonPath('data.pagination.pages', 12)->assertJsonPath('data.pagination.category', 'all')
+            ->assertJsonCount(10, 'data.products');
+        $this->send($client, 'GET', $url.'?mode=inventory&page=12')->assertOk()
+            ->assertJsonPath('data.pagination.page', 12)->assertJsonCount(2, 'data.products');
+        $this->send($client, 'GET', $url.'?mode=inventory&q=MT75%20Inventory%20110&category=product_name')->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)->assertJsonPath('data.products.0.name', 'MT75 Inventory 110');
+        $this->send($client, 'GET', $url.'?mode=inventory&q=MT75%20Inventory%20Other%20Outlet&category=product_name')->assertOk()
+            ->assertJsonPath('data.pagination.total', 0);
+        $this->send($client, 'GET', $url.'?mode=inventory&q=Synthetic-IMEI-1&category=imei')->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)->assertJsonPath('data.products.0.id', $tracked->public_id);
+        $this->send($client, 'GET', $url.'?mode=inventory&category=bad')->assertUnprocessable();
+        $this->send($client, 'GET', $url.'?mode=inventory&outlet_id=087')->assertUnprocessable();
+        $this->send($client, 'GET', $url.'?mode=inventory&page=0')->assertUnprocessable();
+        $this->send($client, 'GET', $url)->assertOk()->assertJsonCount(20, 'data.products')
+            ->assertJsonPath('data.pagination', null);
+        foreach (['inventory_page_length' => '25', 'inventory_search_category' => 'sku'] as $key => $value) {
+            DB::table('pos_settings')->insert(['key' => 'portal.'.$key, 'value' => $value,
+                'group' => 'portal', 'label' => $key, 'input_type' => 'select', 'sort_order' => 200]);
+        }
+        $this->send($client, 'GET', $url.'?mode=inventory')->assertOk()
+            ->assertJsonPath('data.pagination.per_page', 25)->assertJsonPath('data.pagination.category', 'sku')
+            ->assertJsonPath('data.pagination.pages', 5)->assertJsonCount(25, 'data.products');
+    }
+
     public function test_sale_quote_completion_split_tender_return_and_refund_stay_server_authoritative(): void
     {
         $product = $this->product();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PosStockControlWorkspace from './pos-stock-control-workspace';
 import { DocumentActions } from './pos-customer-reporting-workspace';
 
@@ -6,7 +6,8 @@ type Unit = { id: string; code: string; status: string; version: number; imeis: 
 type Product = { id: string; code: string; name: string; category?: string; model?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[] };
 type Destination = { public_id: string; method: string; display_name: string };
 type Master = { id: number; list_key: string; code: string; label: string; metadata: Record<string, unknown> };
-type Catalogue = { products: Product[]; page: number; has_more: boolean; payment_destinations: Destination[]; master_data: Master[]; can_send_documents: boolean };
+type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean };
+type Catalogue = { products: Product[]; page: number; has_more: boolean; pagination: InventoryPaging | null; payment_destinations: Destination[]; master_data: Master[]; can_send_documents: boolean };
 type Payment = { method: string; destination_id: string; amount: string; transaction_reference?: string; cash_tendered?: string };
 type Quote = { payable: string; payments_total: string; remaining: string; cash_change: string };
 
@@ -33,43 +34,49 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 
 export default function PosTransactionWorkspace({ area }: { area: 'inventory' | 'sales' }) {
     const [catalogue, setCatalogue] = useState<Catalogue | null>(null);
+    const inventorySearchRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState('');
+    const [category, setCategory] = useState('');
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
     const [page, setPage] = useState(1);
-    const load = async (value = '', requestedPage = 1) => {
-        const data = await api<Catalogue>('/internal/admin/pos/catalogue?q=' + encodeURIComponent(value) + '&page=' + requestedPage);
+    const load = async (value = '', requestedPage = 1, selectedCategory = category) => {
+        const params = new URLSearchParams({q:value,page:String(requestedPage),...(area === 'inventory' ? {mode:'inventory',...(selectedCategory?{category:selectedCategory}:{})}:{})});
+        const data = await api<Catalogue>('/internal/admin/pos/catalogue?' + params.toString());
         setCatalogue(data);
         setPage(data.page);
+        if (data.pagination) setCategory(data.pagination.category);
     };
-    useEffect(() => { void load(); }, []);
+    useEffect(() => { void load(); }, [area]);
+    useEffect(() => { if (area === 'inventory' && catalogue?.pagination?.auto_focus_search) inventorySearchRef.current?.focus(); }, [area, catalogue?.pagination?.auto_focus_search]);
     const run = async (task: () => Promise<void>) => {
         setBusy(true); setMessage('');
         try { await task(); } catch (error) { setMessage(error instanceof Error ? error.message : 'Request failed.'); } finally { setBusy(false); }
     };
     const lookup = () => run(async () => {
         const found = await api<{ product: Product; unit: Unit | null }>('/internal/admin/pos/lookup?q=' + encodeURIComponent(query));
-        setCatalogue((old) => old ? { ...old, products: [found.product] } : old);
+        setCatalogue((old) => old ? { ...old, products: [found.product], pagination: null, has_more: false } : old);
         setMessage(found.unit ? 'Matched unit ' + found.unit.code : 'Matched product ' + found.product.code);
     });
     return <div className="mt-6 grid min-w-0 gap-5">
         <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
-                <input data-testid="pos-lookup" value={query} onChange={(e) => setQuery(e.target.value)}
+                <input data-testid="pos-lookup" ref={inventorySearchRef} value={query} onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') void lookup(); }}
                     placeholder="Scan barcode / QR / IMEI, or search product" className="min-w-0 flex-1 rounded-lg border px-3 py-2 text-sm" />
                 <button disabled={busy} onClick={() => void lookup()} className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white">Lookup</button>
-                <button disabled={busy} onClick={() => void run(() => load(query, 1))} className="rounded-lg border px-4 py-2 text-sm font-semibold">Search</button>
+                <button disabled={busy} onClick={() => void run(() => load(query, 1, category))} className="rounded-lg border px-4 py-2 text-sm font-semibold">Search</button>
             </div>
+            {area === 'inventory' && catalogue?.pagination && <label className="mt-2 flex items-center gap-2 text-sm">Search category <select data-testid="inventory-category" value={category} onChange={(e)=>setCategory(e.target.value)} className="rounded border px-2 py-1">{catalogue.pagination.options.map((option)=><option key={option} value={option}>{option.replaceAll('_',' ')}</option>)}</select></label>}
             {message && <p role="alert" className="mt-3 text-sm">{message}</p>}
             <div className="mt-3 flex items-center justify-end gap-2 text-xs">
-                <button disabled={busy || page <= 1} onClick={() => void run(() => load(query, page - 1))} className="rounded border px-2 py-1 disabled:opacity-40">Previous</button>
-                <span>Page {page}</span>
-                <button disabled={busy || !catalogue?.has_more} onClick={() => void run(() => load(query, page + 1))} className="rounded border px-2 py-1 disabled:opacity-40">Next</button>
+                <button disabled={busy || page <= 1} onClick={() => void run(() => load(query, page - 1, category))} className="rounded border px-2 py-1 disabled:opacity-40">Previous</button>
+<span data-testid="inventory-page">Page {page}{catalogue?.pagination ? `/${catalogue.pagination.pages} · ${catalogue.pagination.total} products · ${catalogue.pagination.per_page} per page` : ""}</span>
+                <button disabled={busy || !catalogue?.has_more} onClick={() => void run(() => load(query, page + 1, category))} className="rounded border px-2 py-1 disabled:opacity-40">Next</button>
             </div>
         </section>
         {area === 'inventory'
-            ? <><Inventory catalogue={catalogue} busy={busy} run={run} reload={() => load(query, page)} /><PosStockControlWorkspace /></>
+            ? <><Inventory catalogue={catalogue} busy={busy} run={run} reload={() => load(query, page, category)} /><PosStockControlWorkspace /></>
             : <Sales catalogue={catalogue} busy={busy} run={run} />}
     </div>;
 }

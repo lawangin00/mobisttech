@@ -71,7 +71,7 @@ test('sales UI completes split tender then exposes accepted-return refund contro
         } }) });
     });
 
-    await login(page, 'e2e-sales@example.invalid');
+    await login(page, 'e2e-transaction@example.invalid');
     await page.getByRole('link', { name: 'Sales', exact: true }).click();
     await page.waitForURL('**/internal/admin/pos/workspace/sales');
 

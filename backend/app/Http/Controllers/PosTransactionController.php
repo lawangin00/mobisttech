@@ -11,6 +11,7 @@ use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\StockUnit;
 use App\Payments\PosPaymentOperations;
+use App\Pos\PosInventoryListing;
 use App\Reporting\RetailLabels;
 use App\Sales\SalesOperations;
 use Illuminate\Http\Request;
@@ -30,9 +31,21 @@ final class PosTransactionController extends Controller
     public function catalogue(Request $request)
     {
         [$actor, $outlet] = $this->context($request, ['shop.inventory', 'shop.sales']);
+        $inventory = $request->query('mode') === 'inventory';
+        if ($inventory) {
+            abort_unless(app(Access::class)->allows($actor, 'shop.inventory', $outlet), 403);
+        }
         $q = trim((string) $request->query('q', ''));
         $page = max(1, min(5000, (int) $request->query('page', 1)));
+        $paging = null;
         $query = Product::query()->where('outlet_id', $outlet->id)->where('isDeleted', false);
+        if ($inventory) {
+            $result = app(PosInventoryListing::class)->page($request, $query);
+            $rows = collect($result['rows']);
+            $paging = $result['paging'];
+            $page = $paging['page'];
+            $hasMore = $page < $paging['pages'];
+        } else {
         if ($q !== '') {
             $matchedProductId = $this->lookupProductId($outlet, $q);
             $query->where(function ($builder) use ($q, $matchedProductId) {
@@ -46,6 +59,7 @@ final class PosTransactionController extends Controller
         $rows = $query->orderBy('name')->skip(($page - 1) * 20)->limit(21)->get();
         $hasMore = $rows->count() > 20;
         $rows = $rows->take(20)->values();
+        }
         $products = $rows->map(fn (Product $product) => $this->productPayload($product))->all();
         $destinations = [];
         if (app(Access::class)->allows($actor, 'shop.sales', $outlet)) {
@@ -68,7 +82,7 @@ final class PosTransactionController extends Controller
 
         return response()->json(['data' => [
             'outlet' => ['id' => $outlet->public_id, 'name' => $outlet->name],
-            'products' => $products, 'page' => $page, 'has_more' => $hasMore,
+            'products' => $products, 'page' => $page, 'has_more' => $hasMore, 'pagination' => $paging,
             'payment_destinations' => $destinations, 'master_data' => $master,
             'can_send_documents' => app(Access::class)->allows($actor, 'shop.documents.send', $outlet),
         ]]);

@@ -11,6 +11,8 @@ final class PosHistoryListing
     private const FIELDS = [
         'invoices' => ['invoice_id' => 'i.invoice_number', 'customer_name' => 'i.customer_name',
             'contact_number' => 'i.customer_phone', 'invoice_date' => 'i.created_at', 'total' => 'i.final_bill'],
+        'warranty' => ['invoice_id' => 'i.invoice_number', 'customer_name' => 'i.customer_name',
+            'customer_cnic' => 'i.customer_cnic', 'contact_number' => 'i.customer_phone', 'product' => 'p.name'],
         'claims' => ['claim' => 'c.claim_number', 'invoice' => 'i.invoice_number',
             'customer' => 'i.customer_name', 'contact' => 'i.customer_phone', 'product' => 'p.name',
             'status' => 'c.status', 'assigned' => 'c.assigned_to'],
@@ -20,14 +22,14 @@ final class PosHistoryListing
     {
         abort_unless(isset(self::FIELDS[$area]), 404);
         $preferences = app(PortalPreferences::class)->current();
-        $options = app(PortalPreferences::class)->catalogueOptions()[$area === 'invoices' ? 'invoice_search_category' : 'claims_search_category'];
+        $options = app(PortalPreferences::class)->catalogueOptions()[$area === 'invoices' ? 'invoice_search_category' : ($area === 'warranty' ? 'warranty_search_category' : 'claims_search_category')];
         if (array_diff(array_keys($request->query()), ['q', 'category', 'page'])) {
             throw ValidationException::withMessages(['filter' => 'Unexpected list filter.']);
         }
         $input = validator($request->query(), ['q' => ['sometimes', 'nullable', 'string', 'max:100'],
             'category' => ['sometimes', 'string', 'in:'.implode(',', $options)],
             'page' => ['sometimes', 'integer', 'min:1', 'max:10000']])->validate();
-        $category = $input['category'] ?? $preferences[$area === 'invoices' ? 'invoice_search_category' : 'claims_search_category'];
+        $category = $input['category'] ?? $preferences[$area === 'invoices' ? 'invoice_search_category' : ($area === 'warranty' ? 'warranty_search_category' : 'claims_search_category')];
         $search = trim((string) ($input['q'] ?? ''));
         if ($search !== '') {
             $match = '%'.addcslashes($search, '%_\\').'%';
@@ -51,7 +53,7 @@ final class PosHistoryListing
                             ->where('imei.imei', 'like', $match));
                     }
                 }
-                if ($area === 'claims' && in_array($category, ['all', 'imei'], true)) {
+                if (in_array($area, ['claims', 'warranty'], true) && in_array($category, ['all', 'imei'], true)) {
                     $where->orWhereExists(fn (Builder $related) => $related->selectRaw('1')
                         ->from('product_imeis as imei')->whereColumn('imei.stock_unit_id', 'c.stock_unit_id')
                         ->whereColumn('imei.invoice_id', 'c.invoice_id')->where('imei.imei', 'like', $match));

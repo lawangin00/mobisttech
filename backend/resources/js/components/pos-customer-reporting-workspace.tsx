@@ -62,7 +62,7 @@ export default function PosCustomerReportingWorkspace({ area }: { area: Area }) 
     const [filter, setFilter] = useState({q:'',category:'',page:1});
     const load = async (next = filter) => {
         const q = area === 'reports' ? '?' + new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) }).toString()
-            : (area === 'invoices' || area === 'claims') ? '?' + new URLSearchParams({q:next.q,...(next.category?{category:next.category}:{}),page:String(next.page)}).toString() : '';
+            : (area === 'invoices' || area === 'claims' || area === 'warranty') ? '?' + new URLSearchParams({q:next.q,...(next.category?{category:next.category}:{}),page:String(next.page)}).toString() : '';
         const result = await api<Data>('/internal/admin/pos/customer-reporting/' + area + q);
         setData(result); setFilter(next);
         if(result.pagination){setQuery(next.q);setCategory(result.pagination.category);}
@@ -101,9 +101,9 @@ function Invoices({ data, busy, run }: { data: Data; busy: boolean; run: (task: 
 
 function WarrantyHistory({ data, busy, run }: { data: Data; busy: boolean; run: (task: () => Promise<void>, reload?: boolean) => Promise<void> }) {
     const [selectedId, setSelectedId] = useState(data.claims[0]?.id ?? '');
-    const selected = data.claims.find((row) => row.id === selectedId);
+    const selected = data.claims.find((row) => row.id === selectedId) ?? data.claims[0];
     return <>
-        <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Warranty Claim Receipts</h3><p className="mt-1 text-xs text-slate-500">Historical warranty receipts are outlet-scoped. Claim intake/lifecycle remains in Claims.</p><select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="mt-3 w-full min-w-0 rounded border p-2 text-sm"><option value="">Warranty claim</option>{data.claims.map((row) => <option key={row.id} value={row.id}>{row.number} · {row.product_name} · {row.status}</option>)}</select>{selected && <div className="mt-3 rounded bg-slate-50 p-3 text-sm"><p>{selected.number} · {selected.customer_name ?? '—'} · {selected.product_name}</p><p>{selected.invoice_number} · received {selected.received_at}</p></div>}</section>
+        <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Warranty Claim Receipts</h3><p className="mt-1 text-xs text-slate-500">Historical warranty receipts are outlet-scoped. Claim intake/lifecycle remains in Claims.</p><select value={selected?.id ?? ''} onChange={(e) => setSelectedId(e.target.value)} className="mt-3 w-full min-w-0 rounded border p-2 text-sm"><option value="">Warranty claim</option>{data.claims.map((row) => <option key={row.id} value={row.id}>{row.number} · {row.product_name} · {row.status}</option>)}</select>{selected && <div className="mt-3 rounded bg-slate-50 p-3 text-sm"><p>{selected.number} · {selected.customer_name ?? '—'} · {selected.product_name}</p><p>{selected.invoice_number} · received {selected.received_at}</p></div>}</section>
         {selected && <DocumentActions key={selected.id} type="warranty" documentId={selected.id} canSend={data.can_send_documents} busy={busy} run={run} />}
     </>;
 }

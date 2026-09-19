@@ -58,13 +58,10 @@ final class PosCustomerReportingController extends Controller
             $claimQuery = DB::table('claims as c')->join('invoices as i', 'i.id', '=', 'c.invoice_id')
                 ->join('products as p', 'p.id', '=', 'c.product_id')->where('c.outlet_id', $outlet->id)
                 ->whereColumn('i.outlet_id', 'c.outlet_id')->whereColumn('p.outlet_id', 'c.outlet_id');
-            if ($area === 'claims') {
-                $listing = app(PosHistoryListing::class)->page($request, 'claims', $claimQuery);
+            if (in_array($area, ['claims', 'warranty'], true)) {
+                $listing = app(PosHistoryListing::class)->page($request, $area, $claimQuery);
                 $pagination = $listing['pagination'];
                 $claimRows = collect($listing['rows']);
-            } else {
-                $claimRows = $claimQuery->orderByDesc('c.id')->limit(100)->get(['c.*', 'i.public_id as invoice_id',
-                    'i.invoice_number', 'i.customer_name', 'i.customer_phone', 'p.name as product_name']);
             }
             $claims = $claimRows->map(fn ($row) => [
                     'id' => $row->public_id, 'number' => $row->claim_number, 'status' => $row->status,

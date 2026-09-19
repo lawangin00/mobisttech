@@ -44,6 +44,7 @@ class PosCustomerReportingInterfaceTest extends TestCase
         $salesClient = $this->authenticatedClient($salesMember);
         $this->send($salesClient, 'GET', '/internal/admin/pos/catalogue')->assertOk()
             ->assertJsonPath('data.can_send_documents', false);
+        $this->send($salesClient, 'GET', '/internal/admin/pos/catalogue?mode=inventory')->assertForbidden();
 
         $salesMember->forceFill(['permissions' => ['shops.enter', 'shop.sales', 'shop.documents.send']])->save();
         $this->send($salesClient, 'GET', '/internal/admin/pos/catalogue')->assertOk()
@@ -219,13 +220,22 @@ class PosCustomerReportingInterfaceTest extends TestCase
         $this->send($client, 'GET', $baseUrl.'claims?q=MT75-CLAIM-120&category=all')->assertOk()
             ->assertJsonPath('data.pagination.total', 1);
         foreach (['invoice_page_length' => '50', 'claims_page_length' => '25',
-            'invoice_search_category' => 'customer_name', 'claims_search_category' => 'claim'] as $key => $value) {
+            'invoice_search_category' => 'customer_name', 'claims_search_category' => 'claim',
+            'warranty_search_category' => 'customer_name'] as $key => $value) {
             DB::table('pos_settings')->insert(['key' => 'portal.'.$key, 'value' => $value,
                 'group' => 'portal', 'label' => $key, 'input_type' => 'select', 'sort_order' => 200]);
         }
         $this->send($client, 'GET', $baseUrl.'invoices')->assertOk()
             ->assertJsonPath('data.pagination.per_page', 50)->assertJsonPath('data.pagination.category', 'customer_name')
             ->assertJsonPath('data.pagination.pages', 3)->assertJsonCount(50, 'data.invoices');
+        $this->send($client, 'GET', $baseUrl.'warranty')->assertOk()
+            ->assertJsonPath('data.pagination.per_page', 25)->assertJsonPath('data.pagination.category', 'customer_name')
+            ->assertJsonPath('data.pagination.total', 125)->assertJsonCount(25, 'data.claims');
+        $this->send($client, 'GET', $baseUrl.'warranty?q=History%20Customer%20120')->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)->assertJsonPath('data.claims.0.number', 'MT75-CLAIM-120');
+        $this->send($client, 'GET', $baseUrl.'warranty?q=42101-1234567-1&category=customer_cnic')->assertOk()
+            ->assertJsonPath('data.pagination.total', 125);
+        $this->send($client, 'GET', $baseUrl.'warranty?category=bad')->assertUnprocessable();
         $this->send($client, 'GET', $baseUrl.'claims')->assertOk()
             ->assertJsonPath('data.pagination.per_page', 25)->assertJsonPath('data.pagination.category', 'claim')
             ->assertJsonPath('data.pagination.pages', 5)->assertJsonCount(25, 'data.claims');
