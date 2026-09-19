@@ -263,8 +263,11 @@ final class SalesOperations
     private function mutate(IdentityAccount $actor, Outlet $outlet, string $operation, string $key, array $input, callable $callback): array
     {
         return DB::transaction(function () use ($actor, $outlet, $operation, $key, $input, $callback) {
+            // Serialize every POS sale/return (including idempotent replays) with archival.
+            // Authorization before this lock can observe a stale active outlet snapshot.
+            $lockedOutlet = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
             $fresh = $actor->fresh();
-            abort_unless($fresh && app(Access::class)->allows($fresh, 'shop.sales', $outlet->fresh()), 403);
+            abort_unless($fresh && app(Access::class)->allows($fresh, 'shop.sales', $lockedOutlet), 403);
             Validator::make(['key' => $key], ['key' => 'required|string|max:100'])->validate();
             $digest = hash('sha256', json_encode($this->canonical($input), JSON_THROW_ON_ERROR));
             $identity = ['actor_scope' => $actor::class.':'.$actor->id, 'operation' => 'sales.'.$operation, 'key' => $key];

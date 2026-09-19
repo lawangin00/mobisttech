@@ -20,6 +20,71 @@ class SalesOperationsTest extends TestCase
         $this->inventoryFixture();
     }
 
+    public function test_historical_invoice_and_sale_block_archive_and_archived_sales_replays(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 2);
+        $key = (string) Str::uuid();
+        $input = ['discount' => '0.00', 'lines' => [
+            ['product_id' => $product->public_id, 'quantity' => 1],
+        ]];
+        $sale = app(SalesOperations::class)->sell($this->actor, $this->outlet, $key, $input);
+        $originalInvoice = DB::table('invoices')->where('public_id', $sale['invoice_id'])->firstOrFail();
+        $originalLine = DB::table('sales')->where('public_id', $sale['sale_ids'][0])->firstOrFail();
+        $fallback = new \App\Models\Outlet;
+        $fallback->forceFill(['public_id' => (string) Str::uuid(),
+            'name' => 'D03 historical sales fallback', 'outlet_code' => '065'])->save();
+        $owner = new \App\Models\Admin;
+        $owner->forceFill(['name' => 'D03 sales archive owner',
+            'email' => 'd03-sales-'.Str::uuid().'@example.invalid', 'password' => 'SyntheticPass123!',
+            'permissions' => ['shops.enter', 'team-members.full-access.assign', 'admin.business-profile.manage']])->save();
+        $owner->roles()->attach(\App\Models\Role::where('name', 'Full Access')->firstOrFail()->id,
+            ['assigned_at' => now()]);
+        $owner->shops()->attach($fallback);
+        try {
+            app(\App\Identity\OutletLifecycleAdministration::class)
+                ->archive($owner, $this->outlet->public_id, (int) $this->outlet->version);
+            $this->fail('An outlet with an invoice and stock history was archived without review.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+        }
+        $this->assertNull($this->outlet->fresh()->archived_at);
+        $this->assertEquals($originalInvoice, DB::table('invoices')->where('id', $originalInvoice->id)->firstOrFail());
+        $this->assertEquals($originalLine, DB::table('sales')->where('id', $originalLine->id)->firstOrFail());
+        $this->assertSame(1, $product->fresh()->qty);
+        $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $this->outlet->id)
+            ->where('action', 'outlet_archived')->count());
+        // Independently prove invoice-only history blocks archive without a product/sale shortcut.
+        $invoiceOnly = new \App\Models\Outlet;
+        $invoiceOnly->forceFill(['public_id' => (string) Str::uuid(),
+            'name' => 'D03 invoice-only synthetic outlet', 'outlet_code' => '066'])->save();
+        $invoiceOnlyId = DB::table('invoices')->insertGetId(['outlet_id' => $invoiceOnly->id,
+            'public_id' => (string) Str::uuid(), 'total_bill' => '100.00', 'final_bill' => '100.00']);
+        try {
+            app(\App\Identity\OutletLifecycleAdministration::class)
+                ->archive($owner, $invoiceOnly->public_id, 1);
+            $this->fail('An outlet with invoice-only history was archived without review.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+        }
+        $this->assertNull($invoiceOnly->fresh()->archived_at);
+        $this->assertSame($invoiceOnly->id, (int) DB::table('invoices')->where('id', $invoiceOnlyId)->value('outlet_id'));
+        // Synthetic direct archived state tests stale service/model and completed idempotent replay;
+        // this does NOT permit archiving historical sales through the production service.
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        foreach ([$key, (string) Str::uuid()] as $attempt) {
+            try {
+                app(SalesOperations::class)->sell($this->actor, $this->outlet, $attempt, $input);
+                $this->fail('Archived outlet accepted a sale or a completed-key replay.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        $this->assertSame(1, DB::table('invoices')->where('outlet_id', $this->outlet->id)->count());
+        $this->assertSame(1, DB::table('sales')->where('outlet_id', $this->outlet->id)->count());
+        $this->assertSame(1, $product->fresh()->qty);
+    }
+
     public function test_sale_uses_server_prices_allocates_exact_discount_and_replays_once(): void
     {
         $first = $this->product();
