@@ -1,6 +1,7 @@
 # mobiST Tech - AI Project Command Registry
 
 **Registry version:** MT-1.1-r16
+**Applied universal implementation epochs:** `U-CI-2026-09-19-1`
 **Universal baseline (review provenance):** Registry 1.33 / System 7.12
 **Bootstrap baseline (review provenance):** 1.12
 **Last-reviewed universal commit:** `c9e1050db1ce498c509dfefc3f77d911c8d41b7d`
