@@ -25,6 +25,57 @@ class StocktakeTest extends TestCase
         $this->inventoryFixture();
     }
 
+    public function test_archived_outlet_blocks_stocktake_mutations_replays_and_preserves_count_history(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 2);
+        $service = app(StocktakeOperations::class);
+        $input = ['kind' => 'cycle', 'product_ids' => [$product->public_id]];
+        $created = $service->start($this->actor, $this->outlet, 'd03-stocktake-start', $input);
+        $line = $service->session($this->actor, $this->outlet, $created['stocktake_id'])['lines'][0];
+        $countInput = ['line_version' => 1, 'counted_quantity' => 2];
+        $count = $service->countLine($this->actor, $this->outlet, $created['stocktake_id'],
+            $line['line_id'], 'd03-stocktake-count', $countInput);
+        $beforeSession = DB::table('stocktake_sessions')->where('public_id', $created['stocktake_id'])->firstOrFail();
+        $beforeLine = DB::table('stocktake_lines')->where('public_id', $line['line_id'])->firstOrFail();
+        $beforeCount = DB::table('stocktake_counts')->where('stocktake_line_id', $beforeLine->id)->firstOrFail();
+        $beforeKeys = DB::table('idempotency_requests')->where('actor_scope', Admin::class.':'.$this->actor->id)
+            ->where('operation', 'like', 'stocktake.%')->count();
+        // Synthetic forced archive state; historical stocktake/product outlets remain ineligible for real archival.
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        foreach (['d03-stocktake-start', 'd03-stocktake-new'] as $key) {
+            try {
+                $service->start($this->actor, $this->outlet, $key, $input);
+                $this->fail('Archived outlet accepted a stocktake start or completed-key replay.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        foreach (['d03-stocktake-count', 'd03-stocktake-new-count'] as $key) {
+            try {
+                $service->countLine($this->actor, $this->outlet, $created['stocktake_id'],
+                    $line['line_id'], $key, $countInput);
+                $this->fail('Archived outlet accepted a stocktake count or completed-key replay.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        try {
+            $service->approve($this->actor, $this->outlet, $created['stocktake_id'],
+                'd03-stocktake-approve', ['session_version' => $count['session_version']]);
+            $this->fail('Archived outlet accepted stocktake approval.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $this->assertEquals($beforeSession, DB::table('stocktake_sessions')->where('id', $beforeSession->id)->firstOrFail());
+        $this->assertEquals($beforeLine, DB::table('stocktake_lines')->where('id', $beforeLine->id)->firstOrFail());
+        $this->assertEquals($beforeCount, DB::table('stocktake_counts')->where('id', $beforeCount->id)->firstOrFail());
+        $this->assertSame($beforeKeys, DB::table('idempotency_requests')->where('actor_scope', Admin::class.':'.$this->actor->id)
+            ->where('operation', 'like', 'stocktake.%')->count());
+        $this->assertSame(2, (int) $product->fresh()->qty);
+        $this->assertSame(0, DB::table('stocktake_approvals')->where('stocktake_session_id', $beforeSession->id)->count());
+    }
+
     public function test_cycle_scope_idempotency_permissions_and_outlet_boundaries_are_enforced(): void
     {
         $product = $this->product();

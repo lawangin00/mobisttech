@@ -291,7 +291,9 @@ final class StocktakeOperations
     private function mutate(IdentityAccount $actor, Outlet $outlet, string $operation, string $key, mixed $payload, callable $callback, string $permission): array
     {
         return DB::transaction(function () use ($actor, $outlet, $operation, $key, $payload, $callback, $permission) {
-            $fresh = $this->authorize($actor, $outlet, $permission);
+            // Archive-shared lock is required even for completed-key replays: stale permission checks are insufficient.
+            $lockedOutlet = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
+            $fresh = $this->authorize($actor, $lockedOutlet, $permission);
             Validator::make(['key' => $key], ['key' => 'required|string|max:100'])->validate();
             $digest = hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
             $identity = ['actor_scope' => $fresh::class.':'.$fresh->getKey(), 'operation' => $operation, 'key' => $key];
