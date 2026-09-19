@@ -1,0 +1,64 @@
+# MT-7.5 - Deterministic parity closure / retry control
+
+Status: IN PROGRESS. This is a gate index, not a claim that test-file existence proves parity. Source of authority: `docs/migration/FEATURE_PARITY_REGISTER.md`, current Goal/Source of Truth/approved requirements, `docs/audit/MT-7.5_TRACEABILITY.md`, and exact test evidence in `docs/audit/MT-7.5_ACCEPTANCE.md`. Do not reopen completed roadmap points to restate their previously accepted result.
+
+## Execution and closure rule
+
+For each row below, compare the *original source behavior* with current approved superseding behavior, execute independently observable target backend/API/UI tests, record the precise passed/failed assertion and SHA, and distinguish missing functionality from missing proof. Only then change that family's target status. Never infer production approval from synthetic fixtures. `HOLD` is not a PASS. No family is closed by unrelated historical CI or a standalone new test. A repeated failure invokes inherited Universal Registry 1.35 `LOOP_GUARD`: record signature/attempt/change; same failure twice or 3 unsuccessful attempts blocks equivalent retries even on `Proceed`.
+
+## Complete source-family inventory (22 of 22; canonical order)
+
+| ID | Current source-register status | Specific remaining acceptance / next resolution |
+|---|---|---|
+| P01 | Pending | Reconcile original three-guard source contract against *approved* unified Admin/Customer realms; verify source-qualified POS outlet/Admin/Website-customer collision mapping, cross-role/outlet direct denial, password reset/session invalidation and actual UI. See identity decision below. |
+| P02 | Pending | Match protected category, identifier and managed-option historical usage/deletion behavior to source assertions; join target category/stock UI with MySQL history and synthetic migration. |
+| P03 | Pending | Reconcile source acquisition, serialized IMEI slot/re-entry and quantity movement history to target; independently join receiving, reservation/sale/return and race totals. |
+| P04 | Pending | Compare negative sale/return and original invoice/customer snapshots, precise money/stock changes, cross-outlet history, invoice printing and permissions end-to-end. |
+| P05 | Pending | Compare expiry/claim lifecycle, clause-version snapshot and role denial; verify claims/warranty print in real UI against historical record. |
+| P06 | Pending | Join real A4/thermal PDF/Print, optional safe email/assisted WhatsApp, source report filters/date limits and cross-role scoped CSV/history. |
+| P07 | Pending | Reconcile source POS settings, managed media, explicit preview/publish/rollback, safe paths and per-section permissions with target rendered Admin/POS UI. |
+| P08 | Complete | Preserve MT-3.3/MT-7.1/MT-7.4 target-only verified recovery evidence. Live destructive restore/provider work remains a separate authorization HOLD; do not reopen this completed family without regression evidence. |
+| X01 | Pending | Independently join original reservation expiry/confirmation/release races, same-key replay/conflicting-hash, partial-failure reconciliation across order-stock-payment MySQL. |
+| W01 | Pending | Reconcile original customer/Admin identity and signed historical order access, password/profile/avatar/session, last-owner and direct cross-realm denial with customer and Admin browsers. |
+| W02 | Pending | Check source category/filter/price/variant/redirect and zero-stock outputs against live shared POS→Laravel API→Next.js propagation; deny private fields. |
+| W03 | Pending | Join guest-cart to customer recovery, reprice/duplicate checkout, signed owned invoice/order, purchase-qualified review moderation and Admin CSV/status UI. |
+| W04 | Pending | Test four **Website-only** COD/JazzCash/Easypaisa/hosted-card modes, negative owner/reference/replay, disabled provider and refund states. Genuine gateway sandbox/refund remains HOLD, not a tested fake. |
+| W05 | Pending | Verify source service enquiry/quote ownership/expiry, consent/private uploads, agreed milestone history and actual complete project-status lifecycle in client/Admin UI. |
+| W06 | Pending | Source CMS/nav/SEO, safe media, protected collisions/rollback and cache; real joined Admin→Next.js Software Overview revision/rollback locally passes, but new-product create, complete public route family and media/SEO do not yet have equivalent browser closure. |
+| W07 | Pending | Compare theme/settings/media revision recovery, secret masking/key mismatch, safe replacement/deletion, responsive layout and current-source behaviors in real protected/public UI. |
+| W08 | Complete | Preserve MT-3.3/MT-7.4 integration health/job readiness. Real provider activation remains separately authorized HOLD. |
+| B01 | Complete | Preserve independently completed MT-6.1 brand master/runtime proof; only a demonstrated regression can reopen. |
+| C01 | Complete | Preserve independently completed MT-6.3 Windows Control ownership/launcher acceptance; no unrelated host/source changes. |
+| Q01 | In Progress | Final same-candidate clean checkout plus all family/cross-requirement closure; current GitHub runner prestart billing rejection makes later candidate CI unaccepted. |
+| F01 | Complete | Preserve MT-7.3 shared schema/build/CI foundation; exact current release-candidate verification belongs to Q01, not reopening F01. |
+| H01 | Pending | Complete original source-file/route/behavior-to-target disposition and verify historical docs cannot override approved new instructions; evidence must be exhaustive, not file-name presence. |
+
+Inventory invariant: five previously Complete (`P08,W08,B01,C01,F01`), sixteen Pending and one In Progress (`Q01`). These are **family** counts, not roadmap-point counts. Never mass-convert Pending solely because its component roadmap owners finished.
+
+## Approved requirement groups (separate from source-family rows)
+
+| Requirement authority | Required closure evidence / unresolved decision |
+|---|---|
+| Addendum v1.1 | All **41** clauses individually reconciled against target backend/API, rendered role/mode UI and applicable performance/reset tests; current clause-to-roadmap-owner table is not final acceptance. |
+| Consolidated documents/payments/legal/manual v1.0 | Invoice/Warranty explicit customer actions, split POS methods/destinations/day close/payment mix and distinct Website four channels; actual legal/ownership/notice decisions. Final manual belongs to MT-7.6, not premature MT-7.5 completion. |
+| Software publishing v1.0 | Create **new** synthetic product via authenticated UI, private full-route preview and all public Overview/Privacy/Terms/FAQ/Releases/detail, revision/update/rollback, multi-product isolation, safe media/SEO/caches, documentation-impact review and responsive performance. Existing seed/product journey is partial evidence only. |
+| mobiST POS reference set | Verify four reference documents against separately released **Windows desktop** POS and approval of factual product-specific terms/data flows before public publication; browser POS is not this product. |
+| Legal/privacy/license | Final version/effective-date, actual owner/legal sign-off, third-party notices and truthful real-world data flows; synthetic `owner_approved` fixture must never substitute for explicit approval. |
+
+## First evidence-backed discrepancy: P01 contract supersession, not permission to revert identity
+
+The original source characterization describes three POS guards (`FEATURE_PARITY_REGISTER.md` P01). The newer binding `PROJECT_REQUIREMENTS_UNIFIED_ADMIN_GOOGLE_v1.0.md` and `PROJECT_REQUIREMENTS_TEAM_MEMBERS_SESSION_POLICY_v1.0.md` supersede that credential architecture: internal Team Members share one Admin realm and customers have a distinct Customer realm (`PROJECT_SOURCE_OF_TRUTH.md`); `TeamMemberSessionSecurityTest::test_only_admin_and_customer_realms_exist_and_default_roles_are_permission_bundles` asserts the approved two-realm design. Therefore **do not** blindly recreate a third login guard or mark P01 Complete from old source guard count. Pending P01 acceptance is a source-role/guard → current Admin role+outlet+permission mapping with cross-role, cross-outlet, reset/revocation and source-qualified identity migration evidence. MT-2.18/MT-2.19 remain completed; this is MT-7.5 traceability only. Synthetic MT-7.1 rehearsal proves mapper behavior, not unauthorized live source-identity migration.
+
+## Existing failed-task ledger and retry barrier
+
+- Software joined-browser test: asynchronous Admin reload and synthetic rollback-reference cleanup were distinct local failure signatures; corrected test and scoped cleanup passed actual Edge 3/3 with both teardowns. No active equivalent retry is needed; reuse the proven test runner/fixture, do not restart discovery.
+- GitHub CI task: run `35442617990` at SHA `21af94a6` failed **before** a runner or any job step started because GitHub reported failed account payment or Actions spending-limit exhaustion. This is one recorded infrastructure failure, **not** product test failure. Do not dispatch equivalent CI merely for a new commit/`Proceed`; retry only on verified material billing/runner-readiness change after account-holder action. Its outstanding exact-current-candidate CI proof remains OPEN.
+- On any *future* failure, before retry record logical task, attempt number, source/harness/environment identity, terminal outcome/signature and material corrective change in `PROJECT_IMPLEMENTATION_STATUS.md`. Same equivalent failure twice or three unsuccessful/incomplete attempts: `LOOP_GUARD` active, audit whole affected workflow, change strategy and preflight before a new attempt. Missing terminal evidence counts as `ORCHESTRATION_FAIL`.
+
+**Next bounded parity action:** audit P01's approved source→target identity mapping and exact authenticated cross-role/cross-outlet + reset/session journeys against the original source contract. Record a concrete missing implementation versus evidence-only gap; do not add an arbitrary isolated assertion, start MT-7.6, change owner/legal states or repeat billing-blocked CI.
+
+## P01 focused verification checkpoint (19-Sep-2026; target-only)
+
+- Fresh isolated `mobisttech_test`: `IdentityMigrationTest` + `IdentitySecurityTest` + `TeamMemberSessionSecurityTest` **22/22 PASS (162 assertions)**. This joins source-qualified identity mapping/quarantine/replay, unified Admin/Customer permission and reset/session safety.
+- Fresh real local Edge `backend/tests/browser/pos-shell.spec.ts` **2/2 PASS**, verifying desktop salesperson permission-scoped navigation and direct denied inventory route plus mobile inventory operator outlet selection, denied sales route and logout. POS E2E synthetic seeding/cleanup succeeded. Test-owned MySQL returned to its initially stopped state after *each* test run.
+- P01 remains **Pending**, not a failed implementation: the original source register's full 54-route/three-guard behavior-to-approved-role mapping and separately authorized real source identity cutover remain unaccepted. Next P01 action is **source-route/role-to-target contract crosswalk**, *not* another equivalent rerun of these already-PASS tests. Two Admin/Customer realms are the approved replacement, not a regression requiring a third guard.
