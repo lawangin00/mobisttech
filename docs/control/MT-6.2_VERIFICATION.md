@@ -66,3 +66,9 @@ The following legacy features were not carried forward into the canonical target
 - Git diff check: PASS.
 - Protected source repositories: clean.
 - No MT-6.3 work was started.
+
+## MT-7.2 resilience follow-up
+
+MT-7.2 later exposed one lifecycle residue not covered by the original MT-6.2 process-tree assertions: a force-stopped Vite process can leave Laravel's `public/hot` HMR marker behind even though port 15173 is offline. That stale marker makes subsequent built-asset Laravel runs reference a dead Vite server.
+
+Control now removes `backend/public/hot` only when the canonical Backend Vite listener is confirmed offline, both before a fresh Vite start and after/offline Stop. Follow-up acceptance proved: a stale offline marker is removed; a normal Start Backend recreates the marker while Vite is Online; Stop Backend removes it and leaves 18080/15173 free. Default Playwright also clears the marker because that suite intentionally runs against built assets, never HMR.

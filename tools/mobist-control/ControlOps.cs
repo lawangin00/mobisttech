@@ -355,6 +355,22 @@ namespace MobiSTControl
             return null;
         }
 
+        private static string ViteHotPath()
+        {
+            return Path.Combine(BackendProject, "public", "hot");
+        }
+
+        private static void CleanupViteHotMarkerIfOffline(ServiceDefinition service)
+        {
+            if (service.Role != "backend_vite" || GetListeningPid(service.Port) != 0) return;
+            try
+            {
+                string hot = ViteHotPath();
+                if (File.Exists(hot)) File.Delete(hot);
+            }
+            catch { }
+        }
+
         private static string StartService(ServiceDefinition service)
         {
             string preflight = Preflight(service);
@@ -367,6 +383,8 @@ namespace MobiSTControl
                 return service.DisplayName + " already has an owned launcher; duplicate start skipped.";
             if (current.State == ServiceState.Blocked)
                 return current.Text;
+
+            CleanupViteHotMarkerIfOffline(service);
 
             try
             {
@@ -420,6 +438,7 @@ namespace MobiSTControl
                     return service.DisplayName + ": not stopped; port " + service.Port +
                         " belongs to unowned PID " + listener + ".";
                 DeleteRecord(service);
+                CleanupViteHotMarkerIfOffline(service);
                 return service.DisplayName + " is already Offline.";
             }
 
@@ -452,7 +471,10 @@ namespace MobiSTControl
                         DeleteRecord(service);
                         int remaining = GetListeningPid(service.Port);
                         if (remaining == 0)
+                        {
+                            CleanupViteHotMarkerIfOffline(service);
                             return service.DisplayName + " stopped.";
+                        }
                         return service.DisplayName + ": owned process stopped, but port " +
                             service.Port + " is now occupied by PID " + remaining + ".";
                     }

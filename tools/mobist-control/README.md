@@ -16,7 +16,7 @@ The isolated MySQL process is intentionally not owned by Control. Database lifec
 
 Control never treats a listening port as permission to terminate a process. Each launched service writes an ignored per-user ownership record under `%LOCALAPPDATA%\mobiST Control\owned` containing the launcher PID, process creation time and exact runner path. Before stop/restart, Control revalidates all three and verifies that the listening PID is a descendant of the tracked launcher. A stale/reused PID is discarded. An occupied port owned by another process is reported as blocked and is never killed.
 
-The three tracked runner scripts are target-only and contain explicit `C:\mobisttech` paths. This prevents source-project or unrelated process control.
+The three tracked runner scripts are target-only and contain explicit `C:\mobisttech` paths. This prevents source-project or unrelated process control. Backend Vite lifecycle also removes `backend/public/hot` whenever the canonical Vite listener is confirmed offline, preventing Laravel from pointing built pages at a dead HMR port after a force-stopped development process.
 
 ## Commands
 
