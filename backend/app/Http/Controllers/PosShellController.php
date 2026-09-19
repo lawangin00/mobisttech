@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Identity\AdminProfilePhoto;
 use App\Identity\OutletProfileAdministration;
 use App\Models\Admin;
 use App\Models\Outlet;
@@ -22,12 +23,27 @@ final class PosShellController extends Controller
         return Inertia::render('pos-login');
     }
 
+    public function profilePhoto(AdminProfilePhoto $photos)
+    {
+        return $photos->show($this->profileActor());
+    }
+
+    public function uploadProfilePhoto(Request $request, AdminProfilePhoto $photos)
+    {
+        return response()->json(['data' => $photos->upload($this->profileActor(), $request)]);
+    }
+
+    public function removeProfilePhoto(AdminProfilePhoto $photos)
+    {
+        return response()->json(['data' => $photos->remove($this->profileActor())]);
+    }
+
     public function manageAccount()
     {
         $actor = $this->profileActor();
         return Inertia::render('admin-account', ['identity' => [
             'name' => $actor->name, 'email' => $actor->email,
-            'job_title' => $actor->job_title, 'roles' => $actor->roleNames(),
+            'job_title' => $actor->job_title, 'roles' => $actor->roleNames(), 'has_photo' => (bool) $actor->profile_photo,
         ]]);
     }
 

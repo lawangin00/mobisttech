@@ -84,6 +84,9 @@ Route::prefix('/api/v1')->middleware(['identity', 'identity.auth', 'throttle:api
 Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->group(function () {
     Route::get('/pos', [PosShellController::class, 'home'])->defaults('identity_realm', 'admin')->name('admin.pos.home');
     Route::get('/manage-account', [PosShellController::class, 'manageAccount'])->defaults('identity_realm', 'admin')->name('admin.account.page');
+    Route::get('/manage-account/photo', [PosShellController::class, 'profilePhoto'])->defaults('identity_realm', 'admin')->name('admin.account.photo.show');
+    Route::post('/manage-account/photo', [PosShellController::class, 'uploadProfilePhoto'])->defaults('identity_realm', 'admin')->middleware('throttle:identity')->name('admin.account.photo.upload');
+    Route::delete('/manage-account/photo', [PosShellController::class, 'removeProfilePhoto'])->defaults('identity_realm', 'admin')->middleware('throttle:identity')->name('admin.account.photo.delete');
     Route::get('/pos/workspace/{area}', [PosShellController::class, 'workspace'])->whereIn('area', ['sales', 'inventory', 'invoices', 'warranty', 'claims', 'profile', 'reports', 'operations'])
         ->defaults('identity_realm', 'admin')->name('admin.pos.workspace');
     Route::get('/pos/outlet-profile', [PosShellController::class, 'outletProfile'])->defaults('identity_realm', 'admin')->name('admin.pos.outlet-profile.show');

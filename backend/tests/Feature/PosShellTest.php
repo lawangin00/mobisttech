@@ -6,6 +6,8 @@ use App\Models\Admin;
 use App\Models\Outlet;
 use App\Models\Role;
 use Illuminate\Cookie\CookieValuePrefix;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -207,6 +209,47 @@ class PosShellTest extends TestCase
         $this->send($user, 'GET', '/internal/admin/manage-account')->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('admin-account')
                 ->where('identity.email', $actor->email)->missing('identity.password'));
+    }
+
+    public function test_admin_photo_is_private_self_scoped_mime_limited_and_audited(): void
+    {
+        Storage::fake('local');
+        $outlet = $this->outlet('Photo outlet', '059');
+        $owner = $this->member('photo-owner@example.invalid', ['shops.enter', 'shop.sales']);
+        $other = $this->member('photo-other@example.invalid', ['shops.enter', 'shop.sales']);
+        $owner->shops()->attach($outlet);
+        $other->shops()->attach($outlet);
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
+        $url = '/internal/admin/manage-account/photo';
+        $this->send($client, 'GET', $url)->assertNotFound();
+        $this->uploadPhoto($client, $url, new UploadedFile(public_path('icon-192.png'), 'profile.png', 'image/png', null, true), ['admin_id' => $other->public_id])->assertUnprocessable();
+        $this->uploadPhoto($client, $url, UploadedFile::fake()->createWithContent('malicious.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>'))->assertUnprocessable();
+        $this->assertNull($owner->fresh()->profile_photo);
+        $this->uploadPhoto($client, $url, new UploadedFile(public_path('icon-192.png'), 'profile.png', 'image/png', null, true))->assertOk()->assertJsonPath('data.has_photo', true);
+        $path = $owner->fresh()->profile_photo;
+        $this->assertStringStartsWith('admin-profile-photos/'.$owner->public_id.'/', $path);
+        Storage::disk('local')->assertExists($path);
+        $this->send($client, 'GET', $url)->assertOk()->assertHeader('Content-Type', 'image/png')->assertHeader('X-Content-Type-Options', 'nosniff');
+        $otherClient = $this->client();
+        $this->login($otherClient, $other->email)->assertOk();
+        $this->send($otherClient, 'GET', $url)->assertNotFound();
+        $this->send($otherClient, 'DELETE', $url)->assertOk()->assertJsonPath('data.has_photo', false);
+        Storage::disk('local')->assertExists($path);
+        $this->send($client, 'DELETE', $url)->assertOk()->assertJsonPath('data.has_photo', false);
+        $this->assertNull($owner->fresh()->profile_photo);
+        Storage::disk('local')->assertMissing($path);
+        $this->send($client, 'GET', $url)->assertNotFound();
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)->where('action', 'admin_profile_photo_updated')->count());
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)->where('action', 'admin_profile_photo_removed')->count());
+    }
+
+    private function uploadPhoto(array &$client, string $url, UploadedFile $file, array $fields = [])
+    {
+        return $this->call('POST', $url, $fields, $client['cookies'], ['profile_photo' => $file], [
+            'HTTP_ACCEPT' => 'application/json', 'HTTP_USER_AGENT' => $client['agent'],
+            'HTTP_X_CSRF_TOKEN' => $client['tokens']['XSRF-TOKEN-admin'],
+        ]);
     }
 
     private function member(string $email, array $permissions): Admin

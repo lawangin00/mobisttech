@@ -167,3 +167,31 @@ test('Team Member account and recovery UI are accessible only through the approv
     expect((await fresh).status()).toBe(200);
     await page.waitForURL('**/internal/admin/pos');
 });
+
+test('personal Admin photo upload and removal stay inside the authenticated account UI', async ({page,browser}) => {
+    await login(page,'e2e-mt43@example.invalid');
+    await page.getByTestId('my-account-link').click();
+    await page.waitForURL('**/internal/admin/manage-account');
+    await expect(page.getByTestId('account-photo-workspace')).toBeVisible();
+    await expect(page.getByTestId('account-photo-image')).toHaveCount(0);
+    await page.getByTestId('account-photo-file').setInputFiles('public/icon-192.png');
+    const created=page.waitForResponse(r=>r.url().endsWith('/internal/admin/manage-account/photo')&&r.request().method()==='POST');
+    await page.getByTestId('account-photo-upload').click();
+    expect((await created).status()).toBe(200);
+    await expect(page.getByTestId('account-photo-image')).toBeVisible();
+    await expect(page.getByTestId('account-photo-image')).toHaveJSProperty('naturalWidth',192);
+    await page.reload();
+    await expect(page.getByTestId('account-photo-image')).toHaveJSProperty('naturalWidth',192);
+    const other=await browser.newContext();
+    try {
+        const guest=await other.newPage();
+        expect((await guest.goto('/internal/admin/manage-account/photo'))?.status()).toBe(401);
+        await login(guest,'e2e-inventory@example.invalid');
+        expect((await guest.goto('/internal/admin/manage-account/photo'))?.status()).toBe(404);
+    } finally {await other.close();}
+    const removed=page.waitForResponse(r=>r.url().endsWith('/internal/admin/manage-account/photo')&&r.request().method()==='DELETE');
+    await page.getByTestId('account-photo-remove').click();
+    expect((await removed).status()).toBe(200);
+    await expect(page.getByTestId('account-photo-image')).toHaveCount(0);
+    expect((await page.request.get('/internal/admin/manage-account/photo')).status()).toBe(404);
+});
