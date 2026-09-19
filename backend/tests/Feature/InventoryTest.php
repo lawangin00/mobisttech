@@ -24,6 +24,65 @@ class InventoryTest extends TestCase
         $this->inventoryFixture();
     }
 
+    public function test_zero_stock_definition_and_stock_history_block_outlet_archive_and_archived_inventory_writes(): void
+    {
+        $product = $this->product();
+        $fallback = new \App\Models\Outlet;
+        $fallback->forceFill(['public_id' => (string) \Illuminate\Support\Str::uuid(),
+            'name' => 'D03 inventory fallback', 'outlet_code' => '067'])->save();
+        $owner = new Admin;
+        $owner->forceFill(['name' => 'D03 inventory archive owner',
+            'email' => 'd03-inventory-'.\Illuminate\Support\Str::uuid().'@example.invalid',
+            'password' => 'SyntheticPass123!', 'permissions' => [
+                'shops.enter', 'team-members.full-access.assign', 'admin.business-profile.manage']])->save();
+        $owner->roles()->attach(\App\Models\Role::where('name', 'Full Access')->firstOrFail()->id,
+            ['assigned_at' => now()]);
+        $owner->shops()->attach($fallback);
+        $archive = app(\App\Identity\OutletLifecycleAdministration::class);
+        foreach ([0, 2] as $quantity) {
+            if ($quantity) {
+                $this->acquire($product, $quantity, 'd03-inventory-receipt');
+            }
+            try {
+                $archive->archive($owner, $this->outlet->public_id, (int) $this->outlet->version);
+                $this->fail('A product definition or its stock history was silently archived.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(409, $exception->getStatusCode());
+            }
+            $this->assertNull($this->outlet->fresh()->archived_at);
+            $this->assertSame($quantity, (int) $product->fresh()->qty);
+            $this->assertSame($this->outlet->id, (int) $product->fresh()->outlet_id);
+        }
+        $service = app(InventoryOperations::class);
+        $entry = $this->acquisitionInput(2);
+        $movement = DB::table('stock_movements')->where('product_id', $product->id)->firstOrFail();
+        $receipt = DB::table('stock_acquisitions')->where('product_id', $product->id)->firstOrFail();
+        $keys = DB::table('idempotency_requests')->count();
+        // Deliberately simulated archived state only: production still forbids this archival.
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        foreach (['d03-inventory-receipt', 'd03-inventory-new'] as $key) {
+            try {
+                $service->acquire($this->actor, $this->outlet, $product->public_id, $key, $entry);
+                $this->fail('Archived outlet accepted stock receipt or a completed-key replay.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        try {
+            $service->adjust($this->actor, $this->outlet, $product->public_id,
+                'd03-inventory-adjust', ['type' => 'lost', 'quantity' => 1, 'reason' => 'Synthetic']);
+            $this->fail('Archived outlet accepted stock adjustment.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $this->assertSame($keys, DB::table('idempotency_requests')->count());
+        $this->assertSame(2, (int) $product->fresh()->qty);
+        $this->assertEquals($movement, DB::table('stock_movements')->where('id', $movement->id)->firstOrFail());
+        $this->assertEquals($receipt, DB::table('stock_acquisitions')->where('id', $receipt->id)->firstOrFail());
+        $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $this->outlet->id)
+            ->where('action', 'outlet_archived')->count());
+    }
+
     public function test_acquisition_is_atomic_exact_idempotent_and_derives_physical_units(): void
     {
         $product = $this->product(true);

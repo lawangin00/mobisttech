@@ -137,7 +137,9 @@ final class InventoryOperations
     private function mutate(IdentityAccount $actor, Outlet $outlet, string $productId, string $operation, string $key, array $input, callable $callback): array
     {
         return DB::transaction(function () use ($actor, $outlet, $productId, $operation, $key, $input, $callback) {
-            $this->authorize($actor, $outlet);
+            // Serialize acquisitions, adjustments, IMEI edits, archive and completed-key replays with outlet archival.
+            $lockedOutlet = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
+            $this->authorize($actor, $lockedOutlet);
             Validator::make(['key' => $key], ['key' => 'required|string|max:100'])->validate();
             ksort($input);
             $digest = hash('sha256', json_encode([$productId, $outlet->id, $input], JSON_THROW_ON_ERROR));
