@@ -298,6 +298,64 @@ class PosShellTest extends TestCase
         $this->assertSame(1, DB::table('cash_sessions')->where('outlet_id', $historical->id)->where('status', 'closed')->count());
     }
 
+    public function test_archived_stock_history_is_owner_only_read_only_and_excludes_private_acquisition_details(): void
+    {
+        $outlet = $this->outlet('Synthetic stock archive candidate', '067');
+        $fallback = $this->outlet('Stock history active fallback', '068');
+        $owner = $this->member('d03-stock-history-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($fallback);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
+        $limited = $this->member('d03-stock-history-limited@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $limited->shops()->attach([$outlet->id, $fallback->id]);
+        $operator = $this->member('d03-stock-history-operator@example.invalid', ['shops.enter', 'shop.inventory']);
+        $operator->shops()->attach([$outlet->id, $fallback->id]);
+        $product = new \App\Models\Product;
+        $product->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Synthetic historical stock',
+            'outlet_id' => $outlet->id, 'category' => 'accessory', 'price' => '20.00', 'qty' => 1])->save();
+        $unit = new \App\Models\StockUnit;
+        $unit->forceFill(['product_id' => $product->id, 'unit_no' => 1, 'status' => 'in_stock'])->save();
+        $movementId = DB::table('stock_movements')->insertGetId(['product_id' => $product->id,
+            'outlet_id' => $outlet->id, 'type' => 'acquisition', 'quantity_change' => 1,
+            'stock_before' => 0, 'stock_after' => 1, 'created_at' => now()]);
+        $acquisitionId = DB::table('stock_acquisitions')->insertGetId(['product_id' => $product->id,
+            'outlet_id' => $outlet->id, 'source_type' => 'supplier', 'quantity' => 1,
+            'seller_name' => 'DO-NOT-EXPOSE-SELLER', 'seller_phone' => '03009999999']);
+        $ownerClient = $this->client();
+        $this->login($ownerClient, $owner->email)->assertOk();
+        $path = '/internal/admin/outlet-management/'.$outlet->public_id.'/history';
+        $this->send($ownerClient, 'GET', $path)->assertStatus(409);
+        $this->assertNull($outlet->fresh()->archived_at);
+        // Do NOT make this product-bearing outlet eligible for real service archival.
+        // Synthetic direct archived-state read-path fixture leaves the production fail-closed rule unchanged.
+        $outlet->forceFill(['archived_at' => now()])->save();
+        $beforeUnit = DB::table('stock_units')->where('id', $unit->id)->firstOrFail();
+        $beforeMovement = DB::table('stock_movements')->where('id', $movementId)->firstOrFail();
+        $response = $this->send($ownerClient, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.stock_history.product_count', 1)
+            ->assertJsonPath('data.stock_history.unit_count', 1)
+            ->assertJsonPath('data.stock_history.movement_count', 1)
+            ->assertJsonPath('data.stock_history.acquisition_count', 1)
+            ->assertJsonPath('data.stock_history.products.0.id', $product->public_id)
+            ->assertJsonPath('data.stock_history.products.0.quantity', 1)
+            ->assertJsonPath('data.stock_history.movements.0.stock_after', 1);
+        $this->assertStringNotContainsString('DO-NOT-EXPOSE-SELLER', $response->getContent());
+        $this->assertStringNotContainsString('03009999999', $response->getContent());
+        $this->assertStringNotContainsString('unit_code', $response->getContent());
+        $limitedClient = $this->client();
+        $this->login($limitedClient, $limited->email)->assertOk();
+        $this->send($limitedClient, 'GET', $path)->assertForbidden();
+        $operatorClient = $this->client();
+        $this->login($operatorClient, $operator->email)->assertOk();
+        $this->send($operatorClient, 'GET', $path)->assertForbidden();
+        $this->assertEquals($beforeUnit, DB::table('stock_units')->where('id', $unit->id)->firstOrFail());
+        $this->assertEquals($beforeMovement, DB::table('stock_movements')->where('id', $movementId)->firstOrFail());
+        $this->assertSame(1, DB::table('stock_acquisitions')->where('id', $acquisitionId)->count());
+        $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
+            ->where('action', 'outlet_archived')->count());
+    }
+
     public function test_account_and_recovery_pages_use_only_the_existing_admin_realm(): void
     {
         $guest = $this->client();

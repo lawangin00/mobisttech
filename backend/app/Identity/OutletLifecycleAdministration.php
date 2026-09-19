@@ -43,6 +43,30 @@ final class OutletLifecycleAdministration
                 ])->all(),
             'cash_session_count' => DB::table('cash_sessions')->where('outlet_id', $outlet->id)->count(),
             'cash_entry_count' => DB::table('cash_entries')->where('outlet_id', $outlet->id)->count(),
+            // Read-only historical stock projection for protected Full Access archive review.
+            // Never expose supplier identity, acquisition documents, unit IMEIs or private notes.
+            'stock_history' => [
+                'product_count' => DB::table('products')->where('outlet_id', $outlet->id)->count(),
+                'unit_count' => DB::table('stock_units as u')->join('products as p', 'p.id', '=', 'u.product_id')
+                    ->where('p.outlet_id', $outlet->id)->count(),
+                'movement_count' => DB::table('stock_movements')->where('outlet_id', $outlet->id)->count(),
+                'acquisition_count' => DB::table('stock_acquisitions')->where('outlet_id', $outlet->id)->count(),
+                'stocktake_count' => DB::table('stocktake_sessions')->where('outlet_id', $outlet->id)->count(),
+                'transfer_count' => DB::table('stock_transfers')->where('source_outlet_id', $outlet->id)
+                    ->orWhere('destination_outlet_id', $outlet->id)->count(),
+                'products' => DB::table('products')->where('outlet_id', $outlet->id)->orderBy('id')->limit(50)
+                    ->get(['public_id', 'product_code', 'name', 'qty', 'isDeleted'])
+                    ->map(fn ($row) => ['id' => $row->public_id, 'code' => $row->product_code,
+                        'name' => $row->name, 'quantity' => (int) $row->qty,
+                        'product_archived' => (bool) $row->isDeleted])->all(),
+                'movements' => DB::table('stock_movements as m')->join('products as p', 'p.id', '=', 'm.product_id')
+                    ->where('m.outlet_id', $outlet->id)->where('p.outlet_id', $outlet->id)
+                    ->orderByDesc('m.id')->limit(50)
+                    ->get(['p.public_id as product_id', 'm.type', 'm.quantity_change', 'm.stock_after', 'm.created_at'])
+                    ->map(fn ($row) => ['product_id' => $row->product_id, 'type' => $row->type,
+                        'quantity_change' => (int) $row->quantity_change,
+                        'stock_after' => (int) $row->stock_after, 'created_at' => $row->created_at])->all(),
+            ],
         ];
     }
 
