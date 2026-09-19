@@ -60,7 +60,7 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
                 privacy: '<p>Privacy</p>', terms: '<p>Terms</p>', faq: [{ question: 'Q?', answer: '<p>A</p>' }],
                 screenshot_media_ids: [], sitemap: true,
             } }],
-            releases: [{ id: 71, public_id: 'release-1', version: '0.9.0', state: 'draft', release_date: '2026-09-18', summary: 'Initial draft release' }],
+            releases: [{ id: 71, public_id: 'release-1', version: '0.9.0', state: 'draft', release_date: '2026-09-18', summary: 'Initial draft release', notes: { added: ['E2E release feature'], fixed: ['E2E bug fix'] }, impact_review: { privacy: 'reviewed_no_change' } }],
         }],
         team_members: [{ id: 'member-1', name: 'E2E Teammate', email: 'teammate@example.invalid', job_title: 'Editor', status: 'active', roles: [{ id: 'role-1', name: 'E2E Editor' }], outlets: [{ id: 'e2e-platform-outlet', name: 'E2E Sales Outlet' }] }],
         roles: [
@@ -275,6 +275,9 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
     await expect(softwarePreview.getByText('Q?')).toBeVisible();
     await softwarePreview.getByRole('button', { name: 'Releases' }).click();
     await expect(softwarePreview.getByText('Initial draft release')).toBeVisible();
+    await expect(softwarePreview.getByText('E2E release feature')).toBeVisible();
+    await expect(softwarePreview.getByText('E2E bug fix')).toBeVisible();
+    await expect(softwarePreview.getByText('Documentation impact review: 1 recorded fields')).toBeVisible();
     await editor.getByRole('button', { name: 'Save new draft revision' }).click();
     await expect.poll(() => calls.some((call) => call.path.endsWith('/software/software-1/draft') && call.body?.name === 'E2E Software')).toBe(true);
     const release = page.getByRole('heading', { name: 'Publish, rollback, release & canonical slug' }).locator('xpath=ancestor::section[1]');

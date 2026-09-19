@@ -109,8 +109,12 @@ final class PlatformAdministrationController extends Controller
                             'created_at' => $x->created_at, 'published_at' => $x->published_at,
                         ])->all(),
                     'releases' => DB::table('software_releases')->where('software_product_id', $productId)
-                        ->orderByDesc('id')->limit(20)->get(['id', 'public_id', 'version', 'state', 'release_date', 'summary', 'published_at'])
-                        ->map(fn ($x) => (array) $x)->all(),
+                        ->orderByDesc('id')->limit(20)->get(['id', 'public_id', 'version', 'state', 'release_date', 'summary', 'notes', 'impact_review', 'published_at'])
+                        ->map(fn ($x) => [
+                            ...((array) $x),
+                            'notes' => json_decode($x->notes, true, flags: JSON_THROW_ON_ERROR),
+                            'impact_review' => json_decode($x->impact_review, true, flags: JSON_THROW_ON_ERROR),
+                        ])->all(),
                 ];
             })->all();
 

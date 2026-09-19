@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-type Release = { id:number; version:string; state:string; release_date:string; summary:string };
+type Release = { id:number; version:string; state:string; release_date:string; summary:string; notes?:Record<string,string[]>; impact_review?:Record<string,unknown> };
 type FAQ = { question:string; answer:string };
 type View = 'overview' | 'privacy' | 'terms' | 'faq' | 'releases';
 const views:View[] = ['overview','privacy','terms','faq','releases'];
@@ -32,8 +32,8 @@ export default function SoftwareRoutePreview({snapshot,releases,revisionState}:{
             {view==='privacy'&&<article className="mt-4 space-y-3" dangerouslySetInnerHTML={{__html:text(snapshot.privacy)}}/>}
             {view==='terms'&&<article className="mt-4 space-y-3" dangerouslySetInnerHTML={{__html:text(snapshot.terms)}}/>}
             {view==='faq'&&<div className="mt-4 space-y-4">{faqs(snapshot.faq).map((entry,i)=><section key={i}><h4 className="font-semibold">{entry.question}</h4><div dangerouslySetInnerHTML={{__html:entry.answer}}/></section>)}</div>}
-            {view==='releases'&&<div className="mt-4 space-y-3">{releases.map(item=><section key={item.id} className="rounded border p-3"><h4 className="font-semibold">{item.version}</h4><p className="text-xs text-slate-500">{item.state} · {item.release_date}</p><p className="mt-1">{item.summary}</p></section>)}{releases.length===0&&<p>No release records yet.</p>}</div>}
+            {view==='releases'&&<div className="mt-4 space-y-3">{releases.map(item=><section key={item.id} className="rounded border p-3"><h4 className="font-semibold">{item.version}</h4><p className="text-xs text-slate-500">{item.state} · {item.release_date}</p><p className="mt-1">{item.summary}</p>{(["added","changed","fixed","security"] as const).map(group=>strings(item.notes?.[group]).length>0&&<div key={group} className="mt-2"><h5 className="text-sm font-semibold">{group[0].toUpperCase()+group.slice(1)}</h5><ul className="list-disc pl-5 text-sm">{strings(item.notes?.[group]).map((note,i)=><li key={i}>{note}</li>)}</ul></div>)}<p className="mt-2 text-xs text-slate-500">Documentation impact review: {Object.keys(item.impact_review??{}).length} recorded fields</p></section>)}{releases.length===0&&<p>No release records yet.</p>}</div>}
         </div>
-        <p className="mt-3 text-xs text-slate-600">Private content preview only. Public URLs, release notes, SEO and media require separate published-route acceptance.</p>
+        <p className="mt-3 text-xs text-slate-600">Private content preview only. Public URLs, exact public-route appearance, SEO and media require separate published-route acceptance.</p>
     </section>;
 }

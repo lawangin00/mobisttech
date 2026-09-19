@@ -228,6 +228,10 @@ class PlatformAdministrationInterfaceTest extends TestCase
         ];
         $release = $this->send($editorClient, 'POST', '/internal/admin/platform/software/'.$productId.'/releases', $releaseInput)
             ->assertOk()->json('data');
+        $adminView = collect($this->send($editorClient, 'GET', '/internal/admin/platform/data')->assertOk()->json('data.software'))
+            ->firstWhere('id', $productId);
+        $this->assertSame(['Test-only feature'], $adminView['releases'][0]['notes']['added']);
+        $this->assertSame('reviewed_no_change', $adminView['releases'][0]['impact_review']['privacy']);
         $this->getJson('/api/v1/software/mt75-fixture/releases')->assertOk()->assertJsonCount(0, 'data.items');
         $releaseId = (int) DB::table('software_releases')->where('public_id', $release['public_id'])->value('id');
         $this->send($editorClient, 'POST', '/internal/admin/platform/software/releases/'.$releaseId.'/publish')->assertForbidden();
