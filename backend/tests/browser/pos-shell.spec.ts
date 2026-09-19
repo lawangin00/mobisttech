@@ -70,3 +70,25 @@ test('mobile inventory manager selects outlet and receives responsive permission
     await page.getByTestId('logout').click();
     await page.waitForURL('**/internal/admin/pos/login');
 });
+
+
+test('assigned Admin edits outlet profile through protected POS workspace without changing outlet identity', async ({ page }) => {
+    await page.setViewportSize({width:1280,height:900});
+    await login(page,'e2e-platform@example.invalid');
+    await expect(page.locator('aside').getByTestId('nav-profile')).toBeVisible();
+    const response=await page.goto('/internal/admin/pos/workspace/profile');
+    expect(response?.status()).toBe(200);
+    await expect(page.getByTestId('outlet-profile-editor')).toBeVisible();
+    await expect(page.getByTestId('outlet-profile-code')).toHaveText('E41');
+    await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Sales Outlet');
+    await page.getByTestId('outlet-profile-name').fill('E2E Verified Profile');
+    await page.getByTestId('outlet-profile-business_phone').fill('+92 300 1234567');
+    const saved=page.waitForResponse(r=>r.url().endsWith('/internal/admin/pos/outlet-profile')&&r.request().method()==='PATCH');
+    await page.getByTestId('outlet-profile-save').click();
+    expect((await saved).status()).toBe(200);
+    await expect(page.getByTestId('outlet-profile-message')).toHaveText('Outlet profile saved.');
+    await expect(page.getByTestId('outlet-profile-code')).toHaveText('E41');
+    await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Verified Profile');
+    await page.reload();
+    await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Verified Profile');
+});

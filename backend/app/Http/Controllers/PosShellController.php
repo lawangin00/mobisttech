@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Identity\OutletProfileAdministration;
 use App\Models\Admin;
+use App\Models\Outlet;
 use App\Pos\PosShell;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +20,30 @@ final class PosShellController extends Controller
         }
 
         return Inertia::render('pos-login');
+    }
+
+    public function outletProfile(Request $request, OutletProfileAdministration $service)
+    {
+        return response()->json(['data' => $service->show($this->profileActor(), $this->selectedOutlet($request))]);
+    }
+
+    public function updateOutletProfile(Request $request, OutletProfileAdministration $service)
+    {
+        return response()->json(['data' => $service->update($this->profileActor(), $this->selectedOutlet($request), $request->all())]);
+    }
+
+    private function profileActor(): Admin
+    {
+        $actor = Auth::guard('admin')->user();
+        abort_unless($actor instanceof Admin, 401);
+        return $actor;
+    }
+
+    private function selectedOutlet(Request $request): Outlet
+    {
+        $id = (int) $request->session()->get('active_outlet_id', 0);
+        abort_unless($id > 0, 403, 'Select an outlet first.');
+        return Outlet::whereKey($id)->firstOrFail();
     }
 
     public function home(Request $request, PosShell $shell)

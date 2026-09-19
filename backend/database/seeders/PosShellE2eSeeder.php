@@ -35,7 +35,7 @@ class PosShellE2eSeeder extends Seeder
                 'website.conversions.view',
             ]);
             $platformRole = $this->role('E2E Platform Administrator', 'e2e-platform-administrator', [
-                'shops.enter',
+                'shops.enter', 'shop.profile',
                 'config.documents.manage', 'config.theme.manage', 'config.branding.manage', 'config.payments.manage',
                 'config.promotions.manage', 'config.loyalty.manage',
                 'admin.business-profile.manage', 'admin.integrations.manage',

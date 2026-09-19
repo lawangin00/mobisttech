@@ -16,6 +16,7 @@ final class PosShell
         'invoices' => ['label' => 'Invoices & customers', 'description' => 'Sale history, invoices and customer records.', 'permission' => 'shop.invoices'],
         'warranty' => ['label' => 'Warranty', 'description' => 'Warranty intake and supporting records.', 'permission' => 'shop.warranty'],
         'claims' => ['label' => 'Claims', 'description' => 'Warranty claim lifecycle and history.', 'permission' => 'shop.claims'],
+        'profile' => ['label' => 'Outlet profile', 'description' => 'Edit the assigned outlet business contact and display details.', 'permission' => 'shop.profile'],
         'reports' => ['label' => 'Reports', 'description' => 'Outlet-scoped business reports and figures.', 'permission' => 'reports.view'],
         'operations' => ['label' => 'Operations', 'description' => 'Cash closing, trade-ins and paid repairs.',
             'permissions_any' => ['shop.cash', 'shop.cash.approve', 'shop.trade-in', 'shop.repairs', 'shop.payments.reconcile']],

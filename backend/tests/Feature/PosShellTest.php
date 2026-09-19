@@ -98,6 +98,43 @@ class PosShellTest extends TestCase
         $this->send($client, 'GET', '/internal/admin/pos/workspace/reports')->assertForbidden();
     }
 
+    public function test_outlet_profile_edit_is_scoped_versioned_audited_and_cannot_change_identity(): void
+    {
+        $assigned = $this->outlet('Assigned Profile', '049');
+        $other = $this->outlet('Other Profile', '050');
+        $editor = $this->member('profile-editor@example.invalid', ['shops.enter', 'shop.profile']);
+        $editor->shops()->attach($assigned);
+        $client = $this->client();
+        $this->login($client, $editor->email)->assertOk();
+        $uri = '/internal/admin/pos/outlet-profile';
+        $this->send($client, 'GET', '/internal/admin/pos/workspace/profile')->assertOk();
+        $this->send($client, 'GET', $uri)->assertOk()->assertJsonPath('data.outlet_code', '049')
+            ->assertJsonPath('data.name', 'Assigned Profile');
+        $input = ['version' => 1, 'name' => 'Assigned Updated', 'business_legal_name' => 'Synthetic Shop',
+            'business_phone' => '+92 300 1234567', 'business_whatsapp' => '03001234567',
+            'business_address' => 'Synthetic address', 'business_hours' => '09:00 - 18:00'];
+        $this->send($client, 'PATCH', $uri, [...$input, 'outlet_code' => '051'])->assertUnprocessable();
+        $this->send($client, 'PATCH', $uri, [...$input, 'business_phone' => '12345'])->assertUnprocessable();
+        $this->send($client, 'PATCH', $uri, $input)->assertOk()->assertJsonPath('data.name', 'Assigned Updated')
+            ->assertJsonPath('data.business_phone', '03001234567')->assertJsonPath('data.version', 2);
+        $this->assertSame('049', $assigned->fresh()->outlet_code);
+        $this->assertSame('Other Profile', $other->fresh()->name);
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $editor->id)
+            ->where('action', 'outlet_profile_updated')->where('outlet_id', $assigned->id)->count());
+        $this->send($client, 'PATCH', $uri, $input)->assertStatus(409);
+        $this->send($client, 'PATCH', $uri, [...$input, 'version' => 2, 'outlet_id' => $other->public_id])->assertUnprocessable();
+        $noPermission = $this->member('profile-denied@example.invalid', ['shops.enter', 'shop.sales']);
+        $noPermission->shops()->attach($assigned);
+        $denied = $this->client();
+        $this->login($denied, $noPermission->email)->assertOk();
+        $this->send($denied, 'GET', $uri)->assertForbidden();
+        $this->send($denied, 'PATCH', $uri, [...$input, 'version' => 2])->assertForbidden();
+        $this->send($denied, 'GET', '/internal/admin/pos/workspace/profile')->assertForbidden();
+        $assigned->forceFill(['archived_at' => now()])->save();
+        $this->send($client, 'GET', $uri)->assertForbidden();
+        $this->send($client, 'PATCH', $uri, [...$input, 'version' => 2])->assertForbidden();
+    }
+
     private function member(string $email, array $permissions): Admin
     {
         $member = new Admin;

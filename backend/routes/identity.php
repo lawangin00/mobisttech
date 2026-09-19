@@ -80,8 +80,10 @@ Route::prefix('/api/v1')->middleware(['identity', 'identity.auth', 'throttle:api
 });
 Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->group(function () {
     Route::get('/pos', [PosShellController::class, 'home'])->defaults('identity_realm', 'admin')->name('admin.pos.home');
-    Route::get('/pos/workspace/{area}', [PosShellController::class, 'workspace'])->whereIn('area', ['sales', 'inventory', 'invoices', 'warranty', 'claims', 'reports', 'operations'])
+    Route::get('/pos/workspace/{area}', [PosShellController::class, 'workspace'])->whereIn('area', ['sales', 'inventory', 'invoices', 'warranty', 'claims', 'profile', 'reports', 'operations'])
         ->defaults('identity_realm', 'admin')->name('admin.pos.workspace');
+    Route::get('/pos/outlet-profile', [PosShellController::class, 'outletProfile'])->defaults('identity_realm', 'admin')->name('admin.pos.outlet-profile.show');
+    Route::patch('/pos/outlet-profile', [PosShellController::class, 'updateOutletProfile'])->defaults('identity_realm', 'admin')->name('admin.pos.outlet-profile.update');
     Route::get('/pos/catalogue', [PosTransactionController::class, 'catalogue'])->defaults('identity_realm', 'admin')->name('admin.pos.catalogue');
     Route::get('/pos/lookup', [PosTransactionController::class, 'lookup'])->defaults('identity_realm', 'admin')->name('admin.pos.lookup');
     Route::post('/pos/inventory/products', [PosTransactionController::class, 'saveProduct'])->defaults('identity_realm', 'admin')->name('admin.pos.products.save');
