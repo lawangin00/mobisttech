@@ -171,6 +171,60 @@ class PlatformAdministrationInterfaceTest extends TestCase
         ])->assertUnprocessable();
     }
 
+    public function test_software_admin_publication_and_rollback_preserve_public_draft_isolation(): void
+    {
+        [$editor] = $this->admin('mt75-editor@example.invalid', ['website.content.manage']);
+        [$publisher] = $this->admin('mt75-publisher@example.invalid', ['website.publish']);
+        $editorClient = $this->client();
+        $this->login($editorClient, $editor->email)->assertOk();
+        $publisherClient = $this->client();
+        $this->login($publisherClient, $publisher->email)->assertOk();
+        $input = $this->mt75SoftwareInput('Initial verified synthetic overview');
+        $draft = $this->send($editorClient, 'POST', '/internal/admin/platform/software', $input)
+            ->assertOk()->json('data');
+        $revision = (int) $draft['id'];
+        $productId = $draft['software_public_id'];
+        $this->getJson('/api/v1/software/mt75-fixture')->assertNotFound();
+        $this->send($editorClient, 'POST', '/internal/admin/platform/software/revisions/'.$revision.'/publish')
+            ->assertForbidden();
+        $this->send($publisherClient, 'POST', '/internal/admin/platform/software/revisions/'.$revision.'/publish')
+            ->assertOk();
+        $this->getJson('/api/v1/software/mt75-fixture')->assertOk()
+            ->assertJsonPath('data.overview.overview', 'Initial verified synthetic overview');
+        $later = $this->send($editorClient, 'POST', '/internal/admin/platform/software/'.$productId.'/draft',
+            $this->mt75SoftwareInput('Updated reviewed synthetic overview'))->assertOk()->json('data');
+        $this->getJson('/api/v1/software/mt75-fixture')->assertOk()
+            ->assertJsonPath('data.overview.overview', 'Initial verified synthetic overview');
+        $this->send($publisherClient, 'POST', '/internal/admin/platform/software/revisions/'.$later['id'].'/publish')
+            ->assertOk();
+        $this->getJson('/api/v1/software/mt75-fixture')->assertOk()
+            ->assertJsonPath('data.overview.overview', 'Updated reviewed synthetic overview');
+        $this->send($publisherClient, 'POST', '/internal/admin/platform/software/revisions/'.$revision.'/rollback')
+            ->assertOk();
+        $this->getJson('/api/v1/software/mt75-fixture')->assertOk()
+            ->assertJsonPath('data.overview.overview', 'Initial verified synthetic overview');
+        $this->assertSame(3, DB::table('software_product_revisions')
+            ->where('software_product_id', DB::table('software_products')->where('public_id', $productId)->value('id'))
+            ->count());
+    }
+
+    private function mt75SoftwareInput(string $overview): array
+    {
+        return [
+            'name' => 'MT75 Synthetic Software', 'slug' => 'mt75-fixture',
+            'summary' => 'Synthetic authenticated publication regression', 'overview' => $overview,
+            'features' => [['title' => 'Synthetic feature', 'description' => 'No real customer data']],
+            'platforms' => ['Windows 11 x64'], 'system_requirements' => '<p>Synthetic platform.</p>',
+            'limitations' => ['Not an approved release'],
+            'support' => ['channel' => 'support'], 'cta' => ['type' => 'contact'],
+            'privacy' => '<p>Synthetic test-only privacy content.</p>',
+            'terms' => '<p>Synthetic test-only terms.</p>',
+            'faq' => [['question' => 'Test product?', 'answer' => '<p>Yes, test-only.</p>']],
+            'seo_title' => 'MT75 Synthetic Software', 'seo_description' => 'Synthetic fixture',
+            'sitemap' => false,
+        ];
+    }
+
     private function platformPermissions(): array
     {
         return [
