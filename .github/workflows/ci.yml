@@ -29,20 +29,6 @@ jobs:
       WEBSITE_API_TIMEOUT_MS: "12000"
 
     services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_ROOT_PASSWORD: root-ci-only
-          MYSQL_DATABASE: mobisttech_test
-          MYSQL_USER: mobisttech
-          MYSQL_PASSWORD: mobisttech-ci
-        ports:
-          - 13306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot-ci-only --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
       redis:
         image: redis:7-alpine
         ports:
@@ -58,6 +44,22 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+
+      - name: Start isolated MySQL 8.4 service
+        shell: bash
+        run: |
+          docker run --detach --name mobisttech-ci-mysql             --env MYSQL_ROOT_PASSWORD=root-ci-only             --env MYSQL_DATABASE=mobisttech_test             --env MYSQL_USER=mobisttech             --env MYSQL_PASSWORD=mobisttech-ci             --publish 127.0.0.1:13306:13306             mysql:8.4 --port=13306 --mysqlx=0
+          for attempt in {1..30}; do
+            if docker exec mobisttech-ci-mysql mysqladmin ping -h 127.0.0.1 -P 13306 -proot-ci-only --silent; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              docker logs mobisttech-ci-mysql
+              exit 1
+            fi
+            sleep 2
+          done
+          docker exec mobisttech-ci-mysql mysql -uroot -proot-ci-only -e "SELECT @@port AS port, VERSION() AS version;"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@2.37.2
@@ -90,9 +92,10 @@ jobs:
       - name: Prepare isolated test environment
         working-directory: backend
         run: |
+          mkdir -p             storage/app/private             storage/framework/cache/data             storage/framework/sessions             storage/framework/testing             storage/framework/views             storage/logs             bootstrap/cache
           cp .env.ci.example .env.testing
           php artisan key:generate --env=testing --force
-          php -r '$pdo=new PDO("mysql:host=127.0.0.1;port=13306;dbname=mobisttech_test","mobisttech","mobisttech-ci"); echo "MYSQL=".$pdo->query("SELECT VERSION()")->fetchColumn().PHP_EOL;'
+          php -r '$pdo=new PDO("mysql:host=127.0.0.1;port=13306;dbname=mobisttech_test","mobisttech","mobisttech-ci"); $row=$pdo->query("SELECT @@port AS port, VERSION() AS version")->fetch(PDO::FETCH_ASSOC); echo "MYSQL_PORT=".$row["port"]." MYSQL_VERSION=".$row["version"].PHP_EOL; if ((int)$row["port"] !== 13306) { exit(3); }'
           php -r 'require "vendor/autoload.php"; $redis=new Predis\Client(["scheme"=>"tcp","host"=>"127.0.0.1","port"=>16379]); echo "REDIS=".$redis->ping().PHP_EOL;'
           php artisan migrate:fresh --env=testing --force
 
@@ -102,6 +105,11 @@ jobs:
           composer validate --no-interaction
           vendor/bin/pint --test
 
+      - name: Backend TypeScript and production build
+        run: |
+          npm --prefix backend run typecheck
+          npm --prefix backend run build
+
       - name: Full backend regression
         working-directory: backend
         run: php artisan test
@@ -109,11 +117,6 @@ jobs:
       - name: Explicit MySQL race and reset gates
         working-directory: backend
         run: php artisan test tests/Feature/InventoryConcurrencyTest.php tests/Feature/GuardedResetServiceTest.php
-
-      - name: Backend TypeScript and production build
-        run: |
-          npm --prefix backend run typecheck
-          npm --prefix backend run build
 
       - name: Website TypeScript lint and production build
         run: |
@@ -159,4 +162,9 @@ jobs:
           test ! -f backend/public/hot
           test ! -f backend/.env.testing || git check-ignore -q backend/.env.testing
           git diff --exit-code
-          git status --porcelain
+          status="$(git status --porcelain --untracked-files=all)"
+          if [ -n "$status" ]; then
+            printf '%s\n' "$status"
+            exit 1
+          fi
+          echo "WORKTREE=clean"
