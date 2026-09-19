@@ -16,6 +16,14 @@ function state(input: { mode?: 'hybrid' | 'digital_only' | 'commerce_only'; acti
     });
 }
 
+// Separate independent synthetic journeys without relaxing the production 120/min public API limit.
+// Laravel's testing guard verifies the disposable database before clearing its test-only cache.
+function resetSyntheticPublicWindow() {
+    execFileSync('php', ['artisan', 'cache:clear', '--env=testing'], {
+        cwd: process.cwd(), stdio: 'inherit',
+    });
+}
+
 async function noHorizontalOverflow(page: import('@playwright/test').Page) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
 }
@@ -25,6 +33,7 @@ test('MT-5.1 storefront keeps catalogue private fresh mode-aware SEO-safe and re
     const browserRequests: string[] = [];
     page.on('request', req => browserRequests.push(req.url()));
 
+    resetSyntheticPublicWindow(); // previous public-content tests are independent
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Mobile products and digital solutions/i })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Products', exact: true })).toBeVisible();
@@ -87,12 +96,14 @@ test('MT-5.1 storefront keeps catalogue private fresh mode-aware SEO-safe and re
     expect(robotsText).toContain('Disallow: /cart');
     expect(robotsText).toContain('Disallow: /checkout');
 
+    resetSyntheticPublicWindow(); // desktop contract is complete; mobile is a new scenario
     await page.setViewportSize({ width: 390, height: 844 });
     for (const path of ['/', '/products', '/products/mt51-alpha-phone', '/categories', '/compare']) {
         await page.goto(path);
         await noHorizontalOverflow(page);
     }
 
+    resetSyntheticPublicWindow(); // mode switching is independent of hybrid/mobile request volume
     state({ mode: 'digital_only' });
     browserRequests.length = 0;
     await page.goto('/');
