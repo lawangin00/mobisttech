@@ -149,6 +149,81 @@ class StockTransferTest extends TestCase
         $this->assertSame(2, (int) $source->fresh()->qty);
     }
 
+    public function test_archived_transfer_participants_block_dispatch_receive_and_replays_without_changing_custody(): void
+    {
+        $source = $this->product();
+        [$destination, $target] = $this->destination($source);
+        $this->acquire($source, 2);
+        $service = app(StockTransferOperations::class);
+        $createInput = ['destination_outlet_id' => $destination->public_id,
+            'lines' => [['source_product_id' => $source->public_id,
+                'destination_product_id' => $target->public_id, 'quantity' => 1]]];
+        $created = $service->create($this->actor, $this->outlet, 'd03-transfer-create', $createInput);
+        $transferId = $created['transfer_id'];
+        $dispatchInput = ['transfer_version' => 1];
+        // The actual archive service blocks transfer history; simulate an archived state only in this rolled-back fixture.
+        $destination->forceFill(['archived_at' => now()])->save();
+        foreach ([
+            fn () => $service->create($this->actor, $this->outlet, 'd03-transfer-create', $createInput),
+            fn () => $service->dispatch($this->actor, $this->outlet, $transferId, 'd03-denied-dispatch', $dispatchInput),
+        ] as $attempt) {
+            try {
+                $attempt();
+                $this->fail('Archived transfer destination accepted a mutation or completed-key replay.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        $this->assertSame('draft', DB::table('stock_transfers')->where('public_id', $transferId)->value('status'));
+        $this->assertSame(0, DB::table('inventory_custody_holds')->whereNull('released_at')->count());
+        $destination->forceFill(['archived_at' => null])->save();
+        $dispatched = $service->dispatch($this->actor, $this->outlet, $transferId,
+            'd03-valid-dispatch', $dispatchInput);
+        $line = $service->details($this->actor, $transferId)['lines'][0];
+        $receiveInput = ['transfer_version' => $dispatched['version'],
+            'lines' => [['line_id' => $line['line_id'], 'receive_quantity' => 1, 'reject_quantity' => 0]]];
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        foreach ([
+            fn () => $service->dispatch($this->actor, $this->outlet, $transferId,
+                'd03-valid-dispatch', $dispatchInput),
+            fn () => $service->receive($this->actor, $destination, $transferId,
+                'd03-denied-receive-source', $receiveInput),
+        ] as $attempt) {
+            try {
+                $attempt();
+                $this->fail('Archived transfer source accepted dispatch replay or destination-side receipt.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        $this->assertSame(0, DB::table('stock_transfer_receipts')->count());
+        $this->assertSame(2, (int) $source->fresh()->qty);
+        $this->assertSame(0, (int) $target->fresh()->qty);
+        $this->outlet->forceFill(['archived_at' => null])->save();
+        $destination->forceFill(['archived_at' => now()])->save();
+        try {
+            $service->receive($this->actor, $destination, $transferId, 'd03-denied-receive-dest', $receiveInput);
+            $this->fail('Archived receipt destination accepted transfer receipt.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $destination->forceFill(['archived_at' => null])->save();
+        $received = $service->receive($this->actor, $destination, $transferId, 'd03-valid-receive', $receiveInput);
+        $this->assertSame('received', $received['status']);
+        $receipt = DB::table('stock_transfer_receipts')->firstOrFail();
+        $this->assertSame(hash('sha256', $receipt->receipt_snapshot), $receipt->snapshot_sha256);
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        try {
+            $service->receive($this->actor, $destination, $transferId, 'd03-valid-receive', $receiveInput);
+            $this->fail('Archived source allowed a completed receipt replay.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $this->assertSame(1, DB::table('stock_transfer_receipts')->count());
+        $this->assertSame(1, (int) $source->fresh()->qty);
+        $this->assertSame(1, (int) $target->fresh()->qty);
+    }
+
     public function test_transfer_idempotency_and_receive_permission_are_enforced(): void
     {
         $source = $this->product();

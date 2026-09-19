@@ -655,7 +655,28 @@ final class StockTransferOperations
     private function mutate(IdentityAccount $actor, Outlet $scopeOutlet, string $operation, string $key, mixed $payload, callable $callback, string $permission): array
     {
         return DB::transaction(function () use ($actor, $scopeOutlet, $operation, $key, $payload, $callback, $permission) {
-            $fresh = $this->authorize($actor, $scopeOutlet, $permission);
+            // Deny unauthorized actors before reading transfer details; repeat authorization under the archive-shared locks.
+            $this->authorize($actor, $scopeOutlet, $permission);
+            // Lock both affected outlets in stable ID order before final authorization or idempotent replay.
+            // Dispatch/receive affect both locations even when only one is the actor's permission scope.
+            if ($operation === 'transfer.create') {
+                $otherOutletId = Outlet::where('public_id', $payload['destination_outlet_id'])->value('id');
+                abort_unless($otherOutletId !== null, 404);
+            } else {
+                $transfer = DB::table('stock_transfers')->where('public_id', $payload[0])->firstOrFail();
+                abort_unless((int) ($operation === 'transfer.dispatch' ? $transfer->source_outlet_id : $transfer->destination_outlet_id)
+                    === (int) $scopeOutlet->id, 404);
+                $otherOutletId = $operation === 'transfer.dispatch' ? $transfer->destination_outlet_id : $transfer->source_outlet_id;
+            }
+            $ids = array_values(array_unique([(int) $scopeOutlet->id, (int) $otherOutletId]));
+            sort($ids, SORT_NUMERIC);
+            $locked = [];
+            foreach ($ids as $id) {
+                $outlet = Outlet::whereKey($id)->lockForUpdate()->firstOrFail();
+                abort_if($outlet->status || $outlet->archived_at !== null, 403, 'A stock transfer requires open outlets.');
+                $locked[$id] = $outlet;
+            }
+            $fresh = $this->authorize($actor, $locked[(int) $scopeOutlet->id], $permission);
             Validator::make(['key' => $key], ['key' => 'required|string|max:100'])->validate();
             $digest = hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
             $identity = ['actor_scope' => $fresh::class.':'.$fresh->getKey(), 'operation' => $operation, 'key' => $key];
