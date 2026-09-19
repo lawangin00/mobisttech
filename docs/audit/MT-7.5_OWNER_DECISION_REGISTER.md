@@ -18,3 +18,23 @@ Owner may answer every ID in **one response** using `D01=B; D02=A; ...`, includi
 | D10 | Supply/approve actual public commercial and legal policy terms, not an unseen blanket sign-off. | Website + desktop-product Privacy/Terms/Warranty/Returns, delivery/retention, support/ownership, effective dates and jurisdiction. | A=keep verified drafts private until owner reviews final specific text; B=provide exact return eligibility/window, warranty/support, delivery commitments, jurisdiction, legal entity/owner, effective date and explicitly approved policy versions for release; unknown wording is never silently `owner_approved`. Pending. |
 
 Additional live operations (customer-data cutover, real payment/refund, actual Gmail to customers, production deployment, destructive backup restore, Google Drive activation) remain outside the bounded MT-7.5 test-only work; no blanket production approval is sought or inferred. Existing accepted two-realm architecture, approved OAuth send-only constraint, desktop POS decisions and previously completed local acceptance are not reopened. Independent development/tests can continue after this decision capture without repeated identical-scope approval prompts. MT-7.6 requires a separate stage-entry instruction after 27/27 gates are genuinely accepted.
+
+
+## Binding consolidated owner reply — 20-Sep-2026 (supersedes PENDING states above)
+
+The owner provided all ten explicit selections together. The original question table is historical; the **operative status for this exact approved scope is below**. Do not re-request any of these identical approvals at each Proceed. An action requiring a real credential, missing exact fact or new external scope remains a *specific dependency*, never an implied approval. No synthetic test or draft grants factual/legal/publication acceptance.
+
+| Decision | Recorded choice and executable scope | Explicit exclusion / acceptance condition |
+|---|---|---|
+| D01 | **B APPROVED:** opt-in same-tab/session search memory; clear logout/outlet change, never store CNIC/phone/IMEI/customer-identifying searches. | No persistent-device retention, cross-tab persistence or personal query storage. |
+| D02 | **B APPROVED:** Full Access Admin may edit unassigned outlet profile after recent password confirmation and with audit. | No implicit assignment, ownership or credential change. |
+| D03 | **B APPROVED:** history-preserving audited read-only archive of referenced outlet, with tests and migration checks. | No automatic archival; never delete/reassign sales, stock, invoice or warranty records. |
+| D04 | **B APPROVED:** read-only real source to isolated non-destructive target-copy migration rehearsal. | Original source data and production target untouched; **production cutover NOT APPROVED**. |
+| D05 | **B APPROVED:** implement guarded hashed-at-rest single-use offline owner recovery codes with audit/rotation/abuse controls. | No actual account issuance/reset under this approval. |
+| D06 | **A:** complete mock/local email tests; external Gmail test sending remains OFF. | No real send, OAuth activation or customer emails. |
+| D07 | **A:** mock and disabled-provider payment tests only. | No sandbox or live payment/refund/provider transactions. |
+| D08 | **B APPROVED:** prepare *private* factual desktop POS Software Product draft using independently verified release facts. | No publication; unknown desktop installer/version/date/download claims cannot be invented or accepted. |
+| D09 | **A:** application proprietary / all rights reserved. | Exact **registered sole-proprietor legal name remains VERIFY/HOLD**; do not guess copyright holder or make a factual ownership claim under an unverified name. Third-party notices remain mandatory. |
+| D10 | **A:** prepare complete product-specific private legal-policy drafts for review. | No owner_approved/verified-by-owner/public status without subsequent review of exact final content. |
+
+Development/test-only actions within these bounds can continue independently and be committed/pushed to the approved repository without asking these ten questions again. Local synthetic testing is permitted, not evidence that real external/provider/legal/factual acceptance gates passed. MT-7.6 stage entry stays separately gated at genuine MT-7.5 closure.
