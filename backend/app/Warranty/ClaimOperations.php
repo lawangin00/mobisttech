@@ -164,7 +164,9 @@ final class ClaimOperations
     private function mutate(IdentityAccount $actor, Outlet $outlet, string $operation, string $key, array $input, callable $callback): array
     {
         return DB::transaction(function () use ($actor, $outlet, $operation, $key, $input, $callback) {
-            $this->authorize($actor, $outlet);
+            // Revalidate under the same outlet row lock used by archival, including completed-key replays.
+            $lockedOutlet = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
+            $this->authorize($actor, $lockedOutlet);
             Validator::make(['key' => $key], ['key' => 'required|string|max:100'])->validate();
             $digest = hash('sha256', json_encode($this->canonical($input), JSON_THROW_ON_ERROR));
             $identity = ['actor_scope' => $actor::class.':'.$actor->id, 'operation' => 'warranty.claim.'.$operation, 'key' => $key];

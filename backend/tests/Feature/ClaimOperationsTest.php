@@ -30,6 +30,56 @@ class ClaimOperationsTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_archived_outlet_denies_claim_open_update_and_replays_without_changing_history(): void
+    {
+        $product = $this->warrantiedProduct();
+        $this->acquire($product, 2);
+        $sale = $this->sell($product);
+        $service = app(ClaimOperations::class);
+        $openKey = (string) Str::uuid();
+        $openInput = ['sale_id' => $sale['sale_ids'][0],
+            'issue_description' => 'D03 synthetic historical claim'];
+        $claim = $service->open($this->actor, $this->outlet, $openKey, $openInput);
+        $updateKey = (string) Str::uuid();
+        $updateInput = $this->update('diagnosing');
+        $claim = $service->update($this->actor, $this->outlet,
+            $claim['claim_id'], $updateKey, $updateInput);
+        $savedClaim = DB::table('claims')->where('public_id', $claim['claim_id'])->firstOrFail();
+        $savedEvents = DB::table('claim_events')->where('claim_id', $savedClaim->id)->orderBy('sequence')->get();
+        $this->assertCount(2, $savedEvents);
+        // Synthetic forced archived state: production archive MUST still reject linked products/invoices.
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        foreach ([$openKey, (string) Str::uuid()] as $key) {
+            try {
+                $service->open($this->actor, $this->outlet, $key, $openInput);
+                $this->fail('Archived outlet accepted a new claim or completed open replay.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        foreach ([$updateKey, (string) Str::uuid()] as $key) {
+            try {
+                $service->update($this->actor, $this->outlet,
+                    $claim['claim_id'], $key, $updateInput);
+                $this->fail('Archived outlet accepted a claim update or completed replay.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        try {
+            $service->view($this->actor, $this->outlet, $claim['claim_id']);
+            $this->fail('Archived claim leaked through operational view.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $this->assertEquals($savedClaim, DB::table('claims')->where('id', $savedClaim->id)->firstOrFail());
+        $this->assertEquals($savedEvents, DB::table('claim_events')->where('claim_id', $savedClaim->id)
+            ->orderBy('sequence')->get());
+        foreach ($savedEvents as $event) {
+            $this->assertSame(hash('sha256', $event->snapshot), $event->snapshot_sha256);
+        }
+    }
+
     public function test_claim_uses_sale_time_warranty_snapshot_and_exact_inclusive_expiry_boundary(): void
     {
         $product = $this->warrantiedProduct(false, 0, 1);
