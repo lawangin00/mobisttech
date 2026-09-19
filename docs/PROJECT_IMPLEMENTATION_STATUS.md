@@ -43,9 +43,9 @@ Active stage: MT-6 - Shared brand and Windows Control (In Progress)
 
 Last completed stage: MT-5 - Next.js customer Website
 
-Current In Progress point: None
+Current In Progress point: MT-6.2 - Canonical mobiST Control migration
 
-Status: MT-0 through MT-5 complete. MT-6 is in progress. 47/56 complete, 9 pending. MT-6.1 is Complete.
+Status: MT-0 through MT-5 complete. MT-6 is in progress. 47/56 complete, 9 pending. MT-6.2 is In Progress.
 
 Last completed point: MT-6.1 - Canonical branding and runtime assets
 
@@ -398,7 +398,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-5.4 | Dynamic public content and digital solutions | Complete |
 | MT-5.5 | Client project portal and digital conversion journeys | Complete |
 | MT-6.1 | Canonical branding and runtime assets | Complete |
-| MT-6.2 | Canonical mobiST Control migration | Pending |
+| MT-6.2 | Canonical mobiST Control migration | In Progress |
 | MT-6.3 | Windows operator and local integration acceptance | Pending |
 | MT-7.1 | Data migration and rollback rehearsal | Pending |
 | MT-7.2 | Security, performance and resilience audit | Pending |
@@ -1032,3 +1032,11 @@ No source-repository write, source-data migration, source runtime action, real p
 - Final brand consistency regression remains PASS 2 tests / 55 assertions; backend and Website typecheck/lint gates PASS. Evidence: `docs/brand/MT-6.1_VERIFICATION.md`, `brand/runtime-manifest.json`.
 - MT-6.1 closure: Canonical branding and runtime assets is Complete. No unresolved branding/runtime asset defect remains.
 - Next action: MT-6.1 is Complete. Await explicit Proceed/Y before starting MT-6.2 - Canonical mobiST Control migration.
+- MT-6.2 Control compile attempt 1: FAIL at C# string escaping only (`C:\\php\\php.exe` display text and cmd runner quoting). No Control runtime action or target process was started. Material correction: escape the display path and construct `cmd.exe /d /s /c ""<runner.cmd>""` correctly; safety/process model unchanged.
+- MT-6.2 Control compile attempt 2: FAIL at a separate C# quoting defect in the Explorer folder argument. No runtime action occurred. Material correction: use an explicitly quoted Explorer argument string; a third compile failure would activate LOOP_GUARD.
+- MT-6.2 canonical Control implementation checkpoint: the two legacy Control copies were verified byte-identical and used read-only as one reference source. The target now has one canonical WinForms app under `tools/mobist-control` with new monorepo paths, current MT-6.1 icon/header branding, backend composite control (Laravel 18080 + Vite 15173), Website Next.js control (13000), Start/Stop/Restart/Open/Status, Start All/Stop All, and CLI aliases for acceptance. Legacy Desktop Commander integration, auto-start links, build button and LAN/QR were not carried forward: they are outside the approved Control target; LAN/QR would be false because approved target servers bind loopback-only, and database ownership remains in `tools/dev/Database.ps1` until MT-6.3 integration rehearsal.
+- Process safety is refactored from unsafe port-only taskkill: each service records an ignored per-user launcher PID + creation time + exact runner path, validates WMI command line and listener ancestry before stop/restart, discards stale/reused ownership records, and reports an occupied unowned port as Blocked without termination. Only an exactly validated owned launcher tree may be force-stopped.
+- Control compile attempts 1-2 failed only on distinct C# quoting syntax defects before runtime; corrected third compile PASS produced the ignored console acceptance binary and final WinForms `bin/mobiST Control.exe`. No legacy executable/logo binary was copied.
+- Live target lifecycle acceptance so far PASS: initial Status All = both Offline; Start All brought Backend HTTP, Backend Vite and Website Next.js Online with owned launcher/listener PIDs; repeated Start All skipped all three duplicate starts; Restart Backend stopped/restarted both backend services; Restart Website stopped/restarted Next.js; Open Backend and Open Website dispatched the approved loopback pages; Stop All returned all services to Offline. Current Control source contains no protected source path or old Control-logo filename reference; git diff check PASS.
+- Incomplete after the 9-minute guard: explicit occupied-unowned-port refusal/no-termination test, stale/reused PID record handling, partial-start/orphan/duplicate safety edge checks appropriate to MT-6.2, final source/legacy cleanliness scan, verification artifact, parity-register/ledger Complete transition. MT-6.3 has not started.
+- Current next action: synthetic unowned-port + stale-PID safety acceptance -> exact owned-tree/orphan checks -> final short compile/static/source-clean gates -> write MT-6.2 verification and mark Complete. Do not start MT-6.3.
