@@ -29,7 +29,7 @@ The same source exposes CLI switches for verification/automation:
 - `--start-all`, `--stop-all`, `--status-all`
 - legacy-compatible aliases `--start-pos`, `--stop-pos`, `--restart-pos`, `--status-pos`, `--open-pos`
 
-Open behavior adapts the legacy Edge title-scanning/focus logic before falling back to a normal default-browser open, reducing unnecessary duplicate tabs where practical.
+Open behavior adapts the legacy Edge title-scanning/focus logic. When Edge is installed, new target pages are opened explicitly in Edge. Control first tries to focus a matching target tab; it also keeps a short per-target recent-open marker and focuses the existing Edge window instead of opening again during repeated/double-click Open actions. Only when Edge is unavailable does Control fall back to the default browser. The recent-open guard is deliberately short so a genuinely closed target can be reopened normally.
 
 ## Build
 

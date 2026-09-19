@@ -565,7 +565,53 @@ namespace MobiSTControl
             return false;
         }
 
-        private static string SmartOpenEdge(string target, string label, string[] titleMarkers)
+        private static string FindEdgeExecutable()
+        {
+            string onPath = FindOnPath("msedge.exe");
+            if (!string.IsNullOrEmpty(onPath)) return onPath;
+            string[] candidates = new[]
+            {
+                @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+                @"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+            };
+            foreach (string candidate in candidates)
+                if (File.Exists(candidate)) return candidate;
+            return null;
+        }
+
+        private static string BrowserGuardPath(string key)
+        {
+            return Path.Combine(StateRoot, "browser-" + key + ".stamp");
+        }
+
+        private static void MarkBrowserOpen(string key)
+        {
+            try { File.WriteAllText(BrowserGuardPath(key), DateTime.UtcNow.Ticks.ToString()); }
+            catch { }
+        }
+
+        private static bool TryFocusRecentEdge(string key)
+        {
+            try
+            {
+                string path = BrowserGuardPath(key);
+                if (!File.Exists(path)) return false;
+                long ticks;
+                if (!long.TryParse(File.ReadAllText(path).Trim(), out ticks)) return false;
+                DateTime opened = new DateTime(ticks, DateTimeKind.Utc);
+                if (DateTime.UtcNow - opened > TimeSpan.FromSeconds(10)) return false;
+
+                Process window = Process.GetProcessesByName("msedge")
+                    .FirstOrDefault(p => p.MainWindowHandle != IntPtr.Zero);
+                if (window == null) return false;
+                ShowWindow(window.MainWindowHandle, 9);
+                SetForegroundWindow(window.MainWindowHandle);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        private static string SmartOpenEdge(string target, string label, string browserKey, string[] titleMarkers)
         {
             try
             {
@@ -597,10 +643,22 @@ namespace MobiSTControl
             }
             catch { }
 
+            if (TryFocusRecentEdge(browserKey))
+                return label + ": recent Edge target focused; duplicate open skipped.";
+
             try
             {
+                string edge = FindEdgeExecutable();
+                if (!string.IsNullOrEmpty(edge))
+                {
+                    Process.Start(new ProcessStartInfo(edge, target) { UseShellExecute = true });
+                    MarkBrowserOpen(browserKey);
+                    return label + ": opened in Edge.";
+                }
+
                 Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
-                return label + ": opened in the default browser.";
+                MarkBrowserOpen(browserKey);
+                return label + ": Edge unavailable; opened in the default browser.";
             }
             catch (Exception ex)
             {
@@ -614,6 +672,7 @@ namespace MobiSTControl
             return SmartOpenEdge(
                 "http://127.0.0.1:18080/internal/admin/pos",
                 "Backend / POS",
+                "backend",
                 new[] { "mobiST POS", "Team Member sign in", "POS home" });
         }
 
@@ -623,6 +682,7 @@ namespace MobiSTControl
             return SmartOpenEdge(
                 "http://127.0.0.1:13000/",
                 "Website",
+                "website",
                 new[] { "mobiST Technologies" });
         }
 
