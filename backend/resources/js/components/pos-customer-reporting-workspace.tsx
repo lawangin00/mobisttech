@@ -16,7 +16,7 @@ type Report = {
     activity: Record<string, number>;
 };
 type Paging = {page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean};
-type Data = { area: Area; outlet: { id: string; name: string }; can_send_documents: boolean; invoices: Invoice[]; customers: Customer[]; claims: ClaimRow[]; sale_candidates: SaleCandidate[]; report: Report | null; pagination: Paging | null };
+type Data = { area: Area; outlet: { id: string; name: string }; can_send_documents: boolean; invoices: Invoice[]; customers: Customer[]; claims: ClaimRow[]; sale_candidates: SaleCandidate[]; report: Report | null; pagination: Paging | null; warranty_intake_category: string | null };
 type ClaimDetail = Record<string, unknown> & { claim_id: string; claim_number: string; status: string; invoice_id: string; invoice_number: string; activity_log: Array<Record<string, unknown>>; warranty: Record<string, unknown> };
 type DocRender = { document_type: string; format: string; filename: string; document_sha256: string; html?: string; pdf_base64?: string; action?: string };
 type EmailDraft = DocRender & { to: string; subject: string; message: string };
@@ -113,7 +113,7 @@ function Claims({ data, busy, run, area: _area }: { data: Data; busy: boolean; r
     const [detail, setDetail] = useState<ClaimDetail | null>(null);
     const [saleId, setSaleId] = useState('');
     const [intakeTerm, setIntakeTerm] = useState('');
-    const [intakeCategory, setIntakeCategory] = useState('all');
+    const [intakeCategory, setIntakeCategory] = useState(data.warranty_intake_category ?? 'all');
     const [intakeProductCategory, setIntakeProductCategory] = useState('');
     const [intakeResults, setIntakeResults] = useState<SaleCandidate[] | null>(null);
     const intakeCandidates = intakeResults ?? data.sale_candidates;

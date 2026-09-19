@@ -16,6 +16,9 @@ final class PosWarrantyIntakeE2eSeeder extends Seeder
             abort_unless($outlet && DB::table('admins')->where('email', 'e2e-intake@example.invalid')->exists(), 409);
             abort_unless(! DB::table('invoices')->where('invoice_number', 'like', 'MT75-INTAKE-%')->exists(), 409);
             abort_unless(! DB::table('products')->where('name', 'MT75 Intake Product')->exists(), 409);
+            abort_unless(! DB::table('pos_settings')->where('key', 'portal.warranty_search_category')->exists(), 409);
+            DB::table('pos_settings')->insert(['key' => 'portal.warranty_search_category', 'value' => 'invoice_id',
+                'group' => 'portal', 'label' => 'warranty_search_category', 'input_type' => 'select', 'sort_order' => 206]);
             $product = DB::table('products')->insertGetId([
                 'public_id' => (string) Str::uuid(), 'outlet_id' => $outlet,
                 'name' => 'MT75 Intake Product', 'category' => 'accessory',

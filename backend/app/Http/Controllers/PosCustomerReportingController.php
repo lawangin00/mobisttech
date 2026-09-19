@@ -105,6 +105,7 @@ final class PosCustomerReportingController extends Controller
             'can_send_documents' => app(Access::class)->allows($actor, 'shop.documents.send', $outlet),
             'invoices' => $invoices, 'customers' => $customers, 'claims' => $claims,
             'sale_candidates' => $saleCandidates, 'report' => $report, 'pagination' => $pagination,
+            'warranty_intake_category' => $area === 'claims' ? app(\App\Pos\PortalPreferences::class)->current()['warranty_search_category'] : null,
         ]]);
     }
 

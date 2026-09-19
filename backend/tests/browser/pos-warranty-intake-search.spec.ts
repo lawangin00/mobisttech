@@ -12,6 +12,7 @@ test('warranty intake finds and selects an older source-matched sale in real UI'
     await expect(page.getByTestId('mt43-claims')).toBeVisible();
     await expect(page.getByTestId('intake-result-count')).toContainText('Latest 100');
     await expect(page.getByTestId('intake-sale').locator('option').filter({hasText:'MT75-INTAKE-001'})).toHaveCount(0);
+    await expect(page.getByTestId('intake-category')).toHaveValue('invoice_id');
     await page.getByTestId('intake-category').selectOption('invoice_id');
     await page.getByTestId('intake-query').fill('MT75-INTAKE-001');
     const searched=page.waitForResponse((r)=>r.url().includes('/claims/sale-search?')&&r.ok());

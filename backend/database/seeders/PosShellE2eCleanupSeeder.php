@@ -30,6 +30,12 @@ class PosShellE2eCleanupSeeder extends Seeder
                 DB::table('pos_settings')->whereIn('key', $keys)->where('group', 'portal')->delete();
             }
             $intakeInvoices = DB::table('invoices')->whereIn('outlet_id', $outletIds)->where('invoice_number', 'like', 'MT75-INTAKE-%')->where('customer_name', 'like', 'MT75 Intake Customer %')->pluck('id')->all();
+            if ($intakeInvoices) {
+                abort_unless(DB::table('pos_settings')->where('key', 'portal.warranty_search_category')
+                    ->where('value', 'invoice_id')->where('group', 'portal')->exists(), 409);
+                DB::table('pos_settings')->where('key', 'portal.warranty_search_category')
+                    ->where('value', 'invoice_id')->where('group', 'portal')->delete();
+            }
             if ($intakeInvoices) DB::table('sales')->whereIn('invoice_id', $intakeInvoices)->whereIn('outlet_id', $outletIds)->delete();
             if ($intakeInvoices) DB::table('invoices')->whereIn('id', $intakeInvoices)->delete();
             DB::table('products')->whereIn('outlet_id', $outletIds)->where('name', 'MT75 Intake Product')->delete();

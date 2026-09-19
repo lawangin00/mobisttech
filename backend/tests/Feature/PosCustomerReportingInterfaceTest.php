@@ -256,7 +256,12 @@ class PosCustomerReportingInterfaceTest extends TestCase
         $client = $this->authenticatedClient($this->actor);
         $base = '/internal/admin/pos/customer-reporting/claims/sale-search';
         $old = $sale['sale_ids'][0];
-        $this->assertNotContains($old, array_column($this->send($client, 'GET', '/internal/admin/pos/customer-reporting/claims')->assertOk()->json('data.sale_candidates'), 'sale_id'));
+        $initial = $this->send($client, 'GET', '/internal/admin/pos/customer-reporting/claims')->assertOk()->assertJsonPath('data.warranty_intake_category', 'all');
+        $this->assertNotContains($old, array_column($initial->json('data.sale_candidates'), 'sale_id'));
+        DB::table('pos_settings')->insert(['key' => 'portal.warranty_search_category', 'value' => 'invoice_id',
+            'group' => 'portal', 'label' => 'warranty_search_category', 'input_type' => 'select', 'sort_order' => 206]);
+        $this->send($client, 'GET', '/internal/admin/pos/customer-reporting/claims')->assertOk()
+            ->assertJsonPath('data.warranty_intake_category', 'invoice_id');
         $found = $this->send($client, 'GET', $base.'?category=invoice_id&q='.rawurlencode($originalInvoice['invoice_number']))->assertOk();
         $found->assertJsonCount(1, 'data.sale_candidates')->assertJsonPath('data.sale_candidates.0.sale_id', $old);
         $this->send($client, 'GET', $base.'?category=customer_name&q=MT43%20Customer')->assertOk()->assertJsonPath('data.sale_candidates.0.sale_id', $old);
