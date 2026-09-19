@@ -28,7 +28,7 @@ export default function PosMasterDataWorkspace(){
         setBusy(true);setMessage('');
         try{
             const input:Record<string,unknown>={list,action,...(id?{id}:{})};
-            if(action==='create'){input.label=label.trim();if(list==='unit_color')input.hex=hex;
+            if(action==='create'){if(!numeric)input.label=label.trim();if(list==='unit_color')input.hex=hex;
                 if(list==='device_ram_gb'||list==='device_storage_gb')input.value=Number(value);
                 if(list==='product_subcategory')input.parent_category_code=parent;
                 if(list==='acquisition_source_type')input.party_kind=party;
