@@ -68,13 +68,18 @@ test('MT-5.2 authenticated customer controls alerts and submits an eligible owne
     test.setTimeout(90_000);
     await login(page);
 
+    // The product button is SSR-rendered before hydration; wait for its mounted CSRF request.
+    const csrfReady = page.waitForResponse((response) =>
+        response.url().endsWith('/api/customer/auth/csrf-cookie'));
     await page.goto('/products/mt51-alpha-phone');
+    const csrfResponse = await csrfReady;
+    expect(csrfResponse.status(), 'product page CSRF initialization').toBe(200);
     const alertsCreated = page.waitForResponse((response) =>
         response.url().includes('/api/customer/product-subscriptions/')
-        && response.request().method() === 'POST'
-        && response.status() === 201);
+        && response.request().method() === 'POST');
     await page.getByRole('button', { name: 'Product alerts' }).click();
-    await alertsCreated;
+    const alertResponse = await alertsCreated;
+    expect(alertResponse.status(), 'product alert creation status').toBe(201);
     await expect(page.getByText('Product alerts enabled.', { exact: true })).toBeVisible();
 
     const subscriptionsReady = page.waitForResponse((response) =>
