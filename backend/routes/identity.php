@@ -8,6 +8,7 @@ use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\PlatformAdministrationController;
 use App\Http\Controllers\PosCustomerReportingController;
 use App\Http\Controllers\PosOperationsController;
+use App\Http\Controllers\PosMasterDataController;
 use App\Http\Controllers\OutletManagementController;
 use App\Http\Controllers\PosShellController;
 use App\Http\Controllers\PosAuditController;
@@ -89,10 +90,12 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::get('/manage-account/photo', [PosShellController::class, 'profilePhoto'])->defaults('identity_realm', 'admin')->name('admin.account.photo.show');
     Route::post('/manage-account/photo', [PosShellController::class, 'uploadProfilePhoto'])->defaults('identity_realm', 'admin')->middleware('throttle:identity')->name('admin.account.photo.upload');
     Route::delete('/manage-account/photo', [PosShellController::class, 'removeProfilePhoto'])->defaults('identity_realm', 'admin')->middleware('throttle:identity')->name('admin.account.photo.delete');
-    Route::get('/pos/workspace/{area}', [PosShellController::class, 'workspace'])->whereIn('area', ['sales', 'inventory', 'invoices', 'warranty', 'claims', 'profile', 'reports', 'operations'])
+    Route::get('/pos/workspace/{area}', [PosShellController::class, 'workspace'])->whereIn('area', ['sales', 'inventory', 'invoices', 'warranty', 'claims', 'profile', 'reports', 'operations', 'master-data'])
         ->defaults('identity_realm', 'admin')->name('admin.pos.workspace');
     Route::get('/pos/outlet-profile', [PosShellController::class, 'outletProfile'])->defaults('identity_realm', 'admin')->name('admin.pos.outlet-profile.show');
     Route::patch('/pos/outlet-profile', [PosShellController::class, 'updateOutletProfile'])->defaults('identity_realm', 'admin')->name('admin.pos.outlet-profile.update');
+    Route::get('/pos/master-data', [PosMasterDataController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.pos.master-data.index');
+    Route::post('/pos/master-data', [PosMasterDataController::class, 'change'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.pos.master-data.change');
     Route::get('/pos/catalogue', [PosTransactionController::class, 'catalogue'])->defaults('identity_realm', 'admin')->name('admin.pos.catalogue');
     Route::get('/pos/lookup', [PosTransactionController::class, 'lookup'])->defaults('identity_realm', 'admin')->name('admin.pos.lookup');
     Route::post('/pos/inventory/products', [PosTransactionController::class, 'saveProduct'])->defaults('identity_realm', 'admin')->name('admin.pos.products.save');

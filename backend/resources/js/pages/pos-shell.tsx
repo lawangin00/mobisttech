@@ -4,6 +4,7 @@ import PosTransactionWorkspace from '../components/pos-transaction-workspace';
 import PosOperationsWorkspace from '../components/pos-operations-workspace';
 import PosCustomerReportingWorkspace from '../components/pos-customer-reporting-workspace';
 import OutletProfileWorkspace from '../components/outlet-profile-workspace';
+import PosMasterDataWorkspace from '../components/pos-master-data-workspace';
 
 type NavigationItem = {
     key: string;
@@ -220,6 +221,7 @@ function Workspace({ shell, workspace }: {
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Authorized POS workspace</p>
         <h2 className="mt-3 text-3xl font-semibold tracking-tight">{workspace.label}</h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">{workspace.description}</p>
+        {workspace.key === 'master-data' ? <PosMasterDataWorkspace /> : null}
         {workspace.key === 'profile' && shell.active_outlet ? <OutletProfileWorkspace outletId={shell.active_outlet.id} />
             : workspace.key === 'inventory' || workspace.key === 'sales'
             ? <PosTransactionWorkspace area={workspace.key} />

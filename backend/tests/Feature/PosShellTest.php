@@ -335,6 +335,33 @@ class PosShellTest extends TestCase
             ->where('action', 'pos_portal_preferences_updated')->count());
     }
 
+    public function test_master_data_admin_ui_and_mutations_respect_role_protected_category_and_history(): void
+    {
+        $outlet = $this->outlet('Master options outlet', '081');
+        $owner = $this->member('master-ui-owner@example.invalid', ['shops.enter', 'config.master-data.manage']);
+        $owner->shops()->attach($outlet);
+        $denied = $this->member('master-ui-sales@example.invalid', ['shops.enter', 'shop.sales']);
+        $denied->shops()->attach($outlet);
+        $url = '/internal/admin/pos/master-data';
+        $guest = $this->client(); $this->send($guest, 'GET', $url)->assertUnauthorized();
+        $sales = $this->client(); $this->login($sales, $denied->email)->assertOk();
+        $this->send($sales, 'GET', $url)->assertForbidden();
+        $this->send($sales, 'GET', '/internal/admin/pos/workspace/master-data')->assertForbidden();
+        $client = $this->client(); $this->login($client, $owner->email)->assertOk();
+        $this->send($client, 'GET', '/internal/admin/pos/workspace/master-data')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('view.workspace.key', 'master-data'));
+        $this->send($client, 'GET', $url)->assertOk()->assertJsonPath('data.lists.product_brand', 'Brands');
+        $created = $this->send($client, 'POST', $url, ['list' => 'product_brand', 'action' => 'create',
+            'label' => 'Synthetic Managed P02 Brand'])->assertOk();
+        $id = $created->json('data.id');
+        $this->assertSame('synthetic_managed_p02_brand', DB::table('pos_master_data_options')->where('id', $id)->value('code'));
+        $this->send($client, 'POST', $url, ['list' => 'product_brand', 'action' => 'deactivate', 'id' => $id])->assertOk();
+        $this->assertSame(0, (int) DB::table('pos_master_data_options')->where('id', $id)->value('is_active'));
+        $this->send($client, 'GET', $url)->assertOk()->assertJsonFragment(['code' => 'synthetic_managed_p02_brand', 'is_active' => false]);
+        $this->send($client, 'POST', $url, ['list' => 'product_brand', 'action' => 'delete', 'id' => $id])->assertOk();
+        $this->assertFalse(DB::table('pos_master_data_options')->where('id', $id)->exists());
+    }
+
     private function uploadPhoto(array &$client, string $url, UploadedFile $file, array $fields = [])
     {
         return $this->call('POST', $url, $fields, $client['cookies'], ['profile_photo' => $file], [
