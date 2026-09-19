@@ -199,6 +199,31 @@ class PlatformAdministrationInterfaceTest extends TestCase
             ->assertOk();
         $this->getJson('/api/v1/software/mt75-fixture')->assertOk()
             ->assertJsonPath('data.overview.overview', 'Initial verified synthetic overview');
+        $this->getJson('/api/v1/software/mt75-fixture/privacy')->assertOk()
+            ->assertJsonPath('data.privacy', '<p>Synthetic test-only privacy content.</p>');
+        $this->getJson('/api/v1/software/mt75-fixture/terms')->assertOk()
+            ->assertJsonPath('data.terms', '<p>Synthetic test-only terms.</p>');
+        $this->getJson('/api/v1/software/mt75-fixture/faq')->assertOk()
+            ->assertJsonPath('data.faq.0.question', 'Test product?');
+        $releaseInput = [
+            'version' => '1.0.0', 'release_date' => '2026-09-19',
+            'summary' => 'Synthetic signed-in release',
+            'notes' => ['added' => ['Test-only feature']],
+            'impact_review' => [
+                'overview' => 'reviewed_no_change', 'privacy' => 'reviewed_no_change',
+                'terms' => 'reviewed_no_change', 'faq' => 'reviewed_no_change',
+                'system_requirements' => 'reviewed_no_change', 'support_guidance' => 'reviewed_no_change',
+                'material' => [],
+            ],
+        ];
+        $release = $this->send($editorClient, 'POST', '/internal/admin/platform/software/'.$productId.'/releases', $releaseInput)
+            ->assertOk()->json('data');
+        $this->getJson('/api/v1/software/mt75-fixture/releases')->assertOk()->assertJsonCount(0, 'data.items');
+        $releaseId = (int) DB::table('software_releases')->where('public_id', $release['public_id'])->value('id');
+        $this->send($editorClient, 'POST', '/internal/admin/platform/software/releases/'.$releaseId.'/publish')->assertForbidden();
+        $this->send($publisherClient, 'POST', '/internal/admin/platform/software/releases/'.$releaseId.'/publish')->assertOk();
+        $this->getJson('/api/v1/software/mt75-fixture/releases')->assertOk()
+            ->assertJsonPath('data.items.0.version', '1.0.0');
         $later = $this->send($editorClient, 'POST', '/internal/admin/platform/software/'.$productId.'/draft',
             $this->mt75SoftwareInput('Updated reviewed synthetic overview'))->assertOk()->json('data');
         $this->getJson('/api/v1/software/mt75-fixture')->assertOk()
