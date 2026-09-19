@@ -50,7 +50,7 @@ class PosShellE2eCleanupSeeder extends Seeder
                 ->where('invoice_number', 'like', 'MT75-HIST-%')
                 ->where('customer_name', 'like', 'MT75 Synthetic Customer %')->delete();
             $p02Option = DB::table('pos_master_data_options')->where('list_key', 'product_brand')
-                ->where('code', 'mt75_p02_browser_brand')->where('label', 'MT75 P02 Browser Brand')->first();
+                ->where('code', 'mt75_p02_browser_brand')->whereIn('label', ['MT75 P02 Browser Brand', 'MT75 P02 Browser Brand Edited'])->first();
             if ($p02Option) {
                 abort_unless(! DB::table('pos_master_data_usages')->where('master_data_option_id', $p02Option->id)->exists(), 409);
                 DB::table('domain_events')->where('aggregate_type', 'master_data')

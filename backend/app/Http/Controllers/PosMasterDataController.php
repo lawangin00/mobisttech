@@ -52,8 +52,12 @@ final class PosMasterDataController extends Controller
         if (($action === 'create' && isset($data['id'])) || ($action !== 'create' && ! isset($data['id']))) {
             throw ValidationException::withMessages(['id' => 'Incorrect master-data action target.']);
         }
-        $result = $service->change($actor, $action, $data['list'],
-            array_diff_key($data, array_flip(['list', 'action', 'id'])), $data['id'] ?? null);
+        try {
+            $result = $service->change($actor, $action, $data['list'],
+                array_diff_key($data, array_flip(['list', 'action', 'id'])), $data['id'] ?? null);
+        } catch (\LogicException $error) {
+            throw ValidationException::withMessages(['action' => 'This protected or referenced master-data option cannot be changed as requested.']);
+        }
         return response()->json(['data' => ['id' => $result?->id, 'action' => $action]]);
     }
 }

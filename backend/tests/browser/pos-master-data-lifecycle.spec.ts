@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const brand = 'MT75 P02 Browser Brand';
+const editedBrand = 'MT75 P02 Browser Brand Edited';
 const endpoint = '/internal/admin/pos/master-data';
 
 test('P02 protected master option lifecycle refreshes inventory and keeps protected categories', async ({page}) => {
@@ -22,25 +23,35 @@ test('P02 protected master option lifecycle refreshes inventory and keeps protec
     expect((await created).status()).toBe(200);
     await expect(page.getByRole('alert')).toContainText('Option create successful.');
     await expect(page.getByText(brand,{exact:true})).toBeVisible();
+    const managed=page.getByTestId('master-row-mt75_p02_browser_brand');
+    await managed.getByRole('button',{name:'Edit'}).click();
+    await expect(page.getByTestId('master-edit-label')).toHaveValue(brand);
+    await page.getByTestId('master-edit-label').fill(editedBrand);
+    await page.getByTestId('master-edit-order').fill('37');
+    const edited=page.waitForResponse(r=>r.url().endsWith(endpoint)&&r.request().method()==='POST');
+    await page.getByTestId('master-edit-save').click();
+    expect((await edited).status()).toBe(200);
+    await expect(managed).toContainText(editedBrand);
+    await expect(managed).toContainText('mt75_p02_browser_brand');
     await page.goto('/internal/admin/pos/workspace/inventory');
     await expect(page.getByTestId('workspace-inventory')).toBeVisible();
-    await expect(page.locator('select').filter({has:page.locator('option',{hasText:brand})})).toHaveCount(1);
+    await expect(page.locator('select').filter({has:page.locator('option',{hasText:editedBrand})})).toHaveCount(1);
     await page.goto('/internal/admin/pos/workspace/master-data');
     await expect(page.getByTestId('master-data-workspace')).toBeVisible();
     await page.getByTestId('master-list').selectOption('product_brand');
-    const branded=page.getByTestId('master-data-workspace').locator('div.border').filter({has:page.getByText(brand,{exact:true})}).last();
+    const branded=page.getByTestId('master-data-workspace').locator('div.border').filter({has:page.getByText(editedBrand,{exact:true})}).last();
     const deactivated=page.waitForResponse(r=>r.url().endsWith(endpoint)&&r.request().method()==='POST');
     await branded.getByRole('button',{name:'Deactivate'}).click();
     expect((await deactivated).status()).toBe(200);
     await expect(branded).toContainText('Inactive');
     await page.goto('/internal/admin/pos/workspace/inventory');
     await expect(page.getByTestId('workspace-inventory')).toBeVisible();
-    await expect(page.locator('option',{hasText:brand})).toHaveCount(0);
+    await expect(page.locator('option',{hasText:editedBrand})).toHaveCount(0);
     await page.goto('/internal/admin/pos/workspace/master-data');
     await page.getByTestId('master-list').selectOption('product_brand');
     page.once('dialog',dialog=>void dialog.accept());
     const removed=page.waitForResponse(r=>r.url().endsWith(endpoint)&&r.request().method()==='POST');
-    await page.getByTestId('master-data-workspace').locator('div.border').filter({has:page.getByText(brand,{exact:true})}).last().getByRole('button',{name:'Delete unused'}).click();
+    await page.getByTestId('master-data-workspace').locator('div.border').filter({has:page.getByText(editedBrand,{exact:true})}).last().getByRole('button',{name:'Delete unused'}).click();
     expect((await removed).status()).toBe(200);
-    await expect(page.getByText(brand,{exact:true})).toHaveCount(0);
+    await expect(page.getByText(editedBrand,{exact:true})).toHaveCount(0);
 });

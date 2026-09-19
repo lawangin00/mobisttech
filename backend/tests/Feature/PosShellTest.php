@@ -362,6 +362,33 @@ class PosShellTest extends TestCase
         $this->assertFalse(DB::table('pos_master_data_options')->where('id', $id)->exists());
     }
 
+    public function test_p02_http_option_editor_keeps_stable_code_and_denies_referenced_deletion(): void
+    {
+        $outlet = $this->outlet('P02 Edit Outlet', '082');
+        $actor = $this->member('p02-edit@example.invalid', ['shops.enter', 'config.master-data.manage']);
+        $actor->shops()->attach($outlet);
+        $client = $this->client(); $this->login($client, $actor->email)->assertOk();
+        $url = '/internal/admin/pos/master-data';
+        $id = $this->send($client, 'POST', $url, ['list' => 'product_brand', 'action' => 'create', 'label' => 'P02 Original'])->assertOk()->json('data.id');
+        $code = DB::table('pos_master_data_options')->where('id', $id)->value('code');
+        $this->send($client, 'POST', $url, ['list' => 'product_brand', 'action' => 'update', 'id' => $id,
+            'label' => 'P02 Edited', 'sort_order' => 37])->assertOk();
+        $this->assertSame($code, DB::table('pos_master_data_options')->where('id', $id)->value('code'));
+        $this->assertSame(37, (int) DB::table('pos_master_data_options')->where('id', $id)->value('sort_order'));
+        $this->send($client, 'GET', $url)->assertOk()->assertJsonFragment(['code' => $code, 'label' => 'P02 Edited', 'sort_order' => 37]);
+        DB::table('pos_master_data_usages')->insert(['master_data_option_id' => $id, 'usage_type' => 'product',
+            'usage_id' => 'synthetic-p02-history', 'usage_field' => 'brand']);
+        $this->send($client, 'POST', $url, ['list' => 'product_brand', 'action' => 'delete', 'id' => $id])->assertUnprocessable();
+        $this->assertSame('P02 Edited', DB::table('pos_master_data_options')->where('id', $id)->value('label'));
+        $this->send($client, 'GET', $url)->assertOk()->assertJsonFragment(['code' => $code, 'usages_count' => 1]);
+        $this->send($client, 'POST', $url, ['list' => 'product_brand', 'action' => 'update', 'id' => $id,
+            'label' => 'Injected', 'code' => 'rewritten'])->assertUnprocessable();
+        $protected = DB::table('pos_master_data_options')->where('list_key', 'product_category')->value('id');
+        $this->send($client, 'POST', $url, ['list' => 'product_category', 'action' => 'delete', 'id' => $protected])->assertUnprocessable();
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $actor->id)
+            ->where('action', 'master_data_update')->count());
+    }
+
     private function uploadPhoto(array &$client, string $url, UploadedFile $file, array $fields = [])
     {
         return $this->call('POST', $url, $fields, $client['cookies'], ['profile_photo' => $file], [
