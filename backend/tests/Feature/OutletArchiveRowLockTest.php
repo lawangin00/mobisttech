@@ -80,7 +80,18 @@ final class OutletArchiveRowLockTest extends TestCase
         $originalDefault = DB::getDefaultConnection();
         config(['database.connections.d03_service_writer' => config('database.connections.mysql')]);
         $writer = DB::connection('d03_service_writer');
+        $historicalSessionId = null;
         try {
+            // Actual closed cash history remains eligible for the real archival service.
+            $historyOpenKey = 'd03-cash-history-open-'.$tag;
+            $opened = app(\App\Cash\CashSessionOperations::class)->open(
+                $cashActor, $historical, $historyOpenKey, ['opening_cash' => '10.00']);
+            $historicalSessionId = $opened['session_id'];
+            $closed = app(\App\Cash\CashSessionOperations::class)->close(
+                $cashActor, $historical, $historicalSessionId, 'd03-cash-history-close-'.$tag,
+                ['session_version' => 1, 'actual_cash' => '10.00']);
+            $this->assertSame('closed', $closed['status']);
+            $historyBefore = DB::table('cash_sessions')->where('public_id', $historicalSessionId)->firstOrFail();
             $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
             DB::connection('mysql')->beginTransaction();
             try {
@@ -123,23 +134,36 @@ final class OutletArchiveRowLockTest extends TestCase
             $this->assertNotNull($historical->fresh()->archived_at);
             DB::setDefaultConnection('d03_service_writer');
             try {
-                app(\App\Cash\CashSessionOperations::class)->open($writerActor, $writerOutlet,
-                    'd03-postcommit-'.$tag, ['opening_cash' => '10.00']);
-                $this->fail('The cash service opened a session after the archive committed.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
-                $this->assertSame(403, $exception->getStatusCode());
+                foreach ([$historyOpenKey, 'd03-postcommit-'.$tag] as $deniedKey) {
+                    try {
+                        app(\App\Cash\CashSessionOperations::class)->open($writerActor, $writerOutlet,
+                            $deniedKey, ['opening_cash' => '10.00']);
+                        $this->fail('Archived outlet accepted an original completed cash key or a fresh open.');
+                    } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                        $this->assertSame(403, $exception->getStatusCode());
+                    }
+                }
             } finally {
                 DB::setDefaultConnection($originalDefault);
             }
-            $this->assertSame(0, DB::table('cash_sessions')->where('outlet_id', $historical->id)->count());
+            $this->assertSame(1, DB::table('cash_sessions')->where('outlet_id', $historical->id)->count());
+            $this->assertEquals($historyBefore, DB::table('cash_sessions')->where('public_id', $historicalSessionId)->firstOrFail());
+            $this->assertSame(hash('sha256', $historyBefore->closing_snapshot), $historyBefore->snapshot_sha256);
             $this->assertSame(0, DB::table('idempotency_requests')
                 ->where('actor_scope', \App\Models\Admin::class.':'.$cashActor->id)
-                ->where('operation', 'cash-sessions.open')->where('key', 'like', 'd03-%'.$tag)->count());
+                ->where('operation', 'cash-sessions.open')
+                ->whereIn('key', ['d03-overlap-'.$tag, 'd03-postcommit-'.$tag])->count());
         } finally {
             DB::setDefaultConnection($originalDefault);
             if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
             $writer->disconnect();
             DB::purge('d03_service_writer');
+            if ($historicalSessionId) {
+                DB::table('cash_sessions')->where('public_id', $historicalSessionId)
+                    ->where('outlet_id', $historical->id)->delete();
+                DB::table('idempotency_requests')->where('actor_scope', \App\Models\Admin::class.':'.$cashActor->id)
+                    ->whereIn('key', [$historyOpenKey, 'd03-cash-history-close-'.$tag])->delete();
+            }
             DB::table('identity_audit_events')->whereIn('account_id', [$owner->id, $cashActor->id])->delete();
             DB::table('admin_roles')->whereIn('admin_id', [$owner->id, $cashActor->id])->delete();
             DB::table('outlet_admins')->whereIn('admin_id', [$owner->id, $cashActor->id])->delete();
@@ -511,6 +535,293 @@ final class OutletArchiveRowLockTest extends TestCase
             if ($product) { DB::table('products')->where('id', $product->id)->delete(); }
             if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
                 ->where('name', 'D03 stocktake race '.$tag)->delete(); }
+        }
+    }
+
+    public function test_isolated_sales_and_claim_services_wait_for_archive_and_deny_stale_retries(): void
+    {
+        // Committed synthetic invoice/sale fixture; the production archive service must still
+        // reject this business-bearing outlet. Proves the real services' PRE-CALLBACK gates only.
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test'
+            && (int) config('database.connections.mysql.port') === 13306, 403);
+        $tag = (string) Str::uuid();
+        $default = DB::getDefaultConnection();
+        $outlet = null; $actor = null; $product = null; $invoiceId = null; $saleId = null; $writer = null;
+        try {
+            $outlet = new Outlet;
+            $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '080',
+                'name' => 'D03 sales claim race '.$tag, 'status' => false, 'version' => 1])->save();
+            $actor = new \App\Models\Admin;
+            $actor->forceFill(['name' => 'D03 synthetic sales claim operator',
+                'email' => 'd03-sales-claim-'.$tag.'@example.invalid', 'password' => 'not-a-live-password',
+                'permissions' => ['shops.enter', 'shop.sales', 'shop.claims']])->save();
+            $actor->shops()->attach($outlet);
+            $product = new \App\Models\Product;
+            $product->forceFill(['name' => 'D03 retained warranty product', 'outlet_id' => $outlet->id,
+                'category' => 'accessory', 'price' => '100.00', 'sale_price' => '100.00', 'qty' => 1,
+                'warranty_type' => 'shop_warranty', 'warranty_unit' => 0, 'warranty_duration' => 30])->save();
+            $invoiceId = DB::table('invoices')->insertGetId(['outlet_id' => $outlet->id,
+                'public_id' => (string) Str::uuid(), 'total_bill' => '100.00',
+                'final_bill' => '100.00', 'invoice_number' => 'D03-RACE-'.Str::random(12)]);
+            $salePublic = (string) Str::uuid();
+            $saleId = DB::table('sales')->insertGetId(['outlet_id' => $outlet->id,
+                'public_id' => $salePublic, 'invoice_id' => $invoiceId, 'product_id' => $product->id,
+                'sale_date' => now()->toDateString(), 'sale_price' => '100.00', 'quantity' => 1,
+                'total_price' => '100.00', 'net_total_price' => '100.00']);
+            $beforeSale = DB::table('sales')->where('id', $saleId)->firstOrFail();
+            $saleInput = ['discount' => '0.00', 'lines' => [['product_id' => $product->public_id, 'quantity' => 1]]];
+            $claimInput = ['sale_id' => $salePublic, 'issue_description' => 'Synthetic warranty intake'];
+            config(['database.connections.d03_sale_claim_writer' => config('database.connections.mysql')]);
+            $writer = DB::connection('d03_sale_claim_writer');
+            $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
+            DB::connection('mysql')->beginTransaction();
+            try {
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->lockForUpdate()->firstOrFail();
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->update(['archived_at' => now(), 'version' => 2]);
+                DB::setDefaultConnection('d03_sale_claim_writer');
+                $this->assertNull($writer->table('outlets')->where('id', $outlet->id)->value('archived_at'));
+                $writerActor = \App\Models\Admin::on('d03_sale_claim_writer')->findOrFail($actor->id);
+                $writerOutlet = Outlet::on('d03_sale_claim_writer')->findOrFail($outlet->id);
+                foreach (['shop.sales', 'shop.claims'] as $permission) {
+                    $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                        $writerActor, $permission, $writerOutlet));
+                }
+                foreach (['sale', 'claim'] as $kind) {
+                    try {
+                        if ($kind === 'sale') {
+                            app(\App\Sales\SalesOperations::class)->sell($writerActor, $writerOutlet,
+                                'd03-sale-wait-'.$tag, $saleInput);
+                        } else {
+                            app(\App\Warranty\ClaimOperations::class)->open($writerActor, $writerOutlet,
+                                'd03-claim-wait-'.$tag, $claimInput);
+                        }
+                        $this->fail('A '.$kind.' write bypassed the independent outlet archive lock.');
+                    } catch (QueryException $exception) {
+                        $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
+                    }
+                }
+                DB::setDefaultConnection($default);
+                DB::connection('mysql')->commit();
+            } finally {
+                DB::setDefaultConnection($default);
+                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            }
+            $this->assertNotNull($outlet->fresh()->archived_at);
+            DB::setDefaultConnection('d03_sale_claim_writer');
+            try {
+                foreach (['sale', 'claim'] as $kind) {
+                    try {
+                        if ($kind === 'sale') {
+                            app(\App\Sales\SalesOperations::class)->sell($writerActor, $writerOutlet,
+                                'd03-sale-retry-'.$tag, $saleInput);
+                        } else {
+                            app(\App\Warranty\ClaimOperations::class)->open($writerActor, $writerOutlet,
+                                'd03-claim-retry-'.$tag, $claimInput);
+                        }
+                        $this->fail('A '.$kind.' service accepted a post-archive retry.');
+                    } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                        $this->assertSame(403, $exception->getStatusCode());
+                    }
+                }
+            } finally {
+                DB::setDefaultConnection($default);
+            }
+            $this->assertEquals($beforeSale, DB::table('sales')->where('id', $saleId)->firstOrFail());
+            $this->assertSame(1, DB::table('invoices')->where('id', $invoiceId)->count());
+            $this->assertSame(0, DB::table('claims')->where('outlet_id', $outlet->id)->count());
+            $this->assertSame(0, DB::table('idempotency_requests')
+                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('key', 'like', 'd03-%'.$tag)->count());
+        } finally {
+            DB::setDefaultConnection($default);
+            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            if ($writer) { $writer->disconnect(); DB::purge('d03_sale_claim_writer'); }
+            if ($saleId) { DB::table('sales')->where('id', $saleId)->delete(); }
+            if ($invoiceId) { DB::table('invoices')->where('id', $invoiceId)->delete(); }
+            if ($product) { DB::table('products')->where('id', $product->id)->delete(); }
+            if ($actor) {
+                DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
+                DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
+                DB::table('admins')->where('id', $actor->id)->delete();
+            }
+            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
+                ->where('name', 'D03 sales claim race '.$tag)->delete(); }
+        }
+    }
+
+    public function test_isolated_payment_service_serializes_archive_lock_and_rejects_stale_destination_retry(): void
+    {
+        // Test-only committed fixture. This proves the shared payment mutation gate,
+        // not a live card charge, provider settlement or actual payment-history archive.
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test'
+            && (int) config('database.connections.mysql.port') === 13306, 403);
+        $tag = (string) Str::uuid();
+        $default = DB::getDefaultConnection();
+        $outlet = null; $actor = null; $writer = null;
+        try {
+            $outlet = new Outlet;
+            $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '081',
+                'name' => 'D03 payment race '.$tag, 'status' => false, 'version' => 1])->save();
+            $actor = new \App\Models\Admin;
+            $actor->forceFill(['name' => 'D03 synthetic payment operator',
+                'email' => 'd03-payment-race-'.$tag.'@example.invalid',
+                'password' => 'not-a-live-password',
+                'permissions' => ['shops.enter', 'config.payments.manage']])->save();
+            $actor->shops()->attach($outlet);
+            $input = ['method' => 'card', 'display_name' => 'Isolated synthetic destination'];
+            config(['database.connections.d03_payment_writer' => config('database.connections.mysql')]);
+            $writer = DB::connection('d03_payment_writer');
+            $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
+            DB::connection('mysql')->beginTransaction();
+            try {
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->lockForUpdate()->firstOrFail();
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->update(['archived_at' => now(), 'version' => 2]);
+                DB::setDefaultConnection('d03_payment_writer');
+                $this->assertNull($writer->table('outlets')->where('id', $outlet->id)->value('archived_at'));
+                $writerActor = \App\Models\Admin::on('d03_payment_writer')->findOrFail($actor->id);
+                $writerOutlet = Outlet::on('d03_payment_writer')->findOrFail($outlet->id);
+                $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                    $writerActor, 'config.payments.manage', $writerOutlet));
+                try {
+                    app(\App\Payments\PosPaymentOperations::class)->createDestination(
+                        $writerActor, $writerOutlet, 'd03-payment-wait-'.$tag, $input);
+                    $this->fail('Payment configuration bypassed the independent archive lock.');
+                } catch (QueryException $exception) {
+                    $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
+                } finally {
+                    DB::setDefaultConnection($default);
+                }
+                DB::connection('mysql')->commit();
+            } finally {
+                DB::setDefaultConnection($default);
+                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            }
+            $this->assertNotNull($outlet->fresh()->archived_at);
+            DB::setDefaultConnection('d03_payment_writer');
+            try {
+                app(\App\Payments\PosPaymentOperations::class)->createDestination(
+                    $writerActor, $writerOutlet, 'd03-payment-retry-'.$tag, $input);
+                $this->fail('Payment service accepted a post-archive destination.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            } finally {
+                DB::setDefaultConnection($default);
+            }
+            $this->assertSame(0, DB::table('pos_payment_destinations')->where('outlet_id', $outlet->id)->count());
+            $this->assertSame(0, DB::table('idempotency_requests')
+                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('operation', 'pos-payments.destination.create')
+                ->where('key', 'like', 'd03-payment-%'.$tag)->count());
+        } finally {
+            DB::setDefaultConnection($default);
+            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            if ($writer) { $writer->disconnect(); DB::purge('d03_payment_writer'); }
+            if ($actor) {
+                DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
+                DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
+                DB::table('admins')->where('id', $actor->id)->delete();
+            }
+            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
+                ->where('name', 'D03 payment race '.$tag)->delete(); }
+        }
+    }
+
+    public function test_isolated_procurement_and_repair_services_share_archive_lock(): void
+    {
+        // Committed test-only fixture; neither real procurement nor real repair outlet archival is enabled.
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test'
+            && (int) config('database.connections.mysql.port') === 13306, 403);
+        $tag = (string) Str::uuid();
+        $default = DB::getDefaultConnection();
+        $outlet = null; $actor = null; $writer = null;
+        try {
+            $outlet = new Outlet;
+            $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '082',
+                'name' => 'D03 supplier repair race '.$tag, 'status' => false, 'version' => 1])->save();
+            $actor = new \App\Models\Admin;
+            $actor->forceFill(['name' => 'D03 synthetic supplier repair actor',
+                'email' => 'd03-supplier-repair-'.$tag.'@example.invalid', 'password' => 'not-a-live-password',
+                'permissions' => ['shops.enter', 'shop.procurement', 'shop.repairs']])->save();
+            $actor->shops()->attach($outlet);
+            $supplierInput = ['supplier_code' => 'D03-RACE', 'name' => 'Synthetic Supplier'];
+            $repairInput = ['enabled' => true];
+            config(['database.connections.d03_procurement_repair_writer' => config('database.connections.mysql')]);
+            $writer = DB::connection('d03_procurement_repair_writer');
+            $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
+            DB::connection('mysql')->beginTransaction();
+            try {
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->lockForUpdate()->firstOrFail();
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->update(['archived_at' => now(), 'version' => 2]);
+                DB::setDefaultConnection('d03_procurement_repair_writer');
+                $this->assertNull($writer->table('outlets')->where('id', $outlet->id)->value('archived_at'));
+                $writerActor = \App\Models\Admin::on('d03_procurement_repair_writer')->findOrFail($actor->id);
+                $writerOutlet = Outlet::on('d03_procurement_repair_writer')->findOrFail($outlet->id);
+                foreach (['shop.procurement', 'shop.repairs'] as $permission) {
+                    $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                        $writerActor, $permission, $writerOutlet));
+                }
+                foreach (['supplier', 'repair'] as $kind) {
+                    try {
+                        if ($kind === 'supplier') {
+                            app(\App\Procurement\SupplierProcurement::class)->createSupplier(
+                                $writerActor, $writerOutlet, 'd03-supplier-wait-'.$tag, $supplierInput);
+                        } else {
+                            app(\App\Repairs\PaidRepairOperations::class)->configure(
+                                $writerActor, $writerOutlet, 'd03-repair-wait-'.$tag, $repairInput);
+                        }
+                        $this->fail('The '.$kind.' service bypassed the archive row lock.');
+                    } catch (QueryException $exception) {
+                        $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
+                    }
+                }
+                DB::setDefaultConnection($default);
+                DB::connection('mysql')->commit();
+            } finally {
+                DB::setDefaultConnection($default);
+                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            }
+            $this->assertNotNull($outlet->fresh()->archived_at);
+            DB::setDefaultConnection('d03_procurement_repair_writer');
+            try {
+                foreach (['supplier', 'repair'] as $kind) {
+                    try {
+                        if ($kind === 'supplier') {
+                            app(\App\Procurement\SupplierProcurement::class)->createSupplier(
+                                $writerActor, $writerOutlet, 'd03-supplier-retry-'.$tag, $supplierInput);
+                        } else {
+                            app(\App\Repairs\PaidRepairOperations::class)->configure(
+                                $writerActor, $writerOutlet, 'd03-repair-retry-'.$tag, $repairInput);
+                        }
+                        $this->fail('Archived outlet accepted '.$kind.' mutation.');
+                    } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                        $this->assertSame(403, $exception->getStatusCode());
+                    }
+                }
+            } finally {
+                DB::setDefaultConnection($default);
+            }
+            $this->assertSame(0, DB::table('suppliers')->where('outlet_id', $outlet->id)->count());
+            $this->assertSame(0, DB::table('repair_settings')->where('outlet_id', $outlet->id)->count());
+            $this->assertSame(0, DB::table('idempotency_requests')
+                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('key', 'like', 'd03-%'.$tag)->count());
+        } finally {
+            DB::setDefaultConnection($default);
+            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            if ($writer) { $writer->disconnect(); DB::purge('d03_procurement_repair_writer'); }
+            if ($actor) {
+                DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
+                DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
+                DB::table('admins')->where('id', $actor->id)->delete();
+            }
+            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
+                ->where('name', 'D03 supplier repair race '.$tag)->delete(); }
         }
     }
 

@@ -502,8 +502,11 @@ final class PosPaymentOperations
     private function mutate(Admin $actor, Outlet $outlet, string $operation, string $key, mixed $payload, string $permission, callable $callback): array
     {
         return DB::transaction(function () use ($actor, $outlet, $operation, $key, $payload, $permission, $callback) {
+            // Serialize destination edits, tender/settlement/refund writes and completed-key
+            // replays with the archival outlet lock; do not return cached operational results.
+            $lockedOutlet = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
             $fresh = $actor->fresh();
-            abort_unless($fresh instanceof Admin && app(Access::class)->allows($fresh, $permission, $outlet->fresh()), 403);
+            abort_unless($fresh instanceof Admin && app(Access::class)->allows($fresh, $permission, $lockedOutlet), 403);
             Validator::make(['key' => $key], ['key' => 'required|string|max:100'])->validate();
             $digest = hash('sha256', json_encode($this->canonical($payload), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
             $identity = ['actor_scope' => Admin::class.':'.$fresh->id, 'operation' => 'pos-payments.'.$operation, 'key' => $key];

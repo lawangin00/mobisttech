@@ -328,6 +328,30 @@ class PosShellTest extends TestCase
             'source_outlet_id' => $outlet->id, 'destination_outlet_id' => $fallback->id,
             'created_by_admin_id' => $owner->id, 'status' => 'received', 'version' => 2,
             'notes' => 'PRIVATE-TRANSFER-NOTES']);
+        $destinationProduct = new \App\Models\Product;
+        $destinationProduct->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Transfer destination product',
+            'outlet_id' => $fallback->id, 'category' => 'accessory', 'price' => '20.00', 'qty' => 1])->save();
+        $lineSnapshot = json_encode(['contract' => 'synthetic-transfer-line', 'private' => 'PRIVATE-LINE-SNAPSHOT'], JSON_THROW_ON_ERROR);
+        $transferLinePublic = (string) Str::uuid();
+        $transferLineId = DB::table('stock_transfer_lines')->insertGetId([
+            'public_id' => $transferLinePublic, 'stock_transfer_id' => $transferId,
+            'source_outlet_id' => $outlet->id, 'destination_outlet_id' => $fallback->id,
+            'source_product_id' => $product->id, 'destination_product_id' => $destinationProduct->id,
+            'tracked_serialized' => false, 'quantity' => 1, 'received_quantity' => 1,
+            'product_snapshot' => $lineSnapshot, 'snapshot_sha256' => hash('sha256', $lineSnapshot)]);
+        $receiptSnapshot = json_encode(['contract' => 'synthetic-receipt', 'private' => 'PRIVATE-RECEIPT-SNAPSHOT'], JSON_THROW_ON_ERROR);
+        $receiptPublic = (string) Str::uuid();
+        $receiptId = DB::table('stock_transfer_receipts')->insertGetId([
+            'public_id' => $receiptPublic, 'stock_transfer_id' => $transferId,
+            'destination_outlet_id' => $fallback->id, 'processed_by_admin_id' => $owner->id,
+            'transfer_version_before' => 1, 'transfer_version_after' => 2,
+            'notes' => 'PRIVATE-RECEIPT-NOTES', 'processed_at' => now(),
+            'receipt_snapshot' => $receiptSnapshot, 'snapshot_sha256' => hash('sha256', $receiptSnapshot)]);
+        $receiptLineSnapshot = json_encode(['private' => 'PRIVATE-RECEIPT-LINE'], JSON_THROW_ON_ERROR);
+        $receiptLineId = DB::table('stock_transfer_receipt_lines')->insertGetId([
+            'stock_transfer_receipt_id' => $receiptId, 'stock_transfer_id' => $transferId,
+            'stock_transfer_line_id' => $transferLineId, 'received_quantity' => 1,
+            'line_snapshot' => $receiptLineSnapshot, 'snapshot_sha256' => hash('sha256', $receiptLineSnapshot)]);
         $ownerClient = $this->client();
         $this->login($ownerClient, $owner->email)->assertOk();
         $path = '/internal/admin/outlet-management/'.$outlet->public_id.'/history';
@@ -337,6 +361,9 @@ class PosShellTest extends TestCase
         // Synthetic direct archived-state read-path fixture leaves the production fail-closed rule unchanged.
         $outlet->forceFill(['archived_at' => now()])->save();
         $beforeTransfer = DB::table('stock_transfers')->where('id', $transferId)->firstOrFail();
+        $beforeLine = DB::table('stock_transfer_lines')->where('id', $transferLineId)->firstOrFail();
+        $beforeReceipt = DB::table('stock_transfer_receipts')->where('id', $receiptId)->firstOrFail();
+        $beforeReceiptLine = DB::table('stock_transfer_receipt_lines')->where('id', $receiptLineId)->firstOrFail();
         $beforeUnit = DB::table('stock_units')->where('id', $unit->id)->firstOrFail();
         $beforeMovement = DB::table('stock_movements')->where('id', $movementId)->firstOrFail();
         $response = $this->send($ownerClient, 'GET', $path)->assertOk()
@@ -349,11 +376,23 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.stock_history.transfers.0.source_id', $outlet->public_id)
             ->assertJsonPath('data.stock_history.transfers.0.destination_id', $fallback->public_id)
             ->assertJsonPath('data.stock_history.transfers.0.status', 'received')
+            ->assertJsonPath('data.stock_history.transfers.0.line_count', 1)
+            ->assertJsonPath('data.stock_history.transfers.0.receipt_count', 1)
+            ->assertJsonPath('data.stock_history.transfers.0.unresolved_quantity', 0)
+            ->assertJsonPath('data.stock_history.transfers.0.requires_review', false)
+            ->assertJsonPath('data.stock_history.transfers.0.lines.0.id', $transferLinePublic)
+            ->assertJsonPath('data.stock_history.transfers.0.lines.0.received_quantity', 1)
+            ->assertJsonPath('data.stock_history.transfers.0.receipts.0.id', $receiptPublic)
+            ->assertJsonPath('data.stock_history.transfers.0.receipts.0.received_quantity', 1)
             ->assertJsonPath('data.stock_history.products.0.id', $product->public_id)
             ->assertJsonPath('data.stock_history.products.0.quantity', 1)
             ->assertJsonPath('data.stock_history.movements.0.stock_after', 1);
         $this->assertStringNotContainsString('DO-NOT-EXPOSE-SELLER', $response->getContent());
         $this->assertStringNotContainsString('PRIVATE-TRANSFER-NOTES', $response->getContent());
+        foreach (['PRIVATE-LINE-SNAPSHOT', 'PRIVATE-RECEIPT-SNAPSHOT', 'PRIVATE-RECEIPT-NOTES',
+            'PRIVATE-RECEIPT-LINE'] as $private) {
+            $this->assertStringNotContainsString($private, $response->getContent());
+        }
         $this->assertStringNotContainsString('03009999999', $response->getContent());
         $this->assertStringNotContainsString('unit_code', $response->getContent());
         $limitedClient = $this->client();
@@ -363,10 +402,78 @@ class PosShellTest extends TestCase
         $this->login($operatorClient, $operator->email)->assertOk();
         $this->send($operatorClient, 'GET', $path)->assertForbidden();
         $this->assertEquals($beforeTransfer, DB::table('stock_transfers')->where('id', $transferId)->firstOrFail());
+        $this->assertEquals($beforeLine, DB::table('stock_transfer_lines')->where('id', $transferLineId)->firstOrFail());
+        $this->assertEquals($beforeReceipt, DB::table('stock_transfer_receipts')->where('id', $receiptId)->firstOrFail());
+        $this->assertEquals($beforeReceiptLine, DB::table('stock_transfer_receipt_lines')->where('id', $receiptLineId)->firstOrFail());
+        $this->assertSame(hash('sha256', $lineSnapshot), $beforeLine->snapshot_sha256);
+        $this->assertSame(hash('sha256', $receiptSnapshot), $beforeReceipt->snapshot_sha256);
+        $this->assertSame(hash('sha256', $receiptLineSnapshot), $beforeReceiptLine->snapshot_sha256);
         $this->assertEquals($beforeUnit, DB::table('stock_units')->where('id', $unit->id)->firstOrFail());
         $this->assertEquals($beforeMovement, DB::table('stock_movements')->where('id', $movementId)->firstOrFail());
         $this->assertSame(1, DB::table('stock_acquisitions')->where('id', $acquisitionId)->count());
         $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
+            ->where('action', 'outlet_archived')->count());
+    }
+
+    public function test_archived_transfer_history_reconciles_in_transit_both_outlets_without_reassignment(): void
+    {
+        $source = $this->outlet('D03 unresolved transfer source', '077');
+        $destination = $this->outlet('D03 unresolved transfer destination', '078');
+        $fallback = $this->outlet('D03 transfer history owner fallback', '079');
+        $owner = $this->member('d03-transfer-history-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($fallback);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
+        $sourceProduct = new \App\Models\Product;
+        $sourceProduct->forceFill(['name' => 'Synthetic in-transit source',
+            'outlet_id' => $source->id, 'category' => 'accessory', 'price' => '30.00', 'qty' => 1])->save();
+        $destinationProduct = new \App\Models\Product;
+        $destinationProduct->forceFill(['name' => 'Synthetic in-transit destination',
+            'outlet_id' => $destination->id, 'category' => 'accessory', 'price' => '30.00', 'qty' => 0])->save();
+        $public = (string) Str::uuid();
+        $transferId = DB::table('stock_transfers')->insertGetId([
+            'public_id' => $public, 'transfer_number' => 'D03-IN-'.Str::random(10),
+            'source_outlet_id' => $source->id, 'destination_outlet_id' => $destination->id,
+            'status' => 'in_transit', 'created_by_admin_id' => $owner->id,
+            'notes' => 'PRIVATE-TRANSFER-IN-TRANSIT']);
+        $snapshot = json_encode(['contract' => 'synthetic-transit', 'private' => 'DO-NOT-EXPOSE-TRANSIT'], JSON_THROW_ON_ERROR);
+        $lineId = DB::table('stock_transfer_lines')->insertGetId([
+            'public_id' => (string) Str::uuid(), 'stock_transfer_id' => $transferId,
+            'source_outlet_id' => $source->id, 'destination_outlet_id' => $destination->id,
+            'source_product_id' => $sourceProduct->id, 'destination_product_id' => $destinationProduct->id,
+            'tracked_serialized' => false, 'quantity' => 1, 'received_quantity' => 0,
+            'rejected_quantity' => 0, 'product_snapshot' => $snapshot,
+            'snapshot_sha256' => hash('sha256', $snapshot)]);
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
+        foreach ([$source, $destination] as $outlet) {
+            $this->send($client, 'GET', '/internal/admin/outlet-management/'.$outlet->public_id.'/history')->assertStatus(409);
+            $this->send($client, 'POST', '/internal/admin/outlet-management/'.$outlet->public_id.'/archive',
+                ['version' => 1])->assertStatus(409);
+            $this->assertNull($outlet->fresh()->archived_at);
+        }
+        // Synthetic archived-state inspection only: production explicitly blocks both sides.
+        $source->forceFill(['archived_at' => now()])->save();
+        $destination->forceFill(['archived_at' => now()])->save();
+        foreach ([$source, $destination] as $outlet) {
+            $response = $this->send($client, 'GET', '/internal/admin/outlet-management/'.$outlet->public_id.'/history')->assertOk()
+                ->assertJsonPath('data.stock_history.transfer_count', 1)
+                ->assertJsonPath('data.stock_history.transfers.0.id', $public)
+                ->assertJsonPath('data.stock_history.transfers.0.status', 'in_transit')
+                ->assertJsonPath('data.stock_history.transfers.0.source_id', $source->public_id)
+                ->assertJsonPath('data.stock_history.transfers.0.destination_id', $destination->public_id)
+                ->assertJsonPath('data.stock_history.transfers.0.line_count', 1)
+                ->assertJsonPath('data.stock_history.transfers.0.receipt_count', 0)
+                ->assertJsonPath('data.stock_history.transfers.0.unresolved_quantity', 1)
+                ->assertJsonPath('data.stock_history.transfers.0.requires_review', true);
+            $this->assertStringNotContainsString('PRIVATE-TRANSFER-IN-TRANSIT', $response->getContent());
+            $this->assertStringNotContainsString('DO-NOT-EXPOSE-TRANSIT', $response->getContent());
+        }
+        $this->assertSame($source->id, (int) DB::table('stock_transfers')->where('id', $transferId)->value('source_outlet_id'));
+        $this->assertSame($destination->id, (int) DB::table('stock_transfers')->where('id', $transferId)->value('destination_outlet_id'));
+        $this->assertSame(0, DB::table('stock_transfer_receipts')->where('stock_transfer_id', $transferId)->count());
+        $this->assertSame(hash('sha256', $snapshot), DB::table('stock_transfer_lines')->where('id', $lineId)->value('snapshot_sha256'));
+        $this->assertSame(0, DB::table('identity_audit_events')->whereIn('outlet_id', [$source->id, $destination->id])
             ->where('action', 'outlet_archived')->count());
     }
 

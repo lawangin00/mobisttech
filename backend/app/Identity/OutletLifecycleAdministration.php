@@ -74,19 +74,8 @@ final class OutletLifecycleAdministration
                 'stocktake_count' => DB::table('stocktake_sessions')->where('outlet_id', $outlet->id)->count(),
                 'transfer_count' => DB::table('stock_transfers')->where('source_outlet_id', $outlet->id)
                     ->orWhere('destination_outlet_id', $outlet->id)->count(),
-                // Both source and destination are historical owners of the same immutable transfer.
-                'transfers' => DB::table('stock_transfers as t')
-                    ->join('outlets as src', 'src.id', '=', 't.source_outlet_id')
-                    ->join('outlets as dst', 'dst.id', '=', 't.destination_outlet_id')
-                    ->where(fn ($query) => $query->where('t.source_outlet_id', $outlet->id)
-                        ->orWhere('t.destination_outlet_id', $outlet->id))
-                    ->orderByDesc('t.id')->limit(50)
-                    ->get(['t.public_id', 't.transfer_number', 't.status', 'src.public_id as source_id',
-                        'dst.public_id as destination_id', 't.dispatched_at', 't.completed_at'])
-                    ->map(fn ($row) => ['id' => $row->public_id, 'number' => $row->transfer_number,
-                        'status' => $row->status, 'source_id' => $row->source_id,
-                        'destination_id' => $row->destination_id,
-                        'dispatched_at' => $row->dispatched_at, 'completed_at' => $row->completed_at])->all(),
+                // Both source and destination are owners of retained transfer history.
+                'transfers' => $this->archivedTransfers($outlet),
                 'products' => DB::table('products')->where('outlet_id', $outlet->id)->orderBy('id')->limit(50)
                     ->get(['public_id', 'product_code', 'name', 'qty', 'isDeleted'])
                     ->map(fn ($row) => ['id' => $row->public_id, 'code' => $row->product_code,
@@ -101,6 +90,60 @@ final class OutletLifecycleAdministration
                         'stock_after' => (int) $row->stock_after, 'created_at' => $row->created_at])->all(),
             ],
         ];
+    }
+
+    /** Summaries only: no notes, customer details, serialized-unit identities or snapshot payloads. */
+    private function archivedTransfers(Outlet $outlet): array
+    {
+        return DB::table('stock_transfers as t')
+            ->join('outlets as src', 'src.id', '=', 't.source_outlet_id')
+            ->join('outlets as dst', 'dst.id', '=', 't.destination_outlet_id')
+            ->where(fn ($query) => $query->where('t.source_outlet_id', $outlet->id)
+                ->orWhere('t.destination_outlet_id', $outlet->id))
+            ->orderByDesc('t.id')->limit(50)
+            ->get(['t.id', 't.public_id', 't.transfer_number', 't.status',
+                'src.public_id as source_id', 'dst.public_id as destination_id',
+                't.dispatched_at', 't.completed_at'])
+            ->map(function ($transfer) {
+                // Aggregate ALL lines, but expose at most the first 50 read-only summaries.
+                $totals = DB::table('stock_transfer_lines')->where('stock_transfer_id', $transfer->id)
+                    ->selectRaw('COUNT(*) as line_count, COALESCE(SUM(GREATEST(quantity - received_quantity - rejected_quantity, 0)), 0) as unresolved')->first();
+                $lines = DB::table('stock_transfer_lines as l')
+                    ->join('products as src', 'src.id', '=', 'l.source_product_id')
+                    ->join('products as dst', 'dst.id', '=', 'l.destination_product_id')
+                    ->where('l.stock_transfer_id', $transfer->id)->orderBy('l.id')->limit(50)
+                    ->get(['l.public_id', 'src.public_id as source_product_id',
+                        'dst.public_id as destination_product_id', 'l.quantity',
+                        'l.received_quantity', 'l.rejected_quantity', 'l.snapshot_sha256']);
+                $receipts = DB::table('stock_transfer_receipts')->where('stock_transfer_id', $transfer->id)
+                    ->orderBy('id')->limit(50)
+                    ->get(['id', 'public_id', 'processed_at', 'snapshot_sha256'])
+                    ->map(function ($receipt) {
+                        $receiptLines = DB::table('stock_transfer_receipt_lines')
+                            ->where('stock_transfer_receipt_id', $receipt->id);
+                        return ['id' => $receipt->public_id, 'processed_at' => $receipt->processed_at,
+                            'snapshot_sha256' => $receipt->snapshot_sha256,
+                            'received_quantity' => (int) (clone $receiptLines)->sum('received_quantity'),
+                            'rejected_quantity' => (int) $receiptLines->sum('rejected_quantity')];
+                    })->all();
+                $unresolved = (int) $totals->unresolved;
+                return ['id' => $transfer->public_id, 'number' => $transfer->transfer_number,
+                    'status' => $transfer->status, 'source_id' => $transfer->source_id,
+                    'destination_id' => $transfer->destination_id,
+                    'dispatched_at' => $transfer->dispatched_at, 'completed_at' => $transfer->completed_at,
+                    'line_count' => (int) $totals->line_count, 'receipt_count' => DB::table('stock_transfer_receipts')
+                        ->where('stock_transfer_id', $transfer->id)->count(),
+                    'unresolved_quantity' => (int) $unresolved,
+                    'requires_review' => $unresolved > 0 || ! in_array($transfer->status, ['received', 'rejected'], true),
+                    'lines' => $lines->map(fn ($line) => [
+                        'id' => $line->public_id, 'source_product_id' => $line->source_product_id,
+                        'destination_product_id' => $line->destination_product_id,
+                        'quantity' => (int) $line->quantity,
+                        'received_quantity' => (int) $line->received_quantity,
+                        'rejected_quantity' => (int) $line->rejected_quantity,
+                        'snapshot_sha256' => $line->snapshot_sha256])->all(),
+                    'receipts' => $receipts];
+            })->all();
     }
 
     public function create(Admin $actor, array $input): array

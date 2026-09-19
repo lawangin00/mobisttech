@@ -47,6 +47,38 @@ class PaidRepairOperationsTest extends TestCase
         $this->reject(fn () => $service->view($unauthorized, $this->outlet, $job['repair_id']));
     }
 
+    public function test_archived_outlet_denies_paid_repair_configuration_replays_and_new_intake(): void
+    {
+        $service = app(PaidRepairOperations::class);
+        $configureKey = (string) Str::uuid();
+        $input = ['enabled' => true];
+        $service->configure($this->actor, $this->outlet, $configureKey, $input);
+        $jobKey = (string) Str::uuid();
+        $intake = $this->intake('D03-PAID-ARCHIVE');
+        $job = $service->open($this->actor, $this->outlet, $jobKey, $intake);
+        $beforeJob = DB::table('repair_jobs')->where('public_id', $job['repair_id'])->firstOrFail();
+        $beforeSettings = DB::table('repair_settings')->where('outlet_id', $this->outlet->id)->firstOrFail();
+        $beforeEvents = DB::table('repair_events')->where('repair_job_id', $beforeJob->id)->get();
+        // Synthetic forced archived state only: actual repair-bearing outlet remains ineligible.
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        foreach ([
+            fn () => $service->configure($this->actor, $this->outlet, $configureKey, $input),
+            fn () => $service->open($this->actor, $this->outlet, $jobKey, $intake),
+            fn () => $service->configure($this->actor, $this->outlet, (string) Str::uuid(), ['enabled' => false]),
+        ] as $attempt) {
+            try {
+                $attempt();
+                $this->fail('Archived outlet accepted paid repair mutation or completed replay.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        $this->assertEquals($beforeSettings, DB::table('repair_settings')->where('outlet_id', $this->outlet->id)->firstOrFail());
+        $this->assertEquals($beforeJob, DB::table('repair_jobs')->where('id', $beforeJob->id)->firstOrFail());
+        $this->assertEquals($beforeEvents, DB::table('repair_events')->where('repair_job_id', $beforeJob->id)->get());
+        $this->assertSame(1, DB::table('repair_jobs')->where('outlet_id', $this->outlet->id)->count());
+    }
+
     public function test_approved_estimate_owns_parts_payment_and_full_lifecycle(): void
     {
         $service = app(PaidRepairOperations::class);

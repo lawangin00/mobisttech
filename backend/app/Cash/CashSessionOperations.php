@@ -286,8 +286,12 @@ final class CashSessionOperations
     private function mutate(Admin $actor, Outlet $outlet, string $operation, string $key, mixed $payload, string $permission, callable $callback): array
     {
         return DB::transaction(function () use ($actor, $outlet, $operation, $key, $payload, $permission, $callback) {
+            // All cash writes AND completed idempotency replays share the archival row lock.
+            // Open/close callback checks are defense-in-depth; never return a cached active
+            // response to a stale actor after the outlet was archived.
+            $lockedOutlet = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
             $fresh = $actor->fresh();
-            abort_unless($fresh instanceof Admin && app(Access::class)->allows($fresh, $permission, $outlet->fresh()), 403);
+            abort_unless($fresh instanceof Admin && app(Access::class)->allows($fresh, $permission, $lockedOutlet), 403);
             Validator::make(['key' => $key], ['key' => 'required|string|max:100'])->validate();
             $digest = hash('sha256', json_encode($this->canonical($payload), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
             $identity = ['actor_scope' => Admin::class.':'.$fresh->id, 'operation' => 'cash-sessions.'.$operation, 'key' => $key];

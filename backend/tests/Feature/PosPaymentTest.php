@@ -209,6 +209,59 @@ class PosPaymentTest extends TestCase
         ]));
     }
 
+    public function test_archived_outlet_rejects_payment_replays_and_settlement_without_touching_financial_history(): void
+    {
+        $service = $this->service();
+        $product = $this->product();
+        $this->acquire($product, 2);
+        $destinationKey = (string) Str::uuid();
+        $destinationInput = ['method' => 'card', 'display_name' => 'Synthetic archived payment terminal'];
+        $destination = $service->createDestination($this->actor, $this->outlet, $destinationKey, $destinationInput);
+        $saleKey = (string) Str::uuid();
+        $saleInput = ['sale' => ['discount' => '0.00', 'lines' => [
+            ['product_id' => $product->public_id, 'quantity' => 1]]],
+            'payments' => [['method' => 'card', 'destination_id' => $destination['destination_id'],
+                'amount' => '200.02', 'transaction_reference' => 'D03-TEST-CARD']]];
+        $sale = $service->sell($this->actor, $this->outlet, $saleKey, $saleInput);
+        $allocation = $sale['payments'][0];
+        $settlementKey = (string) Str::uuid();
+        $settlementInput = ['settlement_version' => 0, 'fee_amount' => '0.00',
+            'adjustment_amount' => '0.00', 'received_net_amount' => '200.02'];
+        $service->reconcile($this->actor, $this->outlet,
+            $allocation['allocation_id'], $settlementKey, $settlementInput);
+        $priorDestination = DB::table('pos_payment_destinations')->where('public_id', $destination['destination_id'])->firstOrFail();
+        $priorInvoice = DB::table('invoices')->where('public_id', $sale['invoice_id'])->firstOrFail();
+        $priorTender = DB::table('pos_tender_allocations')->where('public_id', $allocation['allocation_id'])->firstOrFail();
+        $priorSettlement = DB::table('pos_settlement_events')->firstOrFail();
+        // A production archive must still reject these linked product/invoice/tender records.
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        $attempts = [
+            fn () => $service->createDestination($this->actor, $this->outlet, $destinationKey, $destinationInput),
+            fn () => $service->sell($this->actor, $this->outlet, $saleKey, $saleInput),
+            fn () => $service->reconcile($this->actor, $this->outlet,
+                $allocation['allocation_id'], $settlementKey, $settlementInput),
+            fn () => $service->updateDestination($this->actor, $this->outlet,
+                $destination['destination_id'], (string) Str::uuid(), ['version' => 1, 'display_name' => 'Denied']),
+            fn () => $service->reconcile($this->actor, $this->outlet,
+                $allocation['allocation_id'], (string) Str::uuid(), $settlementInput),
+        ];
+        foreach ($attempts as $attempt) {
+            try {
+                $attempt();
+                $this->fail('Archived outlet served cached payment response or accepted a financial write.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        $this->assertEquals($priorDestination, DB::table('pos_payment_destinations')->where('id', $priorDestination->id)->firstOrFail());
+        $this->assertEquals($priorInvoice, DB::table('invoices')->where('id', $priorInvoice->id)->firstOrFail());
+        $this->assertEquals($priorTender, DB::table('pos_tender_allocations')->where('id', $priorTender->id)->firstOrFail());
+        $this->assertEquals($priorSettlement, DB::table('pos_settlement_events')->where('id', $priorSettlement->id)->firstOrFail());
+        $this->assertSame(hash('sha256', $priorSettlement->event_snapshot), $priorSettlement->snapshot_sha256);
+        $this->assertSame(1, DB::table('pos_settlement_events')->count());
+        $this->assertSame(0, DB::table('pos_refund_allocations')->count());
+    }
+
     private function destination(string $method, string $name, array $extra = []): array
     {
         return $this->service()->createDestination($this->actor, $this->outlet, (string) Str::uuid(), [

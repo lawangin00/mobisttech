@@ -54,6 +54,39 @@ class ProcurementTest extends TestCase
         $this->reject(fn () => $service->createSupplier($limited, $this->outlet, 'wrong-permission', $input));
     }
 
+    public function test_archived_outlet_denies_supplier_and_purchase_order_replays_without_erasing_history(): void
+    {
+        $service = app(SupplierProcurement::class);
+        $supplierKey = (string) Str::uuid();
+        $supplierInput = ['supplier_code' => 'D03-KEEP', 'name' => 'Synthetic historical procurement'];
+        $supplier = $service->createSupplier($this->actor, $this->outlet, $supplierKey, $supplierInput);
+        $product = $this->product();
+        $orderKey = (string) Str::uuid();
+        $orderInput = ['supplier_id' => $supplier['supplier_id'], 'lines' => [[
+            'product_id' => $product->public_id, 'quantity' => 2,
+            'unit_cost' => '10.00', 'landed_unit_cost' => '10.00']]];
+        $order = $service->createOrder($this->actor, $this->outlet, $orderKey, $orderInput);
+        $savedSupplier = DB::table('suppliers')->where('public_id', $supplier['supplier_id'])->firstOrFail();
+        $savedOrder = DB::table('purchase_orders')->where('public_id', $order['purchase_order_id'])->firstOrFail();
+        // Test-only archived state; actual outlet with procurement/product history remains blocked.
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        foreach ([
+            fn () => $service->createSupplier($this->actor, $this->outlet, $supplierKey, $supplierInput),
+            fn () => $service->createOrder($this->actor, $this->outlet, $orderKey, $orderInput),
+            fn () => $service->createSupplier($this->actor, $this->outlet, (string) Str::uuid(), $supplierInput),
+        ] as $attempt) {
+            try {
+                $attempt();
+                $this->fail('Archived outlet accepted procurement mutation or completed replay.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        $this->assertEquals($savedSupplier, DB::table('suppliers')->where('id', $savedSupplier->id)->firstOrFail());
+        $this->assertEquals($savedOrder, DB::table('purchase_orders')->where('id', $savedOrder->id)->firstOrFail());
+        $this->assertSame(1, DB::table('purchase_order_lines')->where('purchase_order_id', $savedOrder->id)->count());
+    }
+
     public function test_purchase_order_exact_costs_status_and_event_snapshots_are_stable(): void
     {
         $product = $this->product();

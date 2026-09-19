@@ -152,6 +152,59 @@ class CashSessionTest extends TestCase
         $this->assertNull(DB::table('pos_tender_allocations')->where('public_id', $sale['payments'][0]['allocation_id'])->value('cash_session_id'));
     }
 
+    public function test_archived_cash_outlet_denies_all_completed_key_replays_without_rewriting_closed_history(): void
+    {
+        $service = $this->cash();
+        $openKey = (string) Str::uuid();
+        $openInput = ['opening_cash' => '50.00'];
+        $opened = $service->open($this->actor, $this->outlet, $openKey, $openInput);
+        $entryKey = (string) Str::uuid();
+        $entryInput = ['session_version' => $this->version($opened['session_id']),
+            'type' => 'cash_in', 'amount' => '5.00', 'reason' => 'Synthetic reviewed float'];
+        $entry = $service->recordEntry($this->actor, $this->outlet,
+            $opened['session_id'], $entryKey, $entryInput);
+        $reviewKey = (string) Str::uuid();
+        $reviewInput = ['session_version' => $this->version($opened['session_id']),
+            'decision' => 'approved'];
+        $service->reviewEntry($this->actor, $this->outlet, $opened['session_id'],
+            $entry['entry_id'], $reviewKey, $reviewInput);
+        $closeKey = (string) Str::uuid();
+        $closeInput = ['session_version' => $this->version($opened['session_id']),
+            'actual_cash' => '55.00'];
+        $service->close($this->actor, $this->outlet, $opened['session_id'], $closeKey, $closeInput);
+        $beforeSession = DB::table('cash_sessions')->where('public_id', $opened['session_id'])->firstOrFail();
+        $beforeEntry = DB::table('cash_entries')->where('public_id', $entry['entry_id'])->firstOrFail();
+        $this->assertSame('closed', $beforeSession->status);
+        $this->assertSame('approved', $beforeEntry->status);
+        $this->assertSame(4, DB::table('idempotency_requests')
+            ->where('actor_scope', Admin::class.':'.$this->actor->id)
+            ->where('operation', 'like', 'cash-sessions.%')->where('status', 'completed')->count());
+        // Synthetic forced archived state: production archival still enforces every history/obligation gate.
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        $attempts = [
+            fn () => $service->open($this->actor, $this->outlet, $openKey, $openInput),
+            fn () => $service->recordEntry($this->actor, $this->outlet, $opened['session_id'], $entryKey, $entryInput),
+            fn () => $service->reviewEntry($this->actor, $this->outlet, $opened['session_id'],
+                $entry['entry_id'], $reviewKey, $reviewInput),
+            fn () => $service->close($this->actor, $this->outlet, $opened['session_id'], $closeKey, $closeInput),
+            fn () => $service->open($this->actor, $this->outlet, (string) Str::uuid(), $openInput),
+        ];
+        foreach ($attempts as $attempt) {
+            try {
+                $attempt();
+                $this->fail('Archived outlet served a cached cash mutation or accepted a new write.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        $this->assertEquals($beforeSession, DB::table('cash_sessions')->where('id', $beforeSession->id)->firstOrFail());
+        $this->assertEquals($beforeEntry, DB::table('cash_entries')->where('id', $beforeEntry->id)->firstOrFail());
+        $this->assertSame(hash('sha256', $beforeSession->closing_snapshot), $beforeSession->snapshot_sha256);
+        $this->assertSame(4, DB::table('idempotency_requests')
+            ->where('actor_scope', Admin::class.':'.$this->actor->id)
+            ->where('operation', 'like', 'cash-sessions.%')->where('status', 'completed')->count());
+    }
+
     public function test_cash_migration_refuses_populated_financial_history_rollback(): void
     {
         $this->cash()->open($this->actor, $this->outlet, (string) Str::uuid(), ['opening_cash' => '10.00']);

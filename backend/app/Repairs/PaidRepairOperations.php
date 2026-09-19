@@ -415,8 +415,10 @@ final class PaidRepairOperations
     private function mutate(Admin $actor, Outlet $outlet, string $operation, string $key, mixed $payload, callable $callback): array
     {
         return DB::transaction(function () use ($actor, $outlet, $operation, $key, $payload, $callback) {
+            // Prevent concurrent archival and stale completed-key repair replays.
+            $lockedOutlet = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
             $fresh = $actor->fresh();
-            abort_unless($fresh instanceof Admin && app(Access::class)->allows($fresh, 'shop.repairs', $outlet->fresh()), 403);
+            abort_unless($fresh instanceof Admin && app(Access::class)->allows($fresh, 'shop.repairs', $lockedOutlet), 403);
             Validator::make(['key' => $key], ['key' => 'required|string|max:100'])->validate();
             $digest = hash('sha256', json_encode($this->canonical($payload), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
             $identity = ['actor_scope' => Admin::class.':'.$fresh->id, 'operation' => 'paid-repair.'.$operation, 'key' => $key];
