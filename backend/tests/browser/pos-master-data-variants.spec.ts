@@ -1,0 +1,38 @@
+import {execFileSync} from 'node:child_process';
+import {expect,test} from '@playwright/test';
+
+test('P02 category-scoped subcategory and managed device choices persist in inventory',async({page})=>{
+    test.setTimeout(45000);
+    execFileSync('php',['artisan','db:seed','--class=Database\\Seeders\\PosMasterDataVariantE2eSeeder','--env=testing','--force'],{cwd:process.cwd(),stdio:'inherit'});
+    await page.goto('/internal/admin/pos/login');
+    await page.getByTestId('login-email').fill('e2e-protected-owner@example.invalid');
+    await page.getByTestId('login-password').fill('SyntheticPass123!');
+    await page.getByTestId('login-submit').click(); await page.waitForURL('**/internal/admin/pos');
+    const selected=page.waitForResponse(r=>r.url().endsWith('/internal/admin/outlets/select')&&r.request().method()==='POST');
+    await page.getByTestId('outlet-select').selectOption({label:'MT75 P02 Variant Outlet'});
+    expect((await selected).status()).toBe(200);
+    await page.goto('/internal/admin/pos/workspace/inventory');
+    await expect(page.getByTestId('workspace-inventory')).toBeVisible();
+    await page.getByPlaceholder('Product name').fill('MT75 P02 Variant Phone');
+    await page.getByTestId('product-category').selectOption({label:'Mobiles'});
+    await page.getByTestId('product-subcategory').selectOption({label:'MT75 P02 Smartphone'});
+    await page.getByTestId('product-brand').selectOption({label:'MT75 P02 Variant Brand'});
+    await page.getByPlaceholder('Model',{exact:true}).fill('Model V1');
+    await page.getByTestId('product-ram').selectOption({label:'8 GB'});
+    await page.getByTestId('product-storage').selectOption({label:'128 GB'});
+    await page.getByTestId('product-sim').selectOption({label:'MT75 P02 Dual SIM'});
+    await page.getByPlaceholder('Purchase price').fill('100.00');
+    await page.getByPlaceholder('Sale price').fill('120.00');
+    const created=page.waitForResponse(r=>r.url().endsWith('/internal/admin/pos/inventory/products')&&r.request().method()==='POST');
+    await page.getByTestId('product-save').click(); const response=await created;
+    expect(response.status()).toBe(200);
+    const body=await response.json() as {data:{id:string}};
+    const variant=page.getByTestId('inventory-variant-'+body.data.id);
+    await expect(variant).toContainText('MT75 P02 Smartphone');
+    await expect(variant).toContainText('8 GB');
+    await expect(variant).toContainText('128 GB');
+    await expect(variant).toContainText('MT75 P02 Dual SIM');
+    await page.getByTestId('product-category').selectOption({label:'Mobiles'});
+    await expect(page.getByTestId('product-subcategory').locator('option',{hasText:'MT75 P02 Smartphone'})).toHaveCount(1);
+    await expect(page.getByTestId('product-category')).toHaveValue(/\d+/);
+});

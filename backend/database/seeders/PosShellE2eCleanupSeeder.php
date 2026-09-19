@@ -20,6 +20,7 @@ class PosShellE2eCleanupSeeder extends Seeder
                 ->pluck('profile_photo')->all();
             $roleIds = DB::table('roles')->whereIn('slug', ['e2e-salesperson', 'e2e-inventory-manager', 'e2e-operations-manager', 'e2e-mt43-manager', 'e2e-platform-administrator', 'e2e-digital-operations-manager', 'e2e-reset-administrator'])->pluck('id')->all();
             $outletIds = DB::table('outlets')->whereIn('outlet_code', ['E41', 'E42'])->pluck('id')->all();
+            $outletIds = array_values(array_unique([...$outletIds, ...DB::table('outlets')->where('outlet_code', '908')->where('name', 'MT75 P02 Variant Outlet')->pluck('id')->all()]));
             $outletIds = array_values(array_unique([...$outletIds, ...DB::table('outlets')->where('outlet_code', '909')
                 ->where('name', 'MT75 P02 Linked Outlet')->pluck('id')->all()]));
             $outletIds = array_values(array_unique([...$outletIds, ...DB::table('identity_audit_events')->where('realm', 'admin')->whereIn('account_id', $adminIds)->where('action', 'outlet_created')->whereNotNull('outlet_id')->pluck('outlet_id')->all()]));
@@ -51,6 +52,25 @@ class PosShellE2eCleanupSeeder extends Seeder
             DB::table('invoices')->whereIn('outlet_id', $outletIds)
                 ->where('invoice_number', 'like', 'MT75-HIST-%')
                 ->where('customer_name', 'like', 'MT75 Synthetic Customer %')->delete();
+            $variantOutlet = DB::table('outlets')->where('outlet_code', '908')->where('name', 'MT75 P02 Variant Outlet')->value('id');
+            if ($variantOutlet) {
+                $variantProduct = DB::table('products')->where('outlet_id', $variantOutlet)->where('name', 'MT75 P02 Variant Phone')->first();
+                if ($variantProduct) {
+                    abort_unless($variantProduct->category === 'mobile_phone' && ! DB::table('stock_units')->where('product_id', $variantProduct->id)->exists()
+                        && ! DB::table('product_listings')->where('product_id', $variantProduct->id)->exists()
+                        && ! DB::table('sales')->where('product_id', $variantProduct->id)->exists(), 409);
+                    DB::table('pos_master_data_usages')->where('usage_type', 'product')->where('usage_id', (string) $variantProduct->id)->delete();
+                    DB::table('domain_events')->where('aggregate_type', 'product')->where('aggregate_id', $variantProduct->public_id)->delete();
+                    DB::table('products')->where('id', $variantProduct->id)->delete();
+                }
+                foreach (['product_category' => ['mobile_phone', 'Mobiles'], 'product_subcategory' => ['mobile_phone_mt75_variant', 'MT75 P02 Smartphone'],
+                    'product_brand' => ['mt75_p02_variant_brand', 'MT75 P02 Variant Brand'], 'device_ram_gb' => ['ram_8gb', '8 GB'],
+                    'device_storage_gb' => ['storage_128gb', '128 GB'], 'device_sim_configuration' => ['mt75_p02_dual_sim', 'MT75 P02 Dual SIM']] as $list => [$code, $label]) {
+                    $option = DB::table('pos_master_data_options')->where('list_key', $list)->where('code', $code)->where('label', $label)->first();
+                    abort_unless($option && ! DB::table('pos_master_data_usages')->where('master_data_option_id', $option->id)->exists(), 409);
+                    DB::table('pos_master_data_options')->where('id', $option->id)->delete();
+                }
+            }
             // Remove only this synthetic linked-history E2E product and its option usage, never real catalogue rows.
             $linkedOption = DB::table('pos_master_data_options')->where('list_key', 'product_brand')
                 ->where('code', 'mt75_p02_linked_brand')->whereIn('label', ['MT75 P02 Linked Brand', 'MT75 P02 Linked Brand Updated'])->first();

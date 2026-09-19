@@ -3,7 +3,7 @@ import PosStockControlWorkspace from './pos-stock-control-workspace';
 import { DocumentActions } from './pos-customer-reporting-workspace';
 
 type Unit = { id: string; code: string; status: string; version: number; imeis: string[] };
-type Product = { id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[] };
+type Product = { id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[]; subcategory_display?: string | null; ram_display?: string | null; storage_display?: string | null; sim_display?: string | null };
 type Destination = { public_id: string; method: string; display_name: string };
 type Master = { id: number; list_key: string; code: string; label: string; metadata: Record<string, unknown> };
 type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean };
@@ -96,6 +96,10 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
     const [newName, setNewName] = useState('');
     const [categoryId, setCategoryId] = useState('');
     const [brandId, setBrandId] = useState('');
+    const [subcategoryId, setSubcategoryId] = useState('');
+    const [ramId, setRamId] = useState('');
+    const [storageId, setStorageId] = useState('');
+    const [simId, setSimId] = useState('');
     const [newModel, setNewModel] = useState('');
     const [newPurchase, setNewPurchase] = useState('');
     const [newSale, setNewSale] = useState('');
@@ -110,6 +114,12 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
     const sources = catalogue?.master_data.filter((m) => m.list_key === 'acquisition_source_type') ?? [];
     const categories = catalogue?.master_data.filter((m) => m.list_key === 'product_category') ?? [];
     const brands = catalogue?.master_data.filter((m) => m.list_key === 'product_brand') ?? [];
+    const selectedCategory = categories.find((m) => String(m.id) === categoryId);
+    const subcategories = catalogue?.master_data.filter((m) => m.list_key === 'product_subcategory' && m.metadata.parent_category_code === selectedCategory?.code) ?? [];
+    const isDevice = selectedCategory?.code === 'mobile_phone' || selectedCategory?.code === 'tablet';
+    const rams = catalogue?.master_data.filter((m) => m.list_key === 'device_ram_gb') ?? [];
+    const storages = catalogue?.master_data.filter((m) => m.list_key === 'device_storage_gb') ?? [];
+    const simConfigurations = catalogue?.master_data.filter((m) => m.list_key === 'device_sim_configuration') ?? [];
     const conditions = catalogue?.master_data.filter((m) => m.list_key === 'unit_condition') ?? [];
     const ptaStatuses = catalogue?.master_data.filter((m) => m.list_key === 'unit_pta_status') ?? [];
     const printLabel = async (kind: string, id: string) => {
@@ -124,6 +134,7 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
             <div className="mt-3 grid gap-2">{catalogue?.products.map((p) => <div key={p.id} className="rounded-xl border p-3">
                 <button className="w-full text-left" onClick={() => { setProductId(p.id); setCost(p.purchase_price); setUnitId(p.units[0]?.id ?? ''); }}><strong>{p.name}</strong><span className="block text-xs text-slate-500">{p.code} · Qty {p.qty} · PKR {p.sale_price}</span></button>
                 {p.brand_snapshot && <p data-testid={'inventory-brand-history-'+p.id} className="mt-1 text-xs text-slate-600">Original brand: {p.brand_snapshot} · Current brand: {p.brand_display}</p>}
+                {(p.subcategory_display || p.ram_display || p.storage_display || p.sim_display) && <p data-testid={'inventory-variant-'+p.id} className="mt-1 text-xs text-slate-600">{[p.subcategory_display, p.ram_display, p.storage_display, p.sim_display].filter(Boolean).join(' · ')}</p>}
                 <button onClick={() => void run(() => printLabel('product', p.id))} className="mt-2 rounded border px-2 py-1 text-xs">Print product label</button>
                 {p.units.length > 0 && <p className="mt-2 text-xs text-slate-500">{p.units.map((u) => u.code + (u.imeis.length ? ' (' + u.imeis.join(', ') + ')' : '')).join(' · ')}</p>}
             </div>)}</div>
@@ -133,21 +144,31 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
                 <div className="mt-3 grid gap-2">
                     <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Product name" className="w-full min-w-0 rounded border p-2 text-sm" />
                     <div className="grid grid-cols-2 gap-2">
-                        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Category</option>{categories.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
-                        <select value={brandId} onChange={(e) => setBrandId(e.target.value)} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Brand (if device)</option>{brands.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                        <select data-testid="product-category" value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setSubcategoryId(''); setRamId(''); setStorageId(''); setSimId(''); }} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Category</option>{categories.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                        <select data-testid="product-brand" value={brandId} onChange={(e) => setBrandId(e.target.value)} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Brand (if device)</option>{brands.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
                     </div>
+                    <select data-testid="product-subcategory" value={subcategoryId} onChange={(e) => setSubcategoryId(e.target.value)} disabled={!categoryId} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Subcategory (optional)</option>{subcategories.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
                     <input value={newModel} onChange={(e) => setNewModel(e.target.value)} placeholder="Model" className="w-full min-w-0 rounded border p-2 text-sm" />
+                    {isDevice && <fieldset className="grid grid-cols-2 gap-2 rounded border p-2"><legend className="text-xs font-semibold">Device configuration</legend>
+                        <select data-testid="product-ram" aria-label="RAM" value={ramId} onChange={e=>setRamId(e.target.value)} className="rounded border p-2 text-sm"><option value="">RAM (optional)</option>{rams.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                        <select data-testid="product-storage" aria-label="Storage" value={storageId} onChange={e=>setStorageId(e.target.value)} className="rounded border p-2 text-sm"><option value="">Storage (optional)</option>{storages.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                        <select data-testid="product-sim" aria-label="SIM configuration" value={simId} onChange={e=>setSimId(e.target.value)} className="col-span-2 rounded border p-2 text-sm"><option value="">SIM configuration (optional)</option>{simConfigurations.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                    </fieldset>}
                     <div className="grid grid-cols-2 gap-2"><input value={newPurchase} onChange={(e) => setNewPurchase(e.target.value)} placeholder="Purchase price" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={newSale} onChange={(e) => setNewSale(e.target.value)} placeholder="Sale price" className="w-full min-w-0 rounded border p-2 text-sm" /></div>
                     <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={newTrack} onChange={(e) => setNewTrack(e.target.checked)} /> Track IMEI</label>
-                    <button data-testid="product-save" disabled={busy || !newName || !categoryId || !newPurchase || !newSale} onClick={() => void run(async () => {
+                    <button data-testid="product-save" disabled={busy || !newName || !categoryId || !newPurchase || !newSale || (isDevice && (!brandId || !newModel.trim()))} onClick={() => void run(async () => {
                         const category = categories.find((m) => String(m.id) === categoryId);
                         if (!category) throw new Error('Choose a valid category.');
                         await api('/internal/admin/pos/inventory/products', { method: 'POST', body: JSON.stringify({
                             name: newName, category: category.code, category_master_data_id: Number(categoryId),
                             brand_master_data_id: brandId ? Number(brandId) : null, model: newModel || null,
+                            subcategory_master_data_id: subcategoryId ? Number(subcategoryId) : null,
+                            ram_master_data_id: isDevice && ramId ? Number(ramId) : null,
+                            storage_master_data_id: isDevice && storageId ? Number(storageId) : null,
+                            sim_master_data_id: isDevice && simId ? Number(simId) : null,
                             purchase_price: newPurchase, sale_price: newSale, track_imei: newTrack, warranty_type: 'no_warranty',
                         }) });
-                        setNewName(''); setNewModel(''); setNewPurchase(''); setNewSale(''); setBrandId(''); setNewTrack(false); await reload();
+                        setNewName(''); setNewModel(''); setNewPurchase(''); setNewSale(''); setBrandId(''); setSubcategoryId(''); setRamId(''); setStorageId(''); setSimId(''); setCategoryId(''); setNewTrack(false); await reload();
                     })} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">Save product</button>
                 </div>
             </section>

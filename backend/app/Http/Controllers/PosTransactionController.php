@@ -329,7 +329,11 @@ final class PosTransactionController extends Controller
             'sale_price' => (string) $product->sale_price, 'qty' => (int) $product->qty, 'track_imei' => (bool) $product->track_imei,
             'version' => (int) $product->version, 'units' => $units,
             'brand_snapshot' => $inventory ? $product->brand : null,
-            'brand_display' => $inventory ? $product->brandDisplay() : null];
+            'brand_display' => $inventory ? $product->brandDisplay() : null,
+            'subcategory_display' => $inventory ? $product->subcategoryDisplay() : null,
+            'ram_display' => $inventory ? $product->ramMasterOption?->label : null,
+            'storage_display' => $inventory ? $product->storageMasterOption?->label : null,
+            'sim_display' => $inventory ? $product->simDisplay() : null];
     }
 
     private function unitPayload(StockUnit $unit): array
