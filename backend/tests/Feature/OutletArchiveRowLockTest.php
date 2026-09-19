@@ -53,4 +53,99 @@ final class OutletArchiveRowLockTest extends TestCase
                 ->where('name', 'D03 isolated row-lock probe')->delete();
         }
     }
+
+    public function test_real_archive_blocks_concurrent_cash_open_service_and_rejects_post_commit_retry(): void
+    {
+        // This fixture is committed so each real MySQL connection can see it; never run on a live database.
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test'
+            && (int) config('database.connections.mysql.port') === 13306, 403);
+        $tag = (string) Str::uuid();
+        $fallback = new Outlet;
+        $fallback->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'D03 service fallback '.$tag,
+            'status' => false, 'version' => 1])->save();
+        $historical = new Outlet;
+        $historical->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'D03 service archive '.$tag,
+            'status' => false, 'version' => 1])->save();
+        $owner = new \App\Models\Admin;
+        $owner->forceFill(['name' => 'D03 synthetic archive owner', 'email' => 'd03-owner-'.$tag.'@example.invalid',
+            'password' => 'not-a-live-password', 'permissions' => ['shops.enter',
+                'team-members.full-access.assign', 'admin.business-profile.manage']])->save();
+        $owner->roles()->attach(\App\Models\Role::where('name', 'Full Access')->firstOrFail()->id,
+            ['assigned_at' => now()]);
+        $owner->shops()->attach($fallback);
+        $cashActor = new \App\Models\Admin;
+        $cashActor->forceFill(['name' => 'D03 synthetic cash actor', 'email' => 'd03-cash-'.$tag.'@example.invalid',
+            'password' => 'not-a-live-password', 'permissions' => ['shops.enter', 'shop.cash']])->save();
+        $cashActor->shops()->attach($historical);
+        $originalDefault = DB::getDefaultConnection();
+        config(['database.connections.d03_service_writer' => config('database.connections.mysql')]);
+        $writer = DB::connection('d03_service_writer');
+        try {
+            $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
+            DB::connection('mysql')->beginTransaction();
+            try {
+                // The actual archive service holds its outlet lock in an outer, uncommitted transaction.
+                $result = app(\App\Identity\OutletLifecycleAdministration::class)
+                    ->archive($owner, $historical->public_id, 1);
+                $this->assertSame('archived', $result['status']);
+                DB::setDefaultConnection('d03_service_writer');
+                $this->assertNull($writer->table('outlets')->where('id', $historical->id)->value('archived_at'));
+                // Explicitly bind BOTH Eloquent models to the independent writer connection.
+                // Switching DB facade default alone does not rebind models from the main connection.
+                $writerActor = \App\Models\Admin::on('d03_service_writer')->findOrFail($cashActor->id);
+                $writerOutlet = Outlet::on('d03_service_writer')->findOrFail($historical->id);
+                $this->assertTrue($writerActor->usable(), 'Writer actor is not usable.');
+                $this->assertTrue($writerActor->hasPermission('shop.cash'), 'Writer lacks shop.cash.');
+                $this->assertTrue($writerActor->hasPermission('shops.enter'), 'Writer lacks shops.enter.');
+                $this->assertFalse($writerOutlet->status, 'Writer outlet is disabled.');
+                $this->assertNull($writerOutlet->archived_at, 'Writer outlet appears archived before commit.');
+                $this->assertTrue($writerActor->shops()->whereKey($historical->id)->exists(),
+                    'Writer lacks a committed outlet assignment.');
+                $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                    $writerActor, 'shop.cash', $writerOutlet),
+                    'The independent writer must be authorized against its own pre-commit snapshot.');
+                try {
+                    app(\App\Cash\CashSessionOperations::class)->open($writerActor, $writerOutlet,
+                        'd03-overlap-'.$tag, ['opening_cash' => '10.00']);
+                    $this->fail('The cash service bypassed the real archive transaction lock.');
+                } catch (QueryException $exception) {
+                    $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
+                } finally {
+                    DB::setDefaultConnection($originalDefault);
+                }
+                DB::connection('mysql')->commit();
+            } finally {
+                DB::setDefaultConnection($originalDefault);
+                if (DB::connection('mysql')->transactionLevel() > 0) {
+                    DB::connection('mysql')->rollBack();
+                }
+            }
+            $this->assertNotNull($historical->fresh()->archived_at);
+            DB::setDefaultConnection('d03_service_writer');
+            try {
+                app(\App\Cash\CashSessionOperations::class)->open($writerActor, $writerOutlet,
+                    'd03-postcommit-'.$tag, ['opening_cash' => '10.00']);
+                $this->fail('The cash service opened a session after the archive committed.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            } finally {
+                DB::setDefaultConnection($originalDefault);
+            }
+            $this->assertSame(0, DB::table('cash_sessions')->where('outlet_id', $historical->id)->count());
+            $this->assertSame(0, DB::table('idempotency_requests')
+                ->where('actor_scope', \App\Models\Admin::class.':'.$cashActor->id)
+                ->where('operation', 'cash-sessions.open')->where('key', 'like', 'd03-%'.$tag)->count());
+        } finally {
+            DB::setDefaultConnection($originalDefault);
+            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            $writer->disconnect();
+            DB::purge('d03_service_writer');
+            DB::table('identity_audit_events')->whereIn('account_id', [$owner->id, $cashActor->id])->delete();
+            DB::table('admin_roles')->whereIn('admin_id', [$owner->id, $cashActor->id])->delete();
+            DB::table('outlet_admins')->whereIn('admin_id', [$owner->id, $cashActor->id])->delete();
+            DB::table('admins')->whereIn('id', [$owner->id, $cashActor->id])->delete();
+            DB::table('outlets')->whereIn('id', [$fallback->id, $historical->id])
+                ->where('name', 'like', 'D03 service %'.$tag)->delete();
+        }
+    }
 }
