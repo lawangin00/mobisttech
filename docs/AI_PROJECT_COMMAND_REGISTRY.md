@@ -64,3 +64,6 @@ All universal aliases, collision rules, execution-intent isolation, read-only mu
 `COMPATIBILITY_HOLD: none`.
 
 Future universal control fixes auto-apply on canonical first-load/Refresh/new session. This does not advance/reopen mobiST Tech roadmap implementation, alter application data, or replace this project's genuine delta rules.
+
+## Current MT-7.5 CI status (19-Sep-2026)
+GitHub API confirms lawangin00/mobisttech is now PUBLIC. The earlier run 35442617990 billing rejection is HISTORICAL, not a verified current blocker. Continue local MT-7.5 work normally. At a genuinely required CI milestone, check the exact latest candidate and dispatch ONE fresh manual public-repo run if no equivalent accepted success exists. Report a current billing blocker only if that new post-public run itself fails before runner startup; do not repeat the old billing warning in current Incomplete/Next action outputs.
