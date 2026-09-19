@@ -51,6 +51,7 @@ class PosShellE2eSeeder extends Seeder
             $platform = $this->member('E2E Platform Administrator', 'e2e-platform@example.invalid', 'Platform Administrator');
             $digital = $this->member('E2E Digital Operations Manager', 'e2e-digital-operations@example.invalid', 'Digital Operations Manager');
             $reset = $this->member('E2E Reset Administrator', 'e2e-reset@example.invalid', 'Reset Administrator');
+            $owner = $this->member('E2E Protected Owner', 'e2e-protected-owner@example.invalid', 'Protected Owner');
 
             $this->assign($sales, $salesRole, [$salesOutlet]);
             $this->assign($inventory, $inventoryRole, [$salesOutlet, $inventoryOutlet]);
@@ -59,6 +60,7 @@ class PosShellE2eSeeder extends Seeder
             $this->assign($platform, $platformRole, [$salesOutlet]);
             $this->assign($digital, $digitalRole, [$salesOutlet]);
             $this->assign($reset, $resetRole, [$salesOutlet]);
+            $this->assign($owner, Role::where('name', 'Full Access')->firstOrFail(), [$salesOutlet]);
         });
     }
 

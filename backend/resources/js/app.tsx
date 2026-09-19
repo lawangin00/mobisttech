@@ -8,6 +8,7 @@ import PlatformAdmin from './pages/platform-admin';
 import ResetAdministration from './pages/reset-administration';
 import PosLogin from './pages/pos-login';
 import PosShell from './pages/pos-shell';
+import OutletManagement from './pages/outlet-management';
 import AdminSessionBoundary from './components/admin-session-boundary';
 
 void createInertiaApp({
@@ -20,6 +21,7 @@ void createInertiaApp({
         if (name === 'reset-administration') return ResetAdministration;
         if (name === 'pos-login') return PosLogin;
         if (name === 'pos-shell') return PosShell;
+        if (name === 'outlet-management') return OutletManagement;
         throw new Error('Unknown application page');
     },
     setup({ el, App, props }) {

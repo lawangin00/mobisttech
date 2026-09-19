@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\Outlet;
+use App\Models\Role;
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
@@ -133,6 +134,57 @@ class PosShellTest extends TestCase
         $assigned->forceFill(['archived_at' => now()])->save();
         $this->send($client, 'GET', $uri)->assertForbidden();
         $this->send($client, 'PATCH', $uri, [...$input, 'version' => 2])->assertForbidden();
+    }
+
+    public function test_protected_full_access_outlet_create_archive_and_direct_permission_barriers(): void
+    {
+        $existing = $this->outlet('Existing Protected Outlet', '051');
+        $owner = $this->member('outlet-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($existing);
+        $role = Role::where('name', 'Full Access')->firstOrFail();
+        $owner->roles()->attach($role->id, ['assigned_at' => now()]);
+        $limited = $this->member('outlet-limited@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $limited->shops()->attach($existing);
+        $limitedClient = $this->client();
+        $this->login($limitedClient, $limited->email)->assertOk();
+        $uri = '/internal/admin/outlet-management';
+        $this->send($limitedClient, 'GET', $uri)->assertForbidden();
+        $this->send($limitedClient, 'GET', $uri.'/data')->assertForbidden();
+        $this->send($limitedClient, 'POST', $uri, ['name' => 'Denied', 'business_address' => 'Denied'])->assertForbidden();
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
+        $this->send($client, 'GET', $uri)->assertOk();
+        $this->send($client, 'GET', $uri.'/data')->assertOk();
+        $this->send($client, 'POST', $uri, ['name' => 'Injected', 'business_address' => 'Address',
+            'outlet_code' => '999'])->assertUnprocessable();
+        $made = $this->send($client, 'POST', $uri,
+            ['name' => 'New Protected Outlet', 'business_address' => 'Synthetic Karachi'])->assertCreated();
+        $id = $made->json('data.id');
+        $code = $made->json('data.outlet_code');
+        $this->assertMatchesRegularExpression('/^[0-9]{3}$/', $code);
+        $this->assertNotSame('051', $code);
+        $this->assertTrue($owner->shops()->where('outlets.public_id', $id)->exists());
+        $this->assertNull(Outlet::where('public_id', $id)->value('legacy_password'));
+        $this->send($client, 'POST', $uri.'/'.$id.'/archive', ['version' => 2])->assertStatus(409);
+        $linked = DB::table('suppliers')->insertGetId(['public_id' => (string) Str::uuid(),
+            'outlet_id' => Outlet::where('public_id', $id)->value('id'), 'supplier_code' => 'P01-LINK',
+            'name' => 'Synthetic retained supplier', 'created_by_admin_id' => $owner->id,
+            'updated_by_admin_id' => $owner->id]);
+        $this->send($client, 'POST', $uri.'/'.$id.'/archive', ['version' => 1])->assertStatus(409);
+        $this->assertNull(Outlet::where('public_id', $id)->value('archived_at'));
+        DB::table('suppliers')->where('id', $linked)->delete();
+
+        $this->send($limitedClient, 'POST', $uri.'/'.$id.'/archive', ['version' => 1])->assertForbidden();
+        $this->send($client, 'POST', $uri.'/'.$id.'/archive', ['version' => 1])->assertOk()
+            ->assertJsonPath('data.status', 'archived')->assertJsonPath('data.outlet_code', $code);
+        $this->assertNotNull(Outlet::where('public_id', $id)->value('archived_at'));
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
+            ->where('action', 'outlet_archived')->where('outlet_id', Outlet::where('public_id', $id)->value('id'))->count());
+        $this->send($client, 'POST', $uri, ['name' => 'Second Outlet', 'business_address' => 'Synthetic'])->assertCreated()
+            ->assertJsonMissing(['outlet_code' => $code]);
+        $this->assertSame('051', $existing->fresh()->outlet_code);
     }
 
     private function member(string $email, array $permissions): Admin

@@ -25,6 +25,7 @@ type ShellContract = {
     };
     outlets: Outlet[];
     active_outlet: Outlet | null;
+    can_manage_outlets: boolean;
     navigation: NavigationItem[];
     current_area: string | null;
     workspace: (NavigationItem & { permission?: string; permissions_any?: string[] }) | null;
@@ -158,6 +159,7 @@ export default function PosShell({ shell, view }: { shell: ShellContract; view: 
                                         {shell.outlets.map((outlet) => <option key={outlet.id} value={outlet.id}>{outlet.name}</option>)}
                                     </select>
                                 </label>}
+                                {shell.can_manage_outlets && <Link href="/internal/admin/outlet-management" data-testid="manage-outlets-link" className="rounded-lg border border-slate-300 px-3 py-2 text-sm">Manage outlets</Link>}
                                 <button data-testid="logout" disabled={busy} onClick={() => void logout()}
                                     className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-60">
                                     Sign out

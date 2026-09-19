@@ -92,3 +92,32 @@ test('assigned Admin edits outlet profile through protected POS workspace withou
     await page.reload();
     await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Verified Profile');
 });
+
+test('protected Admin creates and archives an unused outlet in actual UI; operator denied', async ({page,browser}) => {
+    await page.setViewportSize({width:1280,height:900});
+    await login(page,'e2e-protected-owner@example.invalid');
+    await expect(page.getByTestId('manage-outlets-link')).toBeVisible();
+    const entry=await page.goto('/internal/admin/outlet-management');
+    expect(entry?.status()).toBe(200);
+    await expect(page.getByRole('heading',{name:'Outlet management'})).toBeVisible();
+    await page.getByTestId('outlet-owner-password').fill(password);
+    await page.getByTestId('outlet-new-name').fill('E2E Lifecycle Outlet');
+    await page.getByTestId('outlet-new-address').fill('Synthetic non-production address');
+    const created=page.waitForResponse(r=>r.url().endsWith('/internal/admin/outlet-management')&&r.request().method()==='POST');
+    await page.getByTestId('outlet-create').click();
+    expect((await created).status()).toBe(201);
+    await expect(page.getByText('E2E Lifecycle Outlet',{exact:false})).toBeVisible();
+    await expect(page.getByRole('status')).toHaveText('Outlet change saved.');
+    const row=page.getByText('E2E Lifecycle Outlet',{exact:false}).locator('..').locator('..');
+    await page.getByTestId('outlet-owner-password').fill(password);
+    const archived=page.waitForResponse(r=>r.url().includes('/internal/admin/outlet-management/')&&r.url().endsWith('/archive')&&r.request().method()==='POST');
+    await row.getByRole('button',{name:'Archive empty outlet'}).click();
+    expect((await archived).status()).toBe(200);
+    await expect(page.getByText('E2E Lifecycle Outlet',{exact:false})).toContainText('E2E Lifecycle Outlet');
+    await expect(page.getByText(/E2E Lifecycle Outlet.*archived/)).toBeVisible();
+    const guest=await browser.newContext();
+    try {const operator=await guest.newPage();await login(operator,'e2e-sales@example.invalid');
+        await expect(operator.getByTestId('manage-outlets-link')).toHaveCount(0);
+        expect((await operator.goto('/internal/admin/outlet-management'))?.status()).toBe(403);
+    } finally {await guest.close();}
+});
