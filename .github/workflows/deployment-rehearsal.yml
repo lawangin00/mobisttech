@@ -30,6 +30,7 @@ jobs:
       - name: Verify static configuration and shell parsing
         run: |
           python3 deploy/linux/tests/verify_config.py
+          test -x deploy/linux/backup/backup.sh
           bash -n deploy/linux/backup/backup.sh deploy/linux/tests/rehearse-linux.sh
       - name: Render throwaway TLS configuration and run nginx syntax validation
         run: |
