@@ -101,7 +101,7 @@ Source coverage: 148 tracked files; 32 resolved routes. Target owner: backend sh
 
 ### P08 - POS backup audit and operations
 
-Source coverage: 33 tracked files; 19 resolved routes. Target owner: backend shared services and protected React/Inertia POS administration. Gates: MT-3.3, MT-7.1, MT-7.4. Target status: Pending.
+Source coverage: 33 tracked files; 19 resolved routes. Target owner: backend shared services and protected React/Inertia POS administration. Gates: MT-3.3, MT-7.1, MT-7.4. Target status: In Progress (MT-3.3 and MT-7.1 complete; MT-7.4 pending).
 
 **Preserve:** Preserve backup manifests/history, download/delete rights, verify-only restore, code/key/target guards, secret-safe audit and operational health.
 
@@ -221,7 +221,7 @@ Source coverage: 28 tracked files; 0 resolved routes. Target owner: tools/mobist
 
 ### Q01 - Regression security performance and migration gates
 
-Source coverage: 37 tracked files; 0 resolved routes. Target owner: backend tests, website Playwright and .github monorepo CI. Gates: MT-7.1, MT-7.2, MT-7.3, MT-7.5. Target status: Pending.
+Source coverage: 37 tracked files; 0 resolved routes. Target owner: backend tests, website Playwright and .github monorepo CI. Gates: MT-7.1, MT-7.2, MT-7.3, MT-7.5. Target status: In Progress (MT-7.1 complete; MT-7.2, MT-7.3 and MT-7.5 pending).
 
 **Preserve:** Retain source regression assertions and negative security/performance/rollback contracts as migration evidence, not proof of target completion.
 
