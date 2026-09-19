@@ -426,4 +426,92 @@ final class OutletArchiveRowLockTest extends TestCase
         }
     }
 
+    public function test_isolated_stocktake_start_serializes_archive_lock_and_denies_stale_retry(): void
+    {
+        // Real stocktake start service on independent MySQL connection; synthetic archive state.
+        // The product-bearing outlet remains forbidden by the production archival service.
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test'
+            && (int) config('database.connections.mysql.port') === 13306, 403);
+        $tag = (string) Str::uuid();
+        $default = DB::getDefaultConnection();
+        $outlet = null;
+        $actor = null;
+        $product = null;
+        $writer = null;
+        try {
+            $outlet = new Outlet;
+            $outlet->forceFill(['public_id' => (string) Str::uuid(),
+                'name' => 'D03 stocktake race '.$tag, 'outlet_code' => '076',
+                'status' => false, 'version' => 1])->save();
+            $actor = new \App\Models\Admin;
+            $actor->forceFill(['name' => 'D03 independent stocktake actor',
+                'email' => 'd03-stocktake-race-'.$tag.'@example.invalid',
+                'password' => 'not-a-live-password',
+                'permissions' => ['shops.enter', 'shop.stocktake']])->save();
+            $actor->shops()->attach($outlet);
+            $product = new \App\Models\Product;
+            $product->forceFill(['public_id' => (string) Str::uuid(),
+                'name' => 'D03 stocktake fixture '.$tag, 'category' => 'accessory',
+                'price' => '30.00', 'qty' => 0, 'outlet_id' => $outlet->id])->save();
+            config(['database.connections.d03_stocktake_writer' => config('database.connections.mysql')]);
+            $writer = DB::connection('d03_stocktake_writer');
+            $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
+            DB::connection('mysql')->beginTransaction();
+            try {
+                $locked = DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->lockForUpdate()->firstOrFail();
+                $this->assertNull($locked->archived_at);
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->update(['archived_at' => now(), 'version' => 2]);
+                DB::setDefaultConnection('d03_stocktake_writer');
+                $this->assertNull($writer->table('outlets')->where('id', $outlet->id)->value('archived_at'));
+                $writerActor = \App\Models\Admin::on('d03_stocktake_writer')->findOrFail($actor->id);
+                $writerOutlet = Outlet::on('d03_stocktake_writer')->findOrFail($outlet->id);
+                $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                    $writerActor, 'shop.stocktake', $writerOutlet));
+                try {
+                    app(\App\Inventory\StocktakeOperations::class)->start(
+                        $writerActor, $writerOutlet, 'd03-stocktake-wait-'.$tag, ['kind' => 'full']);
+                    $this->fail('Stocktake start bypassed independent outlet archive lock.');
+                } catch (QueryException $exception) {
+                    $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
+                } finally {
+                    DB::setDefaultConnection($default);
+                }
+                DB::connection('mysql')->commit();
+            } finally {
+                DB::setDefaultConnection($default);
+                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            }
+            $this->assertNotNull($outlet->fresh()->archived_at);
+            DB::setDefaultConnection('d03_stocktake_writer');
+            try {
+                app(\App\Inventory\StocktakeOperations::class)->start(
+                    $writerActor, $writerOutlet, 'd03-stocktake-retry-'.$tag, ['kind' => 'full']);
+                $this->fail('Stocktake start accepted a post-archive outlet.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            } finally {
+                DB::setDefaultConnection($default);
+            }
+            $this->assertSame(0, DB::table('stocktake_sessions')->where('outlet_id', $outlet->id)->count());
+            $this->assertSame(0, DB::table('idempotency_requests')
+                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('operation', 'stocktake.start')->where('key', 'like', 'd03-stocktake-%'.$tag)->count());
+            $this->assertFalse((bool) $product->fresh()->isDeleted);
+        } finally {
+            DB::setDefaultConnection($default);
+            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            if ($writer) { $writer->disconnect(); DB::purge('d03_stocktake_writer'); }
+            if ($actor) {
+                DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
+                DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
+                DB::table('admins')->where('id', $actor->id)->delete();
+            }
+            if ($product) { DB::table('products')->where('id', $product->id)->delete(); }
+            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
+                ->where('name', 'D03 stocktake race '.$tag)->delete(); }
+        }
+    }
+
 }
