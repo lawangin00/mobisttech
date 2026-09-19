@@ -244,6 +244,62 @@ class PosShellTest extends TestCase
         $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)->where('action', 'admin_profile_photo_removed')->count());
     }
 
+    public function test_protected_pos_audit_view_is_read_only_filtered_and_never_exposes_payloads(): void
+    {
+        $first = $this->outlet('Audit North', '071');
+        $second = $this->outlet('Audit South', '072');
+        $owner = $this->member('audit-owner@example.invalid', ['shops.enter', 'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($first);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
+        $limited = $this->member('audit-limited@example.invalid', ['shops.enter', 'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $limited->shops()->attach($first);
+        $operator = $this->member('audit-operator@example.invalid', ['shops.enter', 'shop.sales']);
+        $operator->shops()->attach($first);
+        $url = '/internal/admin/pos/audit';
+        $this->get($url)->assertUnauthorized();
+        foreach ([$limited, $operator] as $unprivileged) {
+            $client = $this->client(); $this->login($client, $unprivileged->email)->assertOk();
+            $this->send($client, 'GET', $url)->assertForbidden();
+            $this->send($client, 'GET', $url.'?q=private')->assertForbidden();
+        }
+        foreach ([[$first, 'Synthetic North Event', 'POST', 'north-secret'], [$second, 'Synthetic South Event', 'GET', 'south-secret']] as [$outlet, $action, $method, $secret]) {
+            DB::table('pos_audit_logs')->insert(['actor_type' => 'admin', 'actor_id' => $owner->id,
+                'actor_name' => 'Synthetic Auditor', 'actor_email' => $owner->email, 'outlet_id' => $outlet->id,
+                'action' => $action, 'method' => $method, 'path' => '/internal/admin/pos/safe',
+                'payload' => json_encode(['password' => $secret]), 'ip_address' => '198.51.100.42',
+                'user_agent' => 'private device metadata', 'status_code' => 200, 'created_at' => now(), 'updated_at' => now()]);
+        }
+        $client = $this->client(); $this->login($client, $owner->email)->assertOk();
+        $this->send($client, 'GET', $url.'?outlet='.$first->public_id.'&method=POST&q=North')->assertOk()
+            ->assertHeader('Referrer-Policy', 'no-referrer')
+            ->assertInertia(fn (Assert $page) => $page->component('pos-audit-viewer')
+                ->has('records', 1)->where('records.0.action', 'Synthetic North Event')
+                ->where('records.0.outlet_code', '071')->where('records.0.method', 'POST')
+                ->missing('records.0.payload')->missing('records.0.ip_address')
+                ->missing('records.0.user_agent'));
+        $this->send($client, 'GET', $url.'?outlet='.$second->public_id.'&method=GET')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('pos-audit-viewer')->has('records', 1)
+                ->where('records.0.action', 'Synthetic South Event'));
+        $this->send($client, 'GET', $url.'?outlet='.Str::uuid())->assertNotFound();
+        $this->send($client, 'GET', $url.'?outlet='.$first->public_id.'&method=TRACE')->assertUnprocessable();
+        $this->send($client, 'GET', $url.'?include_payload=1')->assertUnprocessable();
+        $this->send($client, 'GET', $url.'?q='.str_repeat('x', 101))->assertUnprocessable();
+        $this->send($client, 'POST', $url)->assertStatus(405);
+        $this->assertSame(2, DB::table('pos_audit_logs')->where('actor_id', $owner->id)->count());
+        for ($i = 0; $i < 61; $i++) {
+            DB::table('pos_audit_logs')->insert(['actor_type' => 'admin', 'actor_id' => $owner->id,
+                'actor_name' => 'Synthetic Paged', 'actor_email' => $owner->email,
+                'outlet_id' => $first->id, 'action' => 'Synthetic Page '.$i,
+                'method' => 'POST', 'path' => '/internal/admin/pos/safe',
+                'payload' => json_encode(['password' => '[REDACTED]']), 'status_code' => 200,
+                'created_at' => now(), 'updated_at' => now()]);
+        }
+        $this->send($client, 'GET', $url)->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('records', 60)->where('total', 63)->where('last_page', 2));
+        $this->send($client, 'GET', $url.'?page=2')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('records', 3)->where('current_page', 2)->where('total', 63));
+    }
+
     private function uploadPhoto(array &$client, string $url, UploadedFile $file, array $fields = [])
     {
         return $this->call('POST', $url, $fields, $client['cookies'], ['profile_photo' => $file], [

@@ -195,3 +195,39 @@ test('personal Admin photo upload and removal stay inside the authenticated acco
     await expect(page.getByTestId('account-photo-image')).toHaveCount(0);
     expect((await page.request.get('/internal/admin/manage-account/photo')).status()).toBe(404);
 });
+
+test('protected POS audit viewer filters true outlet events without leaking payloads or operator access', async ({page,browser}) => {
+    expect((await page.goto('/internal/admin/pos/audit'))?.status()).toBe(401);
+    await login(page,'e2e-audit-owner@example.invalid');
+    await expect(page.getByTestId('audit-viewer-link')).toBeVisible();
+    await page.getByTestId('audit-viewer-link').click();
+    await page.waitForURL('**/internal/admin/pos/audit');
+    await expect(page.getByRole('heading',{name:'POS audit'})).toBeVisible();
+    await expect(page.getByTestId('audit-row')).toHaveCount(2);
+    await expect(page.getByText('MT75 E2E North Audit')).toBeVisible();
+    await expect(page.getByText('MT75 E2E South Audit')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('[REDACTED]');
+    await page.getByTestId('audit-search').fill('South');
+    await page.getByTestId('audit-filter-submit').click();
+    await expect(page.getByTestId('audit-row')).toHaveCount(1);
+    await expect(page.getByText('MT75 E2E South Audit')).toBeVisible();
+    await expect(page.getByText('MT75 E2E North Audit')).toHaveCount(0);
+    const northValue=await page.getByTestId('audit-outlet').locator('option').filter({hasText:/^E41 ·/}).getAttribute('value');
+    expect(northValue).toMatch(/^[0-9a-f-]{36}$/);
+    await page.getByTestId('audit-outlet').selectOption(northValue!);
+    await page.getByTestId('audit-filter-submit').click();
+    await expect(page.getByTestId('audit-empty')).toBeVisible();
+    await page.goto('/internal/admin/pos');
+    await page.getByTestId('logout').click();
+    await page.waitForURL('**/internal/admin/pos/login');
+    const context=await browser.newContext();
+    try {
+        const restricted=await context.newPage();
+        await login(restricted,'e2e-digital-operations@example.invalid');
+        await expect(restricted.getByTestId('audit-viewer-link')).toHaveCount(0);
+        expect((await restricted.goto('/internal/admin/pos/audit'))?.status()).toBe(403);
+        await restricted.goto('/internal/admin/pos');
+        await restricted.getByTestId('logout').click();
+        await restricted.waitForURL('**/internal/admin/pos/login');
+    } finally {await context.close();}
+});

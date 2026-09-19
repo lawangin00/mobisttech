@@ -52,6 +52,7 @@ class PosShellE2eSeeder extends Seeder
             $digital = $this->member('E2E Digital Operations Manager', 'e2e-digital-operations@example.invalid', 'Digital Operations Manager');
             $reset = $this->member('E2E Reset Administrator', 'e2e-reset@example.invalid', 'Reset Administrator');
             $owner = $this->member('E2E Protected Owner', 'e2e-protected-owner@example.invalid', 'Protected Owner');
+            $auditOwner = $this->member('E2E Audit Owner', 'e2e-audit-owner@example.invalid', 'Audit Owner');
 
             $this->assign($sales, $salesRole, [$salesOutlet]);
             $this->assign($inventory, $inventoryRole, [$salesOutlet, $inventoryOutlet]);
@@ -61,6 +62,16 @@ class PosShellE2eSeeder extends Seeder
             $this->assign($digital, $digitalRole, [$salesOutlet]);
             $this->assign($reset, $resetRole, [$salesOutlet]);
             $this->assign($owner, Role::where('name', 'Full Access')->firstOrFail(), [$salesOutlet]);
+            $this->assign($auditOwner, Role::where('name', 'Full Access')->firstOrFail(), [$salesOutlet]);
+            foreach ([[$salesOutlet, 'MT75 E2E North Audit', 'POST'], [$inventoryOutlet, 'MT75 E2E South Audit', 'GET']] as [$auditOutlet, $action, $method]) {
+                DB::table('pos_audit_logs')->insert(['actor_type' => 'admin', 'actor_id' => $owner->id,
+                    'actor_name' => 'E2E Protected Owner', 'actor_email' => $owner->email,
+                    'outlet_id' => $auditOutlet->id, 'action' => $action, 'method' => $method,
+                    'path' => '/internal/admin/pos/e2e-audit', 'payload' => json_encode(['password' => '[REDACTED]']),
+                    'ip_address' => null, 'user_agent' => null, 'status_code' => 200,
+                    'created_at' => now(), 'updated_at' => now()]);
+            }
+
         });
     }
 

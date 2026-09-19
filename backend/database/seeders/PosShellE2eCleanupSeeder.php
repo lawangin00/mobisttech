@@ -11,7 +11,7 @@ class PosShellE2eCleanupSeeder extends Seeder
     public function run(): void
     {
         $photoPaths = DB::transaction(function () {
-            $emails = ['e2e-sales@example.invalid', 'e2e-inventory@example.invalid', 'e2e-operations@example.invalid', 'e2e-mt43@example.invalid', 'e2e-platform@example.invalid', 'e2e-digital-operations@example.invalid', 'e2e-reset@example.invalid', 'e2e-protected-owner@example.invalid'];
+            $emails = ['e2e-sales@example.invalid', 'e2e-inventory@example.invalid', 'e2e-operations@example.invalid', 'e2e-mt43@example.invalid', 'e2e-platform@example.invalid', 'e2e-digital-operations@example.invalid', 'e2e-reset@example.invalid', 'e2e-protected-owner@example.invalid', 'e2e-audit-owner@example.invalid'];
             $adminIds = DB::table('admins')->whereIn('email', $emails)->pluck('id')->all();
             $photos = DB::table('admins')->whereIn('email', $emails)->get(['public_id', 'profile_photo'])
                 ->filter(fn ($row) => is_string($row->profile_photo)
@@ -21,6 +21,7 @@ class PosShellE2eCleanupSeeder extends Seeder
             $outletIds = DB::table('outlets')->whereIn('outlet_code', ['E41', 'E42'])->pluck('id')->all();
             $outletIds = array_values(array_unique([...$outletIds, ...DB::table('identity_audit_events')->where('realm', 'admin')->whereIn('account_id', $adminIds)->where('action', 'outlet_created')->whereNotNull('outlet_id')->pluck('outlet_id')->all()]));
 
+            DB::table('pos_audit_logs')->whereIn('outlet_id', $outletIds)->whereIn('action', ['MT75 E2E North Audit', 'MT75 E2E South Audit'])->where('actor_email', 'e2e-protected-owner@example.invalid')->delete();
             if ($adminIds) {
                 DB::table('identity_audit_events')->where('realm', 'admin')->whereIn('account_id', $adminIds)->delete();
                 DB::table('account_sessions')->where('guard', 'admin')->whereIn('account_id', $adminIds)->delete();
