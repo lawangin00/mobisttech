@@ -43,9 +43,9 @@ Active stage: MT-7 - Migration rehearsal and release readiness (In Progress)
 
 Last completed stage: MT-6 - Shared brand and Windows Control
 
-Current In Progress point: None
+Current In Progress point: MT-7.2 - Security, performance and resilience audit
 
-Status: MT-0 through MT-6 complete. MT-7 is in progress. 50/56 complete, 6 pending. MT-7.1 is Complete.
+Status: MT-0 through MT-6 complete. MT-7 is in progress. 50/56 complete, 6 pending. MT-7.2 is In Progress.
 
 Last completed point: MT-7.1 - Data migration and rollback rehearsal
 
@@ -401,7 +401,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-6.2 | Canonical mobiST Control migration | Complete |
 | MT-6.3 | Windows operator and local integration acceptance | Complete |
 | MT-7.1 | Data migration and rollback rehearsal | Complete |
-| MT-7.2 | Security, performance and resilience audit | Pending |
+| MT-7.2 | Security, performance and resilience audit | In Progress |
 | MT-7.3 | Monorepo CI and reproducible build gates | Pending |
 | MT-7.4 | Linux deployment and backup readiness | Pending |
 | MT-7.5 | Full functional parity and acceptance | Pending |
@@ -1070,3 +1070,15 @@ No source-repository write, source-data migration, source runtime action, real p
 - MT-7.1 closure: disposable/synthetic migration replay/idempotency, quarantine, outer rollback, relationship/history preservation, current-schema reconciliation, guarded reset preservation/private-object semantics and target-only encrypted recovery/restore checks are Complete. No authentic source export/import, live cutover or production reset occurred. Evidence: `docs/migration/MT-7.1_VERIFICATION.md`.
 - P08 remains In Progress because MT-7.4 is pending. Q01 remains In Progress because MT-7.2/MT-7.3/MT-7.5 are pending.
 - Next action: MT-7.1 is Complete. Await explicit Proceed/Y before starting MT-7.2 - Security, performance and resilience audit.
+- MT-7.2 static prohibited-data audit attempt 1: ORCHESTRATION_FAIL during the MySQL information_schema subcommand because Windows PowerShell expanded PHP `$...` variables inside the tinker command. No application/schema mutation occurred. The preceding tracked-source hits were benign: Laravel Slack config references an environment-variable key name only, and Admin UI states that provider secrets are not projected. Material retry: quote PHP literally and distinguish secret names/documentation from secret values/data fields.
+- MT-7.2 runtime audit found four target-local migrations pending (customer engagement, recovery guards, guarded reset and API indexes). Static plus `migrate --pretend` review proved they only create new constrained tables and add indexes; no existing column/table destructive change is performed in `up()`. This is the target `mobisttech_local` database, not a protected source database. Next action: apply these additive current-target migrations, then recheck local migration status and foundation health.
+- MT-7.2 focused security/resilience audit PASS: 85 tests / 2,342 assertions across IdentitySecurity, TeamMemberSessionSecurity, UnifiedAdminGoogleIntegration, DocumentReportingServices, PosPayment, OrderPaymentTransactions, InventoryConcurrency, SharedInfrastructure, OperationalRecovery, GuardedResetService, ResetAdministrationInterface, WebsiteCms and ApiContract. This freshly covers RBAC/delegation/outlet ceilings, realm/session/recent-auth policy, Gmail token isolation, document truth/authorization, POS/Website payment negative paths, real MySQL concurrency, queue retries, Redis/cache outage behavior, private storage, reset/recovery and CMS/software draft/public boundaries.
+- Static secret/data audit: exact testing schema has zero column names matching prohibited PAN/CVV/PIN/stripe-data/OAuth/provider-secret field patterns; tracked high-entropy secret-value patterns NONE; backend/Website frontend source contains no access-token/refresh-token/client-secret/merchant-secret/PAN/CVV/PIN/stripe-data terms. The only broad source hits were an environment-variable key name in Laravel Slack config and explanatory UI copy stating provider secrets are not projected.
+- Licensing audit found and remediated misleading Laravel-starter metadata: removed `license: MIT` from `backend/composer.json` because dependency/framework metadata is not a license grant for mobiST-owned code. Root project license terms remain a truthful unresolved owner decision; no `proprietary`/open-source choice was invented. Normal Composer validation passes with the expected missing-license warning; `--strict` is intentionally nonzero only for that unresolved decision.
+- Root `NOTICE.md` plus `docs/audit/MT-7.2_DEPENDENCY_LICENSE_NOTICE_AUDIT.md` now record the runtime dependency/asset notice posture. Current Website production lock includes Sharp/Apache-2.0, libvips LGPL-3.0-or-later, caniuse-lite CC-BY-4.0, ISC/BSD/0BSD components; release packaging must preserve applicable notices/attribution/source obligations. No third-party Instrument Sans binary is bundled.
+- `docs/audit/MT-7.2_LEGAL_PRIVACY_AUDIT.md` records implementation facts and truthful policy state: policy defaults are draft/pending; publication requires `owner_approved`, factual `verified` and zero unresolved decisions; Cookie Policy remains conditional; reference/E2E legal text is not production legal approval.
+- Runtime audit found four pending additive target-local migrations. Static + `migrate --pretend` proved their `up()` path only creates constrained engagement/recovery/reset tables and adds API indexes. They were applied only to target `mobisttech_local`; all migrations now show Ran and `foundation:check` PASS. Protected source databases/repos were not touched.
+- MT-7.2 full Website production run: 10 functional browser tests PASS. Temporary all-mode performance audit then failed at the first mode: hybrid mobile LCP 2,524 ms versus fixed <=2,500 ms budget (24 ms over). Threshold was not loosened and the result is not accepted as PASS. Because the assertion stopped on hybrid, digital_only and commerce_only fresh MT-7.2 metrics remain uncollected. Temporary spec is preserved only under ignored `.local/mt72/mt72-performance.spec.ts` and removed from tracked tests after evidence capture.
+- Website global teardown completed successfully. A later exact-residue helper partially proved MT52=0 but then stopped because the temporary query assumed non-existent `orders.order_no`; no mutation occurred. Exact schema-correct Website residue recheck remains pending.
+- Incomplete after 9-minute guard: diagnose/retest hybrid performance without loosening thresholds; capture all three modes LCP/CLS/real interaction evidence plus stable mobile Lighthouse >=90; run clean full backend regression, default full Playwright, final Website static/build gates, exact residue/log/secret recheck, and write final MT-7.2 verification/performance evidence. Do not start MT-7.3.
+- Current next action: inspect hybrid performance trace/request timing -> remediate only if a real product bottleneck is verified -> dedicated all-mode performance retry + Lighthouse -> full backend/default Playwright/static/residue closure -> MT-7.2 Complete.
