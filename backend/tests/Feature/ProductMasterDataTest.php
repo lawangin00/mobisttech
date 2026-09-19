@@ -34,6 +34,9 @@ class ProductMasterDataTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // E2E synthetic catalogue publications may have left a previous test version.
+        // Isolate this test family's exact publication-count assertions inside its transaction.
+        DB::table('publication_versions')->where('domain', 'catalogue')->delete();
         $this->seed(PosMasterDataSeeder::class);
         $this->outlet = new Outlet;
         $this->outlet->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Synthetic outlet', 'outlet_code' => '007'])->save();

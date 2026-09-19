@@ -1,6 +1,6 @@
 # MT-7.5 one-time owner decision register
 
-Status: PENDING OWNER RESPONSE (20-Sep-2026). Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`. This register records *questions*, not approvals. Baseline preserved: 27 closure gates, 5 DONE, 22 OPEN (18.52%). No new implementation or real-data/provider/production operation is authorized by creating this record.
+Status: TEN OWNER DECISIONS RECORDED (20-Sep-2026); D09 exact registered legal name and D08 verified desktop release facts remain factual dependencies, D10 final policy publication stays HOLD. Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`. The original question table below is historical; the later binding decision table records all ten actual answers and exact scope. Baseline preserved: 27 closure gates, 5 DONE, 22 OPEN (18.52%). No new implementation or real-data/provider/production operation is authorized by creating this record.
 
 Owner may answer every ID in **one response** using `D01=B; D02=A; ...`, including requested facts where indicated. Record each actual response with date, exact approved scope, exclusions and evidence in this file before acting. `HOLD`/unanswered means no approval and no implied sign-off. Do not ask again on each Proceed for an already decided identical scope. No silent escalation from a test-only approval to live action.
 

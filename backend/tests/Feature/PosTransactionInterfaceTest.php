@@ -86,6 +86,37 @@ class PosTransactionInterfaceTest extends TestCase
         ])->assertOk()->assertJsonPath('data.id', $unit->public_id);
     }
 
+    public function test_existing_inventory_definition_requires_current_version_and_preserves_stock(): void
+    {
+        $product = $this->product(true);
+        $originalBrand = $product->brand;
+        app(\App\Services\PosInventoryMasterData::class)->update($product->brandMasterOption, ['label' => 'Updated managed brand']);
+        $client = $this->authenticatedClient();
+        $url = '/internal/admin/pos/inventory/products';
+        $input = [
+            'product_id' => $product->public_id, 'name' => $product->name,
+            'category' => $product->category, 'category_master_data_id' => $product->category_master_data_id,
+            'brand_master_data_id' => $product->brand_master_data_id, 'model' => 'Updated device model',
+            'purchase_price' => '100.01', 'sale_price' => '230.02',
+            'track_imei' => true, 'warranty_type' => 'no_warranty',
+        ];
+        $this->send($client, 'POST', $url, $input)->assertUnprocessable();
+        $this->send($client, 'POST', $url, [...$input, 'expected_version' => $product->version + 1])->assertStatus(409);
+        $saved = $this->send($client, 'POST', $url, [...$input, 'expected_version' => $product->version])->assertOk();
+        $this->assertSame($product->public_id, $saved->json('data.id'));
+        $this->assertSame($product->product_code, $product->fresh()->product_code);
+        $this->assertSame('Updated device model', $product->fresh()->model);
+        $this->assertSame('230.02', $product->fresh()->sale_price);
+        $this->assertSame($originalBrand, $product->fresh()->brand);
+        $listing = $this->send($client, 'GET', '/internal/admin/pos/catalogue?mode=inventory&category=product_name&q='.urlencode($product->name))->assertOk();
+        $listing->assertJsonPath('data.products.0.brand_snapshot', $originalBrand)
+            ->assertJsonPath('data.products.0.brand_display', 'Updated managed brand');
+        $this->send($client, 'POST', $url, [...$input, 'expected_version' => $product->version])->assertStatus(409);
+        $this->acquire($product);
+        $this->send($client, 'POST', $url, [...$input, 'expected_version' => $product->fresh()->version, 'category' => 'accessory'])->assertUnprocessable();
+        $this->assertSame('Updated device model', $product->fresh()->model);
+    }
+
     public function test_inventory_portal_preferences_page_search_and_sales_catalogue_remain_independent(): void
     {
         $tracked = $this->product(true); $this->acquire($tracked); $this->imeis($tracked);

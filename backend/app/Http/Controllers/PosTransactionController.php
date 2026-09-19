@@ -110,7 +110,12 @@ final class PosTransactionController extends Controller
         $input = $request->all();
         $publicId = array_key_exists('product_id', $input) ? (string) $input['product_id'] : null;
         unset($input['product_id']);
-        $product = $products->save($actor, $outlet, $input, $publicId);
+        $version = null;
+        if ($publicId !== null) {
+            $version = Validator::make($input, ['expected_version' => 'required|integer|min:1'])->validate()['expected_version'];
+        }
+        unset($input['expected_version']);
+        $product = $products->save($actor, $outlet, $input, $publicId, $version);
 
         return response()->json(['data' => $this->productPayload($product)]);
     }
@@ -333,7 +338,16 @@ final class PosTransactionController extends Controller
             'subcategory_display' => $inventory ? $product->subcategoryDisplay() : null,
             'ram_display' => $inventory ? $product->ramMasterOption?->label : null,
             'storage_display' => $inventory ? $product->storageMasterOption?->label : null,
-            'sim_display' => $inventory ? $product->simDisplay() : null];
+            'sim_display' => $inventory ? $product->simDisplay() : null,
+            'category_master_data_id' => $inventory ? $product->category_master_data_id : null,
+            'subcategory_master_data_id' => $inventory ? $product->subcategory_master_data_id : null,
+            'brand_master_data_id' => $inventory ? $product->brand_master_data_id : null,
+            'ram_master_data_id' => $inventory ? $product->ram_master_data_id : null,
+            'storage_master_data_id' => $inventory ? $product->storage_master_data_id : null,
+            'sim_master_data_id' => $inventory ? $product->sim_master_data_id : null,
+            'warranty_type' => $inventory ? $product->warranty_type : null,
+            'warranty_unit' => $inventory ? $product->warranty_unit : null,
+            'warranty_duration' => $inventory ? $product->warranty_duration : null];
     }
 
     private function unitPayload(StockUnit $unit): array

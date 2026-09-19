@@ -27,12 +27,13 @@ final class ProductDefinitions
         'mdm_status_master_data_id' => ['unit_mdm_status', 'mdm_status']];
 
     // Creates zero-stock definitions only; acquisitions/opening stock are owned by MT-2.4.
-    public function save(IdentityAccount $actor, Outlet $outlet, array $input, ?string $publicId = null): Product
+    public function save(IdentityAccount $actor, Outlet $outlet, array $input, ?string $publicId = null, ?int $expectedVersion = null): Product
     {
-        return DB::transaction(function () use ($actor, $outlet, $input, $publicId) {
+        return DB::transaction(function () use ($actor, $outlet, $input, $publicId, $expectedVersion) {
             $outlet = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
             $this->authorize($actor, $outlet);
             $product = $publicId ? Product::where('public_id', $publicId)->where('outlet_id', $outlet->id)->where('isDeleted', false)->lockForUpdate()->firstOrFail() : new Product;
+            abort_if($product->exists && $expectedVersion !== null && (int) $product->version !== $expectedVersion, 409, 'Product definition changed; refresh before saving.');
             $rules = ['name' => ['required', 'string', 'max:255', Rule::unique('products', 'name')->where('outlet_id', $outlet->id)->where('isDeleted', false)->ignore($product->id)],
                 'category' => ['required', Rule::in(array_keys(Product::CATEGORY_LABELS))], 'brand' => 'nullable|string|max:100',
                 'model' => 'required_unless:category,accessory|nullable|string|max:150', 'description' => 'nullable|string|max:5000',
@@ -96,7 +97,11 @@ final class ProductDefinitions
                 }
                 $data[$field] = $options[$field]?->id;
             }
-            $data['brand'] = $options['brand_master_data_id']?->label;
+            // A managed label rename must not rewrite a product's pre-existing historical brand snapshot
+            // during an unrelated product definition edit. A deliberate brand change creates a new snapshot.
+            $brandOptionId = $options['brand_master_data_id']?->id;
+            $data['brand'] = $product->exists && $product->brand_master_data_id === $brandOptionId
+                ? $product->brand : $options['brand_master_data_id']?->label;
             $data['ram_gb'] = $options['ram_master_data_id'] ? $master->value($options['ram_master_data_id']) : null;
             $data['storage_gb'] = $options['storage_master_data_id'] ? $master->value($options['storage_master_data_id']) : null;
             $data['sim_configuration'] = $options['sim_master_data_id']?->code ?? ($category->code === 'accessory' ? 'not_applicable' : ($product->sim_configuration === 'unknown' ? 'unknown' : null));

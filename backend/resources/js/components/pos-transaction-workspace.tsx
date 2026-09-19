@@ -3,7 +3,7 @@ import PosStockControlWorkspace from './pos-stock-control-workspace';
 import { DocumentActions } from './pos-customer-reporting-workspace';
 
 type Unit = { id: string; code: string; status: string; version: number; imeis: string[] };
-type Product = { id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[]; subcategory_display?: string | null; ram_display?: string | null; storage_display?: string | null; sim_display?: string | null };
+type Product = { category_master_data_id?:number|null;subcategory_master_data_id?:number|null;brand_master_data_id?:number|null;ram_master_data_id?:number|null;storage_master_data_id?:number|null;sim_master_data_id?:number|null;warranty_type?:string|null;warranty_unit?:number|null;warranty_duration?:number|null; id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[]; subcategory_display?: string | null; ram_display?: string | null; storage_display?: string | null; sim_display?: string | null };
 type Destination = { public_id: string; method: string; display_name: string };
 type Master = { id: number; list_key: string; code: string; label: string; metadata: Record<string, unknown> };
 type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean };
@@ -93,6 +93,9 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
     const [unitId, setUnitId] = useState('');
     const [imei1, setImei1] = useState('');
     const [imei2, setImei2] = useState('');
+    const [editingId, setEditingId] = useState('');
+    const [editingVersion, setEditingVersion] = useState<number|null>(null);
+    const [editingWarranty, setEditingWarranty] = useState<{type:string;unit:number|null;duration:number|null}>({type:'no_warranty',unit:null,duration:null});
     const [newName, setNewName] = useState('');
     const [categoryId, setCategoryId] = useState('');
     const [brandId, setBrandId] = useState('');
@@ -122,6 +125,14 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
     const simConfigurations = catalogue?.master_data.filter((m) => m.list_key === 'device_sim_configuration') ?? [];
     const conditions = catalogue?.master_data.filter((m) => m.list_key === 'unit_condition') ?? [];
     const ptaStatuses = catalogue?.master_data.filter((m) => m.list_key === 'unit_pta_status') ?? [];
+    const resetDefinition=()=>{setEditingId('');setEditingVersion(null);setNewName('');setNewModel('');setNewPurchase('');setNewSale('');setBrandId('');setSubcategoryId('');setRamId('');setStorageId('');setSimId('');setCategoryId('');setNewTrack(false);setEditingWarranty({type:'no_warranty',unit:null,duration:null});};
+    const editDefinition=(p:Product)=>{
+        if(!p.category_master_data_id||!p.warranty_type||!p.version)throw new Error('Product definition is not complete; historical import review is required.');
+        setEditingId(p.id);setEditingVersion(p.version);setEditingWarranty({type:p.warranty_type,unit:p.warranty_unit??null,duration:p.warranty_duration??null});
+        setProductId(p.id);setNewName(p.name);setCategoryId(String(p.category_master_data_id));setBrandId(String(p.brand_master_data_id??''));
+        setSubcategoryId(String(p.subcategory_master_data_id??''));setRamId(String(p.ram_master_data_id??''));setStorageId(String(p.storage_master_data_id??''));setSimId(String(p.sim_master_data_id??''));
+        setNewModel(p.model??'');setNewPurchase(p.purchase_price);setNewSale(p.sale_price);setNewTrack(p.track_imei);
+    };
     const printLabel = async (kind: string, id: string) => {
         const label = await api<Record<string, unknown>>('/internal/admin/pos/labels/' + kind + '/' + id);
         const popup = window.open('', '_blank', 'width=520,height=420');
@@ -135,24 +146,26 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
                 <button className="w-full text-left" onClick={() => { setProductId(p.id); setCost(p.purchase_price); setUnitId(p.units[0]?.id ?? ''); }}><strong>{p.name}</strong><span className="block text-xs text-slate-500">{p.code} · Qty {p.qty} · PKR {p.sale_price}</span></button>
                 {p.brand_snapshot && <p data-testid={'inventory-brand-history-'+p.id} className="mt-1 text-xs text-slate-600">Original brand: {p.brand_snapshot} · Current brand: {p.brand_display}</p>}
                 {(p.subcategory_display || p.ram_display || p.storage_display || p.sim_display) && <p data-testid={'inventory-variant-'+p.id} className="mt-1 text-xs text-slate-600">{[p.subcategory_display, p.ram_display, p.storage_display, p.sim_display].filter(Boolean).join(' · ')}</p>}
+                <button data-testid={'product-edit-'+p.id} onClick={()=>void run(async()=>{editDefinition(p);})} className="mt-2 mr-2 rounded border px-2 py-1 text-xs">Edit definition</button>
                 <button onClick={() => void run(() => printLabel('product', p.id))} className="mt-2 rounded border px-2 py-1 text-xs">Print product label</button>
                 {p.units.length > 0 && <p className="mt-2 text-xs text-slate-500">{p.units.map((u) => u.code + (u.imeis.length ? ' (' + u.imeis.join(', ') + ')' : '')).join(' · ')}</p>}
             </div>)}</div>
         </section>
         <div className="grid gap-5">
             <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Product definition</h3>
+                {editingId&&<div data-testid="product-edit-mode" className="mt-2 flex items-center justify-between gap-2 text-xs"><span>Editing existing product {editingId}; stock, sales and historical records remain linked.</span><button onClick={resetDefinition} className="rounded border px-2 py-1">Cancel edit</button></div>}
                 <div className="mt-3 grid gap-2">
                     <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Product name" className="w-full min-w-0 rounded border p-2 text-sm" />
                     <div className="grid grid-cols-2 gap-2">
                         <select data-testid="product-category" value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setSubcategoryId(''); setRamId(''); setStorageId(''); setSimId(''); }} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Category</option>{categories.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
-                        <select data-testid="product-brand" value={brandId} onChange={(e) => setBrandId(e.target.value)} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Brand (if device)</option>{brands.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                        <select data-testid="product-brand" value={brandId} onChange={(e) => setBrandId(e.target.value)} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Brand (if device)</option>{brandId&&!brands.some(m=>String(m.id)===brandId)&&<option value={brandId}>Previously selected brand (inactive)</option>}{brands.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
                     </div>
-                    <select data-testid="product-subcategory" value={subcategoryId} onChange={(e) => setSubcategoryId(e.target.value)} disabled={!categoryId} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Subcategory (optional)</option>{subcategories.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                    <select data-testid="product-subcategory" value={subcategoryId} onChange={(e) => setSubcategoryId(e.target.value)} disabled={!categoryId} className="w-full min-w-0 rounded border p-2 text-sm"><option value="">Subcategory (optional)</option>{subcategoryId&&!subcategories.some(m=>String(m.id)===subcategoryId)&&<option value={subcategoryId}>Previously selected subcategory (inactive)</option>}{subcategories.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select>
                     <input value={newModel} onChange={(e) => setNewModel(e.target.value)} placeholder="Model" className="w-full min-w-0 rounded border p-2 text-sm" />
                     {isDevice && <fieldset className="grid grid-cols-2 gap-2 rounded border p-2"><legend className="text-xs font-semibold">Device configuration</legend>
-                        <select data-testid="product-ram" aria-label="RAM" value={ramId} onChange={e=>setRamId(e.target.value)} className="rounded border p-2 text-sm"><option value="">RAM (optional)</option>{rams.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select>
-                        <select data-testid="product-storage" aria-label="Storage" value={storageId} onChange={e=>setStorageId(e.target.value)} className="rounded border p-2 text-sm"><option value="">Storage (optional)</option>{storages.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select>
-                        <select data-testid="product-sim" aria-label="SIM configuration" value={simId} onChange={e=>setSimId(e.target.value)} className="col-span-2 rounded border p-2 text-sm"><option value="">SIM configuration (optional)</option>{simConfigurations.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                        <select data-testid="product-ram" aria-label="RAM" value={ramId} onChange={e=>setRamId(e.target.value)} className="rounded border p-2 text-sm"><option value="">RAM (optional)</option>{ramId&&!rams.some(m=>String(m.id)===ramId)&&<option value={ramId}>Previously selected option (inactive)</option>}{rams.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                        <select data-testid="product-storage" aria-label="Storage" value={storageId} onChange={e=>setStorageId(e.target.value)} className="rounded border p-2 text-sm"><option value="">Storage (optional)</option>{storageId&&!storages.some(m=>String(m.id)===storageId)&&<option value={storageId}>Previously selected option (inactive)</option>}{storages.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select>
+                        <select data-testid="product-sim" aria-label="SIM configuration" value={simId} onChange={e=>setSimId(e.target.value)} className="col-span-2 rounded border p-2 text-sm"><option value="">SIM configuration (optional)</option>{simId&&!simConfigurations.some(m=>String(m.id)===simId)&&<option value={simId}>Previously selected option (inactive)</option>}{simConfigurations.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select>
                     </fieldset>}
                     <div className="grid grid-cols-2 gap-2"><input value={newPurchase} onChange={(e) => setNewPurchase(e.target.value)} placeholder="Purchase price" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={newSale} onChange={(e) => setNewSale(e.target.value)} placeholder="Sale price" className="w-full min-w-0 rounded border p-2 text-sm" /></div>
                     <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={newTrack} onChange={(e) => setNewTrack(e.target.checked)} /> Track IMEI</label>
@@ -160,16 +173,19 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
                         const category = categories.find((m) => String(m.id) === categoryId);
                         if (!category) throw new Error('Choose a valid category.');
                         await api('/internal/admin/pos/inventory/products', { method: 'POST', body: JSON.stringify({
+                            ...(editingId?{product_id:editingId,expected_version:editingVersion}:{}),
                             name: newName, category: category.code, category_master_data_id: Number(categoryId),
                             brand_master_data_id: brandId ? Number(brandId) : null, model: newModel || null,
                             subcategory_master_data_id: subcategoryId ? Number(subcategoryId) : null,
                             ram_master_data_id: isDevice && ramId ? Number(ramId) : null,
                             storage_master_data_id: isDevice && storageId ? Number(storageId) : null,
                             sim_master_data_id: isDevice && simId ? Number(simId) : null,
-                            purchase_price: newPurchase, sale_price: newSale, track_imei: newTrack, warranty_type: 'no_warranty',
+                            purchase_price: newPurchase, sale_price: newSale, track_imei: newTrack,
+                            warranty_type: editingId?editingWarranty.type:'no_warranty',
+                            ...(editingId&&editingWarranty.type!=='no_warranty'?{warranty_unit:editingWarranty.unit,warranty_duration:editingWarranty.duration}:{}),
                         }) });
-                        setNewName(''); setNewModel(''); setNewPurchase(''); setNewSale(''); setBrandId(''); setSubcategoryId(''); setRamId(''); setStorageId(''); setSimId(''); setCategoryId(''); setNewTrack(false); await reload();
-                    })} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">Save product</button>
+                        resetDefinition(); await reload();
+                    })} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{editingId?'Update product':'Save product'}</button>
                 </div>
             </section>
             <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Receive stock</h3>
