@@ -121,3 +121,58 @@ test('MT-5.4 commerce-only mode prunes digital discovery while common legal and 
         state('hybrid');
     }
 });
+
+
+test('MT-7.5 authenticated Software draft publication reaches actual Next.js public page', async ({ page, context }) => {
+    test.setTimeout(120_000);
+    const url = '/software/mt54-software';
+    await page.goto(url);
+    await expect(page.getByText('Published MT54 software overview')).toBeVisible();
+    await expect(page.getByText('Private MT54 software draft')).toHaveCount(0);
+    const admin = await context.newPage();
+    try {
+        await admin.goto('http://127.0.0.1:18080/internal/admin/pos/login');
+        await admin.getByTestId('login-email').fill('e2e-platform@example.invalid');
+        await admin.getByTestId('login-password').fill('SyntheticPass123!');
+        await admin.getByTestId('login-submit').click();
+        await admin.waitForURL('**/internal/admin/pos');
+        await admin.goto('http://127.0.0.1:18080/internal/admin/platform');
+        await expect(admin.getByRole('heading', { name: 'Platform Administration' })).toBeVisible();
+        await admin.getByRole('button', { name: 'Software', exact: true }).click();
+        const editor = admin.getByRole('heading', { name: 'Software create/edit' }).locator('xpath=ancestor::section[1]');
+        await editor.locator('select').first().selectOption({ label: 'MT54 Software · published' });
+        await editor.getByText('Preview selected revision routes').click();
+        const preview = editor.getByRole('region', { name: 'Protected software route preview' });
+        await expect(preview.getByText('Private MT54 software draft')).toBeVisible();
+        const release = admin.getByRole('heading', { name: 'Publish, rollback, release & canonical slug' }).locator('xpath=ancestor::section[1]');
+        await release.getByRole('button', { name: 'Publish draft v2' }).click();
+        await expect(release.getByRole('button', { name: 'Rollback v2' })).toBeVisible();
+        await page.goto(url);
+        await expect(page.getByText('Private MT54 software draft')).toBeVisible();
+        await expect(page.getByText('Published MT54 software overview')).toHaveCount(0);
+        await editor.getByPlaceholder('Overview HTML').fill('<p>MT75 subsequent private revision</p>');
+        const draftSaved = admin.waitForResponse(response => response.url().includes('/internal/admin/platform/software/') && response.url().endsWith('/draft') && response.request().method() === 'POST');
+        await editor.getByRole('button', { name: 'Save new draft revision' }).click();
+        expect((await draftSaved).status()).toBe(200);
+        await expect(release.getByRole('button', { name: 'Publish draft v3' })).toBeVisible({ timeout: 20000 });
+        await page.goto(url);
+        await expect(page.getByText('Private MT54 software draft')).toBeVisible();
+        await expect(page.getByText('MT75 subsequent private revision')).toHaveCount(0);
+        const published = admin.waitForResponse(response => response.url().includes('/internal/admin/platform/software/revisions/') && response.url().endsWith('/publish') && response.request().method() === 'POST');
+        await release.getByRole('button', { name: 'Publish draft v3' }).click();
+        expect((await published).status()).toBe(200);
+        await expect(release.getByRole('button', { name: 'Rollback v3' })).toBeVisible({ timeout: 20000 });
+        await page.goto(url);
+        await expect(page.getByText('MT75 subsequent private revision')).toBeVisible();
+        const rolledBack = admin.waitForResponse(response => response.url().includes('/internal/admin/platform/software/revisions/') && response.url().endsWith('/rollback') && response.request().method() === 'POST');
+        await release.getByRole('button', { name: 'Rollback v1' }).click();
+        expect((await rolledBack).status()).toBe(200);
+        await expect(release.getByRole('button', { name: 'Rollback v4' })).toBeVisible({ timeout: 20000 });
+        await page.goto(url);
+        await expect(page.getByText('Published MT54 software overview')).toBeVisible({ timeout: 15000 });
+        await expect(page.getByText('MT75 subsequent private revision')).toHaveCount(0);
+        await expect(page.getByText('Current version: 1.0.0')).toBeVisible();
+    } finally {
+        await admin.close();
+    }
+});

@@ -56,6 +56,8 @@ class DynamicWebsiteE2eCleanupSeeder extends Seeder
                 DB::table('software_products')->where('id', $softwareId)->update(['current_revision_id' => null, 'current_release_id' => null]);
                 DB::table('cms_route_redirects')->where('software_product_id', $softwareId)->delete();
                 DB::table('software_releases')->where('software_product_id', $softwareId)->delete();
+                // Scoped synthetic rollback history has a self-reference with RESTRICT delete.
+                DB::table('software_product_revisions')->where('software_product_id', $softwareId)->update(['restored_from_revision_id' => null]);
                 DB::table('software_product_revisions')->where('software_product_id', $softwareId)->delete();
                 DB::table('software_products')->where('id', $softwareId)->delete();
             }
