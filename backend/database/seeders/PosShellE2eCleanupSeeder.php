@@ -20,6 +20,8 @@ class PosShellE2eCleanupSeeder extends Seeder
                 ->pluck('profile_photo')->all();
             $roleIds = DB::table('roles')->whereIn('slug', ['e2e-salesperson', 'e2e-inventory-manager', 'e2e-operations-manager', 'e2e-mt43-manager', 'e2e-platform-administrator', 'e2e-digital-operations-manager', 'e2e-reset-administrator'])->pluck('id')->all();
             $outletIds = DB::table('outlets')->whereIn('outlet_code', ['E41', 'E42'])->pluck('id')->all();
+            $outletIds = array_values(array_unique([...$outletIds, ...DB::table('outlets')->where('outlet_code', '909')
+                ->where('name', 'MT75 P02 Linked Outlet')->pluck('id')->all()]));
             $outletIds = array_values(array_unique([...$outletIds, ...DB::table('identity_audit_events')->where('realm', 'admin')->whereIn('account_id', $adminIds)->where('action', 'outlet_created')->whereNotNull('outlet_id')->pluck('outlet_id')->all()]));
 
             $prefOwnerId = DB::table('admins')->where('email', 'e2e-pref-owner@example.invalid')->value('id');
@@ -49,6 +51,25 @@ class PosShellE2eCleanupSeeder extends Seeder
             DB::table('invoices')->whereIn('outlet_id', $outletIds)
                 ->where('invoice_number', 'like', 'MT75-HIST-%')
                 ->where('customer_name', 'like', 'MT75 Synthetic Customer %')->delete();
+            // Remove only this synthetic linked-history E2E product and its option usage, never real catalogue rows.
+            $linkedOption = DB::table('pos_master_data_options')->where('list_key', 'product_brand')
+                ->where('code', 'mt75_p02_linked_brand')->whereIn('label', ['MT75 P02 Linked Brand', 'MT75 P02 Linked Brand Updated'])->first();
+            $linkedProduct = DB::table('products')->whereIn('outlet_id', $outletIds)
+                ->where('name', 'MT75 P02 Linked Product')->where('brand', 'MT75 P02 Linked Brand')->first();
+            if ($linkedProduct) {
+                abort_unless($linkedOption && (int) $linkedProduct->brand_master_data_id === (int) $linkedOption->id, 409);
+                abort_unless(! DB::table('stock_units')->where('product_id', $linkedProduct->id)->exists()
+                    && ! DB::table('sales')->where('product_id', $linkedProduct->id)->exists()
+                    && ! DB::table('product_listings')->where('product_id', $linkedProduct->id)->exists(), 409);
+                DB::table('pos_master_data_usages')->where('usage_type', 'product')->where('usage_id', (string) $linkedProduct->id)->delete();
+                DB::table('domain_events')->where('aggregate_type', 'product')->where('aggregate_id', $linkedProduct->public_id)->delete();
+                DB::table('products')->where('id', $linkedProduct->id)->delete();
+            }
+            if ($linkedOption) {
+                abort_unless(! DB::table('pos_master_data_usages')->where('master_data_option_id', $linkedOption->id)->exists(), 409);
+                DB::table('domain_events')->where('aggregate_type', 'master_data')->where('aggregate_id', (string) $linkedOption->id)->delete();
+                DB::table('pos_master_data_options')->where('id', $linkedOption->id)->delete();
+            }
             $p02Option = DB::table('pos_master_data_options')->where('list_key', 'product_brand')
                 ->where('code', 'mt75_p02_browser_brand')->whereIn('label', ['MT75 P02 Browser Brand', 'MT75 P02 Browser Brand Edited'])->first();
             if ($p02Option) {
@@ -56,6 +77,13 @@ class PosShellE2eCleanupSeeder extends Seeder
                 DB::table('domain_events')->where('aggregate_type', 'master_data')
                     ->where('aggregate_id', (string) $p02Option->id)->delete();
                 DB::table('pos_master_data_options')->where('id', $p02Option->id)->delete();
+            }
+            $syntheticAccessory = DB::table('pos_master_data_options')->where('list_key', 'product_category')
+                ->where('code', 'accessory')->where('label', 'Accessories')->first();
+            if ($linkedOption && $syntheticAccessory) {
+                abort_unless(! DB::table('pos_master_data_usages')->where('master_data_option_id', $syntheticAccessory->id)->exists()
+                    && ! DB::table('products')->where('category_master_data_id', $syntheticAccessory->id)->exists(), 409);
+                DB::table('pos_master_data_options')->where('id', $syntheticAccessory->id)->delete();
             }
             DB::table('pos_audit_logs')->whereIn('outlet_id', $outletIds)->whereIn('action', ['MT75 E2E North Audit', 'MT75 E2E South Audit'])->where('actor_email', 'e2e-protected-owner@example.invalid')->delete();
             if ($adminIds) {

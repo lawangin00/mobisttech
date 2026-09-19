@@ -60,7 +60,7 @@ final class PosTransactionController extends Controller
         $hasMore = $rows->count() > 20;
         $rows = $rows->take(20)->values();
         }
-        $products = $rows->map(fn (Product $product) => $this->productPayload($product))->all();
+        $products = $rows->map(fn (Product $product) => $this->productPayload($product, $inventory))->all();
         $destinations = [];
         if (app(Access::class)->allows($actor, 'shop.sales', $outlet)) {
             $destinations = DB::table('pos_payment_destinations')->where('outlet_id', $outlet->id)
@@ -319,7 +319,7 @@ final class PosTransactionController extends Controller
         return $unitId ? StockUnit::whereKey($unitId)->where('product_id', $product->id)->first() : null;
     }
 
-    private function productPayload(Product $product): array
+    private function productPayload(Product $product, bool $inventory = false): array
     {
         $units = $product->track_imei ? StockUnit::where('product_id', $product->id)->where('status', 'in_stock')
             ->orderBy('unit_no')->limit(30)->get()->map(fn (StockUnit $unit) => $this->unitPayload($unit))->all() : [];
@@ -327,7 +327,9 @@ final class PosTransactionController extends Controller
         return ['id' => $product->public_id, 'code' => $product->product_code, 'name' => $product->name,
             'category' => $product->category, 'model' => $product->model, 'purchase_price' => (string) $product->purchase_price,
             'sale_price' => (string) $product->sale_price, 'qty' => (int) $product->qty, 'track_imei' => (bool) $product->track_imei,
-            'version' => (int) $product->version, 'units' => $units];
+            'version' => (int) $product->version, 'units' => $units,
+            'brand_snapshot' => $inventory ? $product->brand : null,
+            'brand_display' => $inventory ? $product->brandDisplay() : null];
     }
 
     private function unitPayload(StockUnit $unit): array

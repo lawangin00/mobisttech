@@ -3,7 +3,7 @@ import PosStockControlWorkspace from './pos-stock-control-workspace';
 import { DocumentActions } from './pos-customer-reporting-workspace';
 
 type Unit = { id: string; code: string; status: string; version: number; imeis: string[] };
-type Product = { id: string; code: string; name: string; category?: string; model?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[] };
+type Product = { id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[] };
 type Destination = { public_id: string; method: string; display_name: string };
 type Master = { id: number; list_key: string; code: string; label: string; metadata: Record<string, unknown> };
 type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean };
@@ -123,6 +123,7 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
         <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Inventory</h3>
             <div className="mt-3 grid gap-2">{catalogue?.products.map((p) => <div key={p.id} className="rounded-xl border p-3">
                 <button className="w-full text-left" onClick={() => { setProductId(p.id); setCost(p.purchase_price); setUnitId(p.units[0]?.id ?? ''); }}><strong>{p.name}</strong><span className="block text-xs text-slate-500">{p.code} · Qty {p.qty} · PKR {p.sale_price}</span></button>
+                {p.brand_snapshot && <p data-testid={'inventory-brand-history-'+p.id} className="mt-1 text-xs text-slate-600">Original brand: {p.brand_snapshot} · Current brand: {p.brand_display}</p>}
                 <button onClick={() => void run(() => printLabel('product', p.id))} className="mt-2 rounded border px-2 py-1 text-xs">Print product label</button>
                 {p.units.length > 0 && <p className="mt-2 text-xs text-slate-500">{p.units.map((u) => u.code + (u.imeis.length ? ' (' + u.imeis.join(', ') + ')' : '')).join(' · ')}</p>}
             </div>)}</div>
