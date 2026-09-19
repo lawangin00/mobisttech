@@ -1,0 +1,11 @@
+[Unit]
+Description=Run mobiST Tech Laravel scheduler each minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+Persistent=true
+AccuracySec=1s
+Unit=mobisttech-scheduler.service
+
+[Install]
+WantedBy=timers.target

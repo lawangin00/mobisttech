@@ -1,0 +1,15 @@
+[Unit]
+Description=mobiST Tech Laravel scheduled jobs
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=mobisttech
+Group=mobisttech
+WorkingDirectory=/srv/mobisttech/current/backend
+EnvironmentFile=/etc/mobisttech/backend.env
+ExecStart=/usr/bin/php artisan schedule:run --no-interaction
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077

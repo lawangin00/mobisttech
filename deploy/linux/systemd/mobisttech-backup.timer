@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly mobiST Tech encrypted backup
+
+[Timer]
+OnCalendar=*-*-* 02:15:00
+Persistent=true
+RandomizedDelaySec=10m
+Unit=mobisttech-backup.service
+
+[Install]
+WantedBy=timers.target

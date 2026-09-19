@@ -1,0 +1,17 @@
+[Unit]
+Description=mobiST Tech encrypted off-host operational backup
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=mobistbackup
+Group=mobistbackup
+EnvironmentFile=/etc/mobisttech/backup.env
+RuntimeDirectory=mobisttech-backup
+RuntimeDirectoryMode=0700
+ExecStart=/srv/mobisttech/current/deploy/linux/backup/backup.sh
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077
+TimeoutStartSec=2h

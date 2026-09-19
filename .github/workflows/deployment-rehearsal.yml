@@ -1,0 +1,51 @@
+name: MT-7.4 isolated Linux deployment rehearsal
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rehearsal:
+    name: Synthetic backup restore and Nginx validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-mt74
+        ports:
+          - 13306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci-only-mt74 --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install disposable Linux test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y nginx restic mysql-client
+      - name: Verify static configuration and shell parsing
+        run: |
+          python3 deploy/linux/tests/verify_config.py
+          bash -n deploy/linux/backup/backup.sh deploy/linux/tests/rehearse-linux.sh
+      - name: Render throwaway TLS configuration and run nginx syntax validation
+        run: |
+          mkdir -p "$RUNNER_TEMP/mt74-tls" /tmp/mobisttech-fixture
+          openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj '/CN=customer.invalid' \
+            -keyout "$RUNNER_TEMP/mt74-tls/test.key" -out "$RUNNER_TEMP/mt74-tls/test.crt" >/dev/null 2>&1
+          sudo install -d /etc/nginx/snippets
+          sed 's|__PHP_FPM_SOCKET__|/run/php/php8.3-fpm.sock|g' \
+            deploy/linux/nginx/mobisttech-laravel.conf.template \
+            | sudo tee /etc/nginx/snippets/mobisttech-laravel.conf >/dev/null
+          sed -e 's|__CUSTOMER_FQDN__|customer.invalid|g' -e 's|__ADMIN_FQDN__|admin.invalid|g' \
+            -e "s|__CUSTOMER_CERT__|$RUNNER_TEMP/mt74-tls/test.crt|g" \
+            -e "s|__CUSTOMER_KEY__|$RUNNER_TEMP/mt74-tls/test.key|g" \
+            -e "s|__ADMIN_CERT__|$RUNNER_TEMP/mt74-tls/test.crt|g" \
+            -e "s|__ADMIN_KEY__|$RUNNER_TEMP/mt74-tls/test.key|g" \
+            deploy/linux/nginx/mobisttech.conf.template | sudo tee /etc/nginx/conf.d/mobisttech.conf >/dev/null
+          sudo nginx -t
+      - name: Verify disposable MySQL encrypted backup and restore
+        run: bash deploy/linux/tests/rehearse-linux.sh

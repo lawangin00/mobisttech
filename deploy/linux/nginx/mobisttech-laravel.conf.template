@@ -1,0 +1,15 @@
+# Install into /etc/nginx/snippets/mobisttech-laravel.conf after socket substitution.
+location / {
+    try_files $uri $uri/ /index.php?$query_string;
+}
+location = /index.php {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $realpath_root/index.php;
+    fastcgi_param DOCUMENT_ROOT $realpath_root;
+    fastcgi_param HTTPS on;
+    fastcgi_pass unix:__PHP_FPM_SOCKET__;
+    fastcgi_read_timeout 90s;
+}
+location ~ \.php$ { return 404; }
+location ~ /\. { deny all; }
+location ~* /(?:\.env|composer\.(?:json|lock)|artisan|storage|vendor)(?:/|$) { deny all; }

@@ -43,9 +43,9 @@ Active stage: MT-7 - Migration rehearsal and release readiness (In Progress)
 
 Last completed stage: MT-6 - Shared brand and Windows Control
 
-Current In Progress point: None; next pending MT-7.4 - Linux deployment and backup readiness
+Current In Progress point: MT-7.4 - Linux deployment and backup readiness
 
-Status: MT-0 through MT-6 complete. MT-7 is in progress. 52/56 complete, 4 pending. MT-7.3 is Complete.
+Status: MT-0 through MT-6 complete. MT-7 is in progress. 52/56 complete, 4 pending. MT-7.4 is In Progress.
 
 Last completed point: MT-7.3 - Monorepo CI and reproducible build gates
 
@@ -403,7 +403,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-7.1 | Data migration and rollback rehearsal | Complete |
 | MT-7.2 | Security, performance and resilience audit | Complete |
 | MT-7.3 | Monorepo CI and reproducible build gates | Complete |
-| MT-7.4 | Linux deployment and backup readiness | Pending |
+| MT-7.4 | Linux deployment and backup readiness | In Progress |
 | MT-7.5 | Full functional parity and acceptance | Pending |
 | MT-7.6 | Product user manual and administrator operations guide | Pending |
 | FINAL-AUDIT | Independent final project audit | Pending |
@@ -1163,3 +1163,5 @@ No source-repository write, source-data migration, source runtime action, real p
 - MT-7.3 attempt 10 terminal remote clean-checkout `35435647602` for SHA `7cfc3798c2f17f37c353a83083ed1bfd2e79e81e`: all gates through Website performance/request budgets PASS, including Website public Chromium 4/4 and earlier customer alert; final `verify_mysql_schema.php api` FAILED `Strict SQL and UTC session are required.`, tracked-runtime-artifact gate skipped. Verified cause: MySQL application connection configured strict mode but omitted explicit UTC session timezone, while verifier requires `@@session.time_zone = '+00:00'`; upstream server default is not an application contract. Material correction pins Laravel MySQL connection timezone `+00:00`, retains strict SQL, and adds explicit timezone+strict regression to `SharedSchemaTest`. PHP syntax and diff whitespace PASS; isolated MySQL local test could not connect to `127.0.0.1:13306` (no disposable test server listening), failed before assertions; do not count as PASS. Next: commit/push this materially corrected candidate and require its remote clean-checkout regression, schema, artifact and full CI gates PASS; no unmodified retry. MT-7.3 In Progress and MT-7.4 unstarted.
 - MT-7.3 attempt 11: UTC MySQL application-session contract correction, strict-SQL regression and failure evidence committed/pushed to `lawangin00/mobisttech/main` SHA `e056d4258c506f9c6746f8b5ba2fa192c62f52be`; local/origin synced and clean at push. GitHub clean-checkout run `35436344644`, job `105879531751`, triggered on the exact SHA. As of latest observed in-progress job the isolated MySQL setup, new full backend regression, race/reset, builds, budgets, secret scan and Chromium installation PASS; browser schema reset and subsequent browser/performance/final schema/artifact gates remain pending. The local non-disclosing MySQL config preflight confirmed timezone `+00:00` and strict enabled; live DB-specific regression is to be determined by this remote run. This status note is deliberately uncommitted to avoid triggering a duplicate CI run. First next action: collect this exact run's terminal result, do not repeat it; MT-7.3 stays In Progress until every required gate and closure reconciliation PASS, MT-7.4 remains unstarted.
 - MT-7.3 final acceptance/closure (2026-09-19): Exact private `lawangin00/mobisttech/main` application candidate `e056d4258c506f9c6746f8b5ba2fa192c62f52be` had terminal successful GitHub Actions clean-checkout run `35436344644`, job `105879531751` (https://github.com/lawangin00/mobisttech/actions/runs/35436344644). Every required step PASS, including full backend regression with new MySQL UTC+strict invariant, race/reset, builds/style/budgets/secret scan, POS/Admin Chromium, Website checkout/customer/project/public Chromium, performance/request budgets, final strict/UTC schema check and no tracked runtime artifacts. Previous local isolated MySQL connection refusal is not counted as a local database PASS; remote isolated MySQL tests and schema independently PASS. MT-7.3 - Monorepo CI and reproducible build gates is Complete. Current position: Stage MT-7 In Progress; 52/56 complete, 4 pending; next MT-7.4 - Linux deployment and backup readiness is Pending and not started. Evidence: `docs/migration/MT-7.3_VERIFICATION.md`. Closure records are documentation-only; remote code acceptance remains the exact application SHA above.
+
+- MT-7.4 initialized: Linux Nginx/TLS, PHP-FPM, Next.js loopback, systemd queue/scheduler and guarded backup readiness templates, environment-separation examples, encrypted restic SQL/private-object snapshot and explicit non-production restore runbook implemented in the isolated mobiST Tech repo. Live provisioning, production backup activation, external S3 credentials, source/customer data and destructive restore remain HOLD. Local configuration-contract and Bash syntax PASS; separate manual GitHub Actions ephemeral MySQL/restic/Nginx rehearsal is pending terminal result. Evidence: docs/deploy/MT-7.4_VERIFICATION.md. MT-7.5 not started.

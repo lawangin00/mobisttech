@@ -1,0 +1,22 @@
+[Unit]
+Description=mobiST Tech Laravel database queue worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mobisttech
+Group=mobisttech
+WorkingDirectory=/srv/mobisttech/current/backend
+EnvironmentFile=/etc/mobisttech/backend.env
+ExecStart=/usr/bin/php artisan queue:work database --sleep=3 --tries=3 --timeout=60 --no-interaction
+ExecStop=/usr/bin/php artisan queue:restart
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=90
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
