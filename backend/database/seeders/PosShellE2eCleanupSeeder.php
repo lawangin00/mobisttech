@@ -49,6 +49,14 @@ class PosShellE2eCleanupSeeder extends Seeder
             DB::table('invoices')->whereIn('outlet_id', $outletIds)
                 ->where('invoice_number', 'like', 'MT75-HIST-%')
                 ->where('customer_name', 'like', 'MT75 Synthetic Customer %')->delete();
+            $p02Option = DB::table('pos_master_data_options')->where('list_key', 'product_brand')
+                ->where('code', 'mt75_p02_browser_brand')->where('label', 'MT75 P02 Browser Brand')->first();
+            if ($p02Option) {
+                abort_unless(! DB::table('pos_master_data_usages')->where('master_data_option_id', $p02Option->id)->exists(), 409);
+                DB::table('domain_events')->where('aggregate_type', 'master_data')
+                    ->where('aggregate_id', (string) $p02Option->id)->delete();
+                DB::table('pos_master_data_options')->where('id', $p02Option->id)->delete();
+            }
             DB::table('pos_audit_logs')->whereIn('outlet_id', $outletIds)->whereIn('action', ['MT75 E2E North Audit', 'MT75 E2E South Audit'])->where('actor_email', 'e2e-protected-owner@example.invalid')->delete();
             if ($adminIds) {
                 DB::table('identity_audit_events')->where('realm', 'admin')->whereIn('account_id', $adminIds)->delete();

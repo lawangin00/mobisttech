@@ -1,0 +1,46 @@
+import { expect, test } from '@playwright/test';
+
+const brand = 'MT75 P02 Browser Brand';
+const endpoint = '/internal/admin/pos/master-data';
+
+test('P02 protected master option lifecycle refreshes inventory and keeps protected categories', async ({page}) => {
+    test.setTimeout(45000);
+    await page.goto('/internal/admin/pos/login');
+    await page.getByTestId('login-email').fill('e2e-protected-owner@example.invalid');
+    await page.getByTestId('login-password').fill('SyntheticPass123!');
+    await page.getByTestId('login-submit').click();
+    await page.waitForURL('**/internal/admin/pos');
+    await page.goto('/internal/admin/pos/workspace/master-data');
+    await expect(page.getByTestId('master-data-workspace')).toBeVisible();
+    await page.getByTestId('master-list').selectOption('product_category');
+    await expect(page.getByTestId('master-list')).toHaveValue('product_category');
+    await expect(page.getByTestId('master-data-workspace').getByRole('button',{name:'Delete unused'})).toHaveCount(0);
+    await page.getByTestId('master-list').selectOption('product_brand');
+    await page.getByTestId('master-label').fill(brand);
+    const created=page.waitForResponse(r=>r.url().endsWith(endpoint)&&r.request().method()==='POST');
+    await page.getByTestId('master-create').click();
+    expect((await created).status()).toBe(200);
+    await expect(page.getByRole('alert')).toContainText('Option create successful.');
+    await expect(page.getByText(brand,{exact:true})).toBeVisible();
+    await page.goto('/internal/admin/pos/workspace/inventory');
+    await expect(page.getByTestId('workspace-inventory')).toBeVisible();
+    await expect(page.locator('select').filter({has:page.locator('option',{hasText:brand})})).toHaveCount(1);
+    await page.goto('/internal/admin/pos/workspace/master-data');
+    await expect(page.getByTestId('master-data-workspace')).toBeVisible();
+    await page.getByTestId('master-list').selectOption('product_brand');
+    const branded=page.getByTestId('master-data-workspace').locator('div.border').filter({has:page.getByText(brand,{exact:true})}).last();
+    const deactivated=page.waitForResponse(r=>r.url().endsWith(endpoint)&&r.request().method()==='POST');
+    await branded.getByRole('button',{name:'Deactivate'}).click();
+    expect((await deactivated).status()).toBe(200);
+    await expect(branded).toContainText('Inactive');
+    await page.goto('/internal/admin/pos/workspace/inventory');
+    await expect(page.getByTestId('workspace-inventory')).toBeVisible();
+    await expect(page.locator('option',{hasText:brand})).toHaveCount(0);
+    await page.goto('/internal/admin/pos/workspace/master-data');
+    await page.getByTestId('master-list').selectOption('product_brand');
+    page.once('dialog',dialog=>void dialog.accept());
+    const removed=page.waitForResponse(r=>r.url().endsWith(endpoint)&&r.request().method()==='POST');
+    await page.getByTestId('master-data-workspace').locator('div.border').filter({has:page.getByText(brand,{exact:true})}).last().getByRole('button',{name:'Delete unused'}).click();
+    expect((await removed).status()).toBe(200);
+    await expect(page.getByText(brand,{exact:true})).toHaveCount(0);
+});
