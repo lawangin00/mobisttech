@@ -129,16 +129,22 @@ test('protected Admin creates and archives an unused outlet in actual UI; operat
     await page.getByTestId('outlet-new-address').fill('Synthetic non-production address');
     const created=page.waitForResponse(r=>r.url().endsWith('/internal/admin/outlet-management')&&r.request().method()==='POST');
     await page.getByTestId('outlet-create').click();
-    expect((await created).status()).toBe(201);
+    const createdResponse=await created;
+    expect(createdResponse.status()).toBe(201);
+    const createdCode=(await createdResponse.json() as {data:{outlet_code:string}}).data.outlet_code;
     await expect(page.getByText('E2E Lifecycle Outlet',{exact:false})).toBeVisible();
     await expect(page.getByRole('status')).toHaveText('Outlet change saved.');
     const row=page.getByText('E2E Lifecycle Outlet',{exact:false}).locator('..').locator('..');
     await page.getByTestId('outlet-owner-password').fill(password);
     const archived=page.waitForResponse(r=>r.url().includes('/internal/admin/outlet-management/')&&r.url().endsWith('/archive')&&r.request().method()==='POST');
-    await row.getByRole('button',{name:'Archive empty outlet'}).click();
+    await row.getByRole('button',{name:'Archive eligible outlet'}).click();
     expect((await archived).status()).toBe(200);
     await expect(page.getByText('E2E Lifecycle Outlet',{exact:false})).toContainText('E2E Lifecycle Outlet');
     await expect(page.getByText(/E2E Lifecycle Outlet.*archived/)).toBeVisible();
+    // Archived outlet history is a protected read-only view, not an outlet selector.
+    await page.getByTestId('outlet-history-'+createdCode).click();
+    await expect(page.getByTestId('outlet-archive-summary-'+createdCode)).toContainText('Closed cash sessions: 0; cash entries: 0');
+    await expect(row.getByRole('button',{name:'Edit profile'})).toHaveCount(0);
     const guest=await browser.newContext();
     try {const operator=await guest.newPage();await login(operator,'e2e-sales@example.invalid');
         await expect(operator.getByTestId('manage-outlets-link')).toHaveCount(0);

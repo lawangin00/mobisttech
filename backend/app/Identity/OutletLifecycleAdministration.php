@@ -24,6 +24,28 @@ final class OutletLifecycleAdministration
         return Outlet::query()->orderBy('outlet_code')->get()->map(fn (Outlet $outlet) => $this->view($outlet))->all();
     }
 
+    public function archivedHistory(Admin $actor, string $publicId): array
+    {
+        abort_unless($this->canManage($actor), 403);
+        $outlet = Outlet::where('public_id', $publicId)->firstOrFail();
+        abort_unless($outlet->archived_at !== null, 409, 'Outlet is not archived.');
+        return [
+            'outlet_code' => $outlet->outlet_code,
+            'name' => $outlet->name,
+            'archived_at' => $outlet->archived_at->toIso8601String(),
+            'cash_sessions' => DB::table('cash_sessions')->where('outlet_id', $outlet->id)
+                ->where('status', 'closed')->orderByDesc('business_date')->limit(50)
+                ->get(['public_id', 'business_date', 'status', 'expected_cash', 'actual_cash', 'closed_at'])
+                ->map(fn ($row) => [
+                    'id' => $row->public_id, 'business_date' => $row->business_date,
+                    'status' => $row->status, 'expected_cash' => (string) $row->expected_cash,
+                    'actual_cash' => (string) $row->actual_cash, 'closed_at' => $row->closed_at,
+                ])->all(),
+            'cash_session_count' => DB::table('cash_sessions')->where('outlet_id', $outlet->id)->count(),
+            'cash_entry_count' => DB::table('cash_entries')->where('outlet_id', $outlet->id)->count(),
+        ];
+    }
+
     public function create(Admin $actor, array $input): array
     {
         abort_unless($this->canManage($actor), 403);
@@ -70,14 +92,30 @@ final class OutletLifecycleAdministration
             abort_if((int) $outlet->version !== $version, 409, 'Outlet changed; reload before archiving.');
             abort_if(Outlet::where('status', false)->whereNull('archived_at')->count() <= 1,
                 409, 'Cannot archive the last open outlet.');
-            // Fail closed for linked business obligations. Identity/audit records remain intact.
+            // Fail closed by default. Only completed cash history and immutable audit are exempt;
+            // any other present or future linked table, including products, claims and orders,
+            // retains the prior archival block until its obligations have a separate proof.
             $linked = DB::select("SELECT TABLE_NAME AS name FROM INFORMATION_SCHEMA.COLUMNS
                 WHERE TABLE_SCHEMA = DATABASE() AND COLUMN_NAME = 'outlet_id'");
-            $nonBusiness = ['outlet_admins', 'identity_audit_events', 'team_member_audit_events'];
+            $retainedHistory = ['outlet_admins', 'identity_audit_events', 'team_member_audit_events',
+                'pos_audit_logs', 'cash_sessions', 'cash_entries'];
             foreach ($linked as $row) {
-                if (in_array($row->name, $nonBusiness, true)) { continue; }
+                if (in_array($row->name, $retainedHistory, true)) { continue; }
                 abort_if(DB::table($row->name)->where('outlet_id', $outlet->id)->exists(),
                     409, 'Outlet has linked business history or outstanding obligations; archival needs a reviewed transition.');
+            }
+            abort_if(DB::table('cash_sessions')->where('outlet_id', $outlet->id)
+                ->where('status', '!=', 'closed')->exists(), 409, 'Close every cash session before archiving.');
+            abort_if(DB::table('cash_entries')->where('outlet_id', $outlet->id)
+                ->where('status', 'pending')->exists(), 409, 'Resolve pending cash entries before archiving.');
+            // Transfers may reference an outlet through nonstandard source/destination columns.
+            foreach (['stock_transfers' => ['source_outlet_id', 'destination_outlet_id'],
+                'stock_transfer_lines' => ['source_outlet_id', 'destination_outlet_id'],
+                'stock_transfer_receipts' => ['destination_outlet_id']] as $table => $columns) {
+                foreach ($columns as $column) {
+                    abort_if(DB::table($table)->where($column, $outlet->id)->exists(), 409,
+                        'Outlet has transfer history or outstanding transfer obligations; archival needs reviewed transition.');
+                }
             }
             $outlet->forceFill(['archived_at' => now(), 'version' => $outlet->version + 1])->save();
             IdentityAudit::record('admin', $actor->id, 'outlet_archived', 'outlet:'.$outlet->public_id, $outlet->id);

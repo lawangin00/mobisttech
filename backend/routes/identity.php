@@ -223,6 +223,7 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::get('/outlet-management/{outlet}/profile', [OutletManagementController::class, 'profile'])->whereUuid('outlet')->defaults('identity_realm', 'admin')->name('admin.outlets.profile.show');
     Route::patch('/outlet-management/{outlet}/profile', [OutletManagementController::class, 'updateProfile'])->whereUuid('outlet')->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.outlets.profile.update');
     Route::post('/outlet-management', [OutletManagementController::class, 'store'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.outlets.create');
+    Route::get('/outlet-management/{outlet}/history', [OutletManagementController::class, 'archivedHistory'])->whereUuid('outlet')->defaults('identity_realm', 'admin')->name('admin.outlets.archived-history');
     Route::post('/outlet-management/{outlet}/archive', [OutletManagementController::class, 'archive'])->whereUuid('outlet')->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.outlets.archive');
     Route::get('/team-members', [TeamMemberController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.team-members.index');
     Route::get('/roles', [TeamMemberController::class, 'roles'])->defaults('identity_realm', 'admin')->name('admin.roles.index');

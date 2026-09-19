@@ -44,6 +44,11 @@ final class OutletManagementController extends Controller
         return response()->json(['data' => $profiles->update($this->actor(), $target, $request->all(), true)]);
     }
 
+    public function archivedHistory(string $outlet, OutletLifecycleAdministration $service)
+    {
+        return response()->json(['data' => $service->archivedHistory($this->actor(), $outlet)]);
+    }
+
     public function store(Request $request, OutletLifecycleAdministration $service)
     {
         return response()->json(['data' => $service->create($this->actor(), $request->all())], 201);

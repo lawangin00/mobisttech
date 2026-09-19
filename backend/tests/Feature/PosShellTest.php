@@ -225,6 +225,63 @@ class PosShellTest extends TestCase
         $this->assertSame('051', $existing->fresh()->outlet_code);
     }
 
+    public function test_closed_cash_history_archive_retains_immutable_records_and_forbids_operational_access(): void
+    {
+        $active = $this->outlet('Active fallback', '061');
+        $historical = $this->outlet('Historical cash outlet', '062');
+        $owner = $this->member('archive-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($active);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
+        $operator = $this->member('archive-operator@example.invalid', ['shops.enter', 'shop.sales']);
+        $operator->shops()->attach([$historical->id, $active->id]);
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
+        $base = '/internal/admin/outlet-management/'.$historical->public_id;
+        $this->send($client, 'GET', $base.'/history')->assertStatus(409);
+        $sessionId = DB::table('cash_sessions')->insertGetId([
+            'public_id' => (string) Str::uuid(), 'outlet_id' => $historical->id,
+            'opened_by_admin_id' => $owner->id, 'business_date' => now()->toDateString(),
+            'status' => 'open', 'opening_cash' => '100.00', 'opened_at' => now()->subHour(),
+        ]);
+        $this->send($client, 'POST', $base.'/archive', ['version' => 1])->assertStatus(409);
+        $snapshot = json_encode(['contract' => 'synthetic-closed-cash-history', 'amount' => '100.00'], JSON_THROW_ON_ERROR);
+        DB::table('cash_sessions')->where('id', $sessionId)->update([
+            'status' => 'closed', 'open_outlet_guard' => null,
+            'expected_cash' => '100.00', 'actual_cash' => '100.00', 'variance_amount' => '0.00',
+            'closing_snapshot' => $snapshot, 'snapshot_sha256' => hash('sha256', $snapshot),
+            'closed_at' => now(), 'closed_by_admin_id' => $owner->id,
+        ]);
+        $this->send($client, 'POST', $base.'/archive', ['version' => 1])->assertOk()
+            ->assertJsonPath('data.status', 'archived')->assertJsonPath('data.outlet_code', '062');
+        $history = $this->send($client, 'GET', $base.'/history')->assertOk()
+            ->assertJsonPath('data.cash_session_count', 1)
+            ->assertJsonPath('data.cash_sessions.0.status', 'closed')
+            ->assertJsonPath('data.cash_sessions.0.actual_cash', '100.00');
+        $this->assertSame('100.00', (string) DB::table('cash_sessions')->where('id', $sessionId)->value('actual_cash'));
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
+            ->where('outlet_id', $historical->id)->where('action', 'outlet_archived')->count());
+        $this->assertTrue($operator->shops()->whereKey($historical->id)->exists());
+        $this->assertNull($historical->fresh()->legacy_password);
+        $operatorClient = $this->client();
+        $this->login($operatorClient, $operator->email)->assertOk();
+        // Authorization matrix: valid fallback remains usable; the archive never re-enters the chooser.
+        $this->send($operatorClient, 'GET', $base.'/history')->assertForbidden();
+        $this->send($operatorClient, 'GET', '/internal/admin/pos/workspace/sales')->assertOk();
+        $this->send($operatorClient, 'GET', '/internal/admin/outlets')->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $active->public_id);
+        $this->send($operatorClient, 'POST', '/internal/admin/outlets/select',
+            ['outlet_id' => $historical->public_id])->assertNotFound();
+        $this->send($operatorClient, 'POST', '/internal/admin/outlets/select',
+            ['outlet_id' => $active->public_id])->assertOk();
+        $archivedOnly = $this->member('archive-only@example.invalid', ['shops.enter', 'shop.sales']);
+        $archivedOnly->shops()->attach($historical);
+        $archivedOnlyClient = $this->client();
+        $this->login($archivedOnlyClient, $archivedOnly->email)->assertForbidden();
+        $this->send($client, 'POST', $base.'/archive', ['version' => 2])->assertStatus(409);
+        $this->assertSame($sessionId, (int) DB::table('cash_sessions')->where('outlet_id', $historical->id)->value('id'));
+    }
+
     public function test_account_and_recovery_pages_use_only_the_existing_admin_realm(): void
     {
         $guest = $this->client();

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import OutletProfileWorkspace from '../components/outlet-profile-workspace';
 
 type Outlet = {id:string;outlet_code:string;name:string;business_address:string|null;status:string;version:number};
+type ArchiveHistory = {outlet_code:string;name:string;archived_at:string;cash_session_count:number;cash_entry_count:number;cash_sessions:Array<{id:string;business_date:string;status:string;expected_cash:string;actual_cash:string;closed_at:string}>};
 async function call<T>(url:string, method='GET', data?:Record<string,unknown>):Promise<T> {
     const csrf = await fetch('/internal/admin/auth/csrf-cookie',{credentials:'same-origin',headers:{Accept:'application/json'}});
     if(!csrf.ok) throw new Error('Secure request token unavailable.');
@@ -21,6 +22,7 @@ export default function OutletManagement() {
     const [busy,setBusy]=useState(false);
     const [message,setMessage]=useState('');
     const [editing,setEditing]=useState<string|null>(null);
+    const [history,setHistory]=useState<Record<string,ArchiveHistory>>({});
     const load=async()=>setOutlets(await call<Outlet[]>('/internal/admin/outlet-management/data'));
     useEffect(()=>{void load().catch(e=>setMessage(e instanceof Error?e.message:'Unable to load outlets.'));},[]);
     async function act(task:()=>Promise<void>) {
@@ -35,7 +37,7 @@ export default function OutletManagement() {
     return <><Head title="Outlet management"/><main className="mx-auto max-w-4xl space-y-5 p-6 text-slate-900">
         <header className="flex items-center justify-between gap-3"><h1 className="text-2xl font-semibold">Outlet management</h1>
             <Link href="/internal/admin/pos" className="rounded border p-2 text-sm">Back to POS</Link></header>
-        <p className="text-sm text-slate-600">Protected Full Access only. Outlet codes are immutable; archived codes are never reused. Historical or active business records block automatic archive.</p>
+        <p className="text-sm text-slate-600">Protected Full Access only. Outlet codes are immutable and never reused. Only empty or independently verified closed-cash-history outlets may be archived; unresolved obligations block archival. Archived history is read-only.</p>
         <label className="block text-sm">Confirm current Admin password
             <input data-testid="outlet-owner-password" type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-1 block w-full rounded border p-2" /></label>
         <section className="rounded-xl border p-4"><h2 className="font-semibold">Create outlet</h2>
@@ -50,7 +52,9 @@ export default function OutletManagement() {
                 {o.status==='open'&&<button data-testid={'outlet-manage-profile-'+o.outlet_code} disabled={busy} onClick={()=>setEditing(editing===o.id?null:o.id)} className="rounded border px-3 py-2">{editing===o.id?'Close profile':'Edit profile'}</button>}
                 {o.status==='open'&&<button disabled={busy||!password} onClick={()=>void act(async()=>{
                     await call('/internal/admin/outlet-management/'+o.id+'/archive','POST',{version:o.version});
-                })} className="rounded border px-3 py-2 disabled:opacity-40">Archive empty outlet</button>}
+                })} className="rounded border px-3 py-2 disabled:opacity-40">Archive eligible outlet</button>}
+                {o.status==='archived'&&<button data-testid={'outlet-history-'+o.outlet_code} disabled={busy} onClick={()=>void call<ArchiveHistory>('/internal/admin/outlet-management/'+o.id+'/history').then(data=>setHistory(previous=>({...previous,[o.id]:data}))).catch(e=>setMessage(e instanceof Error?e.message:'Archived history unavailable.'))} className="rounded border px-3 py-2 disabled:opacity-40">View read-only history</button>}
+                {history[o.id]&&o.status==='archived'&&<div data-testid={'outlet-archive-summary-'+o.outlet_code} className="w-full rounded border bg-slate-50 p-3 text-xs"><strong>Archived {history[o.id].name}</strong><p>Closed cash sessions: {history[o.id].cash_session_count}; cash entries: {history[o.id].cash_entry_count}</p><div className="mt-2 space-y-1">{history[o.id].cash_sessions.map(session=><p key={session.id}>{session.business_date}: closed; expected {session.expected_cash}; actual {session.actual_cash}</p>)}</div><p>Historical records are read-only; operational access stays disabled.</p></div>}
                 {editing===o.id&&o.status==='open'&&<div className="w-full"><OutletProfileWorkspace key={o.id} outletId={o.id} managed onSaved={()=>void load()} /></div>}
             </div>)}</div></section>
         {message&&<p role="status" className="rounded border p-3 text-sm">{message}</p>}
