@@ -345,9 +345,12 @@ final class PlatformAdministrationController extends Controller
         return response()->json(['data' => (array) $service->configure($this->actor(), $request->all())]);
     }
 
-    public function softwareDraft(Request $request, WebsiteCms $service, ?string $software = null)
+    public function softwareDraft(Request $request, WebsiteCms $service)
     {
-        return response()->json(['data' => $service->saveSoftwareDraft($this->actor(), $software, $request->all())]);
+        // Read only the named route parameter; identity_realm is a route default, not a Software ID.
+        $software = $request->route('software');
+
+        return response()->json(['data' => $service->saveSoftwareDraft($this->actor(), is_string($software) ? $software : null, $request->all())]);
     }
 
     public function softwarePublish(int $revision, WebsiteCms $service)

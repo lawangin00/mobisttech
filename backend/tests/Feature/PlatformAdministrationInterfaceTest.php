@@ -173,8 +173,16 @@ class PlatformAdministrationInterfaceTest extends TestCase
 
     public function test_software_admin_publication_and_rollback_preserve_public_draft_isolation(): void
     {
-        [$editor] = $this->admin('mt75-editor@example.invalid', ['website.content.manage']);
-        [$publisher] = $this->admin('mt75-publisher@example.invalid', ['website.publish']);
+        // Public routes require a published Website mode; isolate Software draft visibility, not a disabled site.
+        $modeRevision = DB::table('site_configuration_revisions')->insertGetId([
+            'domain' => 'website.mode', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode(['mode' => 'hybrid'], JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        DB::table('website_operating_profiles')->updateOrInsert(['id' => 1], [
+            'mode' => 'hybrid', 'version' => 1, 'revision_id' => $modeRevision, 'published_at' => now(),
+        ]);
+        [$editor] = $this->admin('mt75-editor@example.invalid', ['website.content.manage'], 'A75');
+        [$publisher] = $this->admin('mt75-publisher@example.invalid', ['website.publish'], 'B75');
         $editorClient = $this->client();
         $this->login($editorClient, $editor->email)->assertOk();
         $publisherClient = $this->client();
@@ -238,7 +246,7 @@ class PlatformAdministrationInterfaceTest extends TestCase
         ];
     }
 
-    private function admin(string $email, array $permissions): array
+    private function admin(string $email, array $permissions, ?string $fixtureOutletCode = null): array
     {
         $admin = new Admin;
         $admin->forceFill([
@@ -252,7 +260,7 @@ class PlatformAdministrationInterfaceTest extends TestCase
         $outlet->forceFill([
             'name' => 'MT44 Outlet '.Str::random(5),
             'public_id' => (string) Str::uuid(),
-            'outlet_code' => (string) random_int(100, 999),
+            'outlet_code' => $fixtureOutletCode ?? (string) random_int(100, 999),
         ])->save();
         $admin->shops()->attach($outlet);
 
