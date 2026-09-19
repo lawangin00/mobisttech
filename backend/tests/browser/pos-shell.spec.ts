@@ -231,3 +231,31 @@ test('protected POS audit viewer filters true outlet events without leaking payl
         await restricted.waitForURL('**/internal/admin/pos/login');
     } finally {await context.close();}
 });
+
+
+test('protected owner saves and reloads the original nine POS portal preferences', async ({page}) => {
+    expect((await page.goto('/internal/admin/pos/portal-preferences'))?.status()).toBe(401);
+    await login(page,'e2e-pref-owner@example.invalid');
+    await expect(page.getByTestId('portal-preferences-link')).toBeVisible();
+    await page.getByTestId('portal-preferences-link').click();
+    await page.waitForURL('**/internal/admin/pos/portal-preferences');
+    await expect(page.getByRole('heading',{name:'POS portal preferences'})).toBeVisible();
+    await expect(page.getByTestId('pref-invoice_page_length')).toHaveValue('15');
+    await expect(page.getByTestId('pref-inventory_page_length')).toHaveValue('10');
+    await expect(page.getByTestId('pref-auto_focus_search')).toBeChecked();
+    await page.getByTestId('pref-invoice_page_length').selectOption('50');
+    await page.getByTestId('pref-inventory_page_length').selectOption('100');
+    await page.getByTestId('pref-invoice_search_category').selectOption('customer_name');
+    await page.getByTestId('pref-auto_focus_search').uncheck();
+    await page.getByTestId('pref-remember_search').check();
+    const saved=page.waitForResponse(r=>r.url().endsWith('/internal/admin/pos/portal-preferences')&&r.request().method()==='PUT');
+    await page.getByTestId('portal-preferences-save').click();
+    expect((await saved).status()).toBe(200);
+    await expect(page.getByRole('status')).toHaveText('Portal preferences saved.');
+    await page.reload();
+    await expect(page.getByTestId('pref-invoice_page_length')).toHaveValue('50');
+    await expect(page.getByTestId('pref-inventory_page_length')).toHaveValue('100');
+    await expect(page.getByTestId('pref-invoice_search_category')).toHaveValue('customer_name');
+    await expect(page.getByTestId('pref-auto_focus_search')).not.toBeChecked();
+    await expect(page.getByTestId('pref-remember_search')).toBeChecked();
+});

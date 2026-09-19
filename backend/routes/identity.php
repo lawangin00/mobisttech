@@ -11,6 +11,7 @@ use App\Http\Controllers\PosOperationsController;
 use App\Http\Controllers\OutletManagementController;
 use App\Http\Controllers\PosShellController;
 use App\Http\Controllers\PosAuditController;
+use App\Http\Controllers\PosPortalPreferencesController;
 use App\Http\Controllers\PosStockControlController;
 use App\Http\Controllers\PosTransactionController;
 use App\Http\Controllers\ResetAdministrationController;
@@ -211,6 +212,8 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::post('/platform/software/{software}/archive', [PlatformAdministrationController::class, 'softwareArchive'])->defaults('identity_realm', 'admin')->name('admin.platform.software.archive');
     Route::post('/platform/software/{software}/slug', [PlatformAdministrationController::class, 'softwareSlug'])->defaults('identity_realm', 'admin')->name('admin.platform.software.slug');
     Route::get('/pos/audit', [PosAuditController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.pos.audit');
+    Route::get('/pos/portal-preferences', [PosPortalPreferencesController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.pos.preferences');
+    Route::put('/pos/portal-preferences', [PosPortalPreferencesController::class, 'update'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.pos.preferences.update');
     Route::get('/outlet-management', [OutletManagementController::class, 'page'])->defaults('identity_realm', 'admin')->name('admin.outlets.page');
     Route::get('/outlet-management/data', [OutletManagementController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.outlets.index');
     Route::post('/outlet-management', [OutletManagementController::class, 'store'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.outlets.create');

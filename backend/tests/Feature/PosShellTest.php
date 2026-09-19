@@ -300,6 +300,41 @@ class PosShellTest extends TestCase
             ->has('records', 3)->where('current_page', 2)->where('total', 63));
     }
 
+    public function test_protected_portal_preferences_validate_and_persist_only_registered_keys(): void
+    {
+        $owner = $this->member('pref-owner@example.invalid', ['config.portal-presentation.manage',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
+        $owner->shops()->attach($this->outlet('Preferences Owner Outlet', '059'));
+        $limited = $this->member('pref-limited@example.invalid', ['config.portal-presentation.manage']);
+        $url = '/internal/admin/pos/portal-preferences';
+        $guest = $this->client();
+        $this->send($guest, 'GET', $url)->assertUnauthorized();
+        $this->send($guest, 'PUT', $url, [])->assertUnauthorized();
+        $denied = $this->client(); $this->login($denied, $limited->email)->assertOk();
+        $this->send($denied, 'GET', $url)->assertForbidden();
+        $this->send($denied, 'PUT', $url, [])->assertForbidden();
+        $client = $this->client(); $this->login($client, $owner->email)->assertOk();
+        $this->send($client, 'GET', $url)->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('pos-portal-preferences')->where('values.invoice_page_length', '15')
+            ->where('values.inventory_page_length', '10')->where('values.auto_focus_search', true)
+            ->where('values.remember_search', false)->has('options.invoice_search_category', 8));
+        $values = app(\App\Pos\PortalPreferences::class)->current();
+        $values['invoice_page_length'] = '50'; $values['inventory_page_length'] = '100';
+        $values['invoice_search_category'] = 'customer_name'; $values['remember_search'] = true;
+        $this->send($client, 'PUT', $url, [...$values, 'outlet_id' => 'unauthorized'])->assertUnprocessable();
+        // Identity limiter is 5/min by path+IP; keep guest, denied, invalid and successful writes below cap.
+        $this->assertFalse(in_array('500', app(\App\Pos\PortalPreferences::class)->catalogue($owner)['options']['invoice_page_length'], true));
+        $this->assertSame(0, DB::table('pos_settings')->where('group', 'portal')->count());
+        $this->send($client, 'PUT', $url, $values)->assertOk()
+            ->assertJsonPath('data.invoice_page_length', '50')->assertJsonPath('data.remember_search', true);
+        $this->send($client, 'GET', $url)->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('values.invoice_page_length', '50')->where('values.remember_search', true));
+        $this->assertSame(9, DB::table('pos_settings')->where('group', 'portal')->count());
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
+            ->where('action', 'pos_portal_preferences_updated')->count());
+    }
+
     private function uploadPhoto(array &$client, string $url, UploadedFile $file, array $fields = [])
     {
         return $this->call('POST', $url, $fields, $client['cookies'], ['profile_photo' => $file], [

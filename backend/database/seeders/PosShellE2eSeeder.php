@@ -14,6 +14,8 @@ class PosShellE2eSeeder extends Seeder
 {
     public function run(): void
     {
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test', 403);
+        abort_unless(DB::table('pos_settings')->where('group', 'portal')->count() === 0, 409, 'E2E portal preference baseline must be empty.');
         DB::transaction(function () {
             $salesOutlet = $this->outlet('E2E Sales Outlet', 'E41');
             $inventoryOutlet = $this->outlet('E2E Inventory Outlet', 'E42');
@@ -53,6 +55,7 @@ class PosShellE2eSeeder extends Seeder
             $reset = $this->member('E2E Reset Administrator', 'e2e-reset@example.invalid', 'Reset Administrator');
             $owner = $this->member('E2E Protected Owner', 'e2e-protected-owner@example.invalid', 'Protected Owner');
             $auditOwner = $this->member('E2E Audit Owner', 'e2e-audit-owner@example.invalid', 'Audit Owner');
+            $prefOwner = $this->member('E2E Portal Preference Owner', 'e2e-pref-owner@example.invalid', 'Preference Owner');
 
             $this->assign($sales, $salesRole, [$salesOutlet]);
             $this->assign($inventory, $inventoryRole, [$salesOutlet, $inventoryOutlet]);
@@ -63,6 +66,7 @@ class PosShellE2eSeeder extends Seeder
             $this->assign($reset, $resetRole, [$salesOutlet]);
             $this->assign($owner, Role::where('name', 'Full Access')->firstOrFail(), [$salesOutlet]);
             $this->assign($auditOwner, Role::where('name', 'Full Access')->firstOrFail(), [$salesOutlet]);
+            $this->assign($prefOwner, Role::where('name', 'Full Access')->firstOrFail(), [$salesOutlet]);
             foreach ([[$salesOutlet, 'MT75 E2E North Audit', 'POST'], [$inventoryOutlet, 'MT75 E2E South Audit', 'GET']] as [$auditOutlet, $action, $method]) {
                 DB::table('pos_audit_logs')->insert(['actor_type' => 'admin', 'actor_id' => $owner->id,
                     'actor_name' => 'E2E Protected Owner', 'actor_email' => $owner->email,
