@@ -43,8 +43,6 @@ final class OutletLifecycleAdministration
                 ])->all(),
             'cash_session_count' => DB::table('cash_sessions')->where('outlet_id', $outlet->id)->count(),
             'cash_entry_count' => DB::table('cash_entries')->where('outlet_id', $outlet->id)->count(),
-            // Read-only historical stock projection for protected Full Access archive review.
-            // Never expose supplier identity, acquisition documents, unit IMEIs or private notes.
             // Owner-only historical invoice/sale and warranty-claim summary, without customer PII,
             // claim narratives, internal notes, payment instruments or event snapshot payloads.
             'sales_claim_history' => [
@@ -66,6 +64,7 @@ final class OutletLifecycleAdministration
                     ->map(fn ($row) => ['id' => $row->public_id, 'number' => $row->claim_number,
                         'status' => $row->status, 'invoice_id' => $row->invoice_id])->all(),
             ],
+            // Protected read-only stock and transfer summaries exclude supplier identities, documents and IMEIs.
             'stock_history' => [
                 'product_count' => DB::table('products')->where('outlet_id', $outlet->id)->count(),
                 'unit_count' => DB::table('stock_units as u')->join('products as p', 'p.id', '=', 'u.product_id')
@@ -75,6 +74,19 @@ final class OutletLifecycleAdministration
                 'stocktake_count' => DB::table('stocktake_sessions')->where('outlet_id', $outlet->id)->count(),
                 'transfer_count' => DB::table('stock_transfers')->where('source_outlet_id', $outlet->id)
                     ->orWhere('destination_outlet_id', $outlet->id)->count(),
+                // Both source and destination are historical owners of the same immutable transfer.
+                'transfers' => DB::table('stock_transfers as t')
+                    ->join('outlets as src', 'src.id', '=', 't.source_outlet_id')
+                    ->join('outlets as dst', 'dst.id', '=', 't.destination_outlet_id')
+                    ->where(fn ($query) => $query->where('t.source_outlet_id', $outlet->id)
+                        ->orWhere('t.destination_outlet_id', $outlet->id))
+                    ->orderByDesc('t.id')->limit(50)
+                    ->get(['t.public_id', 't.transfer_number', 't.status', 'src.public_id as source_id',
+                        'dst.public_id as destination_id', 't.dispatched_at', 't.completed_at'])
+                    ->map(fn ($row) => ['id' => $row->public_id, 'number' => $row->transfer_number,
+                        'status' => $row->status, 'source_id' => $row->source_id,
+                        'destination_id' => $row->destination_id,
+                        'dispatched_at' => $row->dispatched_at, 'completed_at' => $row->completed_at])->all(),
                 'products' => DB::table('products')->where('outlet_id', $outlet->id)->orderBy('id')->limit(50)
                     ->get(['public_id', 'product_code', 'name', 'qty', 'isDeleted'])
                     ->map(fn ($row) => ['id' => $row->public_id, 'code' => $row->product_code,

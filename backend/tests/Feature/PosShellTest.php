@@ -322,6 +322,12 @@ class PosShellTest extends TestCase
         $acquisitionId = DB::table('stock_acquisitions')->insertGetId(['product_id' => $product->id,
             'outlet_id' => $outlet->id, 'source_type' => 'supplier', 'quantity' => 1,
             'seller_name' => 'DO-NOT-EXPOSE-SELLER', 'seller_phone' => '03009999999']);
+        $transferPublic = (string) Str::uuid();
+        $transferId = DB::table('stock_transfers')->insertGetId([
+            'public_id' => $transferPublic, 'transfer_number' => 'D03-ARCH-'.Str::random(10),
+            'source_outlet_id' => $outlet->id, 'destination_outlet_id' => $fallback->id,
+            'created_by_admin_id' => $owner->id, 'status' => 'received', 'version' => 2,
+            'notes' => 'PRIVATE-TRANSFER-NOTES']);
         $ownerClient = $this->client();
         $this->login($ownerClient, $owner->email)->assertOk();
         $path = '/internal/admin/outlet-management/'.$outlet->public_id.'/history';
@@ -330,6 +336,7 @@ class PosShellTest extends TestCase
         // Do NOT make this product-bearing outlet eligible for real service archival.
         // Synthetic direct archived-state read-path fixture leaves the production fail-closed rule unchanged.
         $outlet->forceFill(['archived_at' => now()])->save();
+        $beforeTransfer = DB::table('stock_transfers')->where('id', $transferId)->firstOrFail();
         $beforeUnit = DB::table('stock_units')->where('id', $unit->id)->firstOrFail();
         $beforeMovement = DB::table('stock_movements')->where('id', $movementId)->firstOrFail();
         $response = $this->send($ownerClient, 'GET', $path)->assertOk()
@@ -337,10 +344,16 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.stock_history.unit_count', 1)
             ->assertJsonPath('data.stock_history.movement_count', 1)
             ->assertJsonPath('data.stock_history.acquisition_count', 1)
+            ->assertJsonPath('data.stock_history.transfer_count', 1)
+            ->assertJsonPath('data.stock_history.transfers.0.id', $transferPublic)
+            ->assertJsonPath('data.stock_history.transfers.0.source_id', $outlet->public_id)
+            ->assertJsonPath('data.stock_history.transfers.0.destination_id', $fallback->public_id)
+            ->assertJsonPath('data.stock_history.transfers.0.status', 'received')
             ->assertJsonPath('data.stock_history.products.0.id', $product->public_id)
             ->assertJsonPath('data.stock_history.products.0.quantity', 1)
             ->assertJsonPath('data.stock_history.movements.0.stock_after', 1);
         $this->assertStringNotContainsString('DO-NOT-EXPOSE-SELLER', $response->getContent());
+        $this->assertStringNotContainsString('PRIVATE-TRANSFER-NOTES', $response->getContent());
         $this->assertStringNotContainsString('03009999999', $response->getContent());
         $this->assertStringNotContainsString('unit_code', $response->getContent());
         $limitedClient = $this->client();
@@ -349,6 +362,7 @@ class PosShellTest extends TestCase
         $operatorClient = $this->client();
         $this->login($operatorClient, $operator->email)->assertOk();
         $this->send($operatorClient, 'GET', $path)->assertForbidden();
+        $this->assertEquals($beforeTransfer, DB::table('stock_transfers')->where('id', $transferId)->firstOrFail());
         $this->assertEquals($beforeUnit, DB::table('stock_units')->where('id', $unit->id)->firstOrFail());
         $this->assertEquals($beforeMovement, DB::table('stock_movements')->where('id', $movementId)->firstOrFail());
         $this->assertSame(1, DB::table('stock_acquisitions')->where('id', $acquisitionId)->count());
