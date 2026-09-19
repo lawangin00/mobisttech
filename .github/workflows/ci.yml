@@ -95,6 +95,7 @@ jobs:
           mkdir -p             storage/app/private             storage/framework/cache/data             storage/framework/sessions             storage/framework/testing             storage/framework/views             storage/logs             bootstrap/cache
           cp .env.ci.example .env.testing
           php artisan key:generate --env=testing --force
+          APP_ENV=testing php ../tools/ci/verify-engagement-signing.php
           php -r '$pdo=new PDO("mysql:host=127.0.0.1;port=13306;dbname=mobisttech_test","mobisttech","mobisttech-ci"); $row=$pdo->query("SELECT @@port AS port, VERSION() AS version")->fetch(PDO::FETCH_ASSOC); echo "MYSQL_PORT=".$row["port"]." MYSQL_VERSION=".$row["version"].PHP_EOL; if ((int)$row["port"] !== 13306) { exit(3); }'
           php -r 'require "vendor/autoload.php"; $redis=new Predis\Client(["scheme"=>"tcp","host"=>"127.0.0.1","port"=>16379]); echo "REDIS=".$redis->ping().PHP_EOL;'
           php artisan migrate:fresh --env=testing --force
