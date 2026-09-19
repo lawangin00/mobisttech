@@ -43,9 +43,9 @@ Active stage: MT-7 - Migration rehearsal and release readiness (In Progress)
 
 Last completed stage: MT-6 - Shared brand and Windows Control
 
-Current In Progress point: None
+Current In Progress point: MT-7.3 - Monorepo CI and reproducible build gates
 
-Status: MT-0 through MT-6 complete. MT-7 is in progress. 51/56 complete, 5 pending. MT-7.2 is Complete.
+Status: MT-0 through MT-6 complete. MT-7 is in progress. 51/56 complete, 5 pending. MT-7.3 is In Progress.
 
 Last completed point: MT-7.2 - Security, performance and resilience audit
 
@@ -402,7 +402,7 @@ This is the live status list. Completed counts are preserved from verified Git c
 | MT-6.3 | Windows operator and local integration acceptance | Complete |
 | MT-7.1 | Data migration and rollback rehearsal | Complete |
 | MT-7.2 | Security, performance and resilience audit | Complete |
-| MT-7.3 | Monorepo CI and reproducible build gates | Pending |
+| MT-7.3 | Monorepo CI and reproducible build gates | In Progress |
 | MT-7.4 | Linux deployment and backup readiness | Pending |
 | MT-7.5 | Full functional parity and acceptance | Pending |
 | MT-7.6 | Product user manual and administrator operations guide | Pending |
@@ -1107,3 +1107,11 @@ No source-repository write, source-data migration, source runtime action, real p
 - MT-7.2 closure: Security, performance and resilience audit is Complete. Evidence: `docs/audit/MT-7.2_VERIFICATION.md`, `docs/audit/MT-7.2_PERFORMANCE.md`, `docs/audit/MT-7.2_DEPENDENCY_LICENSE_NOTICE_AUDIT.md`, `docs/audit/MT-7.2_LEGAL_PRIVACY_AUDIT.md`, and root `NOTICE.md`.
 - Q01 remains In Progress only because MT-7.3 and MT-7.5 are pending. No threshold waiver, security-policy weakening, live provider activation, protected-source mutation or fabricated project-license choice occurred.
 - Next action: MT-7.2 is Complete. Await explicit Proceed/Y before starting MT-7.3 - Monorepo CI and reproducible build gates.
+- MT-7.3 implementation checkpoint: added first monorepo GitHub Actions workflow `.github/workflows/ci.yml` for clean-checkout acceptance on Ubuntu with MySQL 8.4 mapped to the product-safe 13306 test port, Redis mapped to 16379, exact PHP 8.3.33 / Node 24.19.0 / npm 11.17.0 setup, lockfile installs, synthetic ignored test env generation, full backend/Pint/TypeScript/build gates, explicit MySQL concurrency + guarded-reset gates, Chromium Playwright, Website production Playwright and final schema cleanup verification.
+- Added `backend/.env.ci.example` with synthetic non-secret CI credentials and all external integrations disabled. No live Google/payment/AWS/provider secret or user data is required by CI.
+- Playwright configs are now cross-platform without weakening local acceptance: local default remains Edge and 30s server readiness; CI can select Chromium, extend harness-only server startup readiness to 120s and reuse the already-built Website production bundle.
+- Added permanent `zz-ci-performance.spec.ts` production regression gate: 3-sample median LCP <=2,500 ms, max CLS <=0.1, max qualifying interaction <=200 ms and public request count <=12 in hybrid/digital_only/commerce_only. Local focused acceptance PASS: hybrid median LCP 1,948 ms, digital_only 1,276 ms, commerce_only 1,924 ms; CLS 0 and 10 requests in every sample.
+- Added `tools/ci/verify-public-budgets.mjs`: backend largest JS <=600 KiB, CSS <=32 KiB, Website static total <=800 KiB, largest Website chunk <=260 KiB, and public build secret-marker rejection. Current local builds PASS at 519,062 / 23,587 / 679,030 / 228,922 bytes.
+- Workflow YAML parses locally, both Playwright configs enumerate, local tracked secret-pattern scan NONE and git diff check PASS. Workflow intentionally uploads no artifacts; setup-node cache contains package-manager cache only.
+- Current incomplete: push this MT-7.3 implementation checkpoint, collect actual clean-checkout GitHub Actions run on private `lawangin00/mobisttech`, inspect any failed job logs and materially remediate until remote CI passes. MT-7.4 has not started.
+- Next action: commit/push MT-7.3 CI checkpoint -> fetch GitHub workflow run/jobs/logs -> fix only proven CI portability/reproducibility defects -> fresh remote PASS -> MT-7.3 closure.

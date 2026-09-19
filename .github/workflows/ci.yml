@@ -1,0 +1,162 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  acceptance:
+    name: Clean checkout acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CI: "true"
+      COMPOSER_NO_INTERACTION: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+      PLAYWRIGHT_CHANNEL: chromium
+      PLAYWRIGHT_WEBSERVER_TIMEOUT_MS: "120000"
+      PLAYWRIGHT_WEBSITE_SERVER_COMMAND: npm --prefix ../website run start
+      WEBSITE_API_TIMEOUT_MS: "12000"
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root-ci-only
+          MYSQL_DATABASE: mobisttech_test
+          MYSQL_USER: mobisttech
+          MYSQL_PASSWORD: mobisttech-ci
+        ports:
+          - 13306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot-ci-only --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 16379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@2.37.2
+        with:
+          php-version: "8.3.33"
+          extensions: bcmath, pdo_mysql
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24.19.0"
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            website/package-lock.json
+
+      - name: Pin npm
+        run: npm install --global npm@11.17.0
+
+      - name: Install backend dependencies
+        run: composer install --working-dir=backend --no-interaction --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Install frontend dependencies
+        run: |
+          npm ci --prefix backend
+          npm ci --prefix website
+
+      - name: Prepare isolated test environment
+        working-directory: backend
+        run: |
+          cp .env.ci.example .env.testing
+          php artisan key:generate --env=testing --force
+          php -r '$pdo=new PDO("mysql:host=127.0.0.1;port=13306;dbname=mobisttech_test","mobisttech","mobisttech-ci"); echo "MYSQL=".$pdo->query("SELECT VERSION()")->fetchColumn().PHP_EOL;'
+          php -r 'require "vendor/autoload.php"; $redis=new Predis\Client(["scheme"=>"tcp","host"=>"127.0.0.1","port"=>16379]); echo "REDIS=".$redis->ping().PHP_EOL;'
+          php artisan migrate:fresh --env=testing --force
+
+      - name: Composer and PHP style gates
+        working-directory: backend
+        run: |
+          composer validate --no-interaction
+          vendor/bin/pint --test
+
+      - name: Full backend regression
+        working-directory: backend
+        run: php artisan test
+
+      - name: Explicit MySQL race and reset gates
+        working-directory: backend
+        run: php artisan test tests/Feature/InventoryConcurrencyTest.php tests/Feature/GuardedResetServiceTest.php
+
+      - name: Backend TypeScript and production build
+        run: |
+          npm --prefix backend run typecheck
+          npm --prefix backend run build
+
+      - name: Website TypeScript lint and production build
+        run: |
+          npm --prefix website run typecheck
+          npm --prefix website run lint
+          npm --prefix website run build
+
+      - name: Public bundle and secret-marker budgets
+        run: node tools/ci/verify-public-budgets.mjs
+
+      - name: Tracked secret scan
+        shell: bash
+        run: |
+          if git grep -n -I -E '(AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|gh[pousr]_[A-Za-z0-9_]{20,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_(live|test)_[A-Za-z0-9]{16,})' -- . ':(exclude).local/**'; then
+            echo "Tracked secret-like value detected."
+            exit 1
+          fi
+          echo "TRACKED_SECRET_SCAN=PASS"
+
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install --with-deps chromium
+
+      - name: Reset browser test schema
+        working-directory: backend
+        run: php artisan migrate:fresh --env=testing --force
+
+      - name: POS and Admin Playwright
+        working-directory: backend
+        run: npx playwright test --config=playwright.config.ts
+
+      - name: Website production Playwright and performance budgets
+        working-directory: backend
+        run: npx playwright test --config=playwright.website.config.ts
+
+      - name: Final schema and cleanup gate
+        working-directory: backend
+        run: php ../tools/migration/verify_mysql_schema.php api
+
+      - name: Ensure no tracked runtime artifacts
+        shell: bash
+        run: |
+          test ! -f backend/public/hot
+          test ! -f backend/.env.testing || git check-ignore -q backend/.env.testing
+          git diff --exit-code
+          git status --porcelain
