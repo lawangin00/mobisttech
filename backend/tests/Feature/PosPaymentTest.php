@@ -64,6 +64,45 @@ class PosPaymentTest extends TestCase
         $this->assertSame(1, DB::table('invoices')->count());
     }
 
+    public function test_all_four_pos_methods_share_one_invoice_and_keep_cash_closing_and_website_channels_distinct(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $destinations = [
+            'cash' => $this->destination('cash', 'Four-way test drawer'),
+            'card' => $this->destination('card', 'Four-way test card terminal', ['masked_identifier' => 'TERM-4WAY']),
+            'mobile_wallet' => $this->destination('mobile_wallet', 'Four-way test wallet', ['masked_identifier' => '*******8765']),
+            'bank_transfer' => $this->destination('bank_transfer', 'Four-way test bank account', ['masked_identifier' => '****4321']),
+        ];
+        $key = 'mt75-four-way-'.Str::uuid();
+        $sale = $this->service()->sell($this->actor, $this->outlet, $key, [
+            'sale' => ['discount' => '0.00', 'lines' => [['product_id' => $product->public_id, 'quantity' => 1]]],
+            'payments' => [
+                ['method' => 'cash', 'destination_id' => $destinations['cash']['destination_id'], 'amount' => '20.00', 'cash_tendered' => '30.00'],
+                ['method' => 'card', 'destination_id' => $destinations['card']['destination_id'], 'amount' => '50.00', 'transaction_reference' => 'MT75-CARD-4WAY'],
+                ['method' => 'mobile_wallet', 'destination_id' => $destinations['mobile_wallet']['destination_id'], 'amount' => '60.00', 'transaction_reference' => 'MT75-WALLET-4WAY'],
+                ['method' => 'bank_transfer', 'destination_id' => $destinations['bank_transfer']['destination_id'], 'amount' => '70.02', 'transaction_reference' => 'MT75-BANK-4WAY'],
+            ],
+        ]);
+        $this->assertSame('200.02', $sale['paid_amount']);
+        $this->assertSame('10.00', $sale['cash_change_total']);
+        $this->assertSame(['cash', 'card', 'mobile_wallet', 'bank_transfer'], array_column($sale['payments'], 'method'));
+        $this->assertSame(['20.00', '50.00', '60.00', '70.02'], array_column($sale['payments'], 'amount'));
+        $this->assertSame(1, DB::table('invoices')->where('public_id', $sale['invoice_id'])->count());
+        $this->assertSame(4, DB::table('pos_tender_allocations')->where('invoice_id', DB::table('invoices')->where('public_id', $sale['invoice_id'])->value('id'))->count());
+        $session = DB::table('cash_sessions')->where('outlet_id', $this->outlet->id)->where('status', 'open')->firstOrFail();
+        $summary = app(CashSessionOperations::class)->session($this->actor, $this->outlet, $session->public_id)['summary'];
+        $this->assertSame('20.00', $summary['cash_sales']);
+        $this->assertSame('20.00', $summary['expected_cash']);
+        $this->assertCount(3, $summary['non_cash_destinations']);
+        $byMethod = collect($summary['non_cash_destinations'])->keyBy('method');
+        $this->assertSame('50.00', $byMethod['card']['gross_expected_receipts']);
+        $this->assertSame('60.00', $byMethod['mobile_wallet']['gross_expected_receipts']);
+        $this->assertSame('70.02', $byMethod['bank_transfer']['gross_expected_receipts']);
+        $this->assertSame(['cod', 'jazzcash', 'easypaisa', 'card'], array_keys(config('commerce.providers')));
+        $this->assertArrayNotHasKey('bank_transfer', config('commerce.providers'));
+    }
+
     public function test_destination_scope_state_masking_and_management_permissions_are_enforced(): void
     {
         $product = $this->product();
