@@ -122,7 +122,9 @@ final class ProductDefinitions
     public function unitAttributes(IdentityAccount $actor, Outlet $outlet, string $unitId, array $input): StockUnit
     {
         return DB::transaction(function () use ($actor, $outlet, $unitId, $input) {
-            $this->authorize($actor, $outlet->fresh());
+            // Match the outlet archival lock before authorizing any unit-attribute write.
+            $lockedOutlet = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
+            $this->authorize($actor, $lockedOutlet);
             $unit = StockUnit::where('public_id', $unitId)->firstOrFail();
             $product = Product::whereKey($unit->product_id)->where('outlet_id', $outlet->id)->where('isDeleted', false)->lockForUpdate()->firstOrFail();
             $unit = StockUnit::whereKey($unit->id)->lockForUpdate()->firstOrFail();

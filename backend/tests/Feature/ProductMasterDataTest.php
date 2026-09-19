@@ -166,6 +166,32 @@ class ProductMasterDataTest extends TestCase
         $this->reject(fn () => app(ProductDefinitions::class)->save($cms, $this->outlet, $base));
     }
 
+    public function test_archived_outlet_rejects_unit_attribute_edits_without_rewriting_history(): void
+    {
+        $product = $this->product();
+        $unit = new StockUnit;
+        $unit->forceFill(['product_id' => $product->id, 'unit_no' => 1,
+            'status' => 'in_stock', 'color' => 'Black'])->save();
+        $service = app(ProductDefinitions::class);
+        $unit = $service->unitAttributes($this->actor, $this->outlet, $unit->public_id,
+            ['color_master_data_id' => $this->option('unit_color', 'black')->id]);
+        $before = DB::table('stock_units')->where('id', $unit->id)->firstOrFail();
+        $events = DB::table('domain_events')->count();
+        // Direct synthetic state, not approval to archive an outlet with products or stock.
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        try {
+            $service->unitAttributes($this->actor, $this->outlet, $unit->public_id,
+                ['color_master_data_id' => $this->option('unit_color', 'white')->id]);
+            $this->fail('An archived outlet accepted a unit-attribute edit.');
+        } catch (HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
+        $this->assertEquals($before, DB::table('stock_units')->where('id', $unit->id)->firstOrFail());
+        $this->assertSame($events, DB::table('domain_events')->count());
+        $this->assertSame($product->id, $unit->fresh()->product_id);
+        $this->assertSame('Black', $unit->fresh()->color);
+    }
+
     public function test_unit_variant_keys_and_private_metadata_remain_separate_from_display_labels(): void
     {
         $product = $this->product();
