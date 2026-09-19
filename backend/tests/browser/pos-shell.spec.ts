@@ -119,5 +119,51 @@ test('protected Admin creates and archives an unused outlet in actual UI; operat
     try {const operator=await guest.newPage();await login(operator,'e2e-sales@example.invalid');
         await expect(operator.getByTestId('manage-outlets-link')).toHaveCount(0);
         expect((await operator.goto('/internal/admin/outlet-management'))?.status()).toBe(403);
+        await operator.goto('/internal/admin/pos');
+        await operator.getByTestId('logout').click();
+        await operator.waitForURL('**/internal/admin/pos/login');
     } finally {await guest.close();}
+});
+
+
+test('Team Member account and recovery UI are accessible only through the approved Admin realm', async ({page}) => {
+    await page.goto('/internal/admin/forgot-password');
+    await expect(page.getByRole('heading',{name:'Team Member account recovery'})).toBeVisible();
+    await page.getByTestId('recovery-email').fill('e2e-sales@example.invalid');
+    const disabled=page.waitForResponse(r=>r.url().endsWith('/internal/admin/auth/forgot-password')&&r.request().method()==='POST');
+    await page.getByTestId('recovery-submit').click();
+    expect((await disabled).status()).toBe(503);
+    await expect(page.getByTestId('recovery-message')).toHaveText('Email recovery is unavailable. Contact your administrator.');
+    const unauthenticated=await page.goto('/internal/admin/manage-account');
+    expect(unauthenticated?.status()).toBe(401);
+    await page.goto('/internal/admin/reset-password?email=e2e-sales%40example.invalid&token=synthetic-invalid');
+    await expect(page.getByRole('heading',{name:'Set a new password'})).toBeVisible();
+    await expect(page.getByTestId('recovery-email')).toHaveValue('e2e-sales@example.invalid');
+    await login(page,'e2e-sales@example.invalid');
+    await page.getByTestId('my-account-link').click();
+    await page.waitForURL('**/internal/admin/manage-account');
+    await expect(page.getByTestId('account-name')).toHaveText('E2E Salesperson');
+    await expect(page.getByTestId('account-email')).toHaveText('e2e-sales@example.invalid');
+    await page.getByTestId('account-current').fill('incorrect-password');
+    await page.getByTestId('account-new').fill('SyntheticUpdatedPass123!');
+    await page.getByTestId('account-confirm').fill('SyntheticUpdatedPass123!');
+    const rejected=page.waitForResponse(r=>r.url().endsWith('/internal/admin/auth/password')&&r.request().method()==='PATCH');
+    await page.getByTestId('account-change').click();
+    expect((await rejected).status()).toBe(422);
+    await expect(page.getByRole('alert')).toHaveText('The request could not be completed.');
+    await page.getByTestId('account-current').fill(password);
+    const accepted=page.waitForResponse(r=>r.url().endsWith('/internal/admin/auth/password')&&r.request().method()==='PATCH');
+    await page.getByTestId('account-change').click();
+    expect((await accepted).status()).toBe(200);
+    await page.waitForURL('**/internal/admin/pos/login');
+    await page.getByTestId('login-email').fill('e2e-sales@example.invalid');
+    await page.getByTestId('login-password').fill(password);
+    const old=page.waitForResponse(r=>r.url().endsWith('/internal/admin/auth/login')&&r.request().method()==='POST');
+    await page.getByTestId('login-submit').click();
+    expect((await old).status()).toBe(422);
+    await page.getByTestId('login-password').fill('SyntheticUpdatedPass123!');
+    const fresh=page.waitForResponse(r=>r.url().endsWith('/internal/admin/auth/login')&&r.request().method()==='POST');
+    await page.getByTestId('login-submit').click();
+    expect((await fresh).status()).toBe(200);
+    await page.waitForURL('**/internal/admin/pos');
 });

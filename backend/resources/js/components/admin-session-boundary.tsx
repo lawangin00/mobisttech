@@ -24,7 +24,7 @@ export default function AdminSessionBoundary({ children }: PropsWithChildren) {
     const activityPending = useRef(false);
     const lastActivitySync = useRef(0);
     const path = typeof window !== 'undefined' ? window.location.pathname : '';
-    const enabled = path.startsWith('/internal/admin') && path !== '/internal/admin/pos/login';
+    const enabled = path.startsWith('/internal/admin') && !['/internal/admin/pos/login','/internal/admin/forgot-password','/internal/admin/reset-password'].includes(path);
 
     const applyState = useCallback((nextPolicy?: SessionPolicy, nextState?: SessionState) => {
         if (nextPolicy) setPolicy(nextPolicy);

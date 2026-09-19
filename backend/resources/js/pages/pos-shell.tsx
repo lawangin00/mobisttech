@@ -159,6 +159,7 @@ export default function PosShell({ shell, view }: { shell: ShellContract; view: 
                                         {shell.outlets.map((outlet) => <option key={outlet.id} value={outlet.id}>{outlet.name}</option>)}
                                     </select>
                                 </label>}
+                                <Link href="/internal/admin/manage-account" data-testid="my-account-link" className="rounded-lg border border-slate-300 px-3 py-2 text-sm">My account</Link>
                                 {shell.can_manage_outlets && <Link href="/internal/admin/outlet-management" data-testid="manage-outlets-link" className="rounded-lg border border-slate-300 px-3 py-2 text-sm">Manage outlets</Link>}
                                 <button data-testid="logout" disabled={busy} onClick={() => void logout()}
                                     className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-60">

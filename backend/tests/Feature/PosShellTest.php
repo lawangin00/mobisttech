@@ -187,6 +187,28 @@ class PosShellTest extends TestCase
         $this->assertSame('051', $existing->fresh()->outlet_code);
     }
 
+    public function test_account_and_recovery_pages_use_only_the_existing_admin_realm(): void
+    {
+        $guest = $this->client();
+        $this->send($guest, 'GET', '/internal/admin/manage-account')->assertUnauthorized();
+        $this->send($guest, 'GET', '/internal/admin/forgot-password')->assertOk()
+            ->assertHeader('Referrer-Policy', 'no-referrer')
+            ->assertInertia(fn (Assert $page) => $page->component('admin-recovery')->where('mode', 'request'));
+        $resetPage = $this->send($guest, 'GET', '/internal/admin/reset-password?email=x@example.invalid&token=untrusted')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('admin-recovery')->where('mode', 'reset')->missing('token'));
+        $this->assertStringContainsString('no-store', (string) $resetPage->headers->get('Cache-Control'));
+        config(['identity.recovery_delivery_enabled' => false]);
+        $this->send($guest, 'POST', '/internal/admin/auth/forgot-password', ['email' => 'x@example.invalid'])->assertStatus(503);
+        $outlet = $this->outlet('Account outlet', '057');
+        $actor = $this->member('account-page@example.invalid', ['shops.enter', 'shop.sales']);
+        $actor->shops()->attach($outlet);
+        $user = $this->client();
+        $this->login($user, $actor->email)->assertOk();
+        $this->send($user, 'GET', '/internal/admin/manage-account')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('admin-account')
+                ->where('identity.email', $actor->email)->missing('identity.password'));
+    }
+
     private function member(string $email, array $permissions): Admin
     {
         $member = new Admin;

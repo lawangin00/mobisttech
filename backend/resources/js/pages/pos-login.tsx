@@ -81,7 +81,7 @@ export default function PosLogin() {
                             {busy ? 'Signing in?' : 'Sign in'}
                         </button>
                     </form>
-                    <p className="mt-6 text-xs leading-5 text-slate-500">For account recovery or access changes, use the approved administrative process. This POS shell does not create alternate credential realms.</p>
+                    <p className="mt-6 text-xs leading-5 text-slate-500"><a href="/internal/admin/forgot-password" className="underline">Forgot your password?</a> Recovery email works only after approved delivery configuration. This POS shell does not create alternate credential realms.</p>
                 </div>
             </section>
         </div>

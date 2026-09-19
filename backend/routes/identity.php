@@ -50,6 +50,8 @@ foreach (['customer', 'admin'] as $realm) {
 Route::get('/internal/admin/pos/login', [PosShellController::class, 'login'])
     ->defaults('identity_realm', 'admin')->middleware('identity')->name('admin.pos.login');
 
+Route::get('/internal/admin/forgot-password', [PosShellController::class, 'recoveryRequest'])->defaults('identity_realm', 'admin')->middleware('identity')->name('admin.recovery.request');
+Route::get('/internal/admin/reset-password', [PosShellController::class, 'recoveryReset'])->defaults('identity_realm', 'admin')->middleware('identity')->name('admin.recovery.reset');
 Route::prefix('/api/v1')->middleware(['identity', 'identity.auth', 'throttle:api-customer'])->group(function () {
     Route::post('/cart/quote', [CustomerApiController::class, 'cartQuote'])->defaults('identity_realm', 'customer')->name('api.customer.cart.quote');
     Route::get('/checkout/channels', [CustomerApiController::class, 'checkoutChannels'])->defaults('identity_realm', 'customer')->name('api.customer.checkout.channels');
@@ -81,6 +83,7 @@ Route::prefix('/api/v1')->middleware(['identity', 'identity.auth', 'throttle:api
 });
 Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->group(function () {
     Route::get('/pos', [PosShellController::class, 'home'])->defaults('identity_realm', 'admin')->name('admin.pos.home');
+    Route::get('/manage-account', [PosShellController::class, 'manageAccount'])->defaults('identity_realm', 'admin')->name('admin.account.page');
     Route::get('/pos/workspace/{area}', [PosShellController::class, 'workspace'])->whereIn('area', ['sales', 'inventory', 'invoices', 'warranty', 'claims', 'profile', 'reports', 'operations'])
         ->defaults('identity_realm', 'admin')->name('admin.pos.workspace');
     Route::get('/pos/outlet-profile', [PosShellController::class, 'outletProfile'])->defaults('identity_realm', 'admin')->name('admin.pos.outlet-profile.show');

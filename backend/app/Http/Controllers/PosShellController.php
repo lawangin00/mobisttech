@@ -22,6 +22,33 @@ final class PosShellController extends Controller
         return Inertia::render('pos-login');
     }
 
+    public function manageAccount()
+    {
+        $actor = $this->profileActor();
+        return Inertia::render('admin-account', ['identity' => [
+            'name' => $actor->name, 'email' => $actor->email,
+            'job_title' => $actor->job_title, 'roles' => $actor->roleNames(),
+        ]]);
+    }
+
+    public function recoveryRequest()
+    {
+        return $this->recoveryPage('request');
+    }
+
+    public function recoveryReset()
+    {
+        return $this->recoveryPage('reset');
+    }
+
+    private function recoveryPage(string $mode)
+    {
+        $response = Inertia::render('admin-recovery', ['mode' => $mode])->toResponse(request());
+        $response->headers->set('Cache-Control', 'no-store');
+        $response->headers->set('Referrer-Policy', 'no-referrer');
+        return $response;
+    }
+
     public function outletProfile(Request $request, OutletProfileAdministration $service)
     {
         return response()->json(['data' => $service->show($this->profileActor(), $this->selectedOutlet($request))]);
