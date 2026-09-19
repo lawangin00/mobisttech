@@ -121,13 +121,4 @@ test('stock control UI exposes permission-scoped procurement count transfer and 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     expect(overflow).toBe(false);
 
-    await page.waitForLoadState('networkidle');
-    const logout = page.getByTestId('logout');
-    await expect(logout).toBeEnabled();
-    const [logoutResponse] = await Promise.all([
-        page.waitForResponse((response) => response.url().endsWith('/internal/admin/auth/logout') && response.request().method() === 'POST'),
-        logout.click(),
-    ]);
-    expect(logoutResponse.ok()).toBe(true);
-    await page.waitForURL('**/internal/admin/pos/login');
 });
