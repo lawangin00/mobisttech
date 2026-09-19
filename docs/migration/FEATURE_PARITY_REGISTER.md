@@ -41,7 +41,7 @@ Source coverage: 470 tracked files; 54 resolved routes. Target owner: backend sh
 
 ### P02 - POS products and master data
 
-Source coverage: 45 tracked files; 18 resolved routes. Target owner: backend shared services and protected React/Inertia POS administration. Gates: MT-2.3, MT-4.2. Target status: Pending.
+Source coverage: 45 tracked files; 18 resolved routes. Target owner: backend shared services and protected React/Inertia POS administration. Gates: MT-2.3, MT-4.2. Target status: Complete (MT-7.5 P02 target-only closure; see `../audit/MT-7.5_P02_ROUTE_CROSSWALK.md` and `../audit/MT-7.5_FAST_TRACK_REVIEW.md`; cross-family gates and live data cutover remain independently OPEN).
 
 **Preserve:** Preserve protected categories, variant key, brand/model/capacity/condition options, acquisition source, managed unit status and historical option usage.
 

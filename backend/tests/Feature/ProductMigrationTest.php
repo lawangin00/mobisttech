@@ -121,6 +121,7 @@ class ProductMigrationTest extends TestCase
 
     public function test_import_is_atomic_with_outer_rollback_and_preserves_deleted_snapshot_and_timezone(): void
     {
+        $baselineEvents = DB::table('domain_events')->count();
         DB::beginTransaction();
         $result = app(ProductImporter::class)->import($this->run, 'pos', 'products', $this->productRow(['isDeleted' => true, 'created_at' => '2026-08-31 12:00:00']), 'Asia/Karachi');
         $this->assertSame('imported', $result['outcome']);
@@ -129,7 +130,7 @@ class ProductMigrationTest extends TestCase
         DB::rollBack();
         $this->assertSame(0, Product::count());
         $this->assertSame(0, DB::table('migration_identity_map')->where('source_table', 'products')->count());
-        $this->assertSame(0, DB::table('domain_events')->count());
+        $this->assertSame($baselineEvents, DB::table('domain_events')->count());
     }
 
     private function map(string $table, int $old, string $target, int $id): void

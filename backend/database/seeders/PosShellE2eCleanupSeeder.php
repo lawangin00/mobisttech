@@ -53,6 +53,41 @@ class PosShellE2eCleanupSeeder extends Seeder
                 ->where('invoice_number', 'like', 'MT75-HIST-%')
                 ->where('customer_name', 'like', 'MT75 Synthetic Customer %')->delete();
             $variantOutlet = DB::table('outlets')->where('outlet_code', '908')->where('name', 'MT75 P02 Variant Outlet')->value('id');
+            // Remove only source-qualified P02 synthetic import rows before its 908 outlet/options.
+            $importRun = DB::table('migration_runs')->where('input_manifest_hash', str_repeat('e', 64))
+                ->where('code_hash', str_repeat('f', 64))->where('schema_hash', str_repeat('a', 64))
+                ->where('target_identity', 'mobisttech_test')->where('status', 'product_rehearsal')->first();
+            if ($importRun) {
+                $importProduct = DB::table('products')->where('name', 'MT75 P02 Imported Phone')
+                    ->where('product_code', 'MST-MOB-908-000807')->first();
+                $importBrand = DB::table('pos_master_data_options')->where('list_key', 'product_brand')
+                    ->where('code', 'mt75_p02_imported_brand')->where('label', 'MT75 P02 Imported Brand')->first();
+                abort_unless($importProduct && $importBrand && (int) $importProduct->outlet_id === (int) $variantOutlet
+                    && (int) $importProduct->brand_master_data_id === (int) $importBrand->id
+                    && $importProduct->brand === 'MT75 Original Imported Brand'
+                    && ! DB::table('stock_units')->where('product_id', $importProduct->id)->exists()
+                    && ! DB::table('sales')->where('product_id', $importProduct->id)->exists()
+                    && ! DB::table('product_listings')->where('product_id', $importProduct->id)->exists(), 409);
+                $maps = DB::table('migration_identity_map')->where('run_id', $importRun->id)->get();
+                abort_unless($maps->count() === 4 && $maps->where('source_repository', 'pos')->count() === 4
+                    && $maps->where('source_table', 'products')->where('source_primary_key', '807')
+                        ->where('target_id', (string) $importProduct->id)->count() === 1
+                    && $maps->where('source_table', 'pos_master_data_options')->where('source_primary_key', '802')
+                        ->where('target_id', (string) $importBrand->id)->count() === 1, 409);
+
+                abort_unless(! DB::table('migration_quarantine')->where('run_id', $importRun->id)->exists()
+                    && ! DB::table('migration_reconciliation')->where('run_id', $importRun->id)->exists()
+                    && ! DB::table('migration_source_history')->where('run_id', $importRun->id)->exists(), 409);
+                DB::table('pos_master_data_usages')->where('usage_type', 'product')
+                    ->where('usage_id', (string) $importProduct->id)->delete();
+                DB::table('domain_events')->where('aggregate_type', 'product')
+                    ->where('aggregate_id', $importProduct->public_id)->delete();
+                DB::table('products')->where('id', $importProduct->id)->delete();
+                abort_unless(! DB::table('pos_master_data_usages')->where('master_data_option_id', $importBrand->id)->exists(), 409);
+                DB::table('pos_master_data_options')->where('id', $importBrand->id)->delete();
+                DB::table('migration_identity_map')->where('run_id', $importRun->id)->delete();
+                DB::table('migration_runs')->where('id', $importRun->id)->delete();
+            }
             if ($variantOutlet) {
                 $variantProduct = DB::table('products')->where('outlet_id', $variantOutlet)->where('name', 'MT75 P02 Variant Phone')->first();
                 if ($variantProduct) {

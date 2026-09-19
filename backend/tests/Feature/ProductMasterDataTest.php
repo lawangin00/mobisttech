@@ -64,6 +64,7 @@ class ProductMasterDataTest extends TestCase
 
     public function test_protected_codes_and_canonical_status_deletion_are_rejected(): void
     {
+        $baselineEvents = DB::table('domain_events')->count();
         $service = app(MasterDataAdministration::class);
         foreach (['create', 'archive', 'delete'] as $action) {
             $this->reject(fn () => $service->change($this->actor, $action, 'product_category', $action === 'create' ? ['label' => 'Laptops'] : [], $this->option('product_category', 'mobile_phone')->id));
@@ -71,7 +72,7 @@ class ProductMasterDataTest extends TestCase
         $this->reject(fn () => $service->change($this->actor, 'delete', 'unit_condition', [], $this->option('unit_condition', 'used')->id));
         $this->reject(fn () => $service->change($this->actor, 'delete', 'acquisition_source_type', [], $this->option('acquisition_source_type', 'supplier')->id));
         $this->reject(fn () => $this->option('product_category', 'mobile_phone')->update(['code' => 'laptop']));
-        $this->assertSame(0, DB::table('domain_events')->count());
+        $this->assertSame($baselineEvents, DB::table('domain_events')->count());
     }
 
     public function test_master_data_requires_configuration_grant_and_rejects_actor_or_code_injection(): void
@@ -131,6 +132,7 @@ class ProductMasterDataTest extends TestCase
 
     public function test_definition_rejects_duplicate_names_invalid_category_money_and_stock_actor_injection(): void
     {
+        $baselineEvents = DB::table('domain_events')->count();
         $product = $this->product();
         $base = $this->input($product->brand_master_data_id);
         foreach ([['category' => 'laptop'], ['sale_price' => '1e4'], ['purchase_price' => '-1'], ['sale_price' => 0.1], ['qty' => 900], ['outlet_id' => 99], ['product_code' => 'fake'], ['opening_stock' => 1], ['name' => ''], ['model' => null]] as $bad) {
@@ -139,7 +141,7 @@ class ProductMasterDataTest extends TestCase
         $this->reject(fn () => app(ProductDefinitions::class)->save($this->actor, $this->outlet, $base));
         $this->assertSame(1, Product::count());
         $this->assertSame(0, DB::table('stock_units')->count());
-        $this->assertSame(1, DB::table('domain_events')->count());
+        $this->assertSame($baselineEvents + 1, DB::table('domain_events')->count());
     }
 
     public function test_accessory_subcategory_semantics_and_outlet_boundaries_are_enforced(): void
@@ -197,14 +199,16 @@ class ProductMasterDataTest extends TestCase
 
     public function test_definition_transaction_rollback_does_not_publish_or_leave_a_product(): void
     {
+        $baselineEvents = DB::table('domain_events')->count();
+        $baselineVersions = DB::table('publication_versions')->count();
         DB::beginTransaction();
         $product = $this->product();
         $id = $product->id;
-        $this->assertSame(1, DB::table('domain_events')->count());
+        $this->assertSame($baselineEvents + 1, DB::table('domain_events')->count());
         DB::rollBack();
         $this->assertNull(Product::find($id));
-        $this->assertSame(0, DB::table('domain_events')->count());
-        $this->assertSame(0, DB::table('publication_versions')->count());
+        $this->assertSame($baselineEvents, DB::table('domain_events')->count());
+        $this->assertSame($baselineVersions, DB::table('publication_versions')->count());
         $this->assertSame('007', BusinessIdentifier::outlet(null, 7));
         $this->reject(fn () => BusinessIdentifier::outlet(null, 1000));
     }

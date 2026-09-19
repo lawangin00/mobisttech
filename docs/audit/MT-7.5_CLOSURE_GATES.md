@@ -11,7 +11,7 @@ For each row below, compare the *original source behavior* with current approved
 | ID | Current source-register status | Specific remaining acceptance / next resolution |
 |---|---|---|
 | P01 | Pending | Reconcile original three-guard source contract against *approved* unified Admin/Customer realms; verify source-qualified POS outlet/Admin/Website-customer collision mapping, cross-role/outlet direct denial, password reset/session invalidation and actual UI. See identity decision below. |
-| P02 | Pending | Match protected category, identifier and managed-option historical usage/deletion behavior to source assertions; join target category/stock UI with MySQL history and synthetic migration. |
+| P02 | Complete | MT-7.5 P02 closure: 18/18 tagged route dispositions; protected category/variant and managed-option histories, source-qualified synthetic imported-product real Edge edit, product ID/brand/stock preserved; changed-candidate backend 18/18 (208 assertions), imported Edge 1/1 PASS. P03/P06/W02 and live source cutover independent. |
 | P03 | Pending | Reconcile source acquisition, serialized IMEI slot/re-entry and quantity movement history to target; independently join receiving, reservation/sale/return and race totals. |
 | P04 | Pending | Compare negative sale/return and original invoice/customer snapshots, precise money/stock changes, cross-outlet history, invoice printing and permissions end-to-end. |
 | P05 | Pending | Compare expiry/claim lifecycle, clause-version snapshot and role denial; verify claims/warranty print in real UI against historical record. |
