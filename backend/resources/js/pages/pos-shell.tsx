@@ -4,6 +4,7 @@ import PosTransactionWorkspace from '../components/pos-transaction-workspace';
 import PosOperationsWorkspace from '../components/pos-operations-workspace';
 import PosCustomerReportingWorkspace from '../components/pos-customer-reporting-workspace';
 import OutletProfileWorkspace from '../components/outlet-profile-workspace';
+import {clearPosTabSearch} from '../components/pos-tab-search-memory';
 import PosMasterDataWorkspace from '../components/pos-master-data-workspace';
 
 type NavigationItem = {
@@ -74,6 +75,7 @@ export default function PosShell({ shell, view }: { shell: ShellContract; view: 
                 body: JSON.stringify({ outlet_id: outletId }),
             });
             if (!response.ok) throw new Error('Outlet could not be selected.');
+            clearPosTabSearch();
             window.location.assign('/internal/admin/pos');
         } catch (error) {
             setMessage(error instanceof Error ? error.message : 'Outlet could not be selected.');
@@ -98,6 +100,7 @@ export default function PosShell({ shell, view }: { shell: ShellContract; view: 
                 body: '{}',
             });
             if (!response.ok) throw new Error('Sign out failed.');
+            clearPosTabSearch();
             window.location.assign('/internal/admin/pos/login');
         } catch (error) {
             setMessage(error instanceof Error ? error.message : 'Sign out failed.');
@@ -224,11 +227,11 @@ function Workspace({ shell, workspace }: {
         {workspace.key === 'master-data' ? <PosMasterDataWorkspace /> : null}
         {workspace.key === 'profile' && shell.active_outlet ? <OutletProfileWorkspace outletId={shell.active_outlet.id} />
             : workspace.key === 'inventory' || workspace.key === 'sales'
-            ? <PosTransactionWorkspace area={workspace.key} />
+            ? <PosTransactionWorkspace area={workspace.key} memoryScope={shell.identity.id + ":" + (shell.active_outlet?.id ?? "")} />
             : workspace.key === 'operations'
                 ? <PosOperationsWorkspace />
                 : ['invoices', 'warranty', 'claims', 'reports'].includes(workspace.key)
-                    ? <PosCustomerReportingWorkspace area={workspace.key as 'invoices' | 'warranty' | 'claims' | 'reports'} />
+                    ? <PosCustomerReportingWorkspace area={workspace.key as 'invoices' | 'warranty' | 'claims' | 'reports'} memoryScope={shell.identity.id + ":" + (shell.active_outlet?.id ?? "")} />
                     : <div className="mt-6 rounded-2xl bg-slate-50 p-5">
                 <p className="font-medium">Shell boundary verified</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">This route is protected server-side by the required permission and active outlet assignment.</p>

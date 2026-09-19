@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PosStockControlWorkspace from './pos-stock-control-workspace';
+import {tabSearchOptedIn,tabSearchCategory,tabSearchConsent,tabSearchSaveCategory} from './pos-tab-search-memory';
 import { DocumentActions } from './pos-customer-reporting-workspace';
 
 type Unit = { id: string; code: string; status: string; version: number; imeis: string[] };
@@ -32,7 +33,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
     return body.data as T;
 }
 
-export default function PosTransactionWorkspace({ area }: { area: 'inventory' | 'sales' }) {
+export default function PosTransactionWorkspace({ area, memoryScope }: { area: 'inventory' | 'sales'; memoryScope: string }) {
     const [catalogue, setCatalogue] = useState<Catalogue | null>(null);
     const inventorySearchRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState('');
@@ -40,9 +41,14 @@ export default function PosTransactionWorkspace({ area }: { area: 'inventory' | 
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
     const [page, setPage] = useState(1);
+    const [tabConsent,setTabConsent] = useState(false);
     const load = async (value = '', requestedPage = 1, selectedCategory = category) => {
         const params = new URLSearchParams({q:value,page:String(requestedPage),...(area === 'inventory' ? {mode:'inventory',...(selectedCategory?{category:selectedCategory}:{})}:{})});
         const data = await api<Catalogue>('/internal/admin/pos/catalogue?' + params.toString());
+        const enabled = area === 'inventory' && data.pagination?.remember_search === true;
+        setTabConsent(tabSearchOptedIn(memoryScope,enabled));
+        const remembered = data.pagination ? tabSearchCategory(memoryScope,enabled,'inventory',data.pagination.options) : null;
+        if (enabled && value === '' && requestedPage === 1 && !selectedCategory && remembered && remembered !== data.pagination?.category) return load('',1,remembered);
         setCatalogue(data);
         setPage(data.page);
         if (data.pagination) setCategory(data.pagination.category);
@@ -67,7 +73,8 @@ export default function PosTransactionWorkspace({ area }: { area: 'inventory' | 
                 <button disabled={busy} onClick={() => void lookup()} className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white">Lookup</button>
                 <button disabled={busy} onClick={() => void run(() => load(query, 1, category))} className="rounded-lg border px-4 py-2 text-sm font-semibold">Search</button>
             </div>
-            {area === 'inventory' && catalogue?.pagination && <label className="mt-2 flex items-center gap-2 text-sm">Search category <select data-testid="inventory-category" value={category} onChange={(e)=>setCategory(e.target.value)} className="rounded border px-2 py-1">{catalogue.pagination.options.map((option)=><option key={option} value={option}>{option.replaceAll('_',' ')}</option>)}</select></label>}
+            {area === 'inventory' && catalogue?.pagination?.remember_search && <label className="mt-2 flex items-center gap-2 text-xs"><input data-testid="inventory-tab-opt-in" type="checkbox" checked={tabConsent} onChange={e=>{tabSearchConsent(memoryScope,true,e.target.checked);setTabConsent(tabSearchOptedIn(memoryScope,true));if(e.target.checked)tabSearchSaveCategory(memoryScope,true,'inventory',category,catalogue.pagination?.options??[]);}}/>Remember search category in this tab only (never search text)</label>}
+            {area === 'inventory' && catalogue?.pagination && <label className="mt-2 flex items-center gap-2 text-sm">Search category <select data-testid="inventory-category" value={category} onChange={(e)=>{setCategory(e.target.value);tabSearchSaveCategory(memoryScope,catalogue.pagination?.remember_search===true,'inventory',e.target.value,catalogue.pagination?.options??[]);}} className="rounded border px-2 py-1">{catalogue.pagination.options.map((option)=><option key={option} value={option}>{option.replaceAll('_',' ')}</option>)}</select></label>}
             {message && <p role="alert" className="mt-3 text-sm">{message}</p>}
             <div className="mt-3 flex items-center justify-end gap-2 text-xs">
                 <button disabled={busy || page <= 1} onClick={() => void run(() => load(query, page - 1, category))} className="rounded border px-2 py-1 disabled:opacity-40">Previous</button>

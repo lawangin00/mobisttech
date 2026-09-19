@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
+import {clearPosTabSearch} from '../components/pos-tab-search-memory';
 
 type ErrorBody = {
     error?: {
@@ -9,6 +10,7 @@ type ErrorBody = {
 };
 
 export default function PosLogin() {
+    useEffect(() => { clearPosTabSearch(); }, []);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [busy, setBusy] = useState(false);

@@ -2,7 +2,7 @@ import {Head,Link} from '@inertiajs/react';
 import {FormEvent,useState} from 'react';
 type Values=Record<string,string|boolean>;
 type Props={values:Values;options:Record<string,string[]>};
-const labels:Record<string,string>={invoice_page_length:'Invoices per page',inventory_page_length:'Inventory rows per page',claims_page_length:'Warranty jobs per page',invoice_search_category:'Default invoice search category',inventory_search_category:'Default inventory search category',warranty_search_category:'Default warranty search category',claims_search_category:'Default warranty jobs search category',auto_focus_search:'Focus search automatically',remember_search:'Remember search on this browser'};
+const labels:Record<string,string>={invoice_page_length:'Invoices per page',inventory_page_length:'Inventory rows per page',claims_page_length:'Warranty jobs per page',invoice_search_category:'Default invoice search category',inventory_search_category:'Default inventory search category',warranty_search_category:'Default warranty search category',claims_search_category:'Default warranty jobs search category',auto_focus_search:'Focus search automatically',remember_search:'Allow per-operator opt-in search category memory (current tab only; never search text)'};
 export default function PosPortalPreferences({values,options}:Props){
     const [form,setForm]=useState<Values>(values);
     const [busy,setBusy]=useState(false);
