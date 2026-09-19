@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Identity\OutletLifecycleAdministration;
+use App\Identity\OutletProfileAdministration;
+use App\Models\Outlet;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +28,20 @@ final class OutletManagementController extends Controller
     public function index(OutletLifecycleAdministration $service)
     {
         return response()->json(['data' => $service->catalogue($this->actor())]);
+    }
+
+    public function profile(string $outlet, OutletProfileAdministration $profiles)
+    {
+        $target = Outlet::where('public_id', $outlet)->firstOrFail();
+        return response()->json(['data' => $profiles->show($this->actor(), $target, true)]);
+    }
+
+    public function updateProfile(Request $request, string $outlet, OutletProfileAdministration $profiles)
+    {
+        $confirmedAt = (int) $request->session()->get('identity_explicit_password_confirmed_at', 0);
+        abort_unless($confirmedAt > 0 && now()->timestamp - $confirmedAt < (int) config('identity.sessions.admin.recent_auth_minutes') * 60, 403, 'Confirm your current password first.');
+        $target = Outlet::where('public_id', $outlet)->firstOrFail();
+        return response()->json(['data' => $profiles->update($this->actor(), $target, $request->all(), true)]);
     }
 
     public function store(Request $request, OutletLifecycleAdministration $service)

@@ -93,6 +93,30 @@ test('assigned Admin edits outlet profile through protected POS workspace withou
     await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Verified Profile');
 });
 
+test('Full Access edits an unassigned outlet only after explicit password confirmation without membership transfer', async ({page}) => {
+    await page.setViewportSize({width:1280,height:900});
+    await login(page,'e2e-protected-owner@example.invalid');
+    expect((await page.goto('/internal/admin/outlet-management'))?.status()).toBe(200);
+    const target = page.getByTestId('outlet-manage-profile-E42');
+    await expect(target).toBeVisible();
+    await target.click();
+    await expect(page.getByTestId('outlet-profile-code')).toHaveText('E42');
+    await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Inventory Outlet');
+    await page.getByTestId('outlet-profile-name').fill('E2E Unassigned Profile Reviewed');
+    await expect(page.getByTestId('outlet-profile-save')).toBeDisabled();
+    await page.getByTestId('outlet-managed-password').fill(password);
+    const accepted=page.waitForResponse(r=>r.url().includes('/internal/admin/outlet-management/')&&r.url().endsWith('/profile')&&r.request().method()==='PATCH');
+    await page.getByTestId('outlet-profile-save').click();
+    expect((await accepted).status()).toBe(200);
+    await expect(page.getByTestId('outlet-profile-message')).toHaveText('Outlet profile saved.');
+    await expect(page.getByTestId('outlet-profile-code')).toHaveText('E42');
+    await page.reload();
+    await page.getByTestId('outlet-manage-profile-E42').click();
+    await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Unassigned Profile Reviewed');
+    const assigned=await page.evaluate(async()=>{const r=await fetch('/internal/admin/outlets',{headers:{Accept:'application/json'}});return r.ok?(await r.json()).data:[];}) as Array<{name:string}>;
+    expect(assigned.some(outlet=>outlet.name==='E2E Unassigned Profile Reviewed')).toBe(false);
+});
+
 test('protected Admin creates and archives an unused outlet in actual UI; operator denied', async ({page,browser}) => {
     await page.setViewportSize({width:1280,height:900});
     await login(page,'e2e-protected-owner@example.invalid');

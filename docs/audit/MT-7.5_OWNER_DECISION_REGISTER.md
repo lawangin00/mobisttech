@@ -40,3 +40,5 @@ The owner provided all ten explicit selections together. The original question t
 Development/test-only actions within these bounds can continue independently and be committed/pushed to the approved repository without asking these ten questions again. Local synthetic testing is permitted, not evidence that real external/provider/legal/factual acceptance gates passed. MT-7.6 stage entry stays separately gated at genuine MT-7.5 closure.
 
 D01 implementation checkpoint, 20-Sep-2026: B bounded category-only per-tab opt-in locally accepted with real Edge and cleanup; user-approved search-text exclusion intentionally means free-text product queries are not remembered either. The D01 owner decision is unchanged. D02-D05 retain their approved but not-yet-accepted implementation scopes.
+
+D02 implementation checkpoint, 20-Sep-2026: B locally accepted via Full Access unassigned-open-outlet protected editor with explicit password confirmation, per-outlet audit and unchanged membership/code/history, focused backend/real Edge regression and synthetic cleanup. D03-D05 remain approved but unaccepted; no real archive/recovery issuance/source cutover.

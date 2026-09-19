@@ -161,6 +161,7 @@ class IdentityController extends Controller
         $user = Auth::guard($realm)->user();
         abort_unless(Hash::check($data['password'], $user->password), 422, 'Password is incorrect.');
         app(RealmSessionPolicy::class)->confirmRecentAuthentication($request);
+        if ($realm === 'admin') { $request->session()->put('identity_explicit_password_confirmed_at', now()->timestamp); }
         IdentityAudit::record($realm, $user->id, 'recent_authentication_confirmed');
 
         return response()->json(['data' => ['confirmed' => true, 'valid_for_minutes' => config('identity.sessions.'.$realm.'.recent_auth_minutes')]]);

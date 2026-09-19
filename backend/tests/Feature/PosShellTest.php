@@ -138,6 +138,42 @@ class PosShellTest extends TestCase
         $this->send($client, 'PATCH', $uri, [...$input, 'version' => 2])->assertForbidden();
     }
 
+    public function test_full_access_edits_unassigned_outlet_only_after_explicit_password_confirmation(): void
+    {
+        $assigned = $this->outlet('Owner assigned', '061');
+        $unassigned = $this->outlet('Other outlet', '062');
+        $owner = $this->member('unassigned-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($assigned);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
+        $limited = $this->member('unassigned-limited@example.invalid', ['shops.enter', 'shop.profile']);
+        $limited->shops()->attach($assigned);
+        $uri = '/internal/admin/outlet-management/'.$unassigned->public_id.'/profile';
+        $input = ['version' => 1, 'name' => 'Approved unassigned edit',
+            'business_address' => 'Synthetic owner-approved contact'];
+        $guest = $this->client();
+        $this->send($guest, 'GET', $uri)->assertUnauthorized();
+        $ownerClient = $this->client();
+        $this->login($ownerClient, $owner->email)->assertOk();
+        $this->send($ownerClient, 'GET', $uri)->assertOk()->assertJsonPath('data.outlet_code', '062');
+        $this->send($ownerClient, 'PATCH', $uri, $input)->assertForbidden();
+        $this->send($ownerClient, 'POST', '/internal/admin/auth/confirm-password',
+            ['password' => 'SyntheticPass123!'])->assertOk();
+        $this->send($ownerClient, 'PATCH', $uri, [...$input, 'outlet_code' => '099'])->assertUnprocessable();
+        $this->send($ownerClient, 'PATCH', $uri, $input)->assertOk()
+            ->assertJsonPath('data.name', 'Approved unassigned edit')->assertJsonPath('data.version', 2);
+        $this->assertSame('062', $unassigned->fresh()->outlet_code);
+        $this->assertFalse($owner->shops()->whereKey($unassigned->id)->exists());
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
+            ->where('action', 'outlet_profile_updated')->where('outlet_id', $unassigned->id)->count());
+        $denied = $this->client();
+        $this->login($denied, $limited->email)->assertOk();
+        $this->send($denied, 'GET', $uri)->assertForbidden();
+        $this->send($denied, 'PATCH', $uri, [...$input, 'version' => 2])->assertForbidden();
+        $unassigned->forceFill(['archived_at' => now()])->save();
+        $this->send($ownerClient, 'GET', $uri)->assertForbidden();
+    }
+
     public function test_protected_full_access_outlet_create_archive_and_direct_permission_barriers(): void
     {
         $existing = $this->outlet('Existing Protected Outlet', '051');

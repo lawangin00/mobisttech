@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import OutletProfileWorkspace from '../components/outlet-profile-workspace';
 
 type Outlet = {id:string;outlet_code:string;name:string;business_address:string|null;status:string;version:number};
 async function call<T>(url:string, method='GET', data?:Record<string,unknown>):Promise<T> {
@@ -19,6 +20,7 @@ export default function OutletManagement() {
     const [password,setPassword]=useState('');
     const [busy,setBusy]=useState(false);
     const [message,setMessage]=useState('');
+    const [editing,setEditing]=useState<string|null>(null);
     const load=async()=>setOutlets(await call<Outlet[]>('/internal/admin/outlet-management/data'));
     useEffect(()=>{void load().catch(e=>setMessage(e instanceof Error?e.message:'Unable to load outlets.'));},[]);
     async function act(task:()=>Promise<void>) {
@@ -45,9 +47,11 @@ export default function OutletManagement() {
         <section className="rounded-xl border p-4"><h2 className="font-semibold">Outlets</h2>
             <div className="mt-3 space-y-2">{outlets.map(o=><div key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-3 text-sm">
                 <span><strong>{o.outlet_code} · {o.name}</strong> · {o.status}<span className="block text-slate-600">{o.business_address??'No address'}</span></span>
+                {o.status==='open'&&<button data-testid={'outlet-manage-profile-'+o.outlet_code} disabled={busy} onClick={()=>setEditing(editing===o.id?null:o.id)} className="rounded border px-3 py-2">{editing===o.id?'Close profile':'Edit profile'}</button>}
                 {o.status==='open'&&<button disabled={busy||!password} onClick={()=>void act(async()=>{
                     await call('/internal/admin/outlet-management/'+o.id+'/archive','POST',{version:o.version});
                 })} className="rounded border px-3 py-2 disabled:opacity-40">Archive empty outlet</button>}
+                {editing===o.id&&o.status==='open'&&<div className="w-full"><OutletProfileWorkspace key={o.id} outletId={o.id} managed onSaved={()=>void load()} /></div>}
             </div>)}</div></section>
         {message&&<p role="status" className="rounded border p-3 text-sm">{message}</p>}
     </main></>;

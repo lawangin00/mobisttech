@@ -11,14 +11,15 @@ final class OutletProfileAdministration
 {
     private const FIELDS = ['name', 'business_legal_name', 'business_phone', 'business_whatsapp', 'business_address', 'business_hours'];
 
-    public function show(Admin $actor, Outlet $outlet): array
+    public function show(Admin $actor, Outlet $outlet, bool $managed = false): array
     {
-        abort_unless(app(Access::class)->allows($actor->fresh(), 'shop.profile', $outlet->fresh()), 403);
+        $this->authorize($actor, $outlet->fresh(), $managed);
         return $this->view($outlet->fresh());
     }
 
-    public function update(Admin $actor, Outlet $outlet, array $input): array
+    public function update(Admin $actor, Outlet $outlet, array $input, bool $managed = false): array
     {
+        if ($managed) { $this->authorize($actor, $outlet->fresh(), true); }
         if (array_diff(array_keys($input), [...self::FIELDS, 'version'])) {
             throw ValidationException::withMessages(['input' => 'Unexpected outlet profile fields.']);
         }
@@ -45,15 +46,25 @@ final class OutletProfileAdministration
         foreach (['business_legal_name', 'business_address', 'business_hours'] as $field) {
             $data[$field] = trim((string) ($data[$field] ?? '')) ?: null;
         }
-        return DB::transaction(function () use ($actor, $outlet, $data) {
+        return DB::transaction(function () use ($actor, $outlet, $data, $managed) {
             $locked = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
-            abort_unless(app(Access::class)->allows($actor->fresh(), 'shop.profile', $locked), 403);
+            $this->authorize($actor, $locked, $managed);
             abort_if((int) $locked->version !== (int) $data['version'], 409, 'Outlet profile has changed; reload before saving.');
             $values = array_intersect_key($data, array_flip(self::FIELDS));
             $locked->forceFill([...$values, 'version' => $locked->version + 1])->save();
             IdentityAudit::record('admin', $actor->id, 'outlet_profile_updated', 'outlet:'.$locked->public_id.':v'.$locked->version, $locked->id);
             return $this->view($locked);
         });
+    }
+
+    private function authorize(Admin $actor, Outlet $outlet, bool $managed): void
+    {
+        if ($managed) {
+            abort_unless(app(OutletLifecycleAdministration::class)->canManage($actor), 403);
+            abort_if($outlet->status || $outlet->archived_at !== null, 403, 'Outlet is unavailable.');
+            return;
+        }
+        abort_unless(app(Access::class)->allows($actor->fresh(), 'shop.profile', $outlet), 403);
     }
 
     private function view(Outlet $outlet): array
