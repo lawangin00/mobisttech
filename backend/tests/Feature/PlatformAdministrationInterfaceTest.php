@@ -187,6 +187,16 @@ class PlatformAdministrationInterfaceTest extends TestCase
         $this->login($editorClient, $editor->email)->assertOk();
         $publisherClient = $this->client();
         $this->login($publisherClient, $publisher->email)->assertOk();
+        // Saving a legal policy draft must not imply factual verification or owner approval.
+        $policyDraftInput = ['content' => '<p>Synthetic unreviewed policy.</p>',
+            'effective_date' => '2026-09-19', 'approval_state' => 'draft',
+            'factual_review_state' => 'pending', 'unresolved_decisions' => []];
+        $this->send($editorClient, 'POST', '/internal/admin/platform/policies/privacy/draft', $policyDraftInput)
+            ->assertOk()->assertJsonPath('data.approval_state', 'draft')
+            ->assertJsonPath('data.factual_review_state', 'pending');
+        $this->send($editorClient, 'POST', '/internal/admin/platform/policies/privacy/draft',
+            [...$policyDraftInput, 'approval_state' => 'owner_approved', 'factual_review_state' => 'verified'])
+            ->assertForbidden();
         $input = $this->mt75SoftwareInput('Initial verified synthetic overview');
         $draft = $this->send($editorClient, 'POST', '/internal/admin/platform/software', $input)
             ->assertOk()->json('data');

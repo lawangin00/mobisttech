@@ -170,9 +170,12 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
     });
     await expect.poll(() => calls.some((call) => call.path.endsWith('/platform/media'))).toBe(true);
     const policy = page.getByRole('heading', { name: 'Legal & policy content' }).locator('xpath=ancestor::section[1]');
-    await policy.locator('textarea').fill('<p>E2E reviewed privacy policy.</p>');
-    await policy.getByRole('button', { name: 'Save reviewed draft' }).click();
-    await expect.poll(() => calls.some((call) => call.path.includes('/policies/privacy/draft'))).toBe(true);
+    await policy.locator('textarea').fill('<p>E2E unreviewed privacy policy draft.</p>');
+    await policy.getByRole('button', { name: 'Save unreviewed policy draft' }).click();
+    await expect.poll(() => calls.some((call) => call.path.includes('/policies/privacy/draft')
+        && call.body?.approval_state === 'draft'
+        && call.body?.factual_review_state === 'pending'
+        && Array.isArray(call.body?.unresolved_decisions))).toBe(true);
     const policyHistory = page.getByRole('heading', { name: 'Policy revisions' }).locator('xpath=ancestor::section[1]');
     await policyHistory.getByRole('button', { name: 'Publish' }).click();
     await expect.poll(() => calls.some((call) => call.path.endsWith('/policies/21/publish'))).toBe(true);
@@ -289,4 +292,25 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
     expect(calls.some((call) => call.path.includes('/payment-destinations/destination-1'))).toBe(true);
     expect(calls.some((call) => call.path.includes('/team-members/member-1'))).toBe(true);
     expect(calls.some((call) => call.path.includes('/software/software-1/releases'))).toBe(true);
+    // Backend reserves publication, archive and canonical slug changes for publishers.
+    data.permissions = ['website.content.manage'];
+    await page.reload();
+    await page.getByRole('button', { name: 'Software', exact: true }).click();
+    await editor.locator('select').first().selectOption('software-1');
+    await expect(editor.getByRole('button', { name: 'Save new draft revision' })).toBeEnabled();
+    await expect(release.getByRole('button', { name: 'Publish draft v1' })).toBeDisabled();
+    await expect(release.getByRole('button', { name: 'Archive' })).toBeDisabled();
+    await release.getByPlaceholder('new-canonical-slug').fill('editor-cannot-rename');
+    await release.getByPlaceholder('Approved reason').fill('Synthetic editor attempt');
+    await expect(release.getByRole('button', { name: 'Change canonical slug' })).toBeDisabled();
+    data.permissions = ['website.publish'];
+    await page.reload();
+    await page.getByRole('button', { name: 'Software', exact: true }).click();
+    await editor.locator('select').first().selectOption('software-1');
+    await expect(editor.getByRole('button', { name: 'Save new draft revision' })).toBeDisabled();
+    await expect(release.getByRole('button', { name: 'Publish draft v1' })).toBeEnabled();
+    await expect(release.getByRole('button', { name: 'Archive' })).toBeEnabled();
+    await release.getByPlaceholder('new-canonical-slug').fill('publisher-can-rename');
+    await release.getByPlaceholder('Approved reason').fill('Synthetic publisher approval');
+    await expect(release.getByRole('button', { name: 'Change canonical slug' })).toBeEnabled();
 });
