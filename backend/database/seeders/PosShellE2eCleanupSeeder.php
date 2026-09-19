@@ -12,7 +12,7 @@ class PosShellE2eCleanupSeeder extends Seeder
     {
         abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test', 403);
         $photoPaths = DB::transaction(function () {
-            $emails = ['e2e-sales@example.invalid', 'e2e-inventory@example.invalid', 'e2e-operations@example.invalid', 'e2e-mt43@example.invalid', 'e2e-platform@example.invalid', 'e2e-digital-operations@example.invalid', 'e2e-reset@example.invalid', 'e2e-protected-owner@example.invalid', 'e2e-audit-owner@example.invalid', 'e2e-pref-owner@example.invalid', 'e2e-history@example.invalid', 'e2e-iw-inventory@example.invalid', 'e2e-iw-warranty@example.invalid', 'e2e-transaction@example.invalid'];
+            $emails = ['e2e-sales@example.invalid', 'e2e-inventory@example.invalid', 'e2e-operations@example.invalid', 'e2e-mt43@example.invalid', 'e2e-platform@example.invalid', 'e2e-digital-operations@example.invalid', 'e2e-reset@example.invalid', 'e2e-protected-owner@example.invalid', 'e2e-audit-owner@example.invalid', 'e2e-pref-owner@example.invalid', 'e2e-history@example.invalid', 'e2e-iw-inventory@example.invalid', 'e2e-iw-warranty@example.invalid', 'e2e-transaction@example.invalid', 'e2e-intake@example.invalid'];
             $adminIds = DB::table('admins')->whereIn('email', $emails)->pluck('id')->all();
             $photos = DB::table('admins')->whereIn('email', $emails)->get(['public_id', 'profile_photo'])
                 ->filter(fn ($row) => is_string($row->profile_photo)
@@ -29,6 +29,10 @@ class PosShellE2eCleanupSeeder extends Seeder
                 abort_unless(DB::table('pos_settings')->where('group', 'portal')->count() === count($keys), 409);
                 DB::table('pos_settings')->whereIn('key', $keys)->where('group', 'portal')->delete();
             }
+            $intakeInvoices = DB::table('invoices')->whereIn('outlet_id', $outletIds)->where('invoice_number', 'like', 'MT75-INTAKE-%')->where('customer_name', 'like', 'MT75 Intake Customer %')->pluck('id')->all();
+            if ($intakeInvoices) DB::table('sales')->whereIn('invoice_id', $intakeInvoices)->whereIn('outlet_id', $outletIds)->delete();
+            if ($intakeInvoices) DB::table('invoices')->whereIn('id', $intakeInvoices)->delete();
+            DB::table('products')->whereIn('outlet_id', $outletIds)->where('name', 'MT75 Intake Product')->delete();
             DB::table('claims')->whereIn('outlet_id', $outletIds)
                 ->where('claim_number', 'like', 'MT75-IW-CLAIM-%')->delete();
             DB::table('invoices')->whereIn('outlet_id', $outletIds)

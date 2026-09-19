@@ -241,6 +241,42 @@ class PosCustomerReportingInterfaceTest extends TestCase
             ->assertJsonPath('data.pagination.pages', 5)->assertJsonCount(25, 'data.claims');
     }
 
+    public function test_warranty_intake_search_finds_old_sale_without_cross_outlet_or_role_leakage(): void
+    {
+        [$sale, $product] = $this->saleWithPayments('intake@example.invalid', true);
+        $originalInvoice = (array) DB::table('invoices')->where('public_id', $sale['invoice_id'])->firstOrFail();
+        $originalSale = (array) DB::table('sales')->where('public_id', $sale['sale_ids'][0])->firstOrFail();
+        unset($originalInvoice['id'], $originalSale['id']);
+        for ($n = 1; $n <= 125; $n++) {
+            $newInvoice = [...$originalInvoice, 'public_id' => (string) Str::uuid(),
+                'invoice_number' => sprintf('INTAKE-NEW-%03d', $n), 'customer_name' => 'Later Customer'];
+            $id = DB::table('invoices')->insertGetId($newInvoice);
+            DB::table('sales')->insert([...$originalSale, 'invoice_id' => $id, 'public_id' => (string) Str::uuid()]);
+        }
+        $client = $this->authenticatedClient($this->actor);
+        $base = '/internal/admin/pos/customer-reporting/claims/sale-search';
+        $old = $sale['sale_ids'][0];
+        $this->assertNotContains($old, array_column($this->send($client, 'GET', '/internal/admin/pos/customer-reporting/claims')->assertOk()->json('data.sale_candidates'), 'sale_id'));
+        $found = $this->send($client, 'GET', $base.'?category=invoice_id&q='.rawurlencode($originalInvoice['invoice_number']))->assertOk();
+        $found->assertJsonCount(1, 'data.sale_candidates')->assertJsonPath('data.sale_candidates.0.sale_id', $old);
+        $this->send($client, 'GET', $base.'?category=customer_name&q=MT43%20Customer')->assertOk()->assertJsonPath('data.sale_candidates.0.sale_id', $old);
+        $this->send($client, 'GET', $base.'?category=customer_cnic&q=4210112345671')->assertOk()->assertJsonCount(20, 'data.sale_candidates');
+        $this->send($client, 'GET', $base.'?category=contact_number&q=03001234567')->assertOk()->assertJsonCount(20, 'data.sale_candidates');
+        $this->send($client, 'GET', $base.'?category=product&q='.rawurlencode($product->name))->assertOk()->assertJsonCount(20, 'data.sale_candidates');
+        $this->send($client, 'GET', $base.'?category=imei&q=NONEXISTENT')->assertOk()->assertJsonCount(0, 'data.sale_candidates');
+        $this->send($client, 'GET', $base.'?category=unknown&q=test')->assertUnprocessable();
+        $this->send($client, 'GET', $base.'?category=all&q=%20')->assertUnprocessable();
+        $this->send($client, 'GET', $base.'?category=all&q=test&outlet=other')->assertUnprocessable();
+        $this->send($client, 'GET', $base.'?category=all&q=test&product_category=unknown')->assertUnprocessable();
+        $this->send($client, 'GET', $base.'?category=invoice_id&q='.rawurlencode($originalInvoice['invoice_number']).'&product_category=mobile_phone')->assertOk()->assertJsonCount(0, 'data.sale_candidates');
+        $invoiceMember = $this->member('intake-invoice-only@example.invalid', ['shops.enter', 'shop.invoices']);
+        $invoiceMember->shops()->attach($this->outlet);
+        $invoiceClient = $this->authenticatedClient($invoiceMember);
+        $this->send($invoiceClient, 'GET', $base.'?category=invoice_id&q='.rawurlencode($originalInvoice['invoice_number']))->assertForbidden();
+        $guest = $this->client();
+        $this->send($guest, 'GET', $base.'?category=invoice_id&q=test')->assertUnauthorized();
+    }
+
     private function saleWithPayments(?string $email, bool $warranty = false): array
     {
         $product = $this->product();

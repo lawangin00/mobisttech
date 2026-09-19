@@ -107,6 +107,7 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::post('/pos/refunds', [PosTransactionController::class, 'refund'])->defaults('identity_realm', 'admin')->name('admin.pos.refunds.store');
     Route::get('/pos/labels/{kind}/{id}', [PosTransactionController::class, 'label'])->defaults('identity_realm', 'admin')->name('admin.pos.labels.show');
     Route::get('/pos/customer-reporting/{area}', [PosCustomerReportingController::class, 'index'])->whereIn('area', ['invoices', 'warranty', 'claims', 'reports'])->defaults('identity_realm', 'admin')->name('admin.pos.customer-reporting.index');
+    Route::get('/pos/customer-reporting/claims/sale-search', [PosCustomerReportingController::class, 'searchWarrantyIntake'])->defaults('identity_realm', 'admin')->name('admin.pos.claims.sale-search');
     Route::post('/pos/customer-reporting/claims', [PosCustomerReportingController::class, 'openClaim'])->defaults('identity_realm', 'admin')->name('admin.pos.customer-reporting.claims.open');
     Route::get('/pos/customer-reporting/claims/{claim}', [PosCustomerReportingController::class, 'claim'])->defaults('identity_realm', 'admin')->name('admin.pos.customer-reporting.claims.show');
     Route::post('/pos/customer-reporting/claims/{claim}', [PosCustomerReportingController::class, 'updateClaim'])->defaults('identity_realm', 'admin')->name('admin.pos.customer-reporting.claims.update');

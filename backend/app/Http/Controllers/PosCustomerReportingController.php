@@ -7,6 +7,7 @@ use App\Identity\Access;
 use App\Models\Admin;
 use App\Models\Outlet;
 use App\Pos\PosHistoryListing;
+use App\Pos\PosWarrantyIntakeSearch;
 use App\Reporting\OperationalReports;
 use App\Warranty\ClaimOperations;
 use Illuminate\Http\Request;
@@ -105,6 +106,13 @@ final class PosCustomerReportingController extends Controller
             'invoices' => $invoices, 'customers' => $customers, 'claims' => $claims,
             'sale_candidates' => $saleCandidates, 'report' => $report, 'pagination' => $pagination,
         ]]);
+    }
+
+    public function searchWarrantyIntake(Request $request, PosWarrantyIntakeSearch $search)
+    {
+        [$actor, $outlet] = $this->context($request);
+        $this->authorizeArea($actor, $outlet, 'claims');
+        return response()->json(['data' => ['sale_candidates' => $search->search($request, $outlet)]]);
     }
 
     public function claim(Request $request, string $claim, ClaimOperations $service)

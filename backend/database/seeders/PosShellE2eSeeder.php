@@ -60,6 +60,7 @@ class PosShellE2eSeeder extends Seeder
             $iwInventory = $this->member('E2E IW Inventory', 'e2e-iw-inventory@example.invalid', 'IW Inventory');
             $iwWarranty = $this->member('E2E IW Warranty', 'e2e-iw-warranty@example.invalid', 'IW Warranty');
             $transaction = $this->member('E2E Transaction Sales', 'e2e-transaction@example.invalid', 'Transaction Sales');
+            $intake = $this->member('E2E Warranty Intake', 'e2e-intake@example.invalid', 'Warranty Intake');
 
             $this->assign($sales, $salesRole, [$salesOutlet]);
             $this->assign($inventory, $inventoryRole, [$salesOutlet, $inventoryOutlet]);
@@ -69,6 +70,7 @@ class PosShellE2eSeeder extends Seeder
             $this->assign($iwInventory, $inventoryRole, [$salesOutlet, $inventoryOutlet]);
             $this->assign($iwWarranty, $mt43Role, [$salesOutlet]);
             $this->assign($transaction, $salesRole, [$salesOutlet]);
+            $this->assign($intake, $mt43Role, [$salesOutlet]);
             $this->assign($platform, $platformRole, [$salesOutlet]);
             $this->assign($digital, $digitalRole, [$salesOutlet]);
             $this->assign($reset, $resetRole, [$salesOutlet]);
