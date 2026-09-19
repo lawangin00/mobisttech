@@ -41,6 +41,9 @@ final class StockTransferOperations
         return $this->mutate($actor, $sourceOutlet, 'transfer.create', $key, $data, function (Admin $fresh) use ($sourceOutlet, $data) {
             $source = Outlet::whereKey($sourceOutlet->id)->lockForUpdate()->firstOrFail();
             $destination = Outlet::where('public_id', $data['destination_outlet_id'])->lockForUpdate()->firstOrFail();
+            // Authorization before the lock may have observed an outlet that was subsequently archived.
+            abort_if($source->status || $source->archived_at !== null || $destination->status
+                || $destination->archived_at !== null, 403, 'A stock transfer requires open outlets.');
             abort_if($source->id === $destination->id, 422, 'A stock transfer requires two different outlets.');
 
             $pairs = collect($data['lines'])->map(function (array $line) use ($source, $destination) {

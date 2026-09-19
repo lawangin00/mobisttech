@@ -127,6 +127,28 @@ class StockTransferTest extends TestCase
         $this->assertSame(0, DB::table('inventory_custody_holds')->whereNull('released_at')->count());
     }
 
+    public function test_stale_destination_cannot_create_transfer_after_archival(): void
+    {
+        $source = $this->product();
+        [$destination, $target] = $this->destination($source);
+        $this->acquire($source, 2);
+        $staleDestinationId = $destination->public_id;
+        // Synthetic archived state exercises the locked recheck without authorizing a real archive.
+        $destination->forceFill(['archived_at' => now()])->save();
+        try {
+            app(StockTransferOperations::class)->create($this->actor, $this->outlet, 'stale-destination-d03', [
+                'destination_outlet_id' => $staleDestinationId,
+                'lines' => [['source_product_id' => $source->public_id,
+                    'destination_product_id' => $target->public_id, 'quantity' => 1]],
+            ]);
+            $this->fail('Archived destination unexpectedly accepted stock transfer creation.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $this->assertSame(0, DB::table('stock_transfers')->where('destination_outlet_id', $destination->id)->count());
+        $this->assertSame(2, (int) $source->fresh()->qty);
+    }
+
     public function test_transfer_idempotency_and_receive_permission_are_enforced(): void
     {
         $source = $this->product();
