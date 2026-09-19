@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test';
 
+test.afterEach(async ({ page }) => {
+    const logout = page.getByTestId('logout');
+    if (await logout.count()) {
+        await logout.click();
+        await page.waitForURL('**/internal/admin/pos/login');
+    }
+});
+
 test('MT-6.1 backend brand assets render on login and authenticated POS shell', async ({ page, request }) => {
     const favicon = await request.get('/favicon.ico');
     expect(favicon.ok()).toBe(true);

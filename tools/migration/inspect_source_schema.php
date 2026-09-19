@@ -1,5 +1,10 @@
 <?php
 
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
+
 // Run only pinned, disposable source exports against an in-memory database.
 $root = dirname(__DIR__, 2);
 $source = $argv[1] ?? '';
@@ -13,7 +18,7 @@ if (is_dir($copy.'/.git')) {
 chdir($copy);
 require $copy.'/vendor/autoload.php';
 $app = require $copy.'/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 set_exception_handler(function (Throwable $error): void {
     fwrite(STDERR, 'FAIL: '.$error->getMessage().PHP_EOL);
@@ -23,10 +28,10 @@ if (! $app->environment('testing') || config('database.default') !== 'sqlite'
     || config('database.connections.sqlite.database') !== ':memory:') {
     throw new RuntimeException('In-memory source isolation required.');
 }
-Illuminate\Support\Facades\Http::preventStrayRequests();
+Http::preventStrayRequests();
 $declarations = [];
-$app->bind(Illuminate\Database\Schema\Blueprint::class, function ($app, $parameters) use (&$declarations) {
-    return new class($parameters['connection'], $parameters['table'], $parameters['callback'], $declarations) extends Illuminate\Database\Schema\Blueprint
+$app->bind(Blueprint::class, function ($app, $parameters) use (&$declarations) {
+    return new class($parameters['connection'], $parameters['table'], $parameters['callback'], $declarations) extends Blueprint
     {
         private $captured;
 
@@ -48,7 +53,7 @@ $app->bind(Illuminate\Database\Schema\Blueprint::class, function ($app, $paramet
 if ($kernel->call('migrate', ['--force' => true]) !== 0) {
     throw new RuntimeException($kernel->output());
 }
-$schema = Illuminate\Support\Facades\Schema::getFacadeRoot();
+$schema = Schema::getFacadeRoot();
 $tables = [];
 foreach ($schema->getTables() as $table) {
     $name = $table['name'];
