@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { readBusinessProfile } from "@/lib/business-profile";
-import { readCatalogue, readContentIndex, readServices, readWebsiteProfile } from "@/lib/website-api";
+import { readCatalogue, readCategories, readContentIndex, readServices, readWebsiteProfile } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (profile.capabilities.commerce) {
     add("/products", "hourly", 0.9);
     add("/categories", "daily", 0.8);
-    add("/compare", "weekly", 0.4);
+    for (const category of await readCategories()) add("/categories/" + encodeURIComponent(category.code), "daily", 0.7);
     let after: string | undefined;
     for (let page = 0; page < 10; page += 1) {
       const result = await readCatalogue({ limit: 24, after }).catch(() => null);

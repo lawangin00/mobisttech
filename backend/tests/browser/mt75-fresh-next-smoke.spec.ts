@@ -4,7 +4,7 @@ const email = 'mt75-fresh-owner@example.invalid';
 const password = 'SyntheticFreshOwner123!';
 
 test('MT75 fresh publication reaches real Next.js product and guest cart', async ({ page }) => {
-    test.setTimeout(245_000);
+    test.setTimeout(330_000);
     await page.goto('/internal/admin/pos/login');
     await page.getByTestId('login-email').fill(email);
     await page.getByTestId('login-password').fill(password);
@@ -282,6 +282,36 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
         const nextPage=await page.goto('http://127.0.0.1:13000/products/mt75-fresh-accessory');
         expect(nextPage?.status()).toBe(choice==='digital_only'?404:200);
         if(choice!=='digital_only') await expect(page.getByRole('heading',{name:'MT75 Fresh Accessory'})).toBeVisible();
+        const site=await page.request.get('http://127.0.0.1:13000/sitemap.xml');
+        expect(site.status(),choice+' sitemap').toBe(200);
+        const xml=await site.text();
+        const robot=await page.request.get('http://127.0.0.1:13000/robots.txt');
+        expect(robot.status(),choice+' robots').toBe(200);
+        const rules=await robot.text();
+        for(const privatePath of ['/internal/','/api/','/account','/cart','/checkout','/compare','/reset-password'])
+            expect(rules,choice+' '+privatePath).toContain('Disallow: '+privatePath);
+        expect(xml).not.toMatch(/\/(?:internal|account|cart|checkout|compare|reset-password)(?:\/|<|$)|mt75-not-published/);
+        const publicProduct='/products/mt75-fresh-accessory';
+        for (const publicPath of ['/products','/categories','/categories/accessory',publicProduct])
+            expect(xml.includes(publicPath),choice+' sitemap '+publicPath).toBe(choice!=='digital_only');
+        expect(xml.includes('/services'),choice+' services index').toBe(choice!=='commerce_only');
+        if(choice==='digital_only') for(const excluded of ['/products','/categories','/mobiles','/product/'])
+            expect(rules).toContain('Disallow: '+excluded);
+        if(choice==='commerce_only') for(const excluded of ['/services','/enquiry'])
+            expect(rules).toContain('Disallow: '+excluded);
+        for(const route of ['/products','/categories/accessory','/compare','/cart','/checkout']) {
+            const response=await page.request.get('http://127.0.0.1:13000'+route);
+            expect(response.status(),choice+' '+route).toBe(choice==='digital_only'?404:200);
+        }
+        for(const route of ['/services','/enquiry']) {
+            const response=await page.request.get('http://127.0.0.1:13000'+route);
+            expect(response.status(),choice+' '+route).toBe(choice==='commerce_only'?404:200);
+        }
+        if(choice!=='digital_only') {
+            const productHtml=await page.content();
+            expect(productHtml).toContain('/products/mt75-fresh-accessory');
+            expect(productHtml.toLowerCase()).not.toMatch(/purchase_price|customer_cnic|customer_phone|imei|object_key/);
+        }
     }
 });
 
