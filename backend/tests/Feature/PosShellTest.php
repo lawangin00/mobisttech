@@ -1238,6 +1238,33 @@ class PosShellTest extends TestCase
         ]);
         $this->send($client, 'GET', $path)->assertOk()
             ->assertJsonPath('data.promotion_history.financial_snapshot_digest_mismatches', 0);
+        // A matching claim must not conceal an unrelated outlet-owned discount.
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.unmatched_financial_adjustments', 0);
+        $insertSyntheticAdjustment = function (int $invoiceId, string $source): string {
+            $id = (string) Str::uuid();
+            $snapshot = MoneySnapshot::adjustment($id, 'promotion', '1.00',
+                'Synthetic archived financial reconciliation', $source);
+            DB::table('monetary_adjustments')->insert([
+                'id' => $id, 'invoice_id' => $invoiceId, 'order_id' => null,
+                'kind' => 'promotion', 'treatment' => 'discount', 'amount' => '1.00',
+                'currency' => 'PKR', 'source_reference' => $source,
+                'snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR),
+                'snapshot_sha256' => MoneySnapshot::digest($snapshot), 'created_at' => now(),
+            ]);
+
+            return $id;
+        };
+        $orphanAdjustment = $insertSyntheticAdjustment($invoiceId, (string) Str::uuid());
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.unmatched_financial_adjustments', 1);
+        $outsideAdjustment = $insertSyntheticAdjustment($outsideInvoiceId, (string) Str::uuid());
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.unmatched_financial_adjustments', 1);
+        DB::table('monetary_adjustments')->whereIn('id',
+            [$orphanAdjustment, $outsideAdjustment])->delete();
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.unmatched_financial_adjustments', 0);
         $this->assertEquals($before, DB::table('promotion_claims')
             ->whereIn('public_id', [$directClaim, $linkedClaim, $globalClaim, $websiteClaim])->orderBy('id')->get()->all());
         for ($index = 0; $index < 51; $index++) {

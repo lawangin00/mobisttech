@@ -395,6 +395,18 @@ final class OutletLifecycleAdministration
             ->whereRaw("NOT (a.kind = 'promotion' AND a.treatment = 'discount' AND a.currency = 'PKR'
                 AND a.amount = c.discount_amount AND (a.invoice_id <=> c.invoice_id)
                 AND (a.order_id <=> c.order_id))"))->count();
+        // The database already enforces unique source references; check the opposite
+        // direction for promotion adjustments without an original claim/owner match.
+        $outletAdjustments = DB::table('monetary_adjustments as a')->where('a.kind', 'promotion')
+            ->where(fn ($q) => $q->whereIn('a.invoice_id', DB::table('invoices')
+                ->where('outlet_id', $outlet->id)->select('id'))
+                ->orWhere(fn ($order) => $order->whereIn('a.order_id', $outletOrderIds)
+                    ->whereNotIn('a.order_id', $otherOutletOrderIds)));
+        $unmatchedFinancialAdjustments = (clone $outletAdjustments)
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('promotion_claims as c')
+                ->whereColumn('c.public_id', 'a.source_reference')
+                ->whereRaw('(c.invoice_id <=> a.invoice_id) AND (c.order_id <=> a.order_id)'))
+            ->count();
         // Financial adjustment v1 has a defined canonical digest; claim JSON does not
         // retain its original serialized bytes. Check ALL attributed bound claims.
         $financialSnapshotMismatches = 0;
@@ -462,6 +474,7 @@ final class OutletLifecycleAdministration
             'claims_truncated' => $claimCount > 50, 'claims' => $lines,
             'missing_financial_references' => $financialReferenceMissing,
             'mismatched_financial_references' => $financialReferenceMismatch,
+            'unmatched_financial_adjustments' => $unmatchedFinancialAdjustments,
             'shared_order_claims_held_for_review' => $sharedOrderClaimsHeld,
             'claims_without_matching_claimed_event' => $claimsWithoutMatchingClaimedEvent,
             'released_claims_without_matching_release_event' => $releasedWithoutEvent,
@@ -470,6 +483,7 @@ final class OutletLifecycleAdministration
             'snapshot_contract_or_amount_mismatches' => $snapshotMismatch,
             'requires_review' => $campaignCount > 0 || $claimCount > 0 || $sharedOrderClaimsHeld > 0
                 || $financialReferenceMissing > 0 || $financialReferenceMismatch > 0
+                || $unmatchedFinancialAdjustments > 0
                 || $financialSnapshotMismatches > 0 || $snapshotMismatch > 0
                 || $claimsWithoutMatchingClaimedEvent > 0 || $releasedWithoutEvent > 0
                 || $activeWithReleaseEvent > 0,
