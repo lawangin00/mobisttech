@@ -176,7 +176,11 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
                     </fieldset>}
                     <div className="grid grid-cols-2 gap-2"><input value={newPurchase} onChange={(e) => setNewPurchase(e.target.value)} placeholder="Purchase price" className="w-full min-w-0 rounded border p-2 text-sm" /><input value={newSale} onChange={(e) => setNewSale(e.target.value)} placeholder="Sale price" className="w-full min-w-0 rounded border p-2 text-sm" /></div>
                     <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={newTrack} onChange={(e) => setNewTrack(e.target.checked)} /> Track IMEI</label>
-                    <button data-testid="product-save" disabled={busy || !newName || !categoryId || !newPurchase || !newSale || (isDevice && (!brandId || !newModel.trim()))} onClick={() => void run(async () => {
+                    <div className="grid gap-2 rounded border p-2 sm:grid-cols-3" data-testid="product-warranty-editor">
+                        <select aria-label="Warranty type" value={editingWarranty.type} onChange={e=>setEditingWarranty({type:e.target.value,unit:e.target.value==='no_warranty'?null:0,duration:e.target.value==='no_warranty'?null:30})} className="rounded border p-2 text-sm"><option value="no_warranty">No warranty</option><option value="shop_warranty">Shop warranty</option><option value="brand_warranty">Brand warranty</option></select>
+                        {editingWarranty.type!=='no_warranty'&&<><select aria-label="Warranty unit" value={editingWarranty.unit??0} onChange={e=>setEditingWarranty(old=>({...old,unit:Number(e.target.value)}))} className="rounded border p-2 text-sm"><option value="0">Days</option><option value="1">Months</option><option value="2">Years</option></select><input aria-label="Warranty duration" type="number" min="1" step="1" value={editingWarranty.duration??''} onChange={e=>setEditingWarranty(old=>({...old,duration:e.target.value?Number(e.target.value):null}))} className="rounded border p-2 text-sm" /></>}
+                    </div>
+                    <button data-testid="product-save" disabled={busy || !newName || !categoryId || !newPurchase || !newSale || (isDevice && (!brandId || !newModel.trim())) || (editingWarranty.type!=='no_warranty' && (!Number.isInteger(editingWarranty.duration) || (editingWarranty.duration??0)<1))} onClick={() => void run(async () => {
                         const category = categories.find((m) => String(m.id) === categoryId);
                         if (!category) throw new Error('Choose a valid category.');
                         await api('/internal/admin/pos/inventory/products', { method: 'POST', body: JSON.stringify({
@@ -188,8 +192,8 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
                             storage_master_data_id: isDevice && storageId ? Number(storageId) : null,
                             sim_master_data_id: isDevice && simId ? Number(simId) : null,
                             purchase_price: newPurchase, sale_price: newSale, track_imei: newTrack,
-                            warranty_type: editingId?editingWarranty.type:'no_warranty',
-                            ...(editingId&&editingWarranty.type!=='no_warranty'?{warranty_unit:editingWarranty.unit,warranty_duration:editingWarranty.duration}:{}),
+                            warranty_type: editingWarranty.type,
+                            ...(editingWarranty.type!=='no_warranty'?{warranty_unit:editingWarranty.unit,warranty_duration:editingWarranty.duration}:{}),
                         }) });
                         resetDefinition(); await reload();
                     })} className="rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{editingId?'Update product':'Save product'}</button>

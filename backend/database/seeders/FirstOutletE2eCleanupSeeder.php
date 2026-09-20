@@ -38,6 +38,9 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
                 DB::table('return_lines')->whereIn('return_id', $returnIds)->delete();
                 DB::table('returns')->whereIn('id', $returnIds)->delete();
                 DB::table('pos_tender_allocations')->whereIn('id', $tenderIds)->delete();
+                $claimIds = DB::table('claims')->whereIn('invoice_id', $invoiceIds)->pluck('id')->all();
+                DB::table('claim_events')->whereIn('claim_id', $claimIds)->delete();
+                DB::table('claims')->whereIn('id', $claimIds)->delete();
 
                 $destinations = DB::table('pos_payment_destinations')->where('outlet_id', $outlet->id)
                     ->where('display_name', 'MT75 Fresh Bank')->get();
