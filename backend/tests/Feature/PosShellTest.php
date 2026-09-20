@@ -1047,6 +1047,25 @@ class PosShellTest extends TestCase
         $globalClaim = $claim($globalId, 'active', $invoiceId);
         $websiteClaim = $claim($globalId, 'active', null, 'website', $orderId);
         $claim($outsideId, 'active', $outsideInvoiceId);
+        // A globally linked campaign must not leak claims assigned to a DIFFERENT outlet.
+        $outsideLinkedClaim = $claim($linkedId, 'active', $outsideInvoiceId);
+        $outsideScopedClaim = $claim($directId, 'active', $outsideInvoiceId);
+        $outsideOrderId = DB::table('orders')->insertGetId(['public_id' => (string) Str::uuid(),
+            'order_number' => 'D03-OTHER-'.Str::random(10), 'order_type' => 'mobile',
+            'customer_name' => 'PRIVATE-OTHER-ORDER-CUSTOMER', 'customer_mobile' => '03001234567']);
+        $outsideProduct = new Product;
+        $outsideProduct->forceFill(['public_id' => (string) Str::uuid(), 'outlet_id' => $fallback->id,
+            'name' => 'Other outlet product', 'category' => 'accessory', 'price' => '20.00', 'qty' => 0])->save();
+        DB::table('order_items')->insert(['order_id' => $outsideOrderId, 'outlet_id' => $fallback->id,
+            'product_id' => $outsideProduct->id, 'item_type' => 'mobile',
+            'title' => 'Other outlet order item', 'quantity' => 1]);
+        $outsideWebsiteClaim = $claim($linkedId, 'active', null, 'website', $outsideOrderId);
+        $verifiedSnapshot = json_encode(['contract' => 'promotion-claim.v1', 'discount_amount' => '1.00'], JSON_THROW_ON_ERROR);
+        $wrongAmountSnapshot = json_encode(['contract' => 'promotion-claim.v1', 'discount_amount' => '9.00'], JSON_THROW_ON_ERROR);
+        DB::table('promotion_claims')->where('public_id', $websiteClaim)
+            ->update(['snapshot' => $verifiedSnapshot, 'snapshot_sha256' => hash('sha256', $verifiedSnapshot)]);
+        DB::table('promotion_claims')->where('public_id', $globalClaim)
+            ->update(['snapshot' => $wrongAmountSnapshot, 'snapshot_sha256' => hash('sha256', $wrongAmountSnapshot)]);
         $before = DB::table('promotion_claims')->whereIn('public_id', [$directClaim, $linkedClaim, $globalClaim, $websiteClaim])
             ->orderBy('id')->get()->all();
         $client = $this->client();
@@ -1056,34 +1075,64 @@ class PosShellTest extends TestCase
         $archived->forceFill(['archived_at' => now()])->save(); // Synthetic test only; real business archive remains blocked.
         $response = $this->send($client, 'GET', $path)->assertOk()
             ->assertJsonPath('data.obligations.promotion_campaign_count', 2)
-            ->assertJsonPath('data.obligations.promotion_claim_count', 4)
+            ->assertJsonPath('data.obligations.promotion_claim_count', 3)
             ->assertJsonPath('data.obligations.requires_manual_review', true)
             ->assertJsonPath('data.promotion_history.campaign_count', 2)
-            ->assertJsonPath('data.promotion_history.claim_count', 4)
+            ->assertJsonPath('data.promotion_history.claim_count', 3)
             ->assertJsonPath('data.promotion_history.active_claim_count', 3)
-            ->assertJsonPath('data.promotion_history.released_claim_count', 1)
-            ->assertJsonPath('data.promotion_history.unbound_claim_count', 2)
+            ->assertJsonPath('data.promotion_history.released_claim_count', 0)
+            ->assertJsonPath('data.promotion_history.unbound_claim_count', 1)
             ->assertJsonPath('data.promotion_history.claims_truncated', false)
+            ->assertJsonPath('data.promotion_history.missing_financial_references', 2)
+            ->assertJsonPath('data.promotion_history.mismatched_financial_references', 0)
+            ->assertJsonPath('data.promotion_history.snapshot_contract_or_amount_mismatches', 2)
             ->assertJsonPath('data.promotion_history.claims.0.id', $websiteClaim)
             ->assertJsonPath('data.promotion_history.claims.0.channel', 'website')
             ->assertJsonPath('data.promotion_history.claims.0.order_id', DB::table('orders')->where('id', $orderId)->value('public_id'))
             ->assertJsonPath('data.promotion_history.claims.1.id', $globalClaim)
-            ->assertJsonPath('data.promotion_history.claims.2.id', $linkedClaim)
-            ->assertJsonPath('data.promotion_history.claims.3.id', $directClaim)
+            ->assertJsonPath('data.promotion_history.claims.2.id', $directClaim)
             ->assertJsonPath('data.promotion_history.requires_review', true)
             ->assertJsonPath('data.promotion_history.archive_eligibility', 'not_approved_for_business_history');
         $this->assertStringNotContainsString('DO-NOT-EXPOSE-PROMO-CUSTOMER', $response->getContent());
         $this->assertStringNotContainsString('PRIVATE-PROMOTION-ORDER-CUSTOMER', $response->getContent());
         $this->assertStringNotContainsString('D03OUTSIDE', $response->getContent());
+        $this->assertStringNotContainsString($outsideLinkedClaim, $response->getContent());
+        $this->assertStringNotContainsString($outsideScopedClaim, $response->getContent());
+        $this->assertStringNotContainsString($outsideWebsiteClaim, $response->getContent());
+        $this->assertStringNotContainsString('PRIVATE-OTHER-ORDER-CUSTOMER', $response->getContent());
+        $this->assertStringNotContainsString($linkedClaim, $response->getContent());
+        // Deliberately divergent internal booking; this does not simulate a provider transaction.
+        $adjustmentSnapshot = json_encode(['synthetic' => 'internal-financial-reference'], JSON_THROW_ON_ERROR);
+        DB::table('monetary_adjustments')->insert([
+            ['id' => (string) Str::uuid(), 'invoice_id' => $invoiceId, 'order_id' => null,
+                'kind' => 'promotion', 'treatment' => 'discount', 'amount' => '2.00', 'currency' => 'PKR',
+                'source_reference' => $globalClaim, 'snapshot' => $adjustmentSnapshot,
+                'snapshot_sha256' => hash('sha256', $adjustmentSnapshot), 'created_at' => now()],
+            ['id' => (string) Str::uuid(), 'invoice_id' => null, 'order_id' => $orderId,
+                'kind' => 'promotion', 'treatment' => 'discount', 'amount' => '1.00', 'currency' => 'PKR',
+                'source_reference' => $websiteClaim, 'snapshot' => $adjustmentSnapshot,
+                'snapshot_sha256' => hash('sha256', $adjustmentSnapshot), 'created_at' => now()],
+        ]);
+        $divergent = $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.missing_financial_references', 0)
+            ->assertJsonPath('data.promotion_history.mismatched_financial_references', 1)
+            ->assertJsonPath('data.promotion_history.snapshot_contract_or_amount_mismatches', 2);
+        $this->assertStringNotContainsString($outsideLinkedClaim, $divergent->getContent());
+        DB::table('monetary_adjustments')->where('source_reference', $globalClaim)->update(['amount' => '1.00']);
+        $matched = $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.missing_financial_references', 0)
+            ->assertJsonPath('data.promotion_history.mismatched_financial_references', 0)
+            ->assertJsonPath('data.promotion_history.snapshot_contract_or_amount_mismatches', 2);
+        $this->assertStringNotContainsString($outsideLinkedClaim, $matched->getContent());
         $this->assertEquals($before, DB::table('promotion_claims')
             ->whereIn('public_id', [$directClaim, $linkedClaim, $globalClaim, $websiteClaim])->orderBy('id')->get()->all());
         for ($index = 0; $index < 51; $index++) {
             $claim($directId, 'active');
         }
         $bounded = $this->send($client, 'GET', $path)->assertOk()
-            ->assertJsonPath('data.promotion_history.claim_count', 55)
+            ->assertJsonPath('data.promotion_history.claim_count', 54)
             ->assertJsonPath('data.promotion_history.active_claim_count', 54)
-            ->assertJsonPath('data.promotion_history.unbound_claim_count', 53)
+            ->assertJsonPath('data.promotion_history.unbound_claim_count', 52)
             ->assertJsonPath('data.promotion_history.claims_truncated', true);
         $this->assertCount(50, $bounded->json('data.promotion_history.claims'));
         $this->assertStringNotContainsString('DO-NOT-EXPOSE-PROMO-CUSTOMER', $bounded->getContent());

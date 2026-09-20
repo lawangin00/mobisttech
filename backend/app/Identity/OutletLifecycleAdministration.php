@@ -347,11 +347,17 @@ final class OutletLifecycleAdministration
             ->leftJoin('products as product', 'product.id', '=', 'pp.product_id')
             ->where(fn ($q) => $q->where('p.outlet_id', $outlet->id)
                 ->orWhere('product.outlet_id', $outlet->id))->select('p.id');
-        $claims = DB::table('promotion_claims as c')->where(function ($q) use ($outlet, $campaigns) {
-            $q->whereIn('c.promotion_id', $campaigns)
-                ->orWhereIn('c.invoice_id', DB::table('invoices')->where('outlet_id', $outlet->id)->select('id'))
+        // A globally scoped campaign may be linked to many outlets. Its unbound claims
+        // and claims bound to OTHER outlets must never be attributed or disclosed here.
+        $claims = DB::table('promotion_claims as c')->where(function ($q) use ($outlet) {
+            $q->whereIn('c.invoice_id', DB::table('invoices')->where('outlet_id', $outlet->id)->select('id'))
                 ->orWhereIn('c.order_id', DB::table('order_items')
-                    ->where('outlet_id', $outlet->id)->select('order_id'));
+                    ->where('outlet_id', $outlet->id)->select('order_id'))
+                ->orWhere(function ($unbound) use ($outlet) {
+                    $unbound->whereNull('c.invoice_id')->whereNull('c.order_id')
+                        ->whereIn('c.promotion_id', DB::table('promotions')
+                            ->where('outlet_id', $outlet->id)->select('id'));
+                });
         });
         $campaignCount = DB::table('promotions')->whereIn('id', $campaigns)->count();
         $claimCount = (clone $claims)->count();
@@ -368,12 +374,34 @@ final class OutletLifecycleAdministration
                 'snapshot_sha256' => $row->snapshot_sha256, 'released_at' => $row->released_at,
                 'invoice_id' => $row->invoice_id, 'order_id' => $row->order_id])->all();
 
+        // A claim is booked only when its original invoice/order has a matching internal
+        // immutable monetary adjustment. This is NOT evidence of bank/provider settlement.
+        $bound = (clone $claims)->where(fn ($q) => $q->whereNotNull('c.invoice_id')
+            ->orWhereNotNull('c.order_id'));
+        $reference = fn ($query) => $query->selectRaw('1')->from('monetary_adjustments as a')
+            ->whereColumn('a.source_reference', 'c.public_id');
+        $financialReferenceMissing = (clone $bound)->whereNotExists($reference)->count();
+        $financialReferenceMismatch = (clone $bound)->whereExists(fn ($query) => $reference($query)
+            ->whereRaw("NOT (a.kind = 'promotion' AND a.treatment = 'discount' AND a.currency = 'PKR'
+                AND a.amount = c.discount_amount AND (a.invoice_id <=> c.invoice_id)
+                AND (a.order_id <=> c.order_id))"))->count();
+        // JSON field reconciliation is deliberately separate from original byte-hash provenance.
+        // A missing v1 contract/amount is a review anomaly, never silently treated as zero.
+        $snapshotMismatch = (clone $claims)->whereRaw("(JSON_UNQUOTE(JSON_EXTRACT(c.snapshot, '$.contract')) IS NULL
+            OR JSON_UNQUOTE(JSON_EXTRACT(c.snapshot, '$.contract')) <> 'promotion-claim.v1'
+            OR JSON_UNQUOTE(JSON_EXTRACT(c.snapshot, '$.discount_amount')) IS NULL
+            OR JSON_UNQUOTE(JSON_EXTRACT(c.snapshot, '$.discount_amount')) <> c.discount_amount)")->count();
+
         return ['campaign_count' => $campaignCount, 'claim_count' => $claimCount,
             'active_claim_count' => (clone $claims)->where('c.status', 'active')->count(),
             'released_claim_count' => (clone $claims)->where('c.status', 'released')->count(),
             'unbound_claim_count' => (clone $claims)->whereNull('c.invoice_id')->whereNull('c.order_id')->count(),
             'claims_truncated' => $claimCount > 50, 'claims' => $lines,
-            'requires_review' => $campaignCount > 0 || $claimCount > 0,
+            'missing_financial_references' => $financialReferenceMissing,
+            'mismatched_financial_references' => $financialReferenceMismatch,
+            'snapshot_contract_or_amount_mismatches' => $snapshotMismatch,
+            'requires_review' => $campaignCount > 0 || $claimCount > 0
+                || $financialReferenceMissing > 0 || $financialReferenceMismatch > 0 || $snapshotMismatch > 0,
             'archive_eligibility' => 'not_approved_for_business_history'];
     }
 
