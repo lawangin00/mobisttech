@@ -10,5 +10,6 @@ export default defineConfig({
     use: { baseURL: 'http://127.0.0.1:18080', channel: 'msedge',
         trace: 'retain-on-failure', screenshot: 'only-on-failure' },
     webServer: { command: 'npm --prefix ../website run start',
-        url: 'http://127.0.0.1:13000/', reuseExistingServer: false, timeout: 45000 },
+        url: 'http://127.0.0.1:13000/', reuseExistingServer: false, timeout: 45000,
+        env: { ...process.env, WEBSITE_API_TIMEOUT_MS: '12000' } },
 });

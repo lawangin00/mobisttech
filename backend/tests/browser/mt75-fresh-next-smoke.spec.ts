@@ -187,3 +187,57 @@ test('MT75 fresh customer registers, validates own cart and cancels COD checkout
     await page.goto('http://127.0.0.1:13000/cart');
     await expect(page.getByText('Your cart is empty.',{exact:true})).toBeVisible();
 });
+
+
+test('MT75 public Next.js stock reaches zero under COD hold and returns after cancellation', async ({ page }) => {
+    test.setTimeout(105_000);
+    await page.goto('http://127.0.0.1:13000/account');
+    await page.getByLabel('Email').fill('mt75-new-customer@example.invalid');
+    await page.getByLabel('Password').fill('SyntheticBuyerStrong123!');
+    const login=page.waitForResponse(r=>r.url().endsWith('/api/customer/auth/login')&&r.request().method()==='POST');
+    await page.locator('form').getByRole('button',{name:'Sign in',exact:true}).click();
+    expect((await login).status()).toBe(200);
+    await expect(page.getByRole('heading',{name:'MT75 Website Buyer'})).toBeVisible();
+    const productPage=await page.goto('http://127.0.0.1:13000/products/mt75-fresh-accessory');
+    expect(productPage?.status()).toBe(200);
+    await page.getByRole('button',{name:'Add to cart'}).click();
+    await expect(page.getByText('Added to cart.',{exact:true})).toBeVisible();
+    await page.goto('http://127.0.0.1:13000/cart');
+    await page.getByRole('button',{name:'+'}).click();
+    await page.getByRole('button',{name:'+'}).click();
+    const quoteReady=page.waitForResponse(r=>r.url().endsWith('/api/customer/cart/quote')&&r.request().method()==='POST');
+    await page.getByRole('button',{name:'Validate cart'}).click();
+    expect((await quoteReady).status()).toBe(200);
+    await expect(page.getByText(/Subtotal: PKR 450\.00/)).toBeVisible();
+    await page.goto('http://127.0.0.1:13000/checkout');
+    await expect(page.getByRole('radio',{name:/Cash on Delivery/})).toBeEnabled();
+    await page.getByLabel('City').fill('Karachi');
+    await page.getByLabel('Delivery address').fill('Synthetic MT75 full-stock hold address');
+    const created=page.waitForResponse(r=>r.url().endsWith('/api/customer/orders')&&r.request().method()==='POST');
+    await page.getByRole('button',{name:'Place order'}).click();
+    const response=await created;
+    expect(response.status(),await response.text()).toBe(201);
+    const order=await response.json() as {data:{order_id:string;amount:string;payment_status:string}};
+    expect(order.data).toMatchObject({amount:'450.00',payment_status:'pending_collection'});
+    const api='http://127.0.0.1:18080/api/v1/catalogue/products/mt75-fresh-accessory';
+    const soldOut=await page.request.get(api);
+    expect(soldOut.status()).toBe(200);
+    expect((await soldOut.json() as {data:{availability:{quantity:number;in_stock:boolean}}}).data.availability)
+        .toMatchObject({quantity:0,in_stock:false});
+    const unavailable=await page.goto('http://127.0.0.1:13000/products/mt75-fresh-accessory');
+    expect(unavailable?.status()).toBe(200);
+    await expect(page.getByRole('button',{name:'Out of stock'})).toBeDisabled();
+    await expect(page.locator('main').getByText('Out of stock').first()).toBeVisible();
+    await page.goto('http://127.0.0.1:13000/account/orders/'+order.data.order_id);
+    const cancelled=page.waitForResponse(r=>r.url().endsWith('/cancel')&&r.request().method()==='POST');
+    await page.getByRole('button',{name:'Cancel order'}).click();
+    expect((await cancelled).status()).toBe(200);
+    const restocked=await page.request.get(api);
+    expect(restocked.status()).toBe(200);
+    expect((await restocked.json() as {data:{availability:{quantity:number;in_stock:boolean}}}).data.availability)
+        .toMatchObject({quantity:3,in_stock:true});
+    const freshPage=await page.goto('http://127.0.0.1:13000/products/mt75-fresh-accessory');
+    expect(freshPage?.status()).toBe(200);
+    await expect(page.locator('main').getByText('3 available').first()).toBeVisible();
+    await expect(page.getByRole('button',{name:'Add to cart'})).toBeEnabled();
+});
