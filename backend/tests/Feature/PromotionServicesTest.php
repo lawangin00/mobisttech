@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use LogicException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
 
@@ -115,6 +116,32 @@ class PromotionServicesTest extends TestCase
         $this->reject(fn () => $this->coupon($product->public_id, 'ARCHIVED10', 'percentage', '10.00', 1));
         $this->assertSame(0, DB::table('promotions')->count());
         $this->assertSame(0, DB::table('promotion_events')->count());
+    }
+
+    public function test_archived_original_outlet_blocks_retargeting_existing_promotion_to_global(): void
+    {
+        $product = $this->product();
+        $this->coupon($product->public_id, 'REPOINT10', 'percentage', '10.00', 1);
+        $original = DB::table('promotions')->firstOrFail();
+        $before = [DB::table('promotion_events')->count(), DB::table('promotion_products')->count()];
+        $this->outlet->forceFill(['archived_at' => now(), 'version' => $this->outlet->version + 1])->save();
+        try {
+            app(PromotionServices::class)->configure($this->actor, $original->public_id, [
+                'name' => 'Attempt to move archived promotion to global', 'outlet_id' => null,
+                'mode' => 'coupon', 'code' => 'REPOINT10', 'discount_type' => 'percentage',
+                'discount_value' => '10.00', 'min_subtotal' => '0.00', 'usage_limit' => 1,
+                'customer_required' => false, 'stackable' => false, 'priority' => 100,
+                'status' => 'active', 'product_ids' => [], 'categories' => [],
+            ]);
+            $this->fail('Archived original outlet promotion was retargeted to global.');
+        } catch (HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
+        $retained = DB::table('promotions')->where('id', $original->id)->firstOrFail();
+        $this->assertSame($original->outlet_id, $retained->outlet_id);
+        $this->assertSame($original->version, $retained->version);
+        $this->assertSame($original->name, $retained->name);
+        $this->assertSame($before, [DB::table('promotion_events')->count(), DB::table('promotion_products')->count()]);
     }
 
     private function coupon(string $productId, string $code, string $type, string $value, int $usageLimit): void

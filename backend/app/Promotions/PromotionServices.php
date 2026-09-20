@@ -47,8 +47,24 @@ final class PromotionServices
         return DB::transaction(function () use ($actor, $publicId, $data, $value, $max, $minimum, $code) {
             $fresh = $actor->fresh();
             abort_unless($fresh && app(Access::class)->allows($fresh, 'config.promotions.manage'), 403);
-            $outlet = ! empty($data['outlet_id']) ? Outlet::where('public_id', $data['outlet_id'])->lockForUpdate()->firstOrFail() : null;
-            abort_if($outlet && ($outlet->status || $outlet->archived_at !== null), 403, 'Outlet is not active.');
+            // Updating a scoped promotion must serialize against archival of its OLD outlet,
+            // even if the submitted replacement is global or belongs to another outlet.
+            $prior = $publicId ? DB::table('promotions')->where('public_id', $publicId)->firstOrFail() : null;
+            $priorOutletId = $prior?->outlet_id === null ? null : (int) $prior->outlet_id;
+            $newOutletId = ! empty($data['outlet_id'])
+                ? Outlet::where('public_id', $data['outlet_id'])->value('id') : null;
+            if (! empty($data['outlet_id'])) {
+                abort_unless($newOutletId !== null, 404);
+            }
+            $outlets = Outlet::whereIn('id', array_values(array_unique(array_filter(
+                [$priorOutletId, $newOutletId], fn ($id) => $id !== null))))
+                ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+            abort_unless($outlets->count() === count(array_unique(array_filter(
+                [$priorOutletId, $newOutletId], fn ($id) => $id !== null))), 404);
+            foreach ($outlets as $lockedOutlet) {
+                abort_if($lockedOutlet->status || $lockedOutlet->archived_at !== null, 403, 'Outlet is not active.');
+            }
+            $outlet = $newOutletId === null ? null : $outlets->get($newOutletId);
             $productIds = [];
             foreach (array_values(array_unique($data['product_ids'] ?? [])) as $id) {
                 $product = Product::where('public_id', $id)->where('isDeleted', false)->lockForUpdate()->firstOrFail();
@@ -72,6 +88,9 @@ final class PromotionServices
                 'updated_by_admin_id' => $fresh->id, 'updated_at' => now()];
             if ($publicId) {
                 $row = DB::table('promotions')->where('public_id', $publicId)->lockForUpdate()->firstOrFail();
+                // A concurrent change of the original outlet requires a fresh lock plan.
+                abort_unless(($row->outlet_id === null ? null : (int) $row->outlet_id) === $priorOutletId,
+                    409, 'Promotion outlet changed; retry configuration.');
                 $payload['version'] = $row->version + 1;
                 DB::table('promotions')->where('id', $row->id)->update($payload);
                 $promotionId = $row->id;
