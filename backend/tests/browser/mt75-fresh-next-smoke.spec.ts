@@ -347,6 +347,10 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
         const publicProduct='/products/mt75-fresh-accessory';
         for (const publicPath of ['/products','/categories','/categories/accessory',publicProduct])
             expect(xml.includes(publicPath),choice+' sitemap '+publicPath).toBe(choice!=='digital_only');
+        for (const publishedSlug of ['mt75-fresh-accessory','mt75-fresh-budget-accessory','mt75-fresh-tracked-phone'])
+            expect(xml.includes('/products/'+publishedSlug),choice+' explicitly published sitemap product '+publishedSlug)
+                .toBe(choice!=='digital_only');
+        expect(xml.toLowerCase()).not.toMatch(/mt75-private-tracked-imei|purchase_price|seller_phone|customer_phone/);
         expect(xml.includes('/services'),choice+' services index').toBe(choice!=='commerce_only');
         if(choice==='digital_only') for(const excluded of ['/products','/categories','/mobiles','/product/'])
             expect(rules).toContain('Disallow: '+excluded);

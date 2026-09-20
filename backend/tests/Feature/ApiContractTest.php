@@ -255,6 +255,32 @@ class ApiContractTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/purchase_price|seller_phone|outlet_id|imei/i', $first->getContent());
     }
 
+    public function test_sitemap_catalogue_exposes_241_published_products_across_eleven_live_pages(): void
+    {
+        $this->publishMode('hybrid', 1);
+        for ($i = 1; $i <= 241; $i++) {
+            $product = $this->listedProduct('mt75-sitemap-'.str_pad((string) $i, 3, '0', STR_PAD_LEFT));
+            $product->forceFill(['name' => 'MT75SITEMAP Published '.str_pad((string) $i, 3, '0', STR_PAD_LEFT)])->save();
+        }
+        $seen = [];
+        $after = null;
+        for ($page = 0; $page < 11; $page++) {
+            $url = '/api/v1/catalogue/products?limit=24&q=MT75SITEMAP'.($after ? '&after='.urlencode($after) : '');
+            $response = $this->getJson($url)->assertOk();
+            $items = $response->json('data.items');
+            $this->assertCount($page === 10 ? 1 : 24, $items);
+            foreach ($items as $item) {
+                $this->assertArrayNotHasKey('purchase_price', $item);
+                $seen[] = $item['slug'];
+            }
+            $this->assertSame($page !== 10, $response->json('data.page.has_more'));
+            $after = $response->json('data.page.next_cursor');
+        }
+        $this->assertCount(241, array_unique($seen));
+        $this->assertContains('mt75-sitemap-241', $seen);
+        $this->assertNull($after);
+    }
+
     public function test_comparison_search_can_find_a_published_product_after_first_24_options(): void
     {
         $this->publishMode('hybrid', 1);

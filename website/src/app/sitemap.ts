@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { readBusinessProfile } from "@/lib/business-profile";
 import { readCatalogue, readCategories, readContentIndex, readServices, readWebsiteProfile } from "@/lib/website-api";
+import { catalogueSitemapSlugs } from "@/lib/catalogue-sitemap";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const seen = new Set(rows.map((row) => row.url));
   const add = (path: string, changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] = "weekly", priority = 0.5) => {
     const url = base + (path.startsWith("/") ? path : "/" + path);
-    if (!seen.has(url)) { seen.add(url); rows.push({ url, changeFrequency, priority }); }
+    if (!seen.has(url)) {
+      if (rows.length >= 50_000) throw new Error("Public sitemap exceeds single-file capacity.");
+      seen.add(url); rows.push({ url, changeFrequency, priority });
+    }
   };
 
   for (const page of content?.pages ?? []) add("/" + page.slug, "weekly", 0.6);
@@ -36,14 +40,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     add("/products", "hourly", 0.9);
     add("/categories", "daily", 0.8);
     for (const category of await readCategories()) add("/categories/" + encodeURIComponent(category.code), "daily", 0.7);
-    let after: string | undefined;
-    for (let page = 0; page < 10; page += 1) {
-      const result = await readCatalogue({ limit: 24, after }).catch(() => null);
-      if (!result) break;
-      for (const product of result.items) add("/products/" + product.slug, "hourly", 0.8);
-      if (!result.page.has_more || !result.page.next_cursor) break;
-      after = result.page.next_cursor;
-    }
+    const published = await catalogueSitemapSlugs((after) => readCatalogue({ limit: 24, after }));
+    for (const slug of published) add("/products/" + encodeURIComponent(slug), "hourly", 0.8);
   }
 
   return rows;
