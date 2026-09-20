@@ -18,7 +18,7 @@ For each row below, compare the *original source behavior* with current approved
 | P06 | Pending | Join real A4/thermal PDF/Print, optional safe email/assisted WhatsApp, source report filters/date limits and cross-role scoped CSV/history. |
 | P07 | Pending | Reconcile source POS settings, managed media, explicit preview/publish/rollback, safe paths and per-section permissions with target rendered Admin/POS UI. |
 | P08 | Complete | Preserve MT-3.3/MT-7.1/MT-7.4 target-only verified recovery evidence. Live destructive restore/provider work remains a separate authorization HOLD; do not reopen this completed family without regression evidence. |
-| X01 | Pending | Independently join original reservation expiry/confirmation/release races, same-key replay/conflicting-hash, partial-failure reconciliation across order-stock-payment MySQL. |
+| X01 | Complete | All 11 source routes disposed; current payment regression and independent-connection confirmation/release race verify replay/hash conflict, atomic retry, expiry and joined order-stock-payment reconciliation. |
 | W01 | Pending | Reconcile original customer/Admin identity and signed historical order access, password/profile/avatar/session, last-owner and direct cross-realm denial with customer and Admin browsers. |
 | W02 | Pending | Check source category/filter/price/variant/redirect and zero-stock outputs against live shared POS→Laravel API→Next.js propagation; deny private fields. |
 | W03 | Pending | Join guest-cart to customer recovery, reprice/duplicate checkout, signed owned invoice/order, purchase-qualified review moderation and Admin CSV/status UI. |

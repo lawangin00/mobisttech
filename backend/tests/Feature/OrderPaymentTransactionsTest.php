@@ -60,6 +60,42 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->reject(fn () => $this->service()->collectCod($this->actor, $this->outlet, $result['order_id'], $this->key('collect'), '400.03', 'COD-001'));
     }
 
+    public function test_checkout_replay_conflict_and_partial_failure_retry_preserve_one_joined_state(): void
+    {
+        $first = $this->product();
+        $second = $this->product();
+        $this->acquire($first, 2);
+        $key = $this->key('checkout-replay');
+        $input = $this->checkoutInput($first->public_id, 'cod');
+        $created = $this->service()->checkout($this->scope(), $this->customer, $key, $input);
+        $this->assertEquals($created, $this->service()->checkout($this->scope(), $this->customer, $key, $input));
+        $this->reject(fn () => $this->service()->checkout($this->scope(), $this->customer, $key,
+            $this->checkoutInput($first->public_id, 'cod', 2)));
+        $this->assertSame(1, DB::table('orders')->count());
+        $this->assertSame(1, DB::table('reservations')->count());
+        $this->assertSame(1, DB::table('payments')->count());
+
+        $partialKey = $this->key('checkout-partial');
+        $partial = [...$input, 'lines' => [
+            ['product_id' => $first->public_id, 'quantity' => 1],
+            ['product_id' => $second->public_id, 'quantity' => 1],
+        ]];
+        $before = [DB::table('orders')->count(), DB::table('order_items')->count(), DB::table('reservations')->count(),
+            DB::table('reservation_lines')->count(), DB::table('reservation_allocations')->count(), DB::table('payments')->count(),
+            DB::table('idempotency_requests')->count()];
+        $this->reject(fn () => $this->service()->checkout($this->scope(), $this->customer, $partialKey, $partial));
+        $this->assertSame($before, [DB::table('orders')->count(), DB::table('order_items')->count(), DB::table('reservations')->count(),
+            DB::table('reservation_lines')->count(), DB::table('reservation_allocations')->count(), DB::table('payments')->count(),
+            DB::table('idempotency_requests')->count()]);
+
+        $this->acquire($second);
+        $retried = $this->service()->checkout($this->scope(), $this->customer, $partialKey, $partial);
+        $this->assertSame('pending_collection', $retried['payment_status']);
+        $this->assertSame(2, DB::table('orders')->count());
+        $this->assertSame(2, DB::table('reservations')->count());
+        $this->assertSame(3, (int) DB::table('reservation_allocations')->whereNull('released_at')->sum('quantity'));
+    }
+
     public function test_checkout_rejects_client_price_mixed_outlets_duplicate_lines_and_inactive_mode(): void
     {
         $product = $this->product();

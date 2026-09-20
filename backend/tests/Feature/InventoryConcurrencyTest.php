@@ -8,6 +8,7 @@ use App\Inventory\AcquisitionDocuments;
 use App\Inventory\StockLedger;
 use App\Inventory\StocktakeOperations;
 use App\Inventory\StockTransferOperations;
+use App\Inventory\TransactionalStock;
 use App\Loyalty\LoyaltyServices;
 use App\Models\Outlet;
 use App\Models\StockUnit;
@@ -74,6 +75,29 @@ class InventoryConcurrencyTest extends TestCase
         $snapshot = DB::transaction(fn () => app(StockLedger::class)->snapshot($product->id));
         $this->assertSame(0, $snapshot['available']);
         $this->assertSame(1, $snapshot['held'] + $product->fresh()->sold_qty);
+    }
+
+    public function test_separate_mysql_connections_serialize_reserved_confirmation_versus_release(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $reservation = $this->reservation($product);
+        DB::transaction(fn () => app(TransactionalStock::class)->reserve($reservation['line']));
+        $sale = $this->sale($product, 1, $reservation['order']);
+        $results = $this->race([$product->id], [
+            ['operation' => 'confirm_reserved_sale', 'barrier_product' => $product->id, 'sale' => $sale,
+                'line' => $reservation['line'], 'reservation' => $reservation['reservation']],
+            ['operation' => 'release_reservation', 'barrier_product' => $product->id,
+                'reservation' => $reservation['reservation']],
+        ]);
+        $this->assertNotContains('error', array_column($results, 'outcome'), json_encode($results));
+        $state = DB::table('reservations')->where('id', $reservation['reservation'])->value('state');
+        $this->assertContains($state, ['confirmed', 'released']);
+        $this->assertSame(0, DB::table('reservation_allocations')->whereNull('released_at')->count());
+        $sold = $state === 'confirmed';
+        $this->assertSame($sold ? 1 : 0, DB::table('stock_movements')->where('type', 'sale')->count());
+        $this->assertSame($sold ? 0 : 1, $product->fresh()->qty);
+        $this->assertSame($sold ? 1 : 0, $product->fresh()->sold_qty);
     }
 
     public function test_separate_mysql_connections_cannot_reserve_the_same_physical_unit_twice(): void

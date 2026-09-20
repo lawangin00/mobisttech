@@ -44,6 +44,15 @@ try {
         return match ($input['operation']) {
             'reserve' => app(TransactionalStock::class)->reserve($input['id']),
             'sale' => app(TransactionalStock::class)->consumeSale($input['id']),
+            'confirm_reserved_sale' => (function () use ($input) {
+                $movement = app(TransactionalStock::class)->consumeSale($input['sale'], $input['line']);
+                DB::table('reservations')->where('id', $input['reservation'])->update([
+                    'state' => 'confirmed', 'confirmed_at' => now(), 'updated_at' => now(),
+                ]);
+
+                return $movement;
+            })(),
+            'release_reservation' => app(TransactionalStock::class)->release($input['reservation']),
             'imeis' => app(InventoryOperations::class)->imeis(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
                 $input['product'], $input['key'], ['unit_id' => $input['unit'], 'version' => 1, 'imeis' => [1 => 'race-imei-1', 2 => 'race-imei-2']]),
             'return' => app(SalesOperations::class)->acceptReturn(Admin::findOrFail($input['actor']), Outlet::findOrFail($input['outlet']),
