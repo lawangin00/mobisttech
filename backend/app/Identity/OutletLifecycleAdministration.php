@@ -424,6 +424,15 @@ final class OutletLifecycleAdministration
                 $financialSnapshotMismatches++;
             }
         }
+        // Compare retained JSON values only; original serialized claim bytes are unavailable.
+        // A missing or divergent claimed event is a historical reconciliation gap.
+        $claimsWithoutMatchingClaimedEvent = (clone $claims)->whereNotExists(fn ($query) => $query
+            ->selectRaw('1')->from('promotion_events as e')
+            ->whereColumn('e.promotion_claim_id', 'c.id')
+            ->whereColumn('e.promotion_id', 'c.promotion_id')
+            ->where('e.event_type', 'claimed')
+            ->whereRaw('JSON_CONTAINS(e.snapshot, c.snapshot) AND JSON_CONTAINS(c.snapshot, e.snapshot)'))
+            ->count();
         // JSON field reconciliation is deliberately separate from original byte-hash provenance.
         // A missing v1 contract/amount is a review anomaly, never silently treated as zero.
         $snapshotMismatch = (clone $claims)->whereRaw("(JSON_UNQUOTE(JSON_EXTRACT(c.snapshot, '$.contract')) IS NULL
@@ -439,11 +448,13 @@ final class OutletLifecycleAdministration
             'missing_financial_references' => $financialReferenceMissing,
             'mismatched_financial_references' => $financialReferenceMismatch,
             'shared_order_claims_held_for_review' => $sharedOrderClaimsHeld,
+            'claims_without_matching_claimed_event' => $claimsWithoutMatchingClaimedEvent,
             'financial_snapshot_digest_mismatches' => $financialSnapshotMismatches,
             'snapshot_contract_or_amount_mismatches' => $snapshotMismatch,
             'requires_review' => $campaignCount > 0 || $claimCount > 0 || $sharedOrderClaimsHeld > 0
                 || $financialReferenceMissing > 0 || $financialReferenceMismatch > 0
-                || $financialSnapshotMismatches > 0 || $snapshotMismatch > 0,
+                || $financialSnapshotMismatches > 0 || $snapshotMismatch > 0
+                || $claimsWithoutMatchingClaimedEvent > 0,
             'archive_eligibility' => 'not_approved_for_business_history'];
     }
 

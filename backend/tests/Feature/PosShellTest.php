@@ -1084,6 +1084,7 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.promotion_history.released_claim_count', 0)
             ->assertJsonPath('data.promotion_history.unbound_claim_count', 1)
             ->assertJsonPath('data.promotion_history.claims_truncated', false)
+            ->assertJsonPath('data.promotion_history.claims_without_matching_claimed_event', 3)
             ->assertJsonPath('data.promotion_history.missing_financial_references', 2)
             ->assertJsonPath('data.promotion_history.mismatched_financial_references', 0)
             ->assertJsonPath('data.promotion_history.financial_snapshot_digest_mismatches', 0)
@@ -1103,6 +1104,32 @@ class PosShellTest extends TestCase
         $this->assertStringNotContainsString($outsideWebsiteClaim, $response->getContent());
         $this->assertStringNotContainsString('PRIVATE-OTHER-ORDER-CUSTOMER', $response->getContent());
         $this->assertStringNotContainsString($linkedClaim, $response->getContent());
+
+        // The claimed event is independent retained evidence, never original JSON byte proof.
+        $websiteClaimInternalId = DB::table('promotion_claims')->where('public_id', $websiteClaim)->value('id');
+        $claimEventId = DB::table('promotion_events')->insertGetId([
+            'promotion_id' => $globalId, 'promotion_claim_id' => $websiteClaimInternalId,
+            'event_type' => 'claimed', 'snapshot' => $verifiedSnapshot,
+            'snapshot_sha256' => hash('sha256', $verifiedSnapshot), 'created_at' => now(),
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.claims_without_matching_claimed_event', 2);
+        DB::table('promotion_events')->where('id', $claimEventId)->update([
+            'snapshot' => $wrongAmountSnapshot,
+            'snapshot_sha256' => hash('sha256', $wrongAmountSnapshot),
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.claims_without_matching_claimed_event', 3);
+        DB::table('promotion_events')->where('id', $claimEventId)->update([
+            'snapshot' => $verifiedSnapshot, 'snapshot_sha256' => hash('sha256', $verifiedSnapshot),
+            'promotion_id' => $directId,
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.claims_without_matching_claimed_event', 3);
+        DB::table('promotion_events')->where('id', $claimEventId)->update(['promotion_id' => $globalId]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.claims_without_matching_claimed_event', 2);
+
         // Deliberately divergent internal booking; this does not simulate a provider transaction.
         $adjustmentSnapshot = json_encode(['synthetic' => 'internal-financial-reference'], JSON_THROW_ON_ERROR);
         DB::table('monetary_adjustments')->insert([
@@ -1172,6 +1199,7 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.promotion_history.claim_count', 54)
             ->assertJsonPath('data.promotion_history.active_claim_count', 54)
             ->assertJsonPath('data.promotion_history.unbound_claim_count', 52)
+            ->assertJsonPath('data.promotion_history.claims_without_matching_claimed_event', 53)
             ->assertJsonPath('data.promotion_history.claims_truncated', true);
         $this->assertCount(50, $bounded->json('data.promotion_history.claims'));
         $this->assertStringNotContainsString('DO-NOT-EXPOSE-PROMO-CUSTOMER', $bounded->getContent());
