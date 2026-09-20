@@ -1,6 +1,6 @@
 # mobiST Tech - Project Source of Truth
 
-Version: 1.10 | Date: 2026-09-20
+Version: 1.11 | Date: 2026-09-21
 
 ## Authority, Goal and Preferences
 
@@ -31,6 +31,10 @@ The owner confirms mobiSTtech starts with ZERO inherited POS/Website business da
 The production target MUST start with minimum secure login/authorization/configuration bootstrap and NO demo or old business transactions; the clean-production bootstrap gate must be verified before release. MT-7.5 proves Admin login -> create/configure NEW outlet -> add products/stock/customers -> POS sale/payment/return/warranty/report -> Website workflows using newly generated synthetic target fixtures in isolated MySQL. Required source functionality can be referenced read-only, but acceptance concerns target BEHAVIOR, not legacy source rows. Retain all transaction-time snapshots, stock/financial integrity, role/outlet isolation, audit and safeguards for business records created by the NEW system. D03 future-history archive functionality and fail-closed security remain intact; historical source record recovery is not a prerequisite to run a fresh outlet.
 
 Complete Gmail, offline/password recovery, POS bank/payment destination and approved Website COD/JazzCash/Easypaisa/hosted-card backend/configuration UI, validation, authorization, errors, retry and audit using safe local fakes. Treat authentic OAuth/email delivery, gateway sandbox/live transactions, real refunds, bank reconciliation and production activation as separate EXTERNAL UNVERIFIED items pending credentials plus explicit authorization, not blockers for other feature-family implementation or local/mock acceptance. Never equate mocks with connectivity. Preserve independent legal/ownership/publication approvals and final MT-7.6 entry. Reuse valid unchanged test evidence, select the next independently actionable target gap and do not resume obsolete D04 snapshots or arbitrary historical D03 checks.
+
+## MT-7.5 W02 owner-approved same-category comparison rule (2026-09-21)
+
+Product comparison MUST use a single product category per comparison: mobiles with mobiles, tablets with tablets, and accessories with accessories; never mix those categories in the same comparison, including direct and historical `products=` URL selections. The category chooser and searched product options must be restricted to the active category; changing category clears previous selections. A comparison may contain up to four distinct publicly published products of that category, with current public stock/specification and private-field controls retained. The original Website's phone/tablet-only comparison eligibility is superseded for the new target by the owner's express inclusion of same-category accessories. Different category/series codes may not be silently treated as equivalent; further independently modeled series/subcategory distinctions must follow the same category-isolation principle when implemented. This approved owner rule supersedes prior W02 audit notes recording category eligibility as awaiting owner confirmation, without rewriting their historical evidence.
 
 ## Non-negotiable boundaries
 

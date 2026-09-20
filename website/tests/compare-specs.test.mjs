@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { publicCompareEligible, publicCompareSpec } from '../src/lib/compare-specs.ts';
+import { publicCompareEligible, publicCompareSpec, resolveCompareCategory, sameCategoryProducts } from '../src/lib/compare-specs.ts';
 
 const phone = { category: { code: 'mobile_phone' }, device: {ram_gb:8,storage_gb:128,sim:'Single SIM'}, variants: [
   {color:'Black',condition:'used',pta_status:'pta_approved'},
@@ -32,4 +32,18 @@ test('explicit comparison eligibility retains mobiles tablets and previously acc
     assert.equal(publicCompareEligible({category:{code}}), true, code);
   for (const code of ['software', 'digital_service', 'unknown', ''])
     assert.equal(publicCompareEligible({category:{code}}), false, code);
+});
+
+test('owner category policy forbids mobile/tablet/accessory cross-comparison in all selected slots', () => {
+  const selected = [{slug:'mobile-1',category:{code:'mobile_phone'}},
+    {slug:'accessory-1',category:{code:'accessory'}}, {slug:'tablet-1',category:{code:'tablet'}},
+    {slug:'mobile-2',category:{code:'mobile_phone'}}, {slug:'accessory-2',category:{code:'accessory'}}];
+  assert.equal(resolveCompareCategory(undefined, selected), 'mobile_phone');
+  assert.deepEqual(sameCategoryProducts(selected, 'mobile_phone').map(p=>p.slug), ['mobile-1','mobile-2']);
+  assert.deepEqual(sameCategoryProducts(selected, 'accessory').map(p=>p.slug), ['accessory-1','accessory-2']);
+  assert.deepEqual(sameCategoryProducts(selected, 'tablet').map(p=>p.slug), ['tablet-1']);
+  assert.deepEqual(sameCategoryProducts(selected, null), []);
+  assert.equal(resolveCompareCategory('accessory', selected), 'accessory');
+  assert.equal(resolveCompareCategory('unsupported', selected), 'mobile_phone');
+  assert.equal(resolveCompareCategory(undefined, []), null);
 });

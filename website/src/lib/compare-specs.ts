@@ -12,9 +12,22 @@ export function publicCompareSpec(product: ProductDetail, field: "ram" | "storag
   return values.length ? values.join(" / ") : "—";
 }
 
-// Source chooser restricted to phone/tablet. This target retains its independently tested
-// accessory comparison as an additive category, not a claim of exact source eligibility parity.
-// Do not silently change this user-visible scope during a parity-only review.
+// Owner-approved policy: compare products within the SAME category only.
+// Mobiles, tablets, and accessories may each be compared to their own category.
 export function publicCompareEligible(product: Pick<ProductDetail, "category">): boolean {
-  return ["mobile_phone", "tablet", "accessory"].includes(product.category.code);
+  return compareCategoryCodes.includes(product.category.code as CompareCategory);
+}
+
+export const compareCategoryCodes = ["mobile_phone", "tablet", "accessory"] as const;
+export type CompareCategory = typeof compareCategoryCodes[number];
+
+export function resolveCompareCategory(requested: unknown, candidates: readonly Pick<ProductDetail, "category">[]): CompareCategory | null {
+  if (typeof requested === "string" && compareCategoryCodes.includes(requested as CompareCategory))
+    return requested as CompareCategory;
+  const first = candidates.find(publicCompareEligible);
+  return first ? first.category.code as CompareCategory : null;
+}
+
+export function sameCategoryProducts<T extends Pick<ProductDetail, "category">>(products: readonly T[], category: CompareCategory | null): T[] {
+  return category ? products.filter((product) => publicCompareEligible(product) && product.category.code === category) : [];
 }
