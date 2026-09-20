@@ -57,6 +57,19 @@ final class OutletLifecycleAdministration
             'lines' => $lines, 'retrieval_mode' => 'original_database_record_read_only'];
     }
 
+    /** Separately audited reconstruction: this does not recover the originally issued PDF bytes. */
+    public function archivedInvoicePdf(Admin $actor, string $outletId, string $invoiceId, string $password, string $purpose): array
+    {
+        // Reuse the exact password, Full Access, archived-state and same-outlet document checks.
+        $this->archivedInvoiceDocument($actor, $outletId, $invoiceId, $password, $purpose);
+        $outlet = Outlet::where('public_id', $outletId)->firstOrFail();
+        $result = app(\App\Documents\CanonicalDocuments::class)
+            ->reconstructArchivedInvoice($actor, $outlet, $invoiceId);
+        \App\Identity\IdentityAudit::record('admin', $actor->id, 'archived_invoice_pdf_reconstructed',
+            'invoice:'.$invoiceId.';purpose:'.preg_replace('/\s+/u', ' ', trim($purpose)), $outlet->id);
+        return $result;
+    }
+
     /** Per-case password-confirmed warranty history. Never include sensitive case notes in archive indexes. */
     public function archivedClaimDocument(Admin $actor, string $outletId, string $claimId, string $password, string $purpose): array
     {

@@ -5,6 +5,7 @@ namespace App\Documents;
 use App\Identity\Access;
 use App\Identity\IdentityAccount;
 use App\Integrations\GmailApi;
+use App\Models\Admin;
 use App\Models\Outlet;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -48,6 +49,41 @@ final class CanonicalDocuments
         $render = $this->renderAuthorized($actor, $outlet, $type, $documentId, $format);
 
         return $this->publicRender($render) + ['pdf' => $render['pdf'], 'action' => 'save_pdf'];
+    }
+
+    /** An explicitly labelled reconstruction, NEVER the originally issued PDF or a proof of settlement. */
+    public function reconstructArchivedInvoice(Admin $actor, Outlet $outlet, string $documentId): array
+    {
+        abort_unless(app(\App\Identity\OutletLifecycleAdministration::class)->canManage($actor), 403);
+        abort_unless($outlet->fresh()->archived_at !== null, 409, 'Outlet is not archived.');
+        $invoice = DB::table('invoices')->where('public_id', $documentId)
+            ->where('outlet_id', $outlet->id)->firstOrFail();
+        $business = json_decode((string) $invoice->business_snapshot, true);
+        abort_unless(is_string($invoice->invoice_number) && trim($invoice->invoice_number) !== ''
+            && $invoice->created_at !== null && is_array($business)
+            && is_string($business['business_name'] ?? null) && trim($business['business_name']) !== '',
+            409, 'Historical invoice lacks a complete original invoice identity or business snapshot.');
+        $saleQuery = DB::table('sales')->where('invoice_id', $invoice->id)->where('outlet_id', $outlet->id);
+        $count = (clone $saleQuery)->count();
+        abort_unless($count > 0 && $count <= 30
+            && DB::table('sales')->where('invoice_id', $invoice->id)->count() === $count,
+            409, 'Historical PDF reconstruction needs a bounded complete same-outlet sale-line set.');
+        foreach ((clone $saleQuery)->get(['invoice_detail_snapshot']) as $sale) {
+            $snapshot = json_decode((string) $sale->invoice_detail_snapshot, true);
+            abort_unless(is_array($snapshot) && ($snapshot['contract'] ?? null) === 'sale-line.v1'
+                && is_string($snapshot['name'] ?? null) && trim($snapshot['name']) !== '',
+                409, 'Historical invoice item snapshot is missing or uses an unsupported contract.');
+        }
+        $payload = $this->invoice($outlet, $documentId);
+        $lines = ['RECONSTRUCTED COPY - NOT THE ORIGINAL ISSUED PDF',
+            'Historical review only; source records may be transliterated.', ...$this->lines($payload)];
+        abort_unless(count($lines) <= 55, 409, 'Historical PDF exceeds the safe single-page reconstruction limit.');
+        $pdf = $this->pdf($lines, 'a4');
+        return ['filename' => 'reconstructed-'.preg_replace('/[^A-Za-z0-9._-]+/', '-',
+                (string) ($invoice->invoice_number ?: $invoice->public_id)).'-a4.pdf',
+            'pdf_base64' => base64_encode($pdf), 'document_sha256' => hash('sha256', $pdf),
+            'document_version' => self::VERSION, 'reconstruction_only' => true,
+            'original_issued_pdf_preserved' => false, 'format' => 'a4'];
     }
 
     public function emailDraft(IdentityAccount $actor, Outlet $outlet, string $type, string $documentId): array

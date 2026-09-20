@@ -570,11 +570,15 @@ class PosShellTest extends TestCase
             'public_id' => $invoicePublicId, 'invoice_number' => 'D03-INV-'.Str::random(12),
             'total_bill' => '200.00', 'final_bill' => '200.00', 'currency' => 'PKR',
             'customer_name' => 'PRIVATE-CUSTOMER-NAME', 'customer_phone' => '03008888888',
-            'customer_cnic' => '42501-0000000-0']);
+            'customer_cnic' => '42501-0000000-0', 'created_at' => now(),
+            'business_snapshot' => json_encode(['business_name' => 'Synthetic Original Invoicing Entity',
+                'outlet_name' => 'Synthetic historical invoice claim'], JSON_THROW_ON_ERROR)]);
         $saleId = DB::table('sales')->insertGetId(['outlet_id' => $outlet->id,
             'product_id' => $product->id, 'invoice_id' => $invoiceId, 'public_id' => (string) Str::uuid(),
             'sale_date' => now()->toDateString(), 'sale_price' => '200.00', 'quantity' => 1,
-            'total_price' => '200.00', 'net_total_price' => '200.00']);
+            'total_price' => '200.00', 'net_total_price' => '200.00',
+            'invoice_detail_snapshot' => json_encode(['contract' => 'sale-line.v1',
+                'name' => 'Original synthetic archived item'], JSON_THROW_ON_ERROR)]);
         $claimPublicId = (string) Str::uuid();
         $claimId = DB::table('claims')->insertGetId(['outlet_id' => $outlet->id,
             'product_id' => $product->id, 'invoice_id' => $invoiceId, 'sale_id' => $saleId,
@@ -649,8 +653,10 @@ class PosShellTest extends TestCase
         $uri = '/internal/admin/outlet-management/'.$outlet->public_id.'/history';
         $this->send($ownerClient, 'GET', $uri)->assertStatus(409);
         $docUri = $uri.'/invoices/'.$invoicePublicId.'/retrieve';
+        $pdfUri = $uri.'/invoices/'.$invoicePublicId.'/reconstructed-pdf';
         $docRequest = ['password' => 'SyntheticPass123!', 'purpose' => 'Retained invoice review'];
         $this->send($ownerClient, 'POST', $docUri, $docRequest)->assertStatus(409);
+        $this->send($ownerClient, 'POST', $pdfUri, $docRequest)->assertStatus(409);
         $claimDocUri = $uri.'/claims/'.$claimPublicId.'/retrieve';
         $this->send($ownerClient, 'POST', $claimDocUri, $docRequest)->assertStatus(409);
         // Product/invoice/claim-bearing real outlet still MUST NOT be archived by the service.
@@ -747,10 +753,69 @@ class PosShellTest extends TestCase
             ->where('reference', 'invoice:'.$invoicePublicId.';purpose:Retained invoice review')->count());
         $this->assertEquals($priorInvoice, DB::table('invoices')->where('id', $invoiceId)->firstOrFail());
         $this->assertSame(1, DB::table('sales')->where('id', $saleId)->where('returned_quantity', 1)->count());
+        $this->send($ownerClient, 'GET', $pdfUri)->assertStatus(405);
+        $this->send($ownerClient, 'POST', $pdfUri, ['password' => 'incorrect',
+            'purpose' => 'Retained invoice review'])->assertForbidden();
+        $reconstruction = $this->send($ownerClient, 'POST', $pdfUri, $docRequest)->assertOk()
+            ->assertJsonPath('data.reconstruction_only', true)
+            ->assertJsonPath('data.original_issued_pdf_preserved', false)
+            ->assertJsonPath('data.document_version', 1)
+            ->assertJsonPath('data.format', 'a4');
+        $pdfBytes = base64_decode($reconstruction->json('data.pdf_base64'), true);
+        $this->assertNotFalse($pdfBytes);
+        $this->assertStringStartsWith('%PDF-1.4', $pdfBytes);
+        $this->assertStringContainsString('RECONSTRUCTED COPY - NOT THE ORIGINAL ISSUED PDF', $pdfBytes);
+        $this->assertStringContainsString('Original synthetic archived item', $pdfBytes);
+        $this->assertStringContainsString('Synthetic Original Invoicing Entity', $pdfBytes);
+        $this->assertStringContainsString('PRIVATE-CUSTOMER-NAME', $pdfBytes);
+        $this->assertSame(hash('sha256', $pdfBytes), $reconstruction->json('data.document_sha256'));
+        $this->assertStringStartsWith('reconstructed-', $reconstruction->json('data.filename'));
+        $this->assertStringContainsString('no-store', (string) $reconstruction->headers->get('Cache-Control'));
+        // Reconstruction is the ONLY separate archived PDF path; normal operational documents stay denied.
+        try {
+            app(\App\Documents\CanonicalDocuments::class)
+                ->savePdf($owner, $outlet, 'invoice', $invoicePublicId);
+            $this->fail('Normal operational PDF must not grant archived-outlet access.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
+        $this->assertSame(1, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
+            ->where('action', 'archived_invoice_pdf_reconstructed')
+            ->where('reference', 'invoice:'.$invoicePublicId.';purpose:Retained invoice review')->count());
+        $this->assertEquals($priorInvoice, DB::table('invoices')->where('id', $invoiceId)->firstOrFail());
+        $originalSaleSnapshot = DB::table('sales')->where('id', $saleId)->value('invoice_detail_snapshot');
+        DB::table('sales')->where('id', $saleId)->update(['invoice_detail_snapshot' => null]);
+        $this->send($ownerClient, 'POST', $pdfUri, $docRequest)->assertStatus(409);
+        DB::table('sales')->where('id', $saleId)->update(['invoice_detail_snapshot' => $originalSaleSnapshot]);
+        DB::table('sales')->where('id', $saleId)->update(['invoice_detail_snapshot' => json_encode([
+            'contract' => 'unverified-old-contract', 'name' => 'Untrusted arbitrary item'], JSON_THROW_ON_ERROR)]);
+        try {
+            app(\App\Documents\CanonicalDocuments::class)
+                ->reconstructArchivedInvoice($owner, $outlet, $invoicePublicId);
+            $this->fail('Unsupported sale snapshot contract must not be rendered as an original copy.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+            $this->assertSame(409, $error->getStatusCode());
+        }
+        DB::table('sales')->where('id', $saleId)->update(['invoice_detail_snapshot' => $originalSaleSnapshot]);
+        $originalBusinessSnapshot = DB::table('invoices')->where('id', $invoiceId)->value('business_snapshot');
+        DB::table('invoices')->where('id', $invoiceId)->update(['business_snapshot' => null]);
+        try {
+            app(\App\Documents\CanonicalDocuments::class)
+                ->reconstructArchivedInvoice($owner, $outlet, $invoicePublicId);
+            $this->fail('Missing business snapshot must not produce a reconstructed PDF.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+            $this->assertSame(409, $error->getStatusCode());
+        }
+        DB::table('invoices')->where('id', $invoiceId)->update(['business_snapshot' => $originalBusinessSnapshot]);
+        $this->assertEquals($priorInvoice, DB::table('invoices')->where('id', $invoiceId)->firstOrFail());
+        $this->assertSame(1, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
+            ->where('action', 'archived_invoice_pdf_reconstructed')->count());
         $unrelatedArchived = $this->outlet('Synthetic unrelated historical records', '098');
         $unrelatedArchived->forceFill(['archived_at' => now()])->save();
         $otherHistory = '/internal/admin/outlet-management/'.$unrelatedArchived->public_id.'/history';
         $this->send($ownerClient, 'POST', $otherHistory.'/invoices/'.$invoicePublicId.'/retrieve', $docRequest)
+            ->assertNotFound();
+        $this->send($ownerClient, 'POST', $otherHistory.'/invoices/'.$invoicePublicId.'/reconstructed-pdf', $docRequest)
             ->assertNotFound();
         $this->send($ownerClient, 'POST', $otherHistory.'/claims/'.$claimPublicId.'/retrieve', $docRequest)
             ->assertNotFound();
@@ -782,6 +847,7 @@ class PosShellTest extends TestCase
         $this->login($limitedClient, $limited->email)->assertOk();
         $this->send($limitedClient, 'GET', $uri)->assertForbidden();
         $this->send($limitedClient, 'POST', $docUri, $docRequest)->assertForbidden();
+        $this->send($limitedClient, 'POST', $pdfUri, $docRequest)->assertForbidden();
         $this->send($limitedClient, 'POST', $claimDocUri, $docRequest)->assertForbidden();
         $this->assertEquals($priorInvoice, DB::table('invoices')->where('id', $invoiceId)->firstOrFail());
         $this->assertEquals($priorClaim, DB::table('claims')->where('id', $claimId)->firstOrFail());
@@ -861,7 +927,8 @@ class PosShellTest extends TestCase
         $invoiceId = DB::table('invoices')->insertGetId(['outlet_id' => $outlet->id,
             'public_id' => $invoicePublicId, 'invoice_number' => 'D03-CAP-'.Str::random(12),
             'total_bill' => '101.00', 'final_bill' => '101.00', 'currency' => 'PKR',
-            'customer_name' => 'PRIVATE-BOUND-CUSTOMER']);
+            'customer_name' => 'PRIVATE-BOUND-CUSTOMER', 'created_at' => now(),
+            'business_snapshot' => json_encode(['business_name' => 'Synthetic bounded source'], JSON_THROW_ON_ERROR)]);
         $sales = [];
         for ($index = 0; $index < 101; $index++) {
             $sales[] = ['public_id' => (string) Str::uuid(), 'outlet_id' => $outlet->id,
@@ -898,6 +965,10 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.line_count', 101)
             ->assertJsonPath('data.lines_truncated', true)
             ->assertJsonPath('data.customer_name', 'PRIVATE-BOUND-CUSTOMER');
+        $this->send($client, 'POST', $path.'/invoices/'.$invoicePublicId.'/reconstructed-pdf', $input)
+            ->assertStatus(409);
+        $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
+            ->where('action', 'archived_invoice_pdf_reconstructed')->count());
         $this->assertCount(100, $invoice->json('data.lines'));
         $this->assertSame($sales[0]['public_id'], $invoice->json('data.lines.0.id'));
         $claim = $this->send($client, 'POST', $path.'/claims/'.$claimPublicId.'/retrieve', $input)->assertOk()

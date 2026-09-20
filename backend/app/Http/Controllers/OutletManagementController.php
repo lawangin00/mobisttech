@@ -57,6 +57,19 @@ final class OutletManagementController extends Controller
         return $response;
     }
 
+    public function archivedInvoicePdf(Request $request, string $outlet, string $invoice,
+        OutletLifecycleAdministration $service)
+    {
+        $data = $request->validate(['password' => ['required', 'string'],
+            'purpose' => ['required', 'string', 'min:10', 'max:100']]);
+        abort_unless(count($request->all()) === 2, 422, 'Unexpected reconstruction fields.');
+        $response = response()->json(['data' => $service->archivedInvoicePdf(
+            $this->actor(), $outlet, $invoice, $data['password'], $data['purpose'])]);
+        $response->headers->set('Cache-Control', 'private, no-store, max-age=0');
+        $response->headers->set('Pragma', 'no-cache');
+        return $response;
+    }
+
     public function archivedClaimDocument(Request $request, string $outlet, string $claim,
         OutletLifecycleAdministration $service)
     {
