@@ -316,6 +316,18 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await expect(publicSpecs.getByRole('row',{name:/Colors/})).toHaveCount(1);
     expect((await publicSpecs.textContent() ?? '').toLowerCase()).not.toMatch(/mt75-private-tracked-imei|purchase_price|seller_phone|unit_no/);
     expect((await page.content()).toLowerCase()).not.toMatch(/mt75-private-tracked-imei|purchase_price|seller_phone/);
+    // Explicit source/target scope evidence: source phone/tablet, target also retains already accepted accessories.
+    const mixed=await page.goto('http://127.0.0.1:13000/compare?products=mt75-fresh-tracked-phone,mt75-fresh-accessory,mt75-fresh-budget-accessory');
+    expect(mixed?.status()).toBe(200);
+    await expect(page.locator('main article')).toHaveCount(3);
+    const mixedSpecs=page.getByTestId('compare-specs');
+    await expect(mixedSpecs.getByRole('row',{name:/Category/})).toContainText('Mobiles');
+    await expect(mixedSpecs.getByRole('row',{name:/Category/})).toContainText('Accessories');
+    await expect(page.locator('form[action="/compare"]').nth(1).locator('select[name="a"]')).toHaveValue('mt75-fresh-tracked-phone');
+    await expect(page.locator('form[action="/compare"]').nth(1).locator('select[name="b"]')).toHaveValue('mt75-fresh-accessory');
+    await expect(page.locator('form[action="/compare"]').nth(1).locator('select[name="c"]')).toHaveValue('mt75-fresh-budget-accessory');
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content',/noindex/);
+    expect((await page.content()).toLowerCase()).not.toMatch(/mt75-private-tracked-imei|purchase_price|seller_phone|unit_no/);
     const compared=await page.goto('http://127.0.0.1:13000/compare?a=mt75-fresh-accessory&b=mt75-fresh-accessory');
     expect(compared?.status()).toBe(200);
     await expect(page.getByRole('heading',{name:'Compare products'})).toBeVisible();

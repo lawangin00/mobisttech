@@ -12,8 +12,9 @@ export function publicCompareSpec(product: ProductDetail, field: "ram" | "storag
   return values.length ? values.join(" / ") : "—";
 }
 
-// Source chooser was phone/tablet only; preserve the target's already accepted
-// accessory comparison until product owner explicitly decides that scope difference.
+// Source chooser restricted to phone/tablet. This target retains its independently tested
+// accessory comparison as an additive category, not a claim of exact source eligibility parity.
+// Do not silently change this user-visible scope during a parity-only review.
 export function publicCompareEligible(product: Pick<ProductDetail, "category">): boolean {
   return ["mobile_phone", "tablet", "accessory"].includes(product.category.code);
 }

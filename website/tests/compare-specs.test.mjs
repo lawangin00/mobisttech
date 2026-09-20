@@ -24,3 +24,12 @@ test('missing hardware and unknown or absent public variant attributes show safe
   assert.equal(publicCompareEligible({category:{code:'tablet'}}),true);
   assert.equal(publicCompareEligible({category:{code:'unrecognized'}}),false);
 });
+
+// Original Website source only selected mobiles/tablets. Existing target accessory
+// comparison is retained as a documented additive product-scope difference.
+test('explicit comparison eligibility retains mobiles tablets and previously accepted accessories only', () => {
+  for (const code of ['mobile_phone', 'tablet', 'accessory'])
+    assert.equal(publicCompareEligible({category:{code}}), true, code);
+  for (const code of ['software', 'digital_service', 'unknown', ''])
+    assert.equal(publicCompareEligible({category:{code}}), false, code);
+});
