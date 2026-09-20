@@ -204,6 +204,7 @@ final class OrderTransactions
     /** Provider network call occurs outside a database transaction; its durable intent already exists. */
     public function initiate(string $paymentPublicId): array
     {
+        DB::transaction(fn () => $this->lockActivePaymentOutlet($paymentPublicId), 3);
         $payment = DB::table('payments')->where('public_id', $paymentPublicId)->firstOrFail();
         $order = DB::table('orders')->where('id', $payment->order_id)->firstOrFail();
         if ($payment->status !== 'pending' || $payment->gateway === 'cod') {
@@ -618,6 +619,22 @@ final class OrderTransactions
         abort_unless($outletId !== null, 404);
 
         return Outlet::whereKey($outletId)->lockForUpdate()->firstOrFail();
+    }
+
+    private function lockActivePaymentOutlet(string $paymentPublicId): ?Outlet
+    {
+        $payment = DB::table('payments')->where('public_id', $paymentPublicId)->firstOrFail();
+        $order = DB::table('orders')->where('id', $payment->order_id)->firstOrFail();
+        if ($order->order_type === 'digital') {
+            return null;
+        }
+        $outletId = DB::table('reservations')->where('order_id', $order->id)
+            ->where('website_payment_id', $payment->id)->value('outlet_id');
+        abort_unless($outletId !== null, 404);
+        $outlet = Outlet::whereKey($outletId)->lockForUpdate()->firstOrFail();
+        abort_if($outlet->status || $outlet->archived_at !== null, 403, 'Outlet is not active.');
+
+        return $outlet;
     }
 
     private function owner(string $scope, ?CustomerAccount $customer): void

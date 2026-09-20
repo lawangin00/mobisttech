@@ -186,6 +186,28 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(1, DB::table('reservation_allocations')->whereNull('released_at')->count());
     }
 
+    public function test_archived_outlet_blocks_payment_initiation_before_provider_reference(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $this->fakeProvider();
+        $order = $this->service()->checkout($this->scope(), $this->customer, $this->key('archive-initiate'),
+            $this->checkoutInput($product->public_id, 'jazzcash'));
+        $this->outlet->forceFill(['archived_at' => now(), 'version' => $this->outlet->version + 1])->save();
+
+        try {
+            $this->service()->initiate($order['payment_id']);
+            $this->fail('Archived outlet started an external payment intent.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $payment = DB::table('payments')->where('public_id', $order['payment_id'])->firstOrFail();
+        $this->assertNull($payment->gateway_order_reference);
+        $this->assertNull($payment->gateway_response);
+        $this->assertSame('pending', $payment->status);
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+    }
+
     public function test_failure_releases_stock_and_late_payment_is_preserved_for_reconciliation_without_sale(): void
     {
         $product = $this->product();
