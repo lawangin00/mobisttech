@@ -433,6 +433,21 @@ final class OutletLifecycleAdministration
             ->where('e.event_type', 'claimed')
             ->whereRaw('JSON_CONTAINS(e.snapshot, c.snapshot) AND JSON_CONTAINS(c.snapshot, e.snapshot)'))
             ->count();
+        // Release is a separate, retained event: status alone does not prove the reason/history.
+        // Compare JSON values only; MySQL JSON does not preserve original serialized bytes.
+        $releasedWithoutEvent = (clone $claims)->where('c.status', 'released')
+            ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('promotion_events as e')
+                ->whereColumn('e.promotion_claim_id', 'c.id')
+                ->whereColumn('e.promotion_id', 'c.promotion_id')
+                ->where('e.event_type', 'released')
+                ->whereRaw("JSON_CONTAINS(JSON_EXTRACT(e.snapshot, '$.claim'), c.snapshot)
+                    AND JSON_CONTAINS(c.snapshot, JSON_EXTRACT(e.snapshot, '$.claim'))
+                    AND LEFT(JSON_UNQUOTE(JSON_EXTRACT(e.snapshot, '$.reason')), 255) = c.release_reason"))
+            ->count();
+        $activeWithReleaseEvent = (clone $claims)->where('c.status', 'active')
+            ->whereExists(fn ($query) => $query->selectRaw('1')->from('promotion_events as e')
+                ->whereColumn('e.promotion_claim_id', 'c.id')
+                ->where('e.event_type', 'released'))->count();
         // JSON field reconciliation is deliberately separate from original byte-hash provenance.
         // A missing v1 contract/amount is a review anomaly, never silently treated as zero.
         $snapshotMismatch = (clone $claims)->whereRaw("(JSON_UNQUOTE(JSON_EXTRACT(c.snapshot, '$.contract')) IS NULL
@@ -449,12 +464,15 @@ final class OutletLifecycleAdministration
             'mismatched_financial_references' => $financialReferenceMismatch,
             'shared_order_claims_held_for_review' => $sharedOrderClaimsHeld,
             'claims_without_matching_claimed_event' => $claimsWithoutMatchingClaimedEvent,
+            'released_claims_without_matching_release_event' => $releasedWithoutEvent,
+            'active_claims_with_release_event' => $activeWithReleaseEvent,
             'financial_snapshot_digest_mismatches' => $financialSnapshotMismatches,
             'snapshot_contract_or_amount_mismatches' => $snapshotMismatch,
             'requires_review' => $campaignCount > 0 || $claimCount > 0 || $sharedOrderClaimsHeld > 0
                 || $financialReferenceMissing > 0 || $financialReferenceMismatch > 0
                 || $financialSnapshotMismatches > 0 || $snapshotMismatch > 0
-                || $claimsWithoutMatchingClaimedEvent > 0,
+                || $claimsWithoutMatchingClaimedEvent > 0 || $releasedWithoutEvent > 0
+                || $activeWithReleaseEvent > 0,
             'archive_eligibility' => 'not_approved_for_business_history'];
     }
 

@@ -1084,6 +1084,8 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.promotion_history.released_claim_count', 0)
             ->assertJsonPath('data.promotion_history.unbound_claim_count', 1)
             ->assertJsonPath('data.promotion_history.claims_truncated', false)
+            ->assertJsonPath('data.promotion_history.released_claims_without_matching_release_event', 0)
+            ->assertJsonPath('data.promotion_history.active_claims_with_release_event', 0)
             ->assertJsonPath('data.promotion_history.claims_without_matching_claimed_event', 3)
             ->assertJsonPath('data.promotion_history.missing_financial_references', 2)
             ->assertJsonPath('data.promotion_history.mismatched_financial_references', 0)
@@ -1129,6 +1131,52 @@ class PosShellTest extends TestCase
         DB::table('promotion_events')->where('id', $claimEventId)->update(['promotion_id' => $globalId]);
         $this->send($client, 'GET', $path)->assertOk()
             ->assertJsonPath('data.promotion_history.claims_without_matching_claimed_event', 2);
+
+        // The release row must retain a matching released event and reason. Synthetic only.
+        $reason = 'Synthetic manual release';
+        DB::table('promotion_claims')->where('public_id', $directClaim)->update([
+            'status' => 'released', 'released_at' => now(), 'release_reason' => $reason,
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.released_claims_without_matching_release_event', 1)
+            ->assertJsonPath('data.promotion_history.active_claims_with_release_event', 0);
+        $directInternalId = DB::table('promotion_claims')->where('public_id', $directClaim)->value('id');
+        $releasePayload = json_encode(['claim' => json_decode($private, true, flags: JSON_THROW_ON_ERROR),
+            'reason' => $reason], JSON_THROW_ON_ERROR);
+        $releaseEventId = DB::table('promotion_events')->insertGetId([
+            'promotion_id' => $directId, 'promotion_claim_id' => $directInternalId,
+            'event_type' => 'released', 'snapshot' => $releasePayload,
+            'snapshot_sha256' => hash('sha256', $releasePayload), 'created_at' => now(),
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.released_claims_without_matching_release_event', 0);
+        $wrongReleasePayload = json_encode(['claim' => json_decode($private, true, flags: JSON_THROW_ON_ERROR),
+            'reason' => 'Wrong synthetic release reason'], JSON_THROW_ON_ERROR);
+        DB::table('promotion_events')->where('id', $releaseEventId)->update(['snapshot' => $wrongReleasePayload]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.released_claims_without_matching_release_event', 1);
+        $wrongClaimPayload = json_encode(['claim' => ['private' => 'Synthetic divergent claim'],
+            'reason' => $reason], JSON_THROW_ON_ERROR);
+        DB::table('promotion_events')->where('id', $releaseEventId)->update(['snapshot' => $wrongClaimPayload]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.released_claims_without_matching_release_event', 1);
+        DB::table('promotion_events')->where('id', $releaseEventId)->update([
+            'snapshot' => $releasePayload, 'promotion_id' => $globalId,
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.released_claims_without_matching_release_event', 1);
+        DB::table('promotion_events')->where('id', $releaseEventId)->update(['promotion_id' => $directId]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.released_claims_without_matching_release_event', 0);
+        DB::table('promotion_claims')->where('public_id', $directClaim)->update([
+            'status' => 'active', 'released_at' => null, 'release_reason' => null,
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.active_claims_with_release_event', 1);
+        DB::table('promotion_events')->where('id', $releaseEventId)->delete();
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.active_claims_with_release_event', 0)
+            ->assertJsonPath('data.promotion_history.released_claims_without_matching_release_event', 0);
 
         // Deliberately divergent internal booking; this does not simulate a provider transaction.
         $adjustmentSnapshot = json_encode(['synthetic' => 'internal-financial-reference'], JSON_THROW_ON_ERROR);
