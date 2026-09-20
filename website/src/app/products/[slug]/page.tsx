@@ -22,12 +22,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const profile = await readWebsiteProfile();
   if (!profile?.capabilities.commerce) return { robots: { index: false, follow: false } };
   const { slug } = await params;
-  const product = await productOr404(slug);
+  const [product, business] = await Promise.all([productOr404(slug), readBusinessProfile()]);
+  const description = product.description ?? `${product.name} availability and price at mobiST Technologies.`;
+  const canonicalPath = `/products/${encodeURIComponent(product.slug)}`;
+  const socialUrl = business ? new URL(canonicalPath, business.public_website).href : undefined;
   return {
     title: product.name,
-    description: product.description ?? `${product.name} availability and price at mobiST Technologies.`,
-    alternates: { canonical: `/products/${product.slug}` },
-    openGraph: { type: "website", title: product.name, description: product.description ?? undefined },
+    description,
+    alternates: { canonical: canonicalPath },
+    openGraph: { type: "website", title: product.name, description, ...(socialUrl ? { url: socialUrl } : {}) },
+    twitter: { card: "summary", title: product.name, description },
   };
 }
 

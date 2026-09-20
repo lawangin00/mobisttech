@@ -197,6 +197,13 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     const publicOrigin=business.public_website.replace(/\/$/,'');
     const productCanonical=publicOrigin+'/products/mt75-fresh-accessory';
     await expect(page.locator('link[rel=canonical]')).toHaveAttribute('href',productCanonical);
+    // Original public SEO includes canonical social URL, title, description and Twitter summary.
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content',productCanonical);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content','MT75 Fresh Accessory');
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content',/MT75 Fresh Accessory/);
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content','summary');
+    await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute('content','MT75 Fresh Accessory');
+    await expect(page.locator('meta[name="twitter:description"]')).toHaveAttribute('content',/MT75 Fresh Accessory/);
     const productSchema=JSON.parse((await page.locator('script[type="application/ld+json"]').textContent()) ?? '{}') as {offers:{url:string;price:string;priceCurrency:string;availability:string}};
     expect(productSchema.offers).toMatchObject({url:productCanonical,price:'150.00',priceCurrency:'PKR',availability:'https://schema.org/InStock'});
     expect(JSON.stringify(productSchema).toLowerCase()).not.toMatch(/purchase_price|imei|unit_no|seller_phone|outlet_id/);
@@ -250,6 +257,9 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     expect(budgetDetail?.status()).toBe(200);
     await expect(page.locator('main')).toContainText('MT75 Budget Accessories');
     const emptySchema=JSON.parse((await page.locator('script[type="application/ld+json"]').textContent()) ?? '{}') as {offers:{url:string;availability:string}};
+    const zeroStockCanonical=publicOrigin+'/products/mt75-fresh-budget-accessory';
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute('href',zeroStockCanonical);
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content',zeroStockCanonical);
     expect(emptySchema.offers).toMatchObject({url:publicOrigin+'/products/mt75-fresh-budget-accessory',availability:'https://schema.org/OutOfStock'});
     const budgetModel=await page.goto('http://127.0.0.1:13000/products?model=Budget&category=accessory');
     expect(budgetModel?.status()).toBe(200);
