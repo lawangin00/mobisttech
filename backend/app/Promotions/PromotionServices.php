@@ -56,18 +56,29 @@ final class PromotionServices
             if (! empty($data['outlet_id'])) {
                 abort_unless($newOutletId !== null, 404);
             }
-            $outlets = Outlet::whereIn('id', array_values(array_unique(array_filter(
-                [$priorOutletId, $newOutletId], fn ($id) => $id !== null))))
+            $requestedProducts = array_values(array_unique($data['product_ids'] ?? []));
+            $requestedProductOutlets = $requestedProducts
+                ? Product::whereIn('public_id', $requestedProducts)->pluck('outlet_id')->all() : [];
+            $priorProductOutlets = $prior
+                ? DB::table('promotion_products as link')->join('products as product', 'product.id', '=', 'link.product_id')
+                    ->where('link.promotion_id', $prior->id)->pluck('product.outlet_id')->all() : [];
+            // Association replacement is also an archived-outlet write; lock the old AND new
+            // product outlets, even for an otherwise global promotion.
+            $affectedOutletIds = array_values(array_unique(array_map('intval', array_filter(
+                [$priorOutletId, $newOutletId, ...$priorProductOutlets, ...$requestedProductOutlets],
+                fn ($id) => $id !== null))));
+            $outlets = Outlet::whereIn('id', $affectedOutletIds)
                 ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
-            abort_unless($outlets->count() === count(array_unique(array_filter(
-                [$priorOutletId, $newOutletId], fn ($id) => $id !== null))), 404);
+            abort_unless($outlets->count() === count($affectedOutletIds), 404);
             foreach ($outlets as $lockedOutlet) {
                 abort_if($lockedOutlet->status || $lockedOutlet->archived_at !== null, 403, 'Outlet is not active.');
             }
             $outlet = $newOutletId === null ? null : $outlets->get($newOutletId);
             $productIds = [];
-            foreach (array_values(array_unique($data['product_ids'] ?? [])) as $id) {
+            foreach ($requestedProducts as $id) {
                 $product = Product::where('public_id', $id)->where('isDeleted', false)->lockForUpdate()->firstOrFail();
+                abort_unless($outlets->has((int) $product->outlet_id), 409,
+                    'Promotion product outlet changed; retry configuration.');
                 if ($outlet && $product->outlet_id !== $outlet->id) {
                     throw ValidationException::withMessages(['product_ids' => 'Outlet promotion products must belong to that outlet.']);
                 }
@@ -89,8 +100,9 @@ final class PromotionServices
             if ($publicId) {
                 $row = DB::table('promotions')->where('public_id', $publicId)->lockForUpdate()->firstOrFail();
                 // A concurrent change of the original outlet requires a fresh lock plan.
-                abort_unless(($row->outlet_id === null ? null : (int) $row->outlet_id) === $priorOutletId,
-                    409, 'Promotion outlet changed; retry configuration.');
+                abort_unless(($row->outlet_id === null ? null : (int) $row->outlet_id) === $priorOutletId
+                    && (int) $row->version === (int) $prior->version,
+                    409, 'Promotion outlet or version changed; retry configuration.');
                 $payload['version'] = $row->version + 1;
                 DB::table('promotions')->where('id', $row->id)->update($payload);
                 $promotionId = $row->id;

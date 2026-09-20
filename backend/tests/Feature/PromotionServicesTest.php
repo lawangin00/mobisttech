@@ -144,6 +144,40 @@ class PromotionServicesTest extends TestCase
         $this->assertSame($before, [DB::table('promotion_events')->count(), DB::table('promotion_products')->count()]);
     }
 
+    public function test_global_promotion_cannot_create_or_remove_archived_product_associations(): void
+    {
+        $product = $this->product();
+        $input = [
+            'name' => 'Global synthetic product promotion', 'outlet_id' => null,
+            'mode' => 'coupon', 'code' => 'GLOBALPRODUCT10', 'discount_type' => 'percentage',
+            'discount_value' => '10.00', 'min_subtotal' => '0.00', 'usage_limit' => 1,
+            'customer_required' => false, 'stackable' => false, 'priority' => 100,
+            'status' => 'active', 'product_ids' => [$product->public_id], 'categories' => [],
+        ];
+        $original = app(PromotionServices::class)->configure($this->actor, null, $input);
+        $before = DB::table('promotions')->where('public_id', $original['promotion_id'])->firstOrFail();
+        $events = DB::table('promotion_events')->count();
+        $links = DB::table('promotion_products')->count();
+        $this->outlet->forceFill(['archived_at' => now(), 'version' => $this->outlet->version + 1])->save();
+        foreach ([fn () => app(PromotionServices::class)->configure($this->actor, null,
+            [...$input, 'code' => 'GLOBALPRODUCTNEW']),
+            fn () => app(PromotionServices::class)->configure($this->actor, $before->public_id,
+                [...$input, 'product_ids' => []])] as $attempt) {
+            try {
+                $attempt();
+                $this->fail('Global promotion mutated an archived product association.');
+            } catch (HttpException $error) {
+                $this->assertSame(403, $error->getStatusCode());
+            }
+        }
+        $after = DB::table('promotions')->where('id', $before->id)->firstOrFail();
+        $this->assertSame($before->version, $after->version);
+        $this->assertSame($before->name, $after->name);
+        $this->assertSame(1, DB::table('promotions')->count());
+        $this->assertSame($events, DB::table('promotion_events')->count());
+        $this->assertSame($links, DB::table('promotion_products')->count());
+    }
+
     private function coupon(string $productId, string $code, string $type, string $value, int $usageLimit): void
     {
         app(PromotionServices::class)->configure($this->actor, null, [
