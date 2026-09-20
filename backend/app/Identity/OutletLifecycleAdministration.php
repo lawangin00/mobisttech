@@ -2,9 +2,11 @@
 
 namespace App\Identity;
 
+use App\Documents\CanonicalDocuments;
 use App\Models\Admin;
 use App\Models\Outlet;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -13,6 +15,7 @@ final class OutletLifecycleAdministration
     public function canManage(Admin $actor): bool
     {
         $fresh = $actor->fresh();
+
         return $fresh->usable() && $fresh->hasPermission('team-members.full-access.assign')
             && $fresh->hasPermission('admin.business-profile.manage')
             && $fresh->roles()->where('roles.is_protected', true)->whereNull('roles.archived_at')->exists();
@@ -21,6 +24,7 @@ final class OutletLifecycleAdministration
     public function catalogue(Admin $actor): array
     {
         abort_unless($this->canManage($actor), 403);
+
         return Outlet::query()->orderBy('outlet_code')->get()->map(fn (Outlet $outlet) => $this->view($outlet))->all();
     }
 
@@ -29,7 +33,7 @@ final class OutletLifecycleAdministration
     {
         abort_unless($this->canManage($actor), 403);
         $fresh = $actor->fresh();
-        abort_unless($fresh instanceof Admin && \Illuminate\Support\Facades\Hash::check($password, $fresh->password),
+        abort_unless($fresh instanceof Admin && Hash::check($password, $fresh->password),
             403, 'Confirm your current Admin password to retrieve historical invoice data.');
         $outlet = Outlet::where('public_id', $outletId)->firstOrFail();
         abort_unless($outlet->archived_at !== null, 409, 'Outlet is not archived.');
@@ -46,8 +50,9 @@ final class OutletLifecycleAdministration
                 'product_name' => $line->product_name, 'sale_date' => $line->sale_date,
                 'quantity' => (int) $line->quantity, 'returned_quantity' => (int) $line->returned_quantity,
                 'unit_price' => (string) $line->sale_price, 'net_amount' => (string) $line->net_total_price])->all();
-        \App\Identity\IdentityAudit::record('admin', $fresh->id, 'archived_invoice_document_retrieved',
+        IdentityAudit::record('admin', $fresh->id, 'archived_invoice_document_retrieved',
             'invoice:'.$invoice->public_id.';purpose:'.preg_replace('/\s+/u', ' ', trim($purpose)), $outlet->id);
+
         return ['outlet_id' => $outlet->public_id, 'invoice_id' => $invoice->public_id,
             'invoice_number' => $invoice->invoice_number, 'currency' => $invoice->currency,
             'total_bill' => (string) $invoice->total_bill, 'final_bill' => (string) $invoice->final_bill,
@@ -63,10 +68,11 @@ final class OutletLifecycleAdministration
         // Reuse the exact password, Full Access, archived-state and same-outlet document checks.
         $this->archivedInvoiceDocument($actor, $outletId, $invoiceId, $password, $purpose);
         $outlet = Outlet::where('public_id', $outletId)->firstOrFail();
-        $result = app(\App\Documents\CanonicalDocuments::class)
+        $result = app(CanonicalDocuments::class)
             ->reconstructArchivedInvoice($actor, $outlet, $invoiceId);
-        \App\Identity\IdentityAudit::record('admin', $actor->id, 'archived_invoice_pdf_reconstructed',
+        IdentityAudit::record('admin', $actor->id, 'archived_invoice_pdf_reconstructed',
             'invoice:'.$invoiceId.';purpose:'.preg_replace('/\s+/u', ' ', trim($purpose)), $outlet->id);
+
         return $result;
     }
 
@@ -75,7 +81,7 @@ final class OutletLifecycleAdministration
     {
         abort_unless($this->canManage($actor), 403);
         $fresh = $actor->fresh();
-        abort_unless($fresh instanceof Admin && \Illuminate\Support\Facades\Hash::check($password, $fresh->password),
+        abort_unless($fresh instanceof Admin && Hash::check($password, $fresh->password),
             403, 'Confirm your current Admin password to retrieve historical warranty data.');
         $outlet = Outlet::where('public_id', $outletId)->firstOrFail();
         abort_unless($outlet->archived_at !== null, 409, 'Outlet is not archived.');
@@ -90,8 +96,9 @@ final class OutletLifecycleAdministration
             ->map(fn ($event) => ['id' => $event->public_id, 'sequence' => (int) $event->sequence,
                 'status' => $event->status, 'note' => $event->note,
                 'occurred_at' => $event->occurred_at, 'snapshot_sha256' => $event->snapshot_sha256])->all();
-        \App\Identity\IdentityAudit::record('admin', $fresh->id, 'archived_claim_document_retrieved',
+        IdentityAudit::record('admin', $fresh->id, 'archived_claim_document_retrieved',
             'claim:'.$claim->public_id.';purpose:'.preg_replace('/\s+/u', ' ', trim($purpose)), $outlet->id);
+
         return ['outlet_id' => $outlet->public_id, 'claim_id' => $claim->public_id,
             'claim_number' => $claim->claim_number, 'invoice_id' => $claim->invoice_public_id,
             'product_id' => $claim->product_public_id, 'quantity' => (int) $claim->quantity,
@@ -108,6 +115,8 @@ final class OutletLifecycleAdministration
         abort_unless($this->canManage($actor), 403);
         $outlet = Outlet::where('public_id', $publicId)->firstOrFail();
         abort_unless($outlet->archived_at !== null, 409, 'Outlet is not archived.');
+        $promotionHistory = $this->archivedPromotionHistory($outlet);
+
         return [
             'outlet_code' => $outlet->outlet_code,
             'name' => $outlet->name,
@@ -120,7 +129,8 @@ final class OutletLifecycleAdministration
                     'status' => $row->status, 'expected_cash' => (string) $row->expected_cash,
                     'actual_cash' => (string) $row->actual_cash, 'closed_at' => $row->closed_at,
                 ])->all(),
-            'obligations' => $this->archivedObligations($outlet),
+            'obligations' => $this->archivedObligations($outlet, $promotionHistory),
+            'promotion_history' => $promotionHistory,
             'stock_reconciliation' => $this->archivedStockReconciliation($outlet),
             'procurement_repair_history' => $this->archivedProcurementRepairs($outlet),
             'cash_session_count' => DB::table('cash_sessions')->where('outlet_id', $outlet->id)->count(),
@@ -170,6 +180,7 @@ final class OutletLifecycleAdministration
         $products = DB::table('products as p')->where('p.outlet_id', $outlet->id);
         $latestMovement = '(SELECT m.stock_after FROM stock_movements m WHERE m.product_id = p.id AND m.outlet_id = p.outlet_id ORDER BY m.id DESC LIMIT 1)';
         $inStockUnitCount = '(SELECT COUNT(*) FROM stock_units u WHERE u.product_id = p.id AND u.status = \'in_stock\')';
+
         return [
             'negative_stock_product_count' => (clone $products)->where('p.qty', '<', 0)->count(),
             'latest_movement_disagreement_count' => (clone $products)
@@ -201,6 +212,7 @@ final class OutletLifecycleAdministration
                     ->map(fn ($row) => ['id' => $row->public_id, 'sequence' => (int) $row->sequence,
                         'status' => $row->status, 'snapshot_sha256' => $row->snapshot_sha256,
                         'occurred_at' => $row->occurred_at])->all();
+
                 return ['id' => $claim->public_id, 'number' => $claim->claim_number,
                     'status' => $claim->status, 'invoice_id' => $claim->invoice_id,
                     'quantity' => (int) $claim->quantity, 'warranty_expires_at' => $claim->warranty_expires_at,
@@ -214,6 +226,7 @@ final class OutletLifecycleAdministration
     private function archivedProcurementRepairs(Outlet $outlet): array
     {
         $id = $outlet->id;
+
         return [
             'supplier_count' => DB::table('suppliers')->where('outlet_id', $id)->count(),
             'purchase_order_count' => DB::table('purchase_orders')->where('outlet_id', $id)->count(),
@@ -235,6 +248,7 @@ final class OutletLifecycleAdministration
                         ->orderBy('sequence')->limit(50)->get(['sequence', 'event', 'snapshot_sha256', 'occurred_at'])
                         ->map(fn ($event) => ['sequence' => (int) $event->sequence, 'event' => $event->event,
                             'snapshot_sha256' => $event->snapshot_sha256, 'occurred_at' => $event->occurred_at])->all();
+
                     return ['id' => $po->public_id, 'number' => $po->order_number, 'status' => $po->status,
                         'supplier_id' => $po->supplier_id, 'ordered_at' => $po->ordered_at,
                         'line_count' => $lineCount,
@@ -257,6 +271,7 @@ final class OutletLifecycleAdministration
                         ->map(fn ($event) => ['sequence' => (int) $event->sequence,
                             'event_type' => $event->event_type, 'status' => $event->status,
                             'snapshot_sha256' => $event->snapshot_sha256])->all();
+
                     return ['id' => $repair->public_id, 'number' => $repair->repair_number,
                         'status' => $repair->status, 'invoice_id' => $repair->invoice_public_id,
                         'received_at' => $repair->received_at, 'closed_at' => $repair->closed_at,
@@ -307,6 +322,7 @@ final class OutletLifecycleAdministration
                     ->map(fn ($row) => ['id' => $row->public_id, 'original_method' => $row->original_method,
                         'refund_method' => $row->refund_method, 'amount' => (string) $row->amount,
                         'is_override' => (bool) $row->is_override, 'snapshot_sha256' => $row->snapshot_sha256])->all();
+
                 return ['id' => $invoice->public_id, 'number' => $invoice->invoice_number,
                     'currency' => $invoice->currency, 'final_bill' => (string) $invoice->final_bill,
                     'created_at' => $invoice->created_at,
@@ -321,8 +337,48 @@ final class OutletLifecycleAdministration
             })->all();
     }
 
+    /** Outlet-scoped promotion evidence; claims are not settlement or archival clearance. */
+    private function archivedPromotionHistory(Outlet $outlet): array
+    {
+        // Include direct outlet campaigns, global campaigns linked to this outlet's products,
+        // and claims used on this outlet's invoices or website order lines.
+        $campaigns = DB::table('promotions as p')
+            ->leftJoin('promotion_products as pp', 'pp.promotion_id', '=', 'p.id')
+            ->leftJoin('products as product', 'product.id', '=', 'pp.product_id')
+            ->where(fn ($q) => $q->where('p.outlet_id', $outlet->id)
+                ->orWhere('product.outlet_id', $outlet->id))->select('p.id');
+        $claims = DB::table('promotion_claims as c')->where(function ($q) use ($outlet, $campaigns) {
+            $q->whereIn('c.promotion_id', $campaigns)
+                ->orWhereIn('c.invoice_id', DB::table('invoices')->where('outlet_id', $outlet->id)->select('id'))
+                ->orWhereIn('c.order_id', DB::table('order_items')
+                    ->where('outlet_id', $outlet->id)->select('order_id'));
+        });
+        $campaignCount = DB::table('promotions')->whereIn('id', $campaigns)->count();
+        $claimCount = (clone $claims)->count();
+        $lines = (clone $claims)->join('promotions as p', 'p.id', '=', 'c.promotion_id')
+            ->leftJoin('invoices as i', 'i.id', '=', 'c.invoice_id')
+            ->leftJoin('orders as o', 'o.id', '=', 'c.order_id')
+            ->orderByDesc('c.id')->limit(50)
+            ->get(['c.public_id', 'p.public_id as promotion_id', 'c.channel', 'c.status',
+                'c.discount_amount', 'c.snapshot_sha256', 'c.released_at',
+                'i.public_id as invoice_id', 'o.public_id as order_id'])
+            ->map(fn ($row) => ['id' => $row->public_id, 'promotion_id' => $row->promotion_id,
+                'channel' => $row->channel, 'status' => $row->status,
+                'discount_amount' => (string) $row->discount_amount,
+                'snapshot_sha256' => $row->snapshot_sha256, 'released_at' => $row->released_at,
+                'invoice_id' => $row->invoice_id, 'order_id' => $row->order_id])->all();
+
+        return ['campaign_count' => $campaignCount, 'claim_count' => $claimCount,
+            'active_claim_count' => (clone $claims)->where('c.status', 'active')->count(),
+            'released_claim_count' => (clone $claims)->where('c.status', 'released')->count(),
+            'unbound_claim_count' => (clone $claims)->whereNull('c.invoice_id')->whereNull('c.order_id')->count(),
+            'claims_truncated' => $claimCount > 50, 'claims' => $lines,
+            'requires_review' => $campaignCount > 0 || $claimCount > 0,
+            'archive_eligibility' => 'not_approved_for_business_history'];
+    }
+
     /** Conservative read-only obligation indicators, NOT an archival clearance or settlement decision. */
-    private function archivedObligations(Outlet $outlet): array
+    private function archivedObligations(Outlet $outlet, array $promotionHistory): array
     {
         $id = $outlet->id;
         // A net-zero outlet refund sum can conceal one under-refunded and another over-refunded return.
@@ -343,7 +399,7 @@ final class OutletLifecycleAdministration
                 ->join('products as src', 'src.id', '=', 'h.product_id')
                 ->join('products as dst', 'dst.id', '=', 'h.destination_product_id')
                 ->whereNull('h.released_at')->where(fn ($q) => $q->where('src.outlet_id', $id)
-                    ->orWhere('dst.outlet_id', $id))->sum('h.quantity'),
+                ->orWhere('dst.outlet_id', $id))->sum('h.quantity'),
             'unapproved_stocktakes' => DB::table('stocktake_sessions')->where('outlet_id', $id)
                 ->where('status', '!=', 'approved')->count(),
             'unresolved_transfer_quantity' => (int) DB::table('stock_transfer_lines as l')
@@ -387,7 +443,10 @@ final class OutletLifecycleAdministration
                 ->whereNotIn('status', ['closed', 'cancelled'])->count(),
             'active_unbilled_paid_repairs' => DB::table('repair_jobs')->where('outlet_id', $id)
                 ->whereNotIn('status', ['closed', 'cancelled'])->whereNull('invoice_id')->count(),
+            'promotion_campaign_count' => $promotionHistory['campaign_count'],
+            'promotion_claim_count' => $promotionHistory['claim_count'],
         ];
+
         return [...$counts, 'pos_return_amount' => $returnDue,
             'pos_refunds_recorded' => $recordedRefunds, 'pos_refund_difference' => $remaining,
             // A zero difference is NOT proof that website/provider refunds or warranty duties are settled.
@@ -428,12 +487,14 @@ final class OutletLifecycleAdministration
                     ->map(function ($receipt) {
                         $receiptLines = DB::table('stock_transfer_receipt_lines')
                             ->where('stock_transfer_receipt_id', $receipt->id);
+
                         return ['id' => $receipt->public_id, 'processed_at' => $receipt->processed_at,
                             'snapshot_sha256' => $receipt->snapshot_sha256,
                             'received_quantity' => (int) (clone $receiptLines)->sum('received_quantity'),
                             'rejected_quantity' => (int) $receiptLines->sum('rejected_quantity')];
                     })->all();
                 $unresolved = (int) $totals->unresolved;
+
                 return ['id' => $transfer->public_id, 'number' => $transfer->transfer_number,
                     'status' => $transfer->status, 'source_id' => $transfer->source_id,
                     'destination_id' => $transfer->destination_id,
@@ -466,6 +527,7 @@ final class OutletLifecycleAdministration
         if ($name === '' || $address === '') {
             throw ValidationException::withMessages(['name' => 'Outlet name and address are required.']);
         }
+
         return DB::transaction(function () use ($actor, $name, $address) {
             // One locked root serializes new code allocation; never reuse an archived code.
             DB::table('business_profiles')->where('id', 1)->lockForUpdate()->firstOrFail();
@@ -474,7 +536,10 @@ final class OutletLifecycleAdministration
             $code = null;
             for ($i = 1; $i <= 999; $i++) {
                 $candidate = sprintf('%03d', $i);
-                if (! in_array($candidate, $used, true)) { $code = $candidate; break; }
+                if (! in_array($candidate, $used, true)) {
+                    $code = $candidate;
+                    break;
+                }
             }
             abort_if($code === null, 409, 'No outlet codes remain.');
             $outlet = new Outlet;
@@ -484,6 +549,7 @@ final class OutletLifecycleAdministration
                 'version' => 1])->save();
             $actor->shops()->attach($outlet->id);
             IdentityAudit::record('admin', $actor->id, 'outlet_created', 'outlet:'.$outlet->public_id, $outlet->id);
+
             return $this->view($outlet);
         });
     }
@@ -491,6 +557,7 @@ final class OutletLifecycleAdministration
     public function archive(Admin $actor, string $publicId, int $version): array
     {
         abort_unless($this->canManage($actor), 403);
+
         return DB::transaction(function () use ($actor, $publicId, $version) {
             DB::table('business_profiles')->where('id', 1)->lockForUpdate()->firstOrFail();
             abort_unless($this->canManage($actor), 403);
@@ -507,7 +574,9 @@ final class OutletLifecycleAdministration
             $retainedHistory = ['outlet_admins', 'identity_audit_events', 'team_member_audit_events',
                 'pos_audit_logs', 'cash_sessions', 'cash_entries'];
             foreach ($linked as $row) {
-                if (in_array($row->name, $retainedHistory, true)) { continue; }
+                if (in_array($row->name, $retainedHistory, true)) {
+                    continue;
+                }
                 abort_if(DB::table($row->name)->where('outlet_id', $outlet->id)->exists(),
                     409, 'Outlet has linked business history or outstanding obligations; archival needs a reviewed transition.');
             }
@@ -526,6 +595,7 @@ final class OutletLifecycleAdministration
             }
             $outlet->forceFill(['archived_at' => now(), 'version' => $outlet->version + 1])->save();
             IdentityAudit::record('admin', $actor->id, 'outlet_archived', 'outlet:'.$outlet->public_id, $outlet->id);
+
             return $this->view($outlet);
         });
     }

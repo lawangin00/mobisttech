@@ -2,18 +2,24 @@
 
 namespace Tests\Feature;
 
+use App\Cash\CashSessionOperations;
+use App\Documents\CanonicalDocuments;
 use App\Models\Admin;
 use App\Models\Outlet;
+use App\Models\Product;
 use App\Models\Role;
+use App\Models\StockUnit;
+use App\Pos\PortalPreferences;
 use Illuminate\Cookie\CookieValuePrefix;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class PosShellTest extends TestCase
@@ -283,17 +289,17 @@ class PosShellTest extends TestCase
         $this->assertSame($sessionId, (int) DB::table('cash_sessions')->where('outlet_id', $historical->id)->value('id'));
         // A stale pre-archive model/actor must never reopen cash on this archived outlet.
         try {
-            app(\App\Cash\CashSessionOperations::class)->open($operator, $historical, 'd03-archived-no-reopen', ['opening_cash' => '10.00']);
+            app(CashSessionOperations::class)->open($operator, $historical, 'd03-archived-no-reopen', ['opening_cash' => '10.00']);
             $this->fail('An archived outlet unexpectedly accepted a cash session.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());
         }
         $this->assertSame(0, DB::table('cash_sessions')->where('outlet_id', $historical->id)->where('status', 'open')->count());
         // Even a transaction holding a pre-archive outlet model cannot reuse cash history for tender/refund.
         try {
-            DB::transaction(fn () => app(\App\Cash\CashSessionOperations::class)->transactionSession($historical, false));
+            DB::transaction(fn () => app(CashSessionOperations::class)->transactionSession($historical, false));
             $this->fail('Archived outlet unexpectedly offered a cash session to a payment workflow.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());
         }
         $this->assertSame(1, DB::table('cash_sessions')->where('outlet_id', $historical->id)->where('status', 'closed')->count());
@@ -312,10 +318,10 @@ class PosShellTest extends TestCase
         $limited->shops()->attach([$outlet->id, $fallback->id]);
         $operator = $this->member('d03-stock-history-operator@example.invalid', ['shops.enter', 'shop.inventory']);
         $operator->shops()->attach([$outlet->id, $fallback->id]);
-        $product = new \App\Models\Product;
+        $product = new Product;
         $product->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Synthetic historical stock',
             'outlet_id' => $outlet->id, 'category' => 'accessory', 'price' => '20.00', 'qty' => 1])->save();
-        $unit = new \App\Models\StockUnit;
+        $unit = new StockUnit;
         $unit->forceFill(['product_id' => $product->id, 'unit_no' => 1, 'status' => 'in_stock'])->save();
         $movementId = DB::table('stock_movements')->insertGetId(['product_id' => $product->id,
             'outlet_id' => $outlet->id, 'type' => 'acquisition', 'quantity_change' => 1,
@@ -329,7 +335,7 @@ class PosShellTest extends TestCase
             'source_outlet_id' => $outlet->id, 'destination_outlet_id' => $fallback->id,
             'created_by_admin_id' => $owner->id, 'status' => 'received', 'version' => 2,
             'notes' => 'PRIVATE-TRANSFER-NOTES']);
-        $destinationProduct = new \App\Models\Product;
+        $destinationProduct = new Product;
         $destinationProduct->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Transfer destination product',
             'outlet_id' => $fallback->id, 'category' => 'accessory', 'price' => '20.00', 'qty' => 1])->save();
         $lineSnapshot = json_encode(['contract' => 'synthetic-transfer-line', 'private' => 'PRIVATE-LINE-SNAPSHOT'], JSON_THROW_ON_ERROR);
@@ -497,10 +503,10 @@ class PosShellTest extends TestCase
             'team-members.full-access.assign', 'admin.business-profile.manage']);
         $owner->shops()->attach($fallback);
         $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
-        $sourceProduct = new \App\Models\Product;
+        $sourceProduct = new Product;
         $sourceProduct->forceFill(['name' => 'Synthetic in-transit source',
             'outlet_id' => $source->id, 'category' => 'accessory', 'price' => '30.00', 'qty' => 1])->save();
-        $destinationProduct = new \App\Models\Product;
+        $destinationProduct = new Product;
         $destinationProduct->forceFill(['name' => 'Synthetic in-transit destination',
             'outlet_id' => $destination->id, 'category' => 'accessory', 'price' => '30.00', 'qty' => 0])->save();
         $public = (string) Str::uuid();
@@ -563,7 +569,7 @@ class PosShellTest extends TestCase
         $limited = $this->member('d03-invoice-claim-limited@example.invalid', ['shops.enter',
             'team-members.full-access.assign', 'admin.business-profile.manage']);
         $limited->shops()->attach($fallback);
-        $product = new \App\Models\Product;
+        $product = new Product;
         $product->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Synthetic retained invoice product',
             'outlet_id' => $outlet->id, 'category' => 'accessory', 'price' => '200.00', 'qty' => 0])->save();
         $invoicePublicId = (string) Str::uuid();
@@ -774,10 +780,10 @@ class PosShellTest extends TestCase
         $this->assertStringContainsString('no-store', (string) $reconstruction->headers->get('Cache-Control'));
         // Reconstruction is the ONLY separate archived PDF path; normal operational documents stay denied.
         try {
-            app(\App\Documents\CanonicalDocuments::class)
+            app(CanonicalDocuments::class)
                 ->savePdf($owner, $outlet, 'invoice', $invoicePublicId);
             $this->fail('Normal operational PDF must not grant archived-outlet access.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+        } catch (HttpException $error) {
             $this->assertSame(403, $error->getStatusCode());
         }
         $this->assertSame(1, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
@@ -791,20 +797,20 @@ class PosShellTest extends TestCase
         DB::table('sales')->where('id', $saleId)->update(['invoice_detail_snapshot' => json_encode([
             'contract' => 'unverified-old-contract', 'name' => 'Untrusted arbitrary item'], JSON_THROW_ON_ERROR)]);
         try {
-            app(\App\Documents\CanonicalDocuments::class)
+            app(CanonicalDocuments::class)
                 ->reconstructArchivedInvoice($owner, $outlet, $invoicePublicId);
             $this->fail('Unsupported sale snapshot contract must not be rendered as an original copy.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+        } catch (HttpException $error) {
             $this->assertSame(409, $error->getStatusCode());
         }
         DB::table('sales')->where('id', $saleId)->update(['invoice_detail_snapshot' => $originalSaleSnapshot]);
         $originalBusinessSnapshot = DB::table('invoices')->where('id', $invoiceId)->value('business_snapshot');
         DB::table('invoices')->where('id', $invoiceId)->update(['business_snapshot' => null]);
         try {
-            app(\App\Documents\CanonicalDocuments::class)
+            app(CanonicalDocuments::class)
                 ->reconstructArchivedInvoice($owner, $outlet, $invoicePublicId);
             $this->fail('Missing business snapshot must not produce a reconstructed PDF.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+        } catch (HttpException $error) {
             $this->assertSame(409, $error->getStatusCode());
         }
         DB::table('invoices')->where('id', $invoiceId)->update(['business_snapshot' => $originalBusinessSnapshot]);
@@ -921,7 +927,7 @@ class PosShellTest extends TestCase
             'team-members.full-access.assign', 'admin.business-profile.manage']);
         $owner->shops()->attach($fallback);
         $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
-        $product = new \App\Models\Product;
+        $product = new Product;
         $product->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'D03 bounded test product',
             'outlet_id' => $outlet->id, 'category' => 'accessory', 'price' => '1.00', 'qty' => 0])->save();
         $invoicePublicId = (string) Str::uuid();
@@ -983,6 +989,107 @@ class PosShellTest extends TestCase
         $this->assertSame(101, DB::table('claim_events')->where('claim_id', $claimId)->count());
         $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
             ->where('action', 'outlet_archived')->count());
+    }
+
+    public function test_archived_promotion_claims_cover_scoped_and_global_invoice_links_without_leaking_secrets(): void
+    {
+        $archived = $this->outlet('D03 historical promotions', '087');
+        $fallback = $this->outlet('D03 promotion owner fallback', '088');
+        $owner = $this->member('d03-promotions-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($fallback);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
+        $limited = $this->member('d03-promotions-limited@example.invalid', ['shops.enter', 'shop.inventory']);
+        $limited->shops()->attach($fallback);
+        $product = new Product;
+        $product->forceFill(['public_id' => (string) Str::uuid(), 'outlet_id' => $archived->id,
+            'name' => 'D03 promotion product', 'category' => 'accessory', 'price' => '20.00', 'qty' => 0])->save();
+        $promotion = function (?int $outletId, string $label) use ($owner): int {
+            return DB::table('promotions')->insertGetId(['public_id' => (string) Str::uuid(),
+                'outlet_id' => $outletId, 'name' => $label, 'mode' => 'coupon', 'code' => $label,
+                'discount_type' => 'fixed', 'discount_value' => '1.00', 'status' => 'inactive',
+                'created_by_admin_id' => $owner->id, 'created_at' => now(), 'updated_at' => now()]);
+        };
+        $directId = $promotion($archived->id, 'D03DIRECT');
+        $linkedId = $promotion(null, 'D03LINKED');
+        $globalId = $promotion(null, 'D03GLOBAL');
+        $outsideId = $promotion($fallback->id, 'D03OUTSIDE');
+        DB::table('promotion_products')->insert(['promotion_id' => $linkedId, 'product_id' => $product->id]);
+        $invoiceId = DB::table('invoices')->insertGetId(['outlet_id' => $archived->id,
+            'public_id' => (string) Str::uuid(), 'total_bill' => '10.00', 'final_bill' => '10.00']);
+        $outsideInvoiceId = DB::table('invoices')->insertGetId(['outlet_id' => $fallback->id,
+            'public_id' => (string) Str::uuid(), 'total_bill' => '10.00', 'final_bill' => '10.00']);
+        $orderId = DB::table('orders')->insertGetId(['public_id' => (string) Str::uuid(),
+            'order_number' => 'D03-PROMO-'.Str::random(10), 'order_type' => 'mobile',
+            'customer_name' => 'PRIVATE-PROMOTION-ORDER-CUSTOMER',
+            'customer_mobile' => '03001234567']);
+        DB::table('order_items')->insert(['order_id' => $orderId, 'outlet_id' => $archived->id,
+            'product_id' => $product->id, 'item_type' => 'mobile', 'title' => 'Synthetic promotion order line',
+            'quantity' => 1]);
+        $private = json_encode(['private' => 'DO-NOT-EXPOSE-PROMO-CUSTOMER'], JSON_THROW_ON_ERROR);
+        $claim = function (int $campaign, string $status, ?int $invoiceId = null,
+            string $channel = 'pos', ?int $orderId = null) use ($private): string {
+            $publicId = (string) Str::uuid();
+            DB::table('promotion_claims')->insert(['public_id' => $publicId, 'promotion_id' => $campaign,
+                'channel' => $channel, 'owner_key' => hash('sha256', $publicId),
+                'customer_key' => hash('sha256', 'DO-NOT-EXPOSE-PROMO-CUSTOMER'),
+                'invoice_id' => $invoiceId, 'order_id' => $orderId,
+                'discount_amount' => '1.00', 'status' => $status,
+                'snapshot' => $private, 'snapshot_sha256' => hash('sha256', $private),
+                'released_at' => $status === 'released' ? now() : null,
+                'release_reason' => $status === 'released' ? 'Synthetic release' : null,
+                'created_at' => now()]);
+
+            return $publicId;
+        };
+        $directClaim = $claim($directId, 'active');
+        $linkedClaim = $claim($linkedId, 'released');
+        $globalClaim = $claim($globalId, 'active', $invoiceId);
+        $websiteClaim = $claim($globalId, 'active', null, 'website', $orderId);
+        $claim($outsideId, 'active', $outsideInvoiceId);
+        $before = DB::table('promotion_claims')->whereIn('public_id', [$directClaim, $linkedClaim, $globalClaim, $websiteClaim])
+            ->orderBy('id')->get()->all();
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
+        $path = '/internal/admin/outlet-management/'.$archived->public_id.'/history';
+        $this->send($client, 'GET', $path)->assertStatus(409);
+        $archived->forceFill(['archived_at' => now()])->save(); // Synthetic test only; real business archive remains blocked.
+        $response = $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.promotion_campaign_count', 2)
+            ->assertJsonPath('data.obligations.promotion_claim_count', 4)
+            ->assertJsonPath('data.obligations.requires_manual_review', true)
+            ->assertJsonPath('data.promotion_history.campaign_count', 2)
+            ->assertJsonPath('data.promotion_history.claim_count', 4)
+            ->assertJsonPath('data.promotion_history.active_claim_count', 3)
+            ->assertJsonPath('data.promotion_history.released_claim_count', 1)
+            ->assertJsonPath('data.promotion_history.unbound_claim_count', 2)
+            ->assertJsonPath('data.promotion_history.claims_truncated', false)
+            ->assertJsonPath('data.promotion_history.claims.0.id', $websiteClaim)
+            ->assertJsonPath('data.promotion_history.claims.0.channel', 'website')
+            ->assertJsonPath('data.promotion_history.claims.0.order_id', DB::table('orders')->where('id', $orderId)->value('public_id'))
+            ->assertJsonPath('data.promotion_history.claims.1.id', $globalClaim)
+            ->assertJsonPath('data.promotion_history.claims.2.id', $linkedClaim)
+            ->assertJsonPath('data.promotion_history.claims.3.id', $directClaim)
+            ->assertJsonPath('data.promotion_history.requires_review', true)
+            ->assertJsonPath('data.promotion_history.archive_eligibility', 'not_approved_for_business_history');
+        $this->assertStringNotContainsString('DO-NOT-EXPOSE-PROMO-CUSTOMER', $response->getContent());
+        $this->assertStringNotContainsString('PRIVATE-PROMOTION-ORDER-CUSTOMER', $response->getContent());
+        $this->assertStringNotContainsString('D03OUTSIDE', $response->getContent());
+        $this->assertEquals($before, DB::table('promotion_claims')
+            ->whereIn('public_id', [$directClaim, $linkedClaim, $globalClaim, $websiteClaim])->orderBy('id')->get()->all());
+        for ($index = 0; $index < 51; $index++) {
+            $claim($directId, 'active');
+        }
+        $bounded = $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.claim_count', 55)
+            ->assertJsonPath('data.promotion_history.active_claim_count', 54)
+            ->assertJsonPath('data.promotion_history.unbound_claim_count', 53)
+            ->assertJsonPath('data.promotion_history.claims_truncated', true);
+        $this->assertCount(50, $bounded->json('data.promotion_history.claims'));
+        $this->assertStringNotContainsString('DO-NOT-EXPOSE-PROMO-CUSTOMER', $bounded->getContent());
+        $other = $this->client();
+        $this->login($other, $limited->email)->assertOk();
+        $this->send($other, 'GET', $path)->assertForbidden();
     }
 
     public function test_account_and_recovery_pages_use_only_the_existing_admin_realm(): void
@@ -1054,7 +1161,8 @@ class PosShellTest extends TestCase
         $url = '/internal/admin/pos/audit';
         $this->get($url)->assertUnauthorized();
         foreach ([$limited, $operator] as $unprivileged) {
-            $client = $this->client(); $this->login($client, $unprivileged->email)->assertOk();
+            $client = $this->client();
+            $this->login($client, $unprivileged->email)->assertOk();
             $this->send($client, 'GET', $url)->assertForbidden();
             $this->send($client, 'GET', $url.'?q=private')->assertForbidden();
         }
@@ -1065,7 +1173,8 @@ class PosShellTest extends TestCase
                 'payload' => json_encode(['password' => $secret]), 'ip_address' => '198.51.100.42',
                 'user_agent' => 'private device metadata', 'status_code' => 200, 'created_at' => now(), 'updated_at' => now()]);
         }
-        $client = $this->client(); $this->login($client, $owner->email)->assertOk();
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
         $this->send($client, 'GET', $url.'?outlet='.$first->public_id.'&method=POST&q=North')->assertOk()
             ->assertHeader('Referrer-Policy', 'no-referrer')
             ->assertInertia(fn (Assert $page) => $page->component('pos-audit-viewer')
@@ -1107,20 +1216,24 @@ class PosShellTest extends TestCase
         $guest = $this->client();
         $this->send($guest, 'GET', $url)->assertUnauthorized();
         $this->send($guest, 'PUT', $url, [])->assertUnauthorized();
-        $denied = $this->client(); $this->login($denied, $limited->email)->assertOk();
+        $denied = $this->client();
+        $this->login($denied, $limited->email)->assertOk();
         $this->send($denied, 'GET', $url)->assertForbidden();
         $this->send($denied, 'PUT', $url, [])->assertForbidden();
-        $client = $this->client(); $this->login($client, $owner->email)->assertOk();
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
         $this->send($client, 'GET', $url)->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('pos-portal-preferences')->where('values.invoice_page_length', '15')
             ->where('values.inventory_page_length', '10')->where('values.auto_focus_search', true)
             ->where('values.remember_search', false)->has('options.invoice_search_category', 8));
-        $values = app(\App\Pos\PortalPreferences::class)->current();
-        $values['invoice_page_length'] = '50'; $values['inventory_page_length'] = '100';
-        $values['invoice_search_category'] = 'customer_name'; $values['remember_search'] = true;
+        $values = app(PortalPreferences::class)->current();
+        $values['invoice_page_length'] = '50';
+        $values['inventory_page_length'] = '100';
+        $values['invoice_search_category'] = 'customer_name';
+        $values['remember_search'] = true;
         $this->send($client, 'PUT', $url, [...$values, 'outlet_id' => 'unauthorized'])->assertUnprocessable();
         // Identity limiter is 5/min by path+IP; keep guest, denied, invalid and successful writes below cap.
-        $this->assertFalse(in_array('500', app(\App\Pos\PortalPreferences::class)->catalogue($owner)['options']['invoice_page_length'], true));
+        $this->assertFalse(in_array('500', app(PortalPreferences::class)->catalogue($owner)['options']['invoice_page_length'], true));
         $this->assertSame(0, DB::table('pos_settings')->where('group', 'portal')->count());
         $this->send($client, 'PUT', $url, $values)->assertOk()
             ->assertJsonPath('data.invoice_page_length', '50')->assertJsonPath('data.remember_search', true);
@@ -1139,11 +1252,14 @@ class PosShellTest extends TestCase
         $denied = $this->member('master-ui-sales@example.invalid', ['shops.enter', 'shop.sales']);
         $denied->shops()->attach($outlet);
         $url = '/internal/admin/pos/master-data';
-        $guest = $this->client(); $this->send($guest, 'GET', $url)->assertUnauthorized();
-        $sales = $this->client(); $this->login($sales, $denied->email)->assertOk();
+        $guest = $this->client();
+        $this->send($guest, 'GET', $url)->assertUnauthorized();
+        $sales = $this->client();
+        $this->login($sales, $denied->email)->assertOk();
         $this->send($sales, 'GET', $url)->assertForbidden();
         $this->send($sales, 'GET', '/internal/admin/pos/workspace/master-data')->assertForbidden();
-        $client = $this->client(); $this->login($client, $owner->email)->assertOk();
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
         $this->send($client, 'GET', '/internal/admin/pos/workspace/master-data')->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('view.workspace.key', 'master-data'));
         $this->send($client, 'GET', $url)->assertOk()->assertJsonPath('data.lists.product_brand', 'Brands');
@@ -1163,7 +1279,8 @@ class PosShellTest extends TestCase
         $outlet = $this->outlet('P02 Edit Outlet', '082');
         $actor = $this->member('p02-edit@example.invalid', ['shops.enter', 'config.master-data.manage']);
         $actor->shops()->attach($outlet);
-        $client = $this->client(); $this->login($client, $actor->email)->assertOk();
+        $client = $this->client();
+        $this->login($client, $actor->email)->assertOk();
         $url = '/internal/admin/pos/master-data';
         $id = $this->send($client, 'POST', $url, ['list' => 'product_brand', 'action' => 'create', 'label' => 'P02 Original'])->assertOk()->json('data.id');
         $code = DB::table('pos_master_data_options')->where('id', $id)->value('code');
