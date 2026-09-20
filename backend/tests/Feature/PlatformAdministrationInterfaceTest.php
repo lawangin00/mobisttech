@@ -82,6 +82,14 @@ class PlatformAdministrationInterfaceTest extends TestCase
         $this->assertArrayNotHasKey('branding', $scoped['pos_configuration']['domains']);
         $this->assertSame([], $scoped['payment_destinations']);
         $this->assertSame([], $scoped['integrations']);
+        $limitedDraft = $this->send($documentsClient, 'POST', '/internal/admin/platform/pos-config/documents/draft', [
+            'settings' => ['invoice.default_output_format' => 'a4'],
+        ])->assertOk();
+        $limitedId = (int) $limitedDraft->json('data.id');
+        $this->send($documentsClient, 'POST', '/internal/admin/platform/pos-config/revisions/'.$limitedId.'/publish')
+            ->assertForbidden();
+        $this->assertSame('draft', DB::table('pos_configuration_revisions')->where('id', $limitedId)->value('state'));
+        $this->assertNull(DB::table('pos_settings')->where('key', 'invoice.default_output_format')->value('value'));
         // P07: a documents-only Admin cannot invoke other POS domains directly.
         $this->send($documentsClient, 'POST', '/internal/admin/platform/pos-config/theme/preview', [
             'settings' => ['theme.primary' => '#008080'],
@@ -114,6 +122,13 @@ class PlatformAdministrationInterfaceTest extends TestCase
         $this->assertSame('a4', DB::table('pos_settings')->where('key', 'invoice.default_output_format')->value('value'));
         $afterPublish = $this->send($client, 'GET', '/internal/admin/platform/data')->assertOk();
         $this->assertSame('a4', $afterPublish->json('data.pos_configuration.domains.documents.values')['invoice.default_output_format']);
+        [$editor, $editorOutlet] = $this->admin('pos-documents-editor@example.invalid', ['shops.enter', 'config.documents.manage']);
+        $editorClient = $this->client();
+        $this->login($editorClient, $editor->email)->assertOk();
+        $this->selectOutlet($editorClient, $editorOutlet);
+        $this->send($editorClient, 'POST', '/internal/admin/platform/pos-config/revisions/'.$first.'/rollback')
+            ->assertForbidden();
+        $this->assertSame('a4', DB::table('pos_settings')->where('key', 'invoice.default_output_format')->value('value'));
 
         $second = (int) $this->send($client, 'POST', '/internal/admin/platform/pos-config/documents/draft', [
             'settings' => ['invoice.default_output_format' => 'thermal'],
@@ -312,7 +327,7 @@ class PlatformAdministrationInterfaceTest extends TestCase
     {
         return [
             'shops.enter',
-            'config.documents.manage', 'config.theme.manage', 'config.branding.manage', 'config.payments.manage',
+            'config.documents.manage', 'config.theme.manage', 'config.branding.manage', 'config.publish', 'config.payments.manage',
             'config.promotions.manage', 'config.loyalty.manage',
             'admin.business-profile.manage', 'admin.integrations.manage',
             'website.content.manage', 'website.publish', 'website.settings.manage', 'website.mode.preview', 'website.mode.publish',

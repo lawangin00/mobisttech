@@ -130,6 +130,7 @@ final class PosConfiguration
         return DB::transaction(function () use ($actor, $revisionId) {
             $revision = DB::table('pos_configuration_revisions')->where('id', $revisionId)->lockForUpdate()->firstOrFail();
             $this->authorize($actor, $revision->domain);
+            abort_unless(app(Access::class)->allows($actor->fresh(), 'config.publish'), 403);
             abort_unless($revision->state === 'draft', 409, 'Only a draft POS configuration revision can be published.');
             $snapshot = json_decode($revision->snapshot, true, flags: JSON_THROW_ON_ERROR);
             $expected = array_keys($this->defaults($revision->domain));
@@ -172,6 +173,7 @@ final class PosConfiguration
     {
         $source = DB::table('pos_configuration_revisions')->where('id', $revisionId)->firstOrFail();
         $this->authorize($actor, $source->domain);
+        abort_unless(app(Access::class)->allows($actor->fresh(), 'config.publish'), 403);
         abort_unless(in_array($source->state, ['published', 'superseded'], true), 409, 'Rollback requires published POS configuration history.');
         $snapshot = json_decode($source->snapshot, true, flags: JSON_THROW_ON_ERROR);
         $draft = $this->draft($actor, $source->domain, $snapshot);

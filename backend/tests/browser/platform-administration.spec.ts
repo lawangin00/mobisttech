@@ -17,7 +17,7 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
     const calls: Array<{ path: string; method: string; body: Record<string, unknown> | null }> = [];
     const permissions = [
         'shops.enter',
-        'config.documents.manage', 'config.theme.manage', 'config.branding.manage', 'config.payments.manage',
+        'config.documents.manage', 'config.theme.manage', 'config.branding.manage', 'config.publish', 'config.payments.manage',
         'config.promotions.manage', 'config.loyalty.manage',
         'admin.business-profile.manage', 'admin.integrations.manage',
         'website.content.manage', 'website.publish', 'website.settings.manage', 'website.mode.preview', 'website.mode.publish',
@@ -340,6 +340,7 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
     const brandingOnly = page.getByRole('heading', { name: 'POS branding assets' }).locator('xpath=ancestor::section[1]');
     await expect(documentOnly.locator('select').first()).toBeEnabled();
     await expect(documentOnly.getByRole('button', { name: 'Save draft revision' })).toBeEnabled();
+    await expect(documentOnly.getByRole('button', { name: 'Publish', exact: true })).toBeDisabled();
     await expect(themeOnly.locator('input[type="color"]').first()).toBeDisabled();
     await expect(themeOnly.getByRole('button', { name: 'Save draft revision' })).toBeDisabled();
     await expect(brandingOnly.locator('select').first()).toBeDisabled();
@@ -353,6 +354,11 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
     await expect(documentOnly.locator('select').first()).toBeDisabled();
     await expect(themeOnly.locator('input[type="color"]').first()).toBeDisabled();
     await expect(brandingOnly.locator('select').first()).toBeEnabled();
+    await expect(brandingOnly.getByRole('button', { name: 'Publish', exact: true })).toBeDisabled();
+    await expect(brandingOnly.getByRole('button', { name: 'Rollback', exact: true })).toBeDisabled();
+    data.permissions = ['config.branding.manage', 'config.publish'];
+    await page.reload();
+    await page.getByRole('button', { name: 'POS configuration' }).click();
     await expect(brandingOnly.getByRole('button', { name: 'Publish', exact: true })).toBeEnabled();
     await brandingOnly.getByRole('button', { name: 'Publish', exact: true }).click();
     await expect.poll(() => calls.some(call => call.path.endsWith('/pos-config/revisions/82/publish'))).toBe(true);
