@@ -348,12 +348,21 @@ final class OutletLifecycleAdministration
             ->leftJoin('products as product', 'product.id', '=', 'pp.product_id')
             ->where(fn ($q) => $q->where('p.outlet_id', $outlet->id)
                 ->orWhere('product.outlet_id', $outlet->id))->select('p.id');
+        // Mixed-outlet website orders cannot attribute an order-level claim to one outlet.
+        // Hold their claims for manual review without showing cross-outlet claim identities.
+        $otherOutletOrderIds = DB::table('order_items')->where(fn ($q) => $q
+            ->where('outlet_id', '!=', $outlet->id)->orWhereNull('outlet_id'))->select('order_id');
+        $outletOrderIds = DB::table('order_items')->where('outlet_id', $outlet->id)->select('order_id');
+        $sharedOrderIds = DB::table('order_items')->where('outlet_id', $outlet->id)
+            ->whereIn('order_id', $otherOutletOrderIds)->select('order_id');
+        $sharedOrderClaimsHeld = DB::table('promotion_claims')
+            ->whereIn('order_id', $sharedOrderIds)->count();
         // A globally scoped campaign may be linked to many outlets. Its unbound claims
         // and claims bound to OTHER outlets must never be attributed or disclosed here.
-        $claims = DB::table('promotion_claims as c')->where(function ($q) use ($outlet) {
+        $claims = DB::table('promotion_claims as c')->where(function ($q) use ($outlet, $outletOrderIds, $otherOutletOrderIds) {
             $q->whereIn('c.invoice_id', DB::table('invoices')->where('outlet_id', $outlet->id)->select('id'))
-                ->orWhereIn('c.order_id', DB::table('order_items')
-                    ->where('outlet_id', $outlet->id)->select('order_id'))
+                ->orWhere(fn ($website) => $website->whereIn('c.order_id', $outletOrderIds)
+                    ->whereNotIn('c.order_id', $otherOutletOrderIds))
                 ->orWhere(function ($unbound) use ($outlet) {
                     $unbound->whereNull('c.invoice_id')->whereNull('c.order_id')
                         ->whereIn('c.promotion_id', DB::table('promotions')
@@ -429,9 +438,10 @@ final class OutletLifecycleAdministration
             'claims_truncated' => $claimCount > 50, 'claims' => $lines,
             'missing_financial_references' => $financialReferenceMissing,
             'mismatched_financial_references' => $financialReferenceMismatch,
+            'shared_order_claims_held_for_review' => $sharedOrderClaimsHeld,
             'financial_snapshot_digest_mismatches' => $financialSnapshotMismatches,
             'snapshot_contract_or_amount_mismatches' => $snapshotMismatch,
-            'requires_review' => $campaignCount > 0 || $claimCount > 0
+            'requires_review' => $campaignCount > 0 || $claimCount > 0 || $sharedOrderClaimsHeld > 0
                 || $financialReferenceMissing > 0 || $financialReferenceMismatch > 0
                 || $financialSnapshotMismatches > 0 || $snapshotMismatch > 0,
             'archive_eligibility' => 'not_approved_for_business_history'];

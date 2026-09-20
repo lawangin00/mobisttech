@@ -1175,6 +1175,27 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.promotion_history.claims_truncated', true);
         $this->assertCount(50, $bounded->json('data.promotion_history.claims'));
         $this->assertStringNotContainsString('DO-NOT-EXPOSE-PROMO-CUSTOMER', $bounded->getContent());
+        // A shared website order does NOT establish which outlet earned the order-level claim.
+        // Report only an ambiguous count, never the other outlet's claim ID or snapshot.
+        $sharedOrderId = DB::table('orders')->insertGetId(['public_id' => (string) Str::uuid(),
+            'order_number' => 'D03-SHARED-'.Str::random(10), 'order_type' => 'mobile',
+            'customer_name' => 'PRIVATE-SHARED-ORDER-CUSTOMER', 'customer_mobile' => '03001234567']);
+        DB::table('order_items')->insert([
+            ['order_id' => $sharedOrderId, 'outlet_id' => $archived->id, 'product_id' => $product->id,
+                'item_type' => 'mobile', 'title' => 'Archived line', 'quantity' => 1],
+            ['order_id' => $sharedOrderId, 'outlet_id' => $fallback->id, 'product_id' => $outsideProduct->id,
+                'item_type' => 'mobile', 'title' => 'Other outlet line', 'quantity' => 1],
+        ]);
+        $ambiguousClaim = $claim($globalId, 'active', null, 'website', $sharedOrderId);
+        $sharedReport = $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.claim_count', 54)
+            ->assertJsonPath('data.promotion_history.shared_order_claims_held_for_review', 1)
+            ->assertJsonPath('data.promotion_history.requires_review', true)
+            ->assertJsonPath('data.promotion_history.claims_truncated', true);
+        $this->assertCount(50, $sharedReport->json('data.promotion_history.claims'));
+        $this->assertStringNotContainsString($ambiguousClaim, $sharedReport->getContent());
+        $this->assertStringNotContainsString('PRIVATE-SHARED-ORDER-CUSTOMER', $sharedReport->getContent());
+
         $other = $this->client();
         $this->login($other, $limited->email)->assertOk();
         $this->send($other, 'GET', $path)->assertForbidden();
