@@ -1,0 +1,48 @@
+name: GitHub-only website verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - '.github/workflows/github-only-website.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-only-website-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  website:
+    name: Website clean-checkout build and static gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Checkout exact pushed commit
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Setup pinned Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.19.0'
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - name: Pin npm
+        run: npm install --global npm@11.17.0
+      - name: Install locked website dependencies
+        run: npm ci --prefix website
+      - name: Verify website TypeScript
+        run: npm --prefix website run typecheck
+      - name: Lint website
+        run: npm --prefix website run lint
+      - name: Build website for production
+        run: npm --prefix website run build
+      - name: Record exact verified commit
+        run: echo "GITHUB_ONLY_WEBSITE_VERIFIED_SHA=$GITHUB_SHA"
