@@ -1337,7 +1337,35 @@ class PosShellTest extends TestCase
         $this->send($client, 'GET', $path)->assertOk()
             ->assertJsonPath('data.obligations.website_payments_for_reconciliation', 0)
             ->assertJsonPath('data.obligations.website_refunds_for_reconciliation', 0)
+            ->assertJsonPath('data.obligations.website_shared_orders_held_for_financial_review', 1)
+            ->assertJsonPath('data.obligations.website_paid_provider_payments_without_matching_recorded_receipt', 1);
+        // A synthetic paid flag does not establish the retained provider-callback trail.
+        $transaction = 'SYNTHETIC-PAID-'.Str::random(12);
+        DB::table('payments')->where('id', $singlePaymentId)
+            ->update(['transaction_reference' => $transaction]);
+        $receiptId = DB::table('payment_receipts')->insertGetId([
+            'payment_id' => $singlePaymentId, 'gateway' => 'easypaisa',
+            'merchant' => 'test-merchant', 'mode' => 'sandbox',
+            'event_id' => 'D03-synthetic-'.Str::random(12),
+            'transaction_reference' => $transaction, 'amount' => '2.00',
+            'currency' => 'PKR', 'payload_hash' => str_repeat('a', 64),
+            'outcome' => 'paid', 'received_at' => now(), 'verified_at' => now(),
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_paid_provider_payments_without_matching_recorded_receipt', 1);
+        DB::table('payment_receipts')->where('id', $receiptId)->update(['amount' => '1.00']);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_paid_provider_payments_without_matching_recorded_receipt', 0);
+        DB::table('payment_receipts')->where('id', $receiptId)->update(['outcome' => 'failed']);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_paid_provider_payments_without_matching_recorded_receipt', 1);
+        DB::table('payment_receipts')->where('id', $receiptId)->update(['outcome' => 'paid']);
+        DB::table('payments')->where('id', $sharedPaymentId)
+            ->update(['status' => 'paid', 'completed_at' => now(), 'reconciliation_required_at' => null]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_paid_provider_payments_without_matching_recorded_receipt', 0)
             ->assertJsonPath('data.obligations.website_shared_orders_held_for_financial_review', 1);
+        $this->assertStringNotContainsString($transaction, $financeReport->getContent());
 
         $other = $this->client();
         $this->login($other, $limited->email)->assertOk();

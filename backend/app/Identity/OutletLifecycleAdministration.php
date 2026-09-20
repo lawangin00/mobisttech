@@ -547,6 +547,21 @@ final class OutletLifecycleAdministration
                 ->whereIn('order_id', $attributedOrders)
                 ->where(fn ($q) => $q->whereIn('status', ['pending', 'unknown', 'paid_reconciliation'])
                     ->orWhereNotNull('reconciliation_required_at'))->count(),
+            // A locally marked paid gateway payment without a matching retained verified
+            // callback receipt is a reconciliation gap, not proof of bank settlement.
+            // COD has a separate collection workflow and no provider callback receipt.
+            'website_paid_provider_payments_without_matching_recorded_receipt' => DB::table('payments as p')
+                ->whereIn('p.order_id', $attributedOrders)
+                ->where('p.gateway', '!=', 'cod')->where('p.status', 'paid')
+                ->where(fn ($q) => $q->whereNull('p.transaction_reference')
+                    ->orWhereNotExists(fn ($receipt) => $receipt->selectRaw('1')
+                        ->from('payment_receipts as r')->whereColumn('r.payment_id', 'p.id')
+                        ->whereColumn('r.gateway', 'p.gateway')->whereColumn('r.merchant', 'p.merchant')
+                        ->whereColumn('r.mode', 'p.mode')->whereColumn('r.amount', 'p.amount')
+                        ->whereColumn('r.currency', 'p.currency')
+                        ->whereColumn('r.transaction_reference', 'p.transaction_reference')
+                        ->where('r.outcome', 'paid')->whereNotNull('r.verified_at')))
+                ->count(),
             'website_refunds_for_reconciliation' => DB::table('refunds as f')
                 ->join('payments as p', 'p.id', '=', 'f.payment_id')
                 ->whereIn('p.order_id', $attributedOrders)
