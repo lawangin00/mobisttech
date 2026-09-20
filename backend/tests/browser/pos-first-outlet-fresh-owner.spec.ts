@@ -109,6 +109,22 @@ test('fresh protected owner creates, configures and explicitly enters the first 
     await returns.getByRole('button', { name: 'Record refund' }).click();
     await expect(page.getByTestId('refund-result')).toContainText('PKR 150.00 via bank_transfer');
 
+    const reportResponse = await page.request.get('/internal/admin/pos/customer-reporting/reports');
+    expect(reportResponse.status()).toBe(200);
+    const reportPayload = await reportResponse.json() as { data: { report: {
+        sales: { invoice_count: number; net_sales: string; return_net: string; refunds: string };
+        payments: { pos_tender_total: string; method_breakdown: Record<string, string> };
+    } } };
+    expect(reportPayload.data.report.sales).toMatchObject({ invoice_count: 1, net_sales: '150.00', return_net: '150.00', refunds: '150.00' });
+    expect(reportPayload.data.report.payments.pos_tender_total).toBe('150.00');
+    expect(reportPayload.data.report.payments.method_breakdown.bank_transfer).toBe('150.00');
+    await page.goto('/internal/admin/pos/workspace/reports');
+    const reports = page.getByRole('heading', { name: 'Outlet dashboard & reports' }).locator('xpath=ancestor::section[1]');
+    await expect(reports).toContainText('Payment Mix');
+    await expect(reports).toContainText('POS:');
+    await reports.getByRole('button', { name: 'Destination drill-down' }).click();
+    await expect(reports).toContainText('MT75 Fresh Bank · bank_transfer · PKR 150.00');
+
     await page.getByTestId('logout').click();
     await page.waitForURL('**/internal/admin/pos/login');
 });

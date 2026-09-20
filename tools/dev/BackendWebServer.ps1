@@ -35,10 +35,17 @@ if ($owned) { 'Already running: isolated backend test server'; exit 0 }
 $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 18080)
 try { $listener.Start() } finally { $listener.Stop() }
 Remove-Item -LiteralPath $logPath,$errorPath -Force -ErrorAction SilentlyContinue
-$server = Start-Process -FilePath $phpExe -ArgumentList @(
-    '-S', '127.0.0.1:18080',
-    (Join-Path $backendRoot 'vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php')
-) -WorkingDirectory (Join-Path $backendRoot 'public') -WindowStyle Hidden -Environment @{ APP_ENV='testing' } -RedirectStandardOutput $logPath -RedirectStandardError $errorPath -PassThru
+# Start-Process -Environment is unavailable in Windows PowerShell 5.1.
+$previousAppEnv = [Environment]::GetEnvironmentVariable('APP_ENV', 'Process')
+try {
+    [Environment]::SetEnvironmentVariable('APP_ENV', 'testing', 'Process')
+    $server = Start-Process -FilePath $phpExe -ArgumentList @(
+        '-S', '127.0.0.1:18080',
+        (Join-Path $backendRoot 'vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php')
+    ) -WorkingDirectory (Join-Path $backendRoot 'public') -WindowStyle Hidden -RedirectStandardOutput $logPath -RedirectStandardError $errorPath -PassThru
+} finally {
+    [Environment]::SetEnvironmentVariable('APP_ENV', $previousAppEnv, 'Process')
+}
 @{ processId=$server.Id; startTicks=$server.StartTime.ToUniversalTime().Ticks.ToString() } | ConvertTo-Json | Set-Content -LiteralPath $recordPath
 for ($attempt=0; $attempt -lt 30; $attempt++) {
     try {
