@@ -1,12 +1,41 @@
 <?php
 
 use App\Backups\BackupService;
+use App\Identity\FirstAdminProvisioning;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+
+Artisan::command('setup:first-admin', function (FirstAdminProvisioning $provisioner) {
+    // Never accept an owner password through argv, committed seeds or environment defaults.
+    if (! $this->input->isInteractive()) {
+        $this->error('First Admin setup requires an interactive private terminal.');
+
+        return 1;
+    }
+    $name = (string) $this->ask('Initial Admin name');
+    $email = (string) $this->ask('Initial Admin email');
+    $password = (string) $this->secret('New Admin password (12+ characters, mixed case, number, symbol)');
+    $confirmation = (string) $this->secret('Confirm new Admin password');
+    if ($password === '' || ! hash_equals($password, $confirmation)) {
+        $this->error('Password confirmation failed; no account created.');
+
+        return 1;
+    }
+    try {
+        $provisioner->create($name, $email, $password);
+    } catch (Throwable $error) {
+        $this->error('First Admin setup refused. Check the fresh-database prerequisite and input.');
+
+        return 1;
+    }
+    $this->info('Initial protected Admin created. Sign in and create the first outlet.');
+
+    return 0;
+})->purpose('Interactively create one protected Admin on an empty fresh target only');
 
 Artisan::command('foundation:check', function () {
     if (! app()->environment(['local', 'testing'])) {
