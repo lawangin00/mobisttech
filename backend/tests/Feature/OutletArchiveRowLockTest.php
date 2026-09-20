@@ -1051,4 +1051,111 @@ final class OutletArchiveRowLockTest extends TestCase
         }
     }
 
+    public function test_isolated_cod_and_refund_services_share_archive_lock(): void
+    {
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test'
+            && (int) config('database.connections.mysql.port') === 13306, 403);
+        $tag = (string) Str::uuid();
+        $default = DB::getDefaultConnection();
+        $outlet = null; $actor = null; $orderId = null; $returnId = null; $writer = null;
+        try {
+            $outlet = new Outlet;
+            $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '086',
+                'name' => 'D03 COD refund race '.$tag, 'status' => false, 'version' => 1])->save();
+            $actor = new \App\Models\Admin;
+            $actor->forceFill(['name' => 'D03 COD refund actor', 'email' => 'd03-cod-refund-'.$tag.'@example.invalid',
+                'password' => 'not-a-live-password', 'permissions' => ['shops.enter', 'shop.sales']])->save();
+            $actor->shops()->attach($outlet);
+            $orderPublic = (string) Str::uuid();
+            $orderId = DB::table('orders')->insertGetId(['order_number' => 'D03-MONEY-'.$tag, 'order_type' => 'commerce',
+                'status' => 'pending', 'fulfillment_status' => 'pending', 'customer_name' => 'Synthetic',
+                'customer_mobile' => '03001234567', 'subtotal' => '100.00', 'total' => '100.00', 'currency' => 'PKR',
+                'payment_status' => 'unpaid', 'owner_scope_hash' => hash('sha256', 'guest:'.$tag),
+                'public_id' => $orderPublic, 'created_at' => now(), 'updated_at' => now()]);
+            $paymentPublic = (string) Str::uuid();
+            $paymentId = DB::table('payments')->insertGetId(['order_id' => $orderId, 'gateway' => 'cod',
+                'status' => 'pending_collection', 'amount' => '100.00', 'currency' => 'PKR', 'public_id' => $paymentPublic,
+                'merchant' => 'cash-on-delivery', 'mode' => 'manual', 'attempt_key' => 'checkout-1',
+                'intent_hash' => str_repeat('a', 64), 'initiated_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('reservations')->insert(['order_id' => $orderId, 'attempt' => 1, 'outlet_id' => $outlet->id,
+                'website_order_number' => 'D03-MONEY-'.$tag, 'reservation_reference' => (string) Str::uuid(),
+                'state' => 'held_cod', 'currency' => 'PKR', 'customer_name' => 'Synthetic', 'customer_mobile' => '03001234567',
+                'total_amount' => '100.00', 'gateway' => 'cod', 'website_payment_id' => (string) $paymentId,
+                'contract_hash' => str_repeat('b', 64), 'created_at' => now(), 'updated_at' => now()]);
+            $invoiceId = DB::table('invoices')->insertGetId(['outlet_id' => $outlet->id, 'order_id' => $orderId,
+                'total_bill' => '100.00', 'final_bill' => '100.00', 'invoice_number' => 'D03-INV-'.$tag,
+                'public_id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now()]);
+            $returnPublic = (string) Str::uuid();
+            $returnId = DB::table('returns')->insertGetId(['invoice_id' => $invoiceId, 'order_id' => $orderId,
+                'actor_type' => \App\Models\Admin::class, 'actor_id' => $actor->id, 'reason' => 'Synthetic return',
+                'status' => 'accepted', 'idempotency_key' => 'd03-return-'.$tag, 'public_id' => $returnPublic,
+                'created_at' => now(), 'updated_at' => now()]);
+            config(['database.connections.d03_money_writer' => config('database.connections.mysql')]);
+            $writer = DB::connection('d03_money_writer');
+            $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
+            DB::connection('mysql')->beginTransaction();
+            try {
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)->lockForUpdate()->firstOrFail();
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)->update(['archived_at' => now(), 'version' => 2]);
+                DB::setDefaultConnection('d03_money_writer');
+                $writerActor = \App\Models\Admin::on('d03_money_writer')->findOrFail($actor->id);
+                $writerOutlet = Outlet::on('d03_money_writer')->findOrFail($outlet->id);
+                foreach (['cod', 'refund'] as $kind) {
+                    try {
+                        if ($kind === 'cod') {
+                            app(\App\Commerce\OrderTransactions::class)->collectCod($writerActor, $writerOutlet,
+                                $orderPublic, 'd03-cod-wait-'.$tag, '100.00', 'D03-COD-'.$tag);
+                        } else {
+                            app(\App\Commerce\OrderTransactions::class)->manualRefund($writerActor, $returnPublic,
+                                $paymentPublic, 'd03-refund-wait-'.$tag, '1.00', str_repeat('c', 64));
+                        }
+                        $this->fail($kind.' bypassed the independent archive lock.');
+                    } catch (QueryException $exception) {
+                        $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
+                    }
+                }
+                DB::setDefaultConnection($default);
+                DB::connection('mysql')->commit();
+            } finally {
+                DB::setDefaultConnection($default);
+                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            }
+            DB::setDefaultConnection('d03_money_writer');
+            foreach (['cod', 'refund'] as $kind) {
+                try {
+                    if ($kind === 'cod') {
+                        app(\App\Commerce\OrderTransactions::class)->collectCod($writerActor, $writerOutlet,
+                            $orderPublic, 'd03-cod-retry-'.$tag, '100.00', 'D03-COD-2-'.$tag);
+                    } else {
+                        app(\App\Commerce\OrderTransactions::class)->manualRefund($writerActor, $returnPublic,
+                            $paymentPublic, 'd03-refund-retry-'.$tag, '1.00', str_repeat('d', 64));
+                    }
+                    $this->fail('Archived outlet accepted '.$kind.'.');
+                } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                    $this->assertSame(403, $exception->getStatusCode());
+                }
+            }
+            DB::setDefaultConnection($default);
+            $this->assertSame(0, DB::table('payment_receipts')->where('payment_id', $paymentId)->count());
+            $this->assertSame(0, DB::table('refunds')->where('payment_id', $paymentId)->count());
+        } finally {
+            DB::setDefaultConnection($default);
+            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            if ($writer) { $writer->disconnect(); DB::purge('d03_money_writer'); }
+            if ($returnId) { DB::table('returns')->where('id', $returnId)->delete(); }
+            if ($orderId) {
+                DB::table('reservations')->where('order_id', $orderId)->delete();
+                DB::table('invoices')->where('order_id', $orderId)->delete();
+                DB::table('payments')->where('order_id', $orderId)->delete();
+                DB::table('orders')->where('id', $orderId)->delete();
+            }
+            if ($actor) {
+                DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
+                DB::table('admins')->where('id', $actor->id)->delete();
+            }
+            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
+                ->where('name', 'D03 COD refund race '.$tag)->delete(); }
+        }
+    }
+
 }
