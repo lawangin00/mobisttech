@@ -9,7 +9,7 @@ Status: REVIEW ONLY / MT-7.5 IN PROGRESS. Baseline: project `282dba2f-a2d9-47e8-
 - Gap classes: **I** = implementation/functionality confirmed absent or materially incomplete; **E** = target test/integration/source-equivalence evidence not yet sufficient (do not assert a defect); **H** = owner/legal/external authorization, authentic credentials/data or policy decision HOLD. Multiple classes may apply. Existing PASS evidence is **reused**, not rerun unless impacted by an actual change or at the consolidated Q01 milestone.
 - Inputs: `docs/migration/FEATURE_PARITY_REGISTER.md` (all 22, immutable source inventory), `docs/audit/MT-7.5_TRACEABILITY.md`, `docs/audit/MT-7.5_CLOSURE_GATES.md` (latest appended checkpoints override its historical earlier pending descriptions), `docs/audit/MT-7.5_ACCEPTANCE.md`, `docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md`, approved addendum/consolidated/software requirements, `docs/audit/MT-7.2_*` and the current source-of-truth/roadmap. Existing evidence pointers below are **not claims of a fresh whole-suite run**.
 
-Current closure state after P05 acceptance: **11/27 Complete, 16/27 OPEN (40.74%)**.
+Current closure state after P06 acceptance: **12/27 Complete, 15/27 OPEN (44.44%)**.
 
 ## All 22 feature families: reused evidence, exact remaining closure and classification
 
@@ -20,7 +20,7 @@ Current closure state after P05 acceptance: **11/27 Complete, 16/27 OPEN (40.74%
 | P03 POS acquisition/stock | `InventoryConcurrencyTest`, `StockMigrationTest`, `PosTransactionInterfaceTest`, fresh-owner Edge journey and `MT-7.5_P03_STOCK_PARITY.md`. | **Accepted target-only P03 family:** all 12 source routes are disposed through consolidated protected contracts; acquisition and bounded movement history, quantity/physical stock, required IMEI slots and historical/current claims, receiving/sale/reservation/return totals, rollback, concurrency and outlet/role scope are reconciled. | Complete |
 | P04 POS sales/returns | `SalesOperationsTest`, `SalesMigrationTest`, `PosTransactionInterfaceTest`, `PosCustomerReportingInterfaceTest`, real fresh-owner Edge journey and `MT-7.5_P04_SALES_RETURNS_PARITY.md`. | Accepted: eight source routes disposed; negative sale/return, precise money/stock/payment effects, immutable customer/business/product history, outlet/role isolation and real sale/return/refund UI reconciled. | Complete |
 | P05 POS warranty/claims | `WarrantyClausesTest`, `ClaimOperationsTest`, `PosCustomerReportingInterfaceTest`, `DocumentReportingServicesTest`, real fresh-owner Edge journey and `MT-7.5_P05_WARRANTY_CLAIMS_PARITY.md`. | Accepted: six source routes disposed; expiry boundary, versioned sale snapshot, claim intake/lifecycle/concurrency, historical A4 receipt and role/outlet denial reconciled. | Complete |
-| P06 POS reports/documents | `DocumentReportingServicesTest`, `PosCustomerReportingInterfaceTest`, `pos-customer-reporting.spec.ts`. | **E:** live UI PDF/print A4/thermal where applicable, preview/no-auto-download, secure optional Email/assisted WhatsApp/history, report/CSV/date/filter/fee/refund/day-close reconciliation under role/outlet constraints. Authentic Gmail send remains **H**. | Pending |
+| P06 POS reports/documents | `DocumentReportingServicesTest`, `PosCustomerReportingInterfaceTest`, cash/payment/operations tests, existing real Edge evidence and `MT-7.5_P06_REPORTING_DOCUMENTS_PARITY.md`. | Accepted: 36 routes disposed; immutable A4/Thermal actions, safe Email/WhatsApp history, date/category/profit/CSV reports and day-close/payment reconciliation verified. Authentic Gmail remains external unverified. | Complete |
 | P07 POS Dynamic Platform | `PlatformAdministrationInterfaceTest`, `platform-administration.spec.ts`, existing CMS/revision service tests. | **E:** source setting-by-setting, media safe-use, preview/publish/rollback, cross-permission and rendered POS/Admin parity; test only found gaps. | Pending |
 | P08 POS backup/operations | MT-3.3, MT-7.1, MT-7.4, `OperationalRecoveryTest`, `docs/deploy/MT-7.4_VERIFICATION.md`. | Already accepted target-only recovery/readiness; live destructive restore remains independently **H**, not reason to reopen this completed family. | Complete |
 | X01 reservations/reconciliation | `OrderPaymentTransactionsTest`, `InventoryConcurrencyTest`, shared MySQL transaction authority, `MT-7.5_X01_RESERVATION_PARITY.md`. | Accepted: all 11 source routes disposed; expiry, confirmation/release race, exact replay/hash conflict, atomic partial-failure retry and joined order-stock-payment state verified. | Complete |
@@ -65,7 +65,7 @@ Current closure state after P05 acceptance: **11/27 Complete, 16/27 OPEN (40.74%
 | 09/X01 | DONE: all 11 source routes disposed; exact replay/hash conflict, atomic failure/retry, expiry/late-paid handling and independent-connection confirmation-versus-release serialization verified in shared MySQL authority. | DONE |
 | 10/P04 | DONE: eight source routes disposed; precise sale/return/refund money and stock, immutable invoice identity, cross-outlet/role negatives and actual fresh-owner UI accepted. | DONE |
 | 11/P05 | DONE: six source routes disposed; warranty clauses/expiry, claim intake/lifecycle/concurrency, historical A4 receipt and role/outlet boundaries accepted. | DONE |
-| 12/P06 | Join explicit document actions, safe sending, scoped reports and day-close/payment mix evidence. | OPEN [E,H] |
+| 12/P06 | DONE: 36 routes disposed; explicit immutable documents, safe delivery history, scoped date/category/CSV reports and day-close/payment mix accepted. Authentic Gmail remains external unverified. | DONE |
 | 13/P07 | Reconcile POS presentation settings/media/permissions/revision rollback with real UI. | OPEN [E] |
 | 14/W01 | Join Admin/customer identity, signed historical access, profile/session and role denial; local/mock recovery acceptance; actual external delivery separately unverified; no old identity cutover. | OPEN [E,H] |
 | 15/W02 | DONE: source public-route disposition, category/device/availability filters, sort/pagination, zero-stock, four-product same-category comparison, public minimization, POS freshness, three modes, legacy redirects and W02 canonical/social/sitemap evidence reconciled in `MT-7.5_W02_ROUTE_PARITY.md`; editable SEO/media controls remain W06. | DONE |
@@ -420,3 +420,9 @@ A genuinely newly created synthetic owner/outlet/managed device brand/IMEI-track
 - All six source routes are disposed in `MT-7.5_P05_WARRANTY_CLAIMS_PARITY.md`.
 - Current joined backend verification passed 17/17 (282 assertions). Existing current-candidate real Edge evidence covers actual sale-linked claim intake, lifecycle transition, A4 receipt preview and warranty history.
 - P05 is DONE; checklist **11/27 DONE, 16 OPEN (40.74%)**.
+
+### MT-7.5 P06 reporting and documents family closure — 21-Sep-2026
+
+- All 36 source routes are disposed in `MT-7.5_P06_REPORTING_DOCUMENTS_PARITY.md`; overlapping account/presentation editors remain with P01/P07.
+- Current joined backend verification passed 24/24 (458 assertions). The real Reports workspace now includes exact category performance/inventory/claim rows; TypeScript and production Vite build passed.
+- Existing current-candidate Edge evidence covers explicit document actions, reporting/CSV/payment drill-down and mobile containment. P06 is DONE; checklist **12/27 DONE, 15 OPEN (44.44%)**.

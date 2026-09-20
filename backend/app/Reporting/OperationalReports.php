@@ -30,8 +30,36 @@ final class OperationalReports
             'outlet_id' => $outlet->public_id, 'from' => $from, 'to' => $to,
             'sales' => $this->sales($invoices, $sales, $returns, $refunds),
             'payments' => $this->payments($tenders, $invoiceIds),
+            'categories' => $this->categories($outlet, $from, $to),
             'activity' => $this->activity($outlet, $from, $to),
         ];
+    }
+
+    private function categories(Outlet $outlet, ?string $from, ?string $to): array
+    {
+        $sales = DB::table('sales as s')->join('products as p', 'p.id', '=', 's.product_id')
+            ->where('s.outlet_id', $outlet->id)->groupBy('p.category')
+            ->selectRaw('p.category, SUM(s.quantity) units_sold, SUM(s.net_total_price) net_sales, SUM(s.profit) profit');
+        $this->dates($sales, 's.created_at', $from, $to);
+        $sales = $sales->get()->keyBy('category');
+        $inventory = DB::table('products')->where('outlet_id', $outlet->id)->where('isDeleted', false)
+            ->groupBy('category')->selectRaw('category, COUNT(*) products, SUM(qty) stock_units, SUM(qty * purchase_price) inventory_cost')->get()->keyBy('category');
+        $claims = DB::table('claims as c')->join('products as p', 'p.id', '=', 'c.product_id')
+            ->where('c.outlet_id', $outlet->id)->groupBy('p.category')->selectRaw('p.category, COUNT(*) claims');
+        $this->dates($claims, 'c.created_at', $from, $to);
+        $claims = $claims->get()->keyBy('category');
+
+        return $sales->keys()->merge($inventory->keys())->merge($claims->keys())->unique()->sort()->values()
+            ->map(function (string $category) use ($sales, $inventory, $claims) {
+                $sale = $sales->get($category);
+                $stock = $inventory->get($category);
+
+                return ['category' => $category, 'label' => ucwords(str_replace('_', ' ', $category)),
+                    'units_sold' => (int) ($sale->units_sold ?? 0), 'net_sales' => $this->money($sale->net_sales ?? '0.00'),
+                    'profit' => $this->money($sale->profit ?? '0.00'), 'products' => (int) ($stock->products ?? 0),
+                    'stock_units' => (int) ($stock->stock_units ?? 0), 'inventory_cost' => $this->money($stock->inventory_cost ?? '0.00'),
+                    'claims' => (int) ($claims->get($category)?->claims ?? 0)];
+            })->all();
     }
 
     private function sales(Builder $invoices, Builder $sales, Builder $returns, Builder $refunds): array

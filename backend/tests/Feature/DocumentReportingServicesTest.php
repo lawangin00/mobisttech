@@ -119,6 +119,14 @@ class DocumentReportingServicesTest extends TestCase
         $this->assertSame('147.02', $report['payments']['net_settlement']);
         $this->assertSame('50.00', $report['payments']['method_breakdown']['card']);
         $this->assertSame('150.02', $report['payments']['method_breakdown']['bank_transfer']);
+        $this->assertSame('accessory', $report['categories'][0]['category']);
+        $this->assertSame(1, $report['categories'][0]['units_sold']);
+        $this->assertSame('200.02', $report['categories'][0]['net_sales']);
+        $this->assertSame('76.57', $report['categories'][0]['profit']);
+        $future = now()->addDay()->toDateString();
+        $filtered = app(OperationalReports::class)->summary($this->actor, $this->outlet, $future, $future);
+        $this->assertSame(0, $filtered['categories'][0]['units_sold']);
+        $this->assertSame('0.00', $filtered['categories'][0]['net_sales']);
     }
 
     public function test_delivery_failures_and_authorization_do_not_change_finalized_invoice(): void

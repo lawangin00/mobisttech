@@ -232,7 +232,7 @@ final class PosCustomerReportingController extends Controller
         $rows = [
             ['section', 'metric', 'value'],
         ];
-        foreach (['sales', 'payments', 'activity'] as $section) {
+        foreach (['sales', 'payments', 'categories', 'activity'] as $section) {
             foreach (($report[$section] ?? []) as $metric => $value) {
                 if (is_array($value)) {
                     $value = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
