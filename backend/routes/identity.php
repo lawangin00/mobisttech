@@ -101,6 +101,7 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::get('/pos/catalogue', [PosTransactionController::class, 'catalogue'])->defaults('identity_realm', 'admin')->name('admin.pos.catalogue');
     Route::get('/pos/lookup', [PosTransactionController::class, 'lookup'])->defaults('identity_realm', 'admin')->name('admin.pos.lookup');
     Route::post('/pos/inventory/products', [PosTransactionController::class, 'saveProduct'])->defaults('identity_realm', 'admin')->name('admin.pos.products.save');
+    Route::post('/pos/inventory/products/{product}/website-listing', [PosTransactionController::class, 'websiteListing'])->defaults('identity_realm', 'admin')->name('admin.pos.products.website-listing');
     Route::post('/pos/inventory/products/{product}/acquire', [PosTransactionController::class, 'acquire'])->defaults('identity_realm', 'admin')->name('admin.pos.inventory.acquire');
     Route::post('/pos/inventory/products/{product}/imeis', [PosTransactionController::class, 'imeis'])->defaults('identity_realm', 'admin')->name('admin.pos.inventory.imeis');
     Route::post('/pos/inventory/products/{product}/adjust', [PosTransactionController::class, 'adjust'])->defaults('identity_realm', 'admin')->name('admin.pos.inventory.adjust');

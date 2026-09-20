@@ -4,7 +4,7 @@ import {tabSearchOptedIn,tabSearchCategory,tabSearchConsent,tabSearchSaveCategor
 import { DocumentActions } from './pos-customer-reporting-workspace';
 
 type Unit = { id: string; code: string; status: string; version: number; imeis: string[] };
-type Product = { category_master_data_id?:number|null;subcategory_master_data_id?:number|null;brand_master_data_id?:number|null;ram_master_data_id?:number|null;storage_master_data_id?:number|null;sim_master_data_id?:number|null;warranty_type?:string|null;warranty_unit?:number|null;warranty_duration?:number|null; id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[]; subcategory_display?: string | null; ram_display?: string | null; storage_display?: string | null; sim_display?: string | null };
+type Product = { website_listing?:{slug:string;description:string;is_online:boolean;version:number}|null; category_master_data_id?:number|null;subcategory_master_data_id?:number|null;brand_master_data_id?:number|null;ram_master_data_id?:number|null;storage_master_data_id?:number|null;sim_master_data_id?:number|null;warranty_type?:string|null;warranty_unit?:number|null;warranty_duration?:number|null; id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[]; subcategory_display?: string | null; ram_display?: string | null; storage_display?: string | null; sim_display?: string | null };
 type Destination = { public_id: string; method: string; display_name: string };
 type Master = { id: number; list_key: string; code: string; label: string; metadata: Record<string, unknown> };
 type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean };
@@ -103,6 +103,14 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
     const [editingId, setEditingId] = useState('');
     const [editingVersion, setEditingVersion] = useState<number|null>(null);
     const [editingWarranty, setEditingWarranty] = useState<{type:string;unit:number|null;duration:number|null}>({type:'no_warranty',unit:null,duration:null});
+    const [websiteProduct, setWebsiteProduct] = useState<Product|null>(null);
+    const [websiteSlug, setWebsiteSlug] = useState('');
+    const [websiteDescription, setWebsiteDescription] = useState('');
+    const openWebsiteEditor = (p:Product) => {
+        setWebsiteProduct(p);
+        setWebsiteSlug(p.website_listing?.slug ?? p.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''));
+        setWebsiteDescription(p.website_listing?.description ?? 'Product information for '+p.name+'.');
+    };
     const [newName, setNewName] = useState('');
     const [categoryId, setCategoryId] = useState('');
     const [brandId, setBrandId] = useState('');
@@ -154,10 +162,25 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
                 {p.brand_snapshot && <p data-testid={'inventory-brand-history-'+p.id} className="mt-1 text-xs text-slate-600">Original brand: {p.brand_snapshot} · Current brand: {p.brand_display}</p>}
                 {(p.subcategory_display || p.ram_display || p.storage_display || p.sim_display) && <p data-testid={'inventory-variant-'+p.id} className="mt-1 text-xs text-slate-600">{[p.subcategory_display, p.ram_display, p.storage_display, p.sim_display].filter(Boolean).join(' · ')}</p>}
                 <button data-testid={'product-edit-'+p.id} onClick={()=>void run(async()=>{editDefinition(p);})} className="mt-2 mr-2 rounded border px-2 py-1 text-xs">Edit definition</button>
+                <button data-testid={'product-website-'+p.id} onClick={()=>openWebsiteEditor(p)} className="mt-2 mr-2 rounded border px-2 py-1 text-xs">Website listing</button>
                 <button onClick={() => void run(() => printLabel('product', p.id))} className="mt-2 rounded border px-2 py-1 text-xs">Print product label</button>
                 {p.units.length > 0 && <p className="mt-2 text-xs text-slate-500">{p.units.map((u) => u.code + (u.imeis.length ? ' (' + u.imeis.join(', ') + ')' : '')).join(' · ')}</p>}
             </div>)}</div>
         </section>
+        {websiteProduct && <section data-testid="website-listing-editor" className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Website listing: {websiteProduct.name}</h3>
+            <p className="mt-1 text-xs">Publishing makes this product public when the Website commerce mode is active. Stock and prices remain POS-authoritative.</p>
+            <input data-testid="website-listing-slug" value={websiteSlug} onChange={e=>setWebsiteSlug(e.target.value)} placeholder="Public product slug" className="mt-3 w-full rounded border p-2 text-sm" />
+            <textarea data-testid="website-listing-description" value={websiteDescription} onChange={e=>setWebsiteDescription(e.target.value)} rows={3} placeholder="Public description" className="mt-2 w-full rounded border p-2 text-sm" />
+            <div className="mt-2 flex gap-2"><button data-testid="website-listing-publish" disabled={busy||websiteSlug.length<3||websiteDescription.trim().length<10} onClick={()=>void run(async()=>{
+                await api('/internal/admin/pos/inventory/products/'+websiteProduct.id+'/website-listing',{method:'POST',body:JSON.stringify({slug:websiteSlug,description:websiteDescription,is_online:true,expected_version:websiteProduct.website_listing?.version??0})});
+                setWebsiteProduct(null);await reload();
+            })} className="rounded bg-slate-950 px-3 py-2 text-sm text-white disabled:opacity-40">Publish listing</button>
+            {websiteProduct.website_listing?.is_online&&<button data-testid="website-listing-hide" disabled={busy} onClick={()=>void run(async()=>{
+                await api('/internal/admin/pos/inventory/products/'+websiteProduct.id+'/website-listing',{method:'POST',body:JSON.stringify({slug:websiteSlug,description:websiteDescription,is_online:false,expected_version:websiteProduct.website_listing?.version??0})});
+                setWebsiteProduct(null);await reload();
+            })} className="rounded border px-3 py-2 text-sm">Hide listing</button>}
+            <button onClick={()=>setWebsiteProduct(null)} className="rounded border px-3 py-2 text-sm">Cancel</button></div>
+        </section>}
         <div className="grid gap-5">
             <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Product definition</h3>
                 {editingId&&<div data-testid="product-edit-mode" className="mt-2 flex items-center justify-between gap-2 text-xs"><span>Editing existing product {editingId}; stock, sales and historical records remain linked.</span><button onClick={resetDefinition} className="rounded border px-2 py-1">Cancel edit</button></div>}

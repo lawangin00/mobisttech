@@ -86,6 +86,36 @@ class PosTransactionInterfaceTest extends TestCase
         ])->assertOk()->assertJsonPath('data.id', $unit->public_id);
     }
 
+    public function test_fresh_pos_product_requires_explicit_publication_and_stays_stock_authoritative(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 2);
+        $client = $this->authenticatedClient();
+        $draft = app(\App\Cms\WebsiteModePublication::class)->saveDraft($this->actor, 'hybrid');
+        app(\App\Cms\WebsiteModePublication::class)->publish($this->actor, $draft['id']);
+        $slug = 'mt75-fresh-'.strtolower(Str::random(10));
+        $public = '/api/v1/catalogue/products/'.$slug;
+        $this->getJson($public)->assertNotFound();
+        $url = '/internal/admin/pos/inventory/products/'.$product->public_id.'/website-listing';
+        $input = ['slug' => $slug, 'description' => 'Fresh public product description.', 'is_online' => true, 'expected_version' => 0];
+        $this->send($client, 'POST', $url, $input)->assertOk()->assertJsonPath('data.version', 1);
+        $this->send($client, 'GET', '/internal/admin/pos/catalogue?mode=inventory')->assertOk()
+            ->assertJsonPath('data.products.0.website_listing.slug', $slug);
+        $visible = $this->getJson($public)->assertOk();
+        $visible->assertJsonPath('data.name', $product->name)->assertJsonPath('data.price', '200.02')
+            ->assertJsonPath('data.availability.quantity', 2);
+        $this->assertStringNotContainsString('purchase_price', $visible->getContent());
+        $this->assertStringNotContainsString('100.01', $visible->getContent());
+        $this->send($client, 'POST', $url, $input)->assertStatus(409);
+        $this->send($client, 'POST', $url, [...$input, 'slug' => '../invalid', 'expected_version' => 1])->assertUnprocessable();
+        $this->acquire($product, 1);
+        $this->getJson($public)->assertOk()->assertJsonPath('data.availability.quantity', 3);
+        $this->send($client, 'POST', $url, [...$input, 'expected_version' => 1, 'is_online' => false])->assertOk()
+            ->assertJsonPath('data.version', 2);
+        $this->getJson($public)->assertNotFound();
+        $this->assertSame(1, DB::table('product_listings')->where('product_id', $product->id)->count());
+    }
+
     public function test_existing_inventory_definition_requires_current_version_and_preserves_stock(): void
     {
         $product = $this->product(true);

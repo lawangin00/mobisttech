@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Catalog\ProductDefinitions;
+use App\Catalog\ProductWebsitePublication;
 use App\Identity\Access;
 use App\Inventory\InventoryOperations;
 use App\Migration\SourceRow;
@@ -118,6 +119,12 @@ final class PosTransactionController extends Controller
         $product = $products->save($actor, $outlet, $input, $publicId, $version);
 
         return response()->json(['data' => $this->productPayload($product)]);
+    }
+
+    public function websiteListing(Request $request, string $product, ProductWebsitePublication $publication)
+    {
+        [$actor, $outlet] = $this->context($request, ['shop.inventory']);
+        return response()->json(['data' => $publication->save($actor, $outlet, $product, $request->all())]);
     }
 
     public function acquire(Request $request, string $product, InventoryOperations $inventory)
@@ -347,7 +354,10 @@ final class PosTransactionController extends Controller
             'sim_master_data_id' => $inventory ? $product->sim_master_data_id : null,
             'warranty_type' => $inventory ? $product->warranty_type : null,
             'warranty_unit' => $inventory ? $product->warranty_unit : null,
-            'warranty_duration' => $inventory ? $product->warranty_duration : null];
+            'warranty_duration' => $inventory ? $product->warranty_duration : null,
+            'website_listing' => $inventory ? DB::table('product_listings')
+                ->where('product_id', $product->id)->where('external_source', 'pos')
+                ->first(['slug', 'description', 'is_online', 'version']) : null];
     }
 
     private function unitPayload(StockUnit $unit): array

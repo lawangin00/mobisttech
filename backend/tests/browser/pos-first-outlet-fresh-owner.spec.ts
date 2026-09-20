@@ -71,6 +71,21 @@ test('fresh protected owner creates, configures and explicitly enters the first 
     await receive.getByPlaceholder('Address').fill('Target-only supplier address');
     await page.getByTestId('acquire-submit').click();
     await expect(page.getByRole('button', { name: /MT75 Fresh Accessory/ })).toContainText('Qty 3');
+    await page.goto('/internal/admin/platform');
+    const modeSection = page.getByRole('heading', { name: 'Website operating mode' }).locator('xpath=ancestor::section[1]');
+    await modeSection.getByRole('button', { name: 'Save mode draft' }).click();
+    await modeSection.getByRole('button', { name: 'Publish', exact: true }).first().click();
+    await expect(modeSection).toContainText('Current: hybrid');
+    await page.goto('/internal/admin/pos/workspace/inventory');
+    await page.getByRole('button', { name: 'Website listing' }).click();
+    await expect(page.getByTestId('website-listing-editor')).toBeVisible();
+    await page.getByTestId('website-listing-publish').click();
+    await expect(page.getByTestId('website-listing-editor')).toHaveCount(0);
+    const publicProduct = await page.request.get('http://127.0.0.1:18080/api/v1/catalogue/products/mt75-fresh-accessory');
+    expect(publicProduct.status()).toBe(200);
+    const publicData = await publicProduct.json() as { data: { name: string; price: string; availability: {quantity:number} } };
+    expect(publicData.data).toMatchObject({name:'MT75 Fresh Accessory',price:'150.00',availability:{quantity:3}});
+    expect(JSON.stringify(publicData.data)).not.toMatch(/purchase_price|customer_phone|customer_email|imei|object_key/);
 
     await page.goto('/internal/admin/platform');
     await page.getByRole('button', { name: 'Documents, payments & retail' }).click();

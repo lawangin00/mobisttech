@@ -68,6 +68,12 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
                 DB::table('stock_acquisitions')->whereIn('id', $acquisitionIds)->delete();
                 DB::table('pos_master_data_usages')->where('usage_type', 'product')->whereIn('usage_id', array_map('strval', $productIds))->delete();
                 DB::table('domain_events')->where('aggregate_type', 'product')->whereIn('aggregate_id', $productPublicIds)->delete();
+                $listings = DB::table('product_listings')->whereIn('product_id', $productIds)
+                    ->where('external_source', 'pos')->get(['public_id']);
+                abort_unless(DB::table('product_listings')->whereIn('product_id', $productIds)->count() === $listings->count(), 409);
+                DB::table('domain_events')->where('aggregate_type', 'product_listing')
+                    ->whereIn('aggregate_id', $listings->pluck('public_id')->all())->delete();
+                DB::table('product_listings')->whereIn('product_id', $productIds)->delete();
                 DB::table('sales')->whereIn('invoice_id', $invoiceIds)->delete();
                 DB::table('products')->whereIn('id', $productIds)->delete();
                 DB::table('invoices')->whereIn('id', $invoiceIds)->delete();
@@ -75,6 +81,13 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
                 DB::table('document_sequences')->where('outlet_id', $outlet->id)->delete();
             }
 
+            $modeRevisions = DB::table('site_configuration_revisions')->where('domain', 'website.mode')->get(['id', 'created_by_admin_id']);
+            abort_unless($modeRevisions->every(fn ($row) => (int) $row->created_by_admin_id === (int) $owner->id), 409);
+            $modeIds = $modeRevisions->pluck('id')->all();
+            DB::table('website_operating_profiles')->whereIn('revision_id', $modeIds)->delete();
+            DB::table('domain_events')->where('aggregate_type', 'website_mode')
+                ->whereIn('operation_key', array_map(fn ($id) => 'website-mode-revalidate:'.$id, $modeIds))->delete();
+            DB::table('site_configuration_revisions')->whereIn('id', $modeIds)->delete();
             DB::table('identity_audit_events')->where('realm', 'admin')->where('account_id', $owner->id)->delete();
             DB::table('account_sessions')->where('guard', 'admin')->where('account_id', $owner->id)->delete();
             DB::table('admin_roles')->where('admin_id', $owner->id)->delete();
