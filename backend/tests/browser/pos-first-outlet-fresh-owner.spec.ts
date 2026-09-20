@@ -70,6 +70,33 @@ test('fresh protected owner creates, configures and explicitly enters the first 
     await page.getByTestId('acquire-submit').click();
     await expect(page.getByRole('button', { name: /MT75 Fresh Accessory/ })).toContainText('Qty 3');
 
+    await page.goto('/internal/admin/platform');
+    await page.getByRole('button', { name: 'Documents, payments & retail' }).click();
+    const destinations = page.getByRole('heading', { name: 'POS Payment Destinations' }).locator('xpath=ancestor::section[1]');
+    await destinations.getByPlaceholder('Display name').fill('MT75 Fresh Bank');
+    await destinations.getByPlaceholder('Masked identifier').fill('****7500');
+    const destinationCreated = page.waitForResponse(response => response.url().endsWith('/internal/admin/platform/payment-destinations')
+        && response.request().method() === 'POST');
+    await destinations.getByRole('button', { name: 'Add destination' }).click();
+    expect((await destinationCreated).status()).toBe(200);
+    await expect(destinations.locator('input').nth(2)).toHaveValue('MT75 Fresh Bank');
+
+    await page.goto('/internal/admin/pos/workspace/sales');
+    await page.getByRole('button', { name: /MT75 Fresh Accessory/ }).click();
+    const sale = page.getByRole('heading', { name: 'Sale & payment' }).locator('xpath=ancestor::section[1]');
+    await sale.getByPlaceholder('Customer name (optional)').fill('MT75 Fresh Customer');
+    await sale.getByPlaceholder('03XXXXXXXXX').fill('03001112222');
+    await sale.getByPlaceholder('Customer email (optional)').fill('mt75-fresh-customer@example.invalid');
+    await sale.getByRole('button', { name: 'Add Payment' }).click();
+    await sale.getByPlaceholder('Amount').fill('150.00');
+    await sale.getByPlaceholder('Safe reference').fill('MT75-FRESH-BANK-001');
+    await page.getByTestId('server-totals').click();
+    await expect(page.getByTestId('authoritative-totals')).toContainText('Remaining');
+    await expect(page.getByTestId('authoritative-totals')).toContainText('PKR 0.00');
+    await page.getByTestId('finalize-sale').click();
+    await expect(page.getByTestId('sale-result')).toContainText('Sale complete:');
+    await expect(page.getByTestId('sale-result')).toContainText('Final PKR 150.00');
+
     await page.getByTestId('logout').click();
     await page.waitForURL('**/internal/admin/pos/login');
 });
