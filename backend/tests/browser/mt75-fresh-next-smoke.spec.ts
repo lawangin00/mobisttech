@@ -207,6 +207,23 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     const productSchema=JSON.parse((await page.locator('script[type="application/ld+json"]').textContent()) ?? '{}') as {offers:{url:string;price:string;priceCurrency:string;availability:string}};
     expect(productSchema.offers).toMatchObject({url:productCanonical,price:'150.00',priceCurrency:'PKR',availability:'https://schema.org/InStock'});
     expect(JSON.stringify(productSchema).toLowerCase()).not.toMatch(/purchase_price|imei|unit_no|seller_phone|outlet_id/);
+    // Original indexed category route has one canonical and matching social URL, including legacy 301 aliases.
+    const categoryUrl=publicOrigin+'/categories/accessory';
+    const categoryPage=await page.goto('http://127.0.0.1:13000/categories/accessory');
+    expect(categoryPage?.status()).toBe(200);
+    await expect(page.getByRole('heading',{name:'Accessories'})).toBeVisible();
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute('href',categoryUrl);
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content',categoryUrl);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content','Accessories');
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content',/Browse Accessories products/);
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content','summary');
+    await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute('content','Accessories');
+    const absentCategory=await page.request.get('http://127.0.0.1:13000/categories/not-published');
+    expect(absentCategory.status()).toBe(404);
+    const historicalCategory=await page.request.get('http://127.0.0.1:13000/products/accessories',{maxRedirects:0});
+    expect(historicalCategory.status()).toBe(301);
+    expect(new URL(historicalCategory.headers()['location'],'http://127.0.0.1:13000').pathname).toBe('/products');
+    await page.goto('http://127.0.0.1:13000/products/mt75-fresh-accessory');
     const unpublished=await page.request.get('http://127.0.0.1:13000/products/mt75-private-unpublished');
     expect(unpublished.status()).toBe(404);
     await expect(page.getByText('Rs 150',{exact:true})).toBeVisible();

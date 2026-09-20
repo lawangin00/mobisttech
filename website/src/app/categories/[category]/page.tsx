@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
+import { readBusinessProfile } from "@/lib/business-profile";
 import {
   readCatalogue,
   readCategories,
@@ -16,15 +17,18 @@ export async function generateMetadata({
 }: {
   params: Promise<{ category: string }>;
 }): Promise<Metadata> {
-  const profile = await readWebsiteProfile();
+  const [profile, { category }, business] = await Promise.all([readWebsiteProfile(), params, readBusinessProfile()]);
   if (!profile?.capabilities.commerce) return { robots: { index: false, follow: false } };
-  const { category } = await params;
-  const categories = await readCategories().catch(() => []);
-  const found = categories.find((item) => item.code === category);
+  const found = (await readCategories()).find((item) => item.code === category);
+  if (!found) return { robots: { index: false, follow: false } };
+  const canonicalPath = `/categories/${encodeURIComponent(found.code)}`;
+  const canonicalUrl = business ? new URL(canonicalPath, business.public_website).href : undefined;
+  const description = `Browse ${found.label} products at mobiST Technologies.`;
   return {
-    title: found?.label ?? "Category",
-    description: found ? `Browse ${found.label} products at mobiST Technologies.` : undefined,
-    alternates: found ? { canonical: `/categories/${encodeURIComponent(category)}` } : undefined,
+    title: found.label, description,
+    alternates: { canonical: canonicalPath },
+    openGraph: { type: "website", title: found.label, description, ...(canonicalUrl ? { url: canonicalUrl } : {}) },
+    twitter: { card: "summary", title: found.label, description },
   };
 }
 
