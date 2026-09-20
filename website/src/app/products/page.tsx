@@ -28,6 +28,7 @@ export default async function Products({
   const rawQuery = typeof params.q === "string" ? params.q.trim() : "";
   const q = rawQuery.length >= 2 ? rawQuery : "";
   const category = typeof params.category === "string" ? params.category : "";
+  const subcategory = typeof params.subcategory === "string" ? params.subcategory.trim() : "";
   const after = typeof params.after === "string" ? params.after : "";
   const sort = typeof params.sort === "string" ? params.sort : "oldest";
   const minPrice = typeof params.min_price === "string" ? params.min_price : "";
@@ -44,6 +45,7 @@ export default async function Products({
       limit: 12,
       q: q || undefined,
       category: category || undefined,
+      subcategory: subcategory || undefined,
       after: after || undefined,
       sort,
       min_price: minPrice || undefined,
@@ -63,6 +65,7 @@ export default async function Products({
   const next = new URLSearchParams();
   if (q) next.set("q", q);
   if (category) next.set("category", category);
+  if (subcategory) next.set("subcategory", subcategory);
   if (sort !== "oldest") next.set("sort", sort);
   if (minPrice) next.set("min_price", minPrice);
   if (maxPrice) next.set("max_price", maxPrice);
@@ -110,6 +113,7 @@ export default async function Products({
             </option>
           ))}
         </select>
+        <input name="subcategory" aria-label="Subcategory code" maxLength={100} defaultValue={subcategory} placeholder="Subcategory code" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
         <select name="sort" aria-label="Sort products" defaultValue={sort}
           className="rounded-xl border border-slate-300 px-4 py-3">
           <option value="oldest">Oldest first</option><option value="newest">Newest first</option>

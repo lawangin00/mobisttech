@@ -11,6 +11,7 @@ use App\Inventory\TransactionalStock;
 use App\Loyalty\LoyaltyServices;
 use App\Models\CustomerAccount;
 use App\Models\StockUnit;
+use App\Services\PosInventoryMasterData;
 use App\Support\ProductVariantKey;
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -188,6 +189,36 @@ class ApiContractTest extends TestCase
             ->assertJsonPath('data.items.0.slug', 'mt75-page-premium')->assertJsonPath('data.page.has_more', false);
         $this->getJson(str_replace('price_asc', 'name_desc', $middleUrl))->assertUnprocessable();
         $this->assertDoesNotMatchRegularExpression('/IMEI|unit_no|purchase_price|seller_phone|outlet_id/i', $held->getContent());
+    }
+
+    public function test_catalogue_subcategory_uses_live_managed_pos_definition_and_filter_scoped_pages(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $master = app(PosInventoryMasterData::class);
+        $budgetSub = $master->create('product_subcategory', ['label' => 'MT75 Budget Accessories', 'parent_category_code' => 'accessory']);
+        $premiumSub = $master->create('product_subcategory', ['label' => 'MT75 Premium Accessories', 'parent_category_code' => 'accessory']);
+        $budget = $this->listedProduct('mt75-subcat-budget');
+        $next = $this->listedProduct('mt75-subcat-next');
+        $premium = $this->listedProduct('mt75-subcat-premium');
+        foreach ([$budget, $next] as $product) {
+            $product->forceFill(['subcategory_master_data_id' => $budgetSub->id])->save();
+        }
+        $premium->forceFill(['subcategory_master_data_id' => $premiumSub->id])->save();
+        $url = '/api/v1/catalogue/products?category=accessory&subcategory='.$budgetSub->code.'&limit=1';
+        $first = $this->getJson($url)->assertOk()->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.slug', 'mt75-subcat-budget')
+            ->assertJsonPath('data.items.0.subcategory.code', $budgetSub->code)
+            ->assertJsonPath('data.items.0.subcategory.label', 'MT75 Budget Accessories')
+            ->assertJsonPath('data.page.has_more', true);
+        $this->getJson($url.'&after='.urlencode($first->json('data.page.next_cursor')))->assertOk()
+            ->assertJsonPath('data.items.0.slug', 'mt75-subcat-next')
+            ->assertJsonPath('data.page.has_more', false);
+        $this->getJson('/api/v1/catalogue/products?subcategory='.$premiumSub->code)->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-subcat-premium');
+        $this->getJson('/api/v1/catalogue/products?category=tablet&subcategory='.$budgetSub->code)->assertOk()->assertJsonCount(0, 'data.items');
+        $this->getJson('/api/v1/catalogue/products?subcategory=accessory_unknown')->assertOk()->assertJsonCount(0, 'data.items');
+        $this->getJson('/api/v1/catalogue/products?subcategory=bad!')->assertUnprocessable();
+        $this->assertDoesNotMatchRegularExpression('/purchase_price|seller_phone|outlet_id|imei/i', $first->getContent());
     }
 
     public function test_catalogue_brand_and_model_filters_use_current_public_product_values(): void

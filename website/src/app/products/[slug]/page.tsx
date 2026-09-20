@@ -59,6 +59,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">{product.brand ?? product.category.label}</p>
           <h1 className="mt-2 text-4xl font-bold">{product.name}</h1>
           {product.model && <p className="mt-2 text-slate-500">{product.model}</p>}
+          {product.subcategory && <p className="mt-2 text-sm text-slate-500">{product.subcategory.label}</p>}
           <p className="mt-6 text-3xl font-bold">{money(product.price, product.currency)}</p>
           <p className={`mt-3 font-semibold ${product.availability.in_stock ? "text-emerald-700" : "text-slate-500"}`}>
             {product.availability.in_stock ? `${product.availability.quantity} available` : "Out of stock"}

@@ -61,6 +61,7 @@ final class WebsiteApi
             'limit' => 'sometimes|integer|min:1|max:24',
             'after' => 'nullable|string|max:120',
             'category' => 'nullable|string|max:50',
+            'subcategory' => 'nullable|string|min:2|max:100|regex:/\A[a-z0-9]+(?:_[a-z0-9]+)*\z/',
             'q' => 'nullable|string|min:2|max:80',
             'sort' => 'sometimes|in:oldest,newest,price_asc,price_desc,name_asc,name_desc',
             'min_price' => 'nullable|numeric|min:0|max:999999999',
@@ -77,6 +78,7 @@ final class WebsiteApi
         $after = $sort === 'oldest' ? $this->decodeCursor($data['after'] ?? null)
             : $this->decodeCatalogueSortCursor($data['after'] ?? null, $sort);
         $category = isset($data['category']) ? trim($data['category']) : null;
+        $subcategory = $data['subcategory'] ?? null;
         $query = isset($data['q']) ? trim($data['q']) : null;
         $minPrice = isset($data['min_price']) ? (float) $data['min_price'] : null;
         $maxPrice = isset($data['max_price']) ? (float) $data['max_price'] : null;
@@ -89,13 +91,16 @@ final class WebsiteApi
         if ($minPrice !== null && $maxPrice !== null && $minPrice > $maxPrice) {
             throw ValidationException::withMessages(['max_price' => 'Max price must not be lower than min price.']);
         }
-        $resource = json_encode(compact('limit', 'after', 'category', 'query', 'sort', 'minPrice', 'maxPrice', 'brand', 'model', 'condition', 'ptaStatus', 'ram', 'storage'), JSON_THROW_ON_ERROR);
+        $resource = json_encode(compact('limit', 'after', 'category', 'subcategory', 'query', 'sort', 'minPrice', 'maxPrice', 'brand', 'model', 'condition', 'ptaStatus', 'ram', 'storage'), JSON_THROW_ON_ERROR);
 
-        return $this->cache->remember('catalogue', 'api:v1:products:'.$resource, function () use ($limit, $after, $category, $query, $sort, $minPrice, $maxPrice, $brand, $model, $condition, $ptaStatus, $ram, $storage) {
-            return DB::transaction(function () use ($limit, $after, $category, $query, $sort, $minPrice, $maxPrice, $brand, $model, $condition, $ptaStatus, $ram, $storage) {
+        return $this->cache->remember('catalogue', 'api:v1:products:'.$resource, function () use ($limit, $after, $category, $subcategory, $query, $sort, $minPrice, $maxPrice, $brand, $model, $condition, $ptaStatus, $ram, $storage) {
+            return DB::transaction(function () use ($limit, $after, $category, $subcategory, $query, $sort, $minPrice, $maxPrice, $brand, $model, $condition, $ptaStatus, $ram, $storage) {
                 $rows = DB::table('product_listings as l')->join('products as p', 'p.id', '=', 'l.product_id')
                     ->where('l.is_online', true)->where('p.isDeleted', false)->whereNull('p.archived_at')
                     ->when($category, fn ($q) => $q->where('p.category', $category))
+                    ->when($subcategory, fn ($q) => $q->whereExists(fn ($sub) => $sub->selectRaw('1')
+                        ->from('pos_master_data_options as sc')->whereColumn('sc.id', 'p.subcategory_master_data_id')
+                        ->where('sc.list_key', 'product_subcategory')->where('sc.code', $subcategory)))
                     ->when($query, fn ($q) => $q->where('p.name', 'like', '%'.$this->escapeLike($query).'%'))
                     ->when($minPrice !== null, fn ($q) => $q->where('p.sale_price', '>=', $minPrice))
                     ->when($maxPrice !== null, fn ($q) => $q->where('p.sale_price', '<=', $maxPrice))
@@ -396,6 +401,7 @@ final class WebsiteApi
             'brand' => $product->brandDisplay(),
             'model' => $row->model,
             'category' => ['code' => $row->category, 'label' => $product->categoryDisplay()],
+            'subcategory' => $product->subcategoryCode() ? ['code' => $product->subcategoryCode(), 'label' => $product->subcategoryDisplay()] : null,
             'price' => (string) $row->sale_price,
             'currency' => 'PKR',
             'availability' => ['in_stock' => $snapshot['available'] > 0, 'quantity' => $snapshot['available']],

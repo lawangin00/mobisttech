@@ -199,11 +199,18 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await expect(page.getByText('Added to cart.',{exact:true})).toBeVisible();
     await page.goto('http://127.0.0.1:13000/cart');
     await expect(page.getByRole('link',{name:'MT75 Fresh Accessory'})).toBeVisible();
-    // Create a second independent POS definition and explicitly publish it; no duplicate listing fixture.
+    // Create protected synthetic subcategory, then select it for the separately published zero-stock POS product.
+    await page.goto('/internal/admin/pos/workspace/master-data');
+    await page.getByTestId('master-list').selectOption('product_subcategory');
+    await page.getByRole('combobox',{name:'Parent category'}).selectOption('accessory');
+    await page.getByTestId('master-label').fill('MT75 Budget Accessories');
+    await page.getByTestId('master-create').click();
+    await expect(page.getByRole('alert')).toContainText('Option create successful.');
     await page.goto('/internal/admin/pos/workspace/inventory');
     await page.getByPlaceholder('Product name').fill('MT75 Fresh Budget Accessory');
     await page.getByPlaceholder('Model').fill('MT75 Budget 64');
     await page.getByTestId('product-category').selectOption({label:'Accessories'});
+    await page.getByTestId('product-subcategory').selectOption({label:'MT75 Budget Accessories'});
     await page.getByPlaceholder('Purchase price').fill('50.00');
     await page.getByPlaceholder('Sale price').fill('90.00');
     await page.getByTestId('product-save').click();
@@ -213,6 +220,24 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await expect(page.getByTestId('website-listing-editor')).toContainText('MT75 Fresh Budget Accessory');
     await page.getByTestId('website-listing-publish').click();
     await expect(page.getByTestId('website-listing-editor')).toHaveCount(0);
+    const subcatCode='accessory_mt75_budget_accessories';
+    const scopedUrl='http://127.0.0.1:13000/products?category=accessory&subcategory='+subcatCode;
+    const publicSubcat=await page.request.get('http://127.0.0.1:18080/api/v1/catalogue/products?category=accessory&subcategory='+subcatCode);
+    expect(publicSubcat.status()).toBe(200);
+    expect((await publicSubcat.json() as {data:{items:Array<{slug:string;subcategory:{code:string;label:string}}>} }).data.items)
+        .toMatchObject([{slug:'mt75-fresh-budget-accessory',subcategory:{code:subcatCode,label:'MT75 Budget Accessories'}}]);
+    expect((await publicSubcat.text()).toLowerCase()).not.toMatch(/purchase_price|seller_phone|imei|outlet_id/);
+    const filteredSubcat=await page.goto(scopedUrl);
+    expect(filteredSubcat?.status()).toBe(200);
+    await expect(page.getByRole('textbox',{name:'Subcategory code'})).toHaveValue(subcatCode);
+    await expect(page.locator('main article')).toHaveCount(1);
+    await expect(page.locator('main article')).toContainText('MT75 Fresh Budget Accessory');
+    const subcatMissing=await page.goto(scopedUrl.replace(subcatCode,'accessory_unknown'));
+    expect(subcatMissing?.status()).toBe(200);
+    await expect(page.locator('main article')).toHaveCount(0);
+    const budgetDetail=await page.goto('http://127.0.0.1:13000/products/mt75-fresh-budget-accessory');
+    expect(budgetDetail?.status()).toBe(200);
+    await expect(page.locator('main')).toContainText('MT75 Budget Accessories');
     const budgetModel=await page.goto('http://127.0.0.1:13000/products?model=Budget&category=accessory');
     expect(budgetModel?.status()).toBe(200);
     await expect(page.getByRole('textbox',{name:'Model'})).toHaveValue('Budget');
