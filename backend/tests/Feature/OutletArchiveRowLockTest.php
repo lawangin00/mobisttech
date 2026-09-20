@@ -825,4 +825,83 @@ final class OutletArchiveRowLockTest extends TestCase
         }
     }
 
+    public function test_isolated_trade_in_service_shares_archive_lock(): void
+    {
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test'
+            && (int) config('database.connections.mysql.port') === 13306, 403);
+        $tag = (string) Str::uuid();
+        $default = DB::getDefaultConnection();
+        $outlet = null; $actor = null; $product = null; $writer = null;
+        $input = ['seller_name' => 'Synthetic Seller', 'seller_cnic' => '42101-1234567-1',
+            'seller_phone' => '03001234567', 'seller_address' => 'Synthetic private address',
+            'device_serial' => 'D03-RACE', 'imeis' => ['352099001761466', '352099001761474'],
+            'condition' => 'Used - inspected', 'diagnostics' => ['display' => 'Pass'],
+            'valuation_amount' => '100.00', 'settlement_mode' => 'purchase', 'invoice_id' => null];
+        try {
+            $outlet = new Outlet;
+            $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '083',
+                'name' => 'D03 trade-in race '.$tag, 'status' => false, 'version' => 1])->save();
+            $actor = new \App\Models\Admin;
+            $actor->forceFill(['name' => 'D03 synthetic trade-in actor',
+                'email' => 'd03-trade-in-'.$tag.'@example.invalid', 'password' => 'not-a-live-password',
+                'permissions' => ['shops.enter', 'shop.trade-in']])->save();
+            $actor->shops()->attach($outlet);
+            $product = new \App\Models\Product;
+            $product->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'D03 trade-in product '.$tag,
+                'category' => 'mobile_phone', 'price' => '100.00', 'sale_price' => '100.00', 'qty' => 0,
+                'track_imei' => true, 'sim_configuration' => 'dual_physical', 'outlet_id' => $outlet->id])->save();
+            config(['database.connections.d03_trade_in_writer' => config('database.connections.mysql')]);
+            $writer = DB::connection('d03_trade_in_writer');
+            $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
+            DB::connection('mysql')->beginTransaction();
+            try {
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->lockForUpdate()->firstOrFail();
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->update(['archived_at' => now(), 'version' => 2]);
+                DB::setDefaultConnection('d03_trade_in_writer');
+                $writerActor = \App\Models\Admin::on('d03_trade_in_writer')->findOrFail($actor->id);
+                $writerOutlet = Outlet::on('d03_trade_in_writer')->findOrFail($outlet->id);
+                $writerProduct = \App\Models\Product::on('d03_trade_in_writer')->findOrFail($product->id);
+                $this->assertTrue(app(\App\Identity\Access::class)->allows($writerActor, 'shop.trade-in', $writerOutlet));
+                try {
+                    app(\App\TradeIn\TradeInOperations::class)->create(
+                        $writerActor, $writerOutlet, $writerProduct->public_id, 'd03-trade-in-wait-'.$tag, $input);
+                    $this->fail('Trade-in service bypassed the archive row lock.');
+                } catch (QueryException $exception) {
+                    $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
+                }
+                DB::setDefaultConnection($default);
+                DB::connection('mysql')->commit();
+            } finally {
+                DB::setDefaultConnection($default);
+                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            }
+            DB::setDefaultConnection('d03_trade_in_writer');
+            try {
+                app(\App\TradeIn\TradeInOperations::class)->create(
+                    $writerActor, $writerOutlet, $writerProduct->public_id, 'd03-trade-in-retry-'.$tag, $input);
+                $this->fail('Archived outlet accepted a trade-in mutation.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            } finally {
+                DB::setDefaultConnection($default);
+            }
+            $this->assertSame(0, DB::table('trade_ins')->where('outlet_id', $outlet->id)->count());
+            $this->assertSame(0, DB::table('idempotency_requests')
+                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)->count());
+        } finally {
+            DB::setDefaultConnection($default);
+            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            if ($writer) { $writer->disconnect(); DB::purge('d03_trade_in_writer'); }
+            if ($product) { DB::table('products')->where('id', $product->id)->delete(); }
+            if ($actor) {
+                DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
+                DB::table('admins')->where('id', $actor->id)->delete();
+            }
+            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
+                ->where('name', 'D03 trade-in race '.$tag)->delete(); }
+        }
+    }
+
 }
