@@ -36,6 +36,8 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
                 DB::table('outlets')->where('id', $outlet->id)->delete();
             }
             DB::table('admins')->where('id', $owner->id)->delete();
+            abort_unless(! DB::table('pos_master_data_usages')->exists(), 409);
+            DB::table('pos_master_data_options')->delete();
         });
     }
 }

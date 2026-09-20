@@ -4,6 +4,7 @@ namespace App\Identity;
 
 use App\Models\Admin;
 use App\Models\Role;
+use Database\Seeders\PosMasterDataSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -18,6 +19,7 @@ final class FirstAdminProvisioning
         'admins', 'outlets', 'users', 'products', 'stock_units', 'stock_movements',
         'invoices', 'sales', 'claims', 'orders', 'order_items', 'payments',
         'suppliers', 'repair_jobs', 'cash_sessions', 'purchase_orders', 'stocktake_sessions',
+        'pos_master_data_options',
     ];
 
     public function create(string $name, string $email, string $password): Admin
@@ -46,6 +48,9 @@ final class FirstAdminProvisioning
                 'admin.business-profile.manage'], $role->permissionCodes())) {
                 throw new RuntimeException('Required protected Full Access role is not installed.');
             }
+            // Install only canonical system configuration required to create the first products/stock.
+            // The empty-table guard above prevents mixing these defaults with imported or partial data.
+            app(PosMasterDataSeeder::class)->run();
             $admin = new Admin;
             $admin->forceFill(['name' => $data['name'], 'email' => $data['email'],
                 'password' => Hash::make($data['password']), 'permissions' => [],

@@ -36,6 +36,11 @@ class FirstAdminProvisioningTest extends TestCase
         $this->assertSame(0, $owner->shops()->count());
         $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
             ->where('action', 'initial_admin_provisioned')->count());
+        $this->assertSame(['accessory', 'mobile_phone', 'tablet'], DB::table('pos_master_data_options')
+            ->where('list_key', 'product_category')->orderBy('code')->pluck('code')->all());
+        $this->assertSame(['individual_seller', 'other_business', 'shop_dealer', 'supplier', 'wholesaler'],
+            DB::table('pos_master_data_options')->where('list_key', 'acquisition_source_type')
+                ->orderBy('code')->pluck('code')->all());
         foreach (['outlets', 'products', 'users', 'sales', 'invoices', 'orders', 'payments'] as $table) {
             $this->assertSame(0, DB::table($table)->count(), $table);
         }
