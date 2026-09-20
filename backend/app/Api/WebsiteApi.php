@@ -199,7 +199,12 @@ final class WebsiteApi
                 $payload = $this->productProjection($row);
                 $payload['description'] = $row->description;
                 $payload['warranty_summary'] = $row->warranty_summary;
-                $payload['variants'] = $this->publicVariants(Product::findOrFail($row->product_id));
+                $product = Product::findOrFail($row->product_id);
+                $payload['variants'] = $this->publicVariants($product);
+                // Only public POS-managed device configuration; no private unit identity or cost.
+                $payload['device'] = ['ram_gb' => $product->ram_gb === null ? null : (int) $product->ram_gb,
+                    'storage_gb' => $product->storage_gb === null ? null : (int) $product->storage_gb,
+                    'sim' => $product->simDisplay()];
 
                 return $payload;
             }, 2);

@@ -36,6 +36,7 @@ export type CatalogueProduct = {
 };
 export type ProductDetail = CatalogueProduct & {
   description: string | null; warranty_summary: string | null; variants: ProductVariant[];
+  device: { ram_gb: number | null; storage_gb: number | null; sim: string | null };
   reviews: Array<{ rating: number; title: string | null; body: string | null; approved_at: string | null }>;
 };
 export type CataloguePage = {

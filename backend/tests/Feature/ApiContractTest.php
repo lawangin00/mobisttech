@@ -94,6 +94,32 @@ class ApiContractTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/IMEI|unit_no|purchase_price|seller_phone|outlet_id/i', $detail->getContent());
     }
 
+    public function test_compare_detail_uses_only_public_pos_device_configuration_and_eligible_variant_attributes(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $phone = $this->product(true);
+        $phone->forceFill(['ram_gb' => 8, 'storage_gb' => 128])->save();
+        DB::table('product_listings')->insert(['external_source' => 'pos', 'external_id' => 'api-'.$phone->id,
+            'slug' => 'mt75-compare-spec-phone', 'name' => $phone->name, 'category' => $phone->category,
+            'is_online' => true, 'public_id' => (string) Str::uuid(), 'version' => 1, 'product_id' => $phone->id,
+            'created_at' => now(), 'updated_at' => now()]);
+        $this->acquire($phone);
+        $unit = StockUnit::where('product_id', $phone->id)->firstOrFail();
+        $unit->forceFill(['color' => 'Black', 'condition' => 'used', 'pta_status' => 'pta_approved'])->save();
+        $this->imeis($phone, $unit, [1 => 'MT75-PRIVATE-COMPARE-IMEI-1', 2 => 'MT75-PRIVATE-COMPARE-IMEI-2']);
+        $device = $this->getJson('/api/v1/catalogue/products/mt75-compare-spec-phone')->assertOk()
+            ->assertJsonPath('data.category.code', 'mobile_phone')->assertJsonPath('data.device.ram_gb', 8)
+            ->assertJsonPath('data.device.storage_gb', 128)->assertJsonPath('data.device.sim', $phone->simDisplay())
+            ->assertJsonPath('data.variants.0.color', 'Black')->assertJsonPath('data.variants.0.condition', 'used')
+            ->assertJsonPath('data.variants.0.pta_status', 'pta_approved');
+        $this->assertDoesNotMatchRegularExpression('/IMEI|unit_no|purchase_price|seller_phone|outlet_id/i', $device->getContent());
+        $accessory = $this->listedProduct('mt75-compare-spec-accessory');
+        $this->getJson('/api/v1/catalogue/products/mt75-compare-spec-accessory')->assertOk()
+            ->assertJsonPath('data.category.code', 'accessory')->assertJsonPath('data.device.ram_gb', null)
+            ->assertJsonPath('data.device.storage_gb', null)->assertJsonPath('data.device.sim', $accessory->simDisplay());
+        $this->assertNotNull($accessory->id);
+    }
+
     public function test_catalogue_device_specs_and_same_unit_condition_pta_filters(): void
     {
         $this->publishMode('hybrid', 1);

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ProductImage } from "@/components/product-image";
 import { money } from "@/lib/storefront";
 import { comparisonSlotNames, comparisonSlots, comparisonSlugs } from "@/lib/compare-selection";
+import { publicCompareEligible, publicCompareSpec } from "@/lib/compare-specs";
 import { readCatalogue, readProduct, readWebsiteProfile, WebsiteApiError } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
@@ -26,9 +27,9 @@ export default async function Compare({ searchParams }: { searchParams: Promise<
       if (error instanceof WebsiteApiError && error.status === 404) return null;
       throw error;
     }
-  }))).filter((value): value is NonNullable<typeof value> => Boolean(value));
+  }))).filter((value): value is NonNullable<typeof value> => value !== null && publicCompareEligible(value));
 
-  const choices = [...catalogue.items];
+  const choices = catalogue.items.filter(publicCompareEligible);
   for (const product of products) {
     if (!choices.some((choice) => choice.slug === product.slug)) choices.push(product);
   }
@@ -61,6 +62,29 @@ export default async function Compare({ searchParams }: { searchParams: Promise<
           <p className="mt-2 text-sm">{product.availability.in_stock ? `${product.availability.quantity} in stock` : "Out of stock"}</p>
           <p className="mt-4 text-sm text-slate-600">{product.variants.length} variant{product.variants.length === 1 ? "" : "s"}</p>
         </article>)}
+      </div>}
+      {products.length > 0 && <div className="mt-8 overflow-x-auto rounded-2xl border bg-white" data-testid="compare-specs">
+        <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+          <caption className="px-4 py-3 text-left font-semibold">Public product specifications</caption>
+          <thead><tr><th scope="col" className="border-b p-3">Specification</th>
+            {products.map((product) => <th scope="col" key={product.id} className="border-b p-3">{product.name}</th>)}
+          </tr></thead>
+          <tbody>{([
+            ["Category", (product: typeof products[number]) => product.category.label],
+            ["Brand", (product: typeof products[number]) => product.brand || "—"],
+            ["Model", (product: typeof products[number]) => product.model || "—"],
+            ["RAM", (product: typeof products[number]) => publicCompareSpec(product, "ram")],
+            ["Storage", (product: typeof products[number]) => publicCompareSpec(product, "storage")],
+            ["SIM", (product: typeof products[number]) => publicCompareSpec(product, "sim")],
+            ["Condition", (product: typeof products[number]) => publicCompareSpec(product, "condition")],
+            ["PTA status", (product: typeof products[number]) => publicCompareSpec(product, "pta")],
+            ["Colors", (product: typeof products[number]) => publicCompareSpec(product, "colors")],
+            ["Warranty", (product: typeof products[number]) => product.warranty_summary || "—"],
+          ] as const).map(([label, value]) => <tr key={label}>
+            <th scope="row" className="border-b p-3 font-semibold">{label}</th>
+            {products.map((product) => <td key={product.id} className="border-b p-3">{value(product)}</td>)}
+          </tr>)}</tbody>
+        </table>
       </div>}
     </main>
   );
