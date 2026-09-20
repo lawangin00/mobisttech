@@ -9,6 +9,7 @@ use App\Commerce\PaymentProviders;
 use App\Digital\DigitalServiceLeads;
 use App\Loyalty\LoyaltyServices;
 use App\Models\CustomerAccount;
+use App\Models\StockUnit;
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
@@ -62,6 +63,32 @@ class ApiContractTest extends TestCase
         $this->publishMode('digital_only', 2);
         $this->getJson('/api/v1/catalogue/products')->assertNotFound()
             ->assertJsonPath('error.code', 'api_404');
+    }
+
+    public function test_tracked_public_variants_group_available_units_without_private_identifiers(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $product = $this->product(true);
+        DB::table('product_listings')->insert(['external_source' => 'pos', 'external_id' => 'api-'.$product->id, 'slug' => 'mt75-tracked-variants', 'name' => $product->name, 'category' => $product->category, 'is_online' => true, 'public_id' => (string) Str::uuid(), 'version' => 1, 'product_id' => $product->id, 'created_at' => now(), 'updated_at' => now()]);
+        $this->acquire($product);
+        $first = StockUnit::where('product_id', $product->id)->firstOrFail();
+        $first->forceFill(['color' => 'Black', 'condition' => 'used'])->save();
+        $this->imeis($product, $first);
+        $this->acquire($product);
+        $second = StockUnit::where('product_id', $product->id)->orderByDesc('id')->firstOrFail();
+        $second->forceFill(['color' => 'Blue', 'condition' => 'used'])->save();
+        $this->imeis($product, $second, [1 => 'MT75-PRIVATE-IMEI-3', 2 => 'MT75-PRIVATE-IMEI-4']);
+        $detail = $this->getJson('/api/v1/catalogue/products/mt75-tracked-variants')->assertOk();
+        $detail->assertJsonPath('data.availability.quantity', 2)->assertJsonCount(2, 'data.variants');
+        $variants = collect($detail->json('data.variants'))->keyBy('color');
+        $this->assertSame(['Black', 'Blue'], $variants->keys()->sort()->values()->all());
+        foreach ($variants as $variant) {
+            $this->assertSame(1, $variant['availability']['quantity']);
+            $this->assertSame('used', $variant['condition']);
+            $this->assertSame(16, strlen($variant['key']));
+        }
+        $this->assertNotSame($variants['Black']['key'], $variants['Blue']['key']);
+        $this->assertDoesNotMatchRegularExpression('/IMEI|unit_no|purchase_price|seller_phone|outlet_id/i', $detail->getContent());
     }
 
     public function test_catalogue_sort_uses_live_price_name_and_sort_scoped_cursor(): void

@@ -141,6 +141,18 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await expect(page.getByText('Added to cart.',{exact:true})).toBeVisible();
     await page.goto('http://127.0.0.1:13000/cart');
     await expect(page.getByRole('link',{name:'MT75 Fresh Accessory'})).toBeVisible();
+    const compared=await page.goto('http://127.0.0.1:13000/compare?a=mt75-fresh-accessory&b=mt75-fresh-accessory');
+    expect(compared?.status()).toBe(200);
+    await expect(page.getByRole('heading',{name:'Compare products'})).toBeVisible();
+    await expect(page.locator('main article')).toHaveCount(1);
+    await expect(page.locator('main article')).toContainText('MT75 Fresh Accessory');
+    await expect(page.locator('main article')).toContainText('Rs 150');
+    await expect(page.locator('main article')).toContainText('3 in stock');
+    await expect(page.locator('main article')).toContainText('1 variant');
+    const absent=await page.goto('http://127.0.0.1:13000/compare?a=mt75-fresh-accessory&b=mt75-not-published');
+    expect(absent?.status()).toBe(200);
+    await expect(page.locator('main article')).toHaveCount(1);
+    expect((await page.content()).toLowerCase()).not.toMatch(/purchase_price|customer_cnic|customer_phone|imei|object_key/);
     // Publish actual protected mode revisions and verify fresh public route isolation.
     for (const choice of ['digital_only','commerce_only','hybrid'] as const) {
         await page.goto('/internal/admin/platform');

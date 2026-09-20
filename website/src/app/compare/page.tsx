@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductImage } from "@/components/product-image";
 import { money } from "@/lib/storefront";
-import { readCatalogue, readProduct, readWebsiteProfile } from "@/lib/website-api";
+import { readCatalogue, readProduct, readWebsiteProfile, WebsiteApiError } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -15,9 +15,14 @@ export default async function Compare({ searchParams }: { searchParams: Promise<
   const [params, profile] = await Promise.all([searchParams, readWebsiteProfile()]);
   if (!profile?.capabilities.commerce) notFound();
   const catalogue = await readCatalogue({ limit: 24 });
-  const slugs = [params.a, params.b].filter((value): value is string => Boolean(value));
-  const products = (await Promise.all(slugs.map((slug) => readProduct(slug).catch(() => null))))
-    .filter((value): value is NonNullable<typeof value> => Boolean(value));
+  const slugs = [...new Set([params.a, params.b].filter((value): value is string => typeof value === "string" && Boolean(value)))];
+  const products = (await Promise.all(slugs.map(async (slug) => {
+    try { return await readProduct(slug); }
+    catch (error) {
+      if (error instanceof WebsiteApiError && error.status === 404) return null;
+      throw error;
+    }
+  }))).filter((value): value is NonNullable<typeof value> => Boolean(value));
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
