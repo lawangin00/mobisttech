@@ -385,6 +385,7 @@ class PosShellTest extends TestCase
         // Do NOT make this product-bearing outlet eligible for real service archival.
         // Synthetic direct archived-state read-path fixture leaves the production fail-closed rule unchanged.
         $outlet->forceFill(['archived_at' => now()])->save();
+        $beforeProduct = DB::table('products')->where('id', $product->id)->firstOrFail();
         $beforeTransfer = DB::table('stock_transfers')->where('id', $transferId)->firstOrFail();
         $beforeLine = DB::table('stock_transfer_lines')->where('id', $transferLineId)->firstOrFail();
         $beforeReceipt = DB::table('stock_transfer_receipts')->where('id', $receiptId)->firstOrFail();
@@ -412,6 +413,13 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.stock_history.products.0.id', $product->public_id)
             ->assertJsonPath('data.stock_history.products.0.quantity', 1)
             ->assertJsonPath('data.stock_history.movements.0.stock_after', 1)
+            ->assertJsonPath('data.stock_reconciliation.negative_stock_product_count', 0)
+            ->assertJsonPath('data.stock_reconciliation.latest_movement_disagreement_count', 0)
+            ->assertJsonPath('data.stock_reconciliation.tracked_unit_disagreement_count', 0)
+            ->assertJsonPath('data.stock_reconciliation.untracked_product_with_units_count', 1)
+            ->assertJsonPath('data.stock_reconciliation.positive_stock_without_movement_count', 0)
+            ->assertJsonPath('data.stock_reconciliation.physical_count_verified', false)
+            ->assertJsonPath('data.stock_reconciliation.requires_manual_reconciliation', true)
             ->assertJsonPath('data.obligations.on_hand_quantity', 1)
             ->assertJsonPath('data.obligations.unresolved_transfer_quantity', 0)
             ->assertJsonPath('data.obligations.active_custody_hold_quantity', 0)
@@ -461,6 +469,22 @@ class PosShellTest extends TestCase
         $this->assertSame('pending', DB::table('trade_ins')->where('id', $tradeId)->value('status'));
         $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
             ->where('action', 'outlet_archived')->count());
+        // Synthetic only: deliberately corrupt a snapshot without altering its immutable movement;
+        // the archived-history READ must reveal disagreement, never silently mark stock settled.
+        DB::table('products')->where('id', $product->id)->update(['qty' => 2, 'track_imei' => true]);
+        try {
+            $this->send($ownerClient, 'GET', $path)->assertOk()
+                ->assertJsonPath('data.stock_reconciliation.latest_movement_disagreement_count', 1)
+                ->assertJsonPath('data.stock_reconciliation.tracked_unit_disagreement_count', 1)
+                ->assertJsonPath('data.stock_reconciliation.untracked_product_with_units_count', 0)
+                ->assertJsonPath('data.stock_reconciliation.physical_count_verified', false)
+                ->assertJsonPath('data.stock_reconciliation.archive_eligibility', 'not_approved_for_business_history');
+            $this->assertEquals($beforeMovement, DB::table('stock_movements')->where('id', $movementId)->firstOrFail());
+        } finally {
+            DB::table('products')->where('id', $product->id)->update(['qty' => 1, 'track_imei' => false]);
+        }
+        $this->assertEquals($beforeProduct, DB::table('products')->where('id', $product->id)->firstOrFail());
+
     }
 
     public function test_archived_transfer_history_reconciles_in_transit_both_outlets_without_reassignment(): void
@@ -545,7 +569,8 @@ class PosShellTest extends TestCase
         $invoiceId = DB::table('invoices')->insertGetId(['outlet_id' => $outlet->id,
             'public_id' => $invoicePublicId, 'invoice_number' => 'D03-INV-'.Str::random(12),
             'total_bill' => '200.00', 'final_bill' => '200.00', 'currency' => 'PKR',
-            'customer_name' => 'PRIVATE-CUSTOMER-NAME', 'customer_phone' => '03008888888']);
+            'customer_name' => 'PRIVATE-CUSTOMER-NAME', 'customer_phone' => '03008888888',
+            'customer_cnic' => '42501-0000000-0']);
         $saleId = DB::table('sales')->insertGetId(['outlet_id' => $outlet->id,
             'product_id' => $product->id, 'invoice_id' => $invoiceId, 'public_id' => (string) Str::uuid(),
             'sale_date' => now()->toDateString(), 'sale_price' => '200.00', 'quantity' => 1,
@@ -623,6 +648,11 @@ class PosShellTest extends TestCase
         $this->login($ownerClient, $owner->email)->assertOk();
         $uri = '/internal/admin/outlet-management/'.$outlet->public_id.'/history';
         $this->send($ownerClient, 'GET', $uri)->assertStatus(409);
+        $docUri = $uri.'/invoices/'.$invoicePublicId.'/retrieve';
+        $docRequest = ['password' => 'SyntheticPass123!', 'purpose' => 'Retained invoice review'];
+        $this->send($ownerClient, 'POST', $docUri, $docRequest)->assertStatus(409);
+        $claimDocUri = $uri.'/claims/'.$claimPublicId.'/retrieve';
+        $this->send($ownerClient, 'POST', $claimDocUri, $docRequest)->assertStatus(409);
         // Product/invoice/claim-bearing real outlet still MUST NOT be archived by the service.
         $outlet->forceFill(['archived_at' => now()])->save();
         $priorInvoice = DB::table('invoices')->where('id', $invoiceId)->firstOrFail();
@@ -654,6 +684,8 @@ class PosShellTest extends TestCase
                 hash('sha256', $snapshot))
             ->assertJsonPath('data.sales_claim_history.claims.1.requires_review', false)
             ->assertJsonPath('data.obligations.pos_return_count', 1)
+            ->assertJsonPath('data.obligations.pos_returns_unmatched_count', 1)
+            ->assertJsonPath('data.obligations.pos_returns_over_refunded_count', 0)
             ->assertJsonPath('data.obligations.pos_return_amount', '40.00')
             ->assertJsonPath('data.obligations.pos_refunds_recorded', '0')
             ->assertJsonPath('data.obligations.pos_refund_difference', '40.00')
@@ -687,9 +719,70 @@ class PosShellTest extends TestCase
             'PRIVATE-ACTIVE-WARRANTY-EVENT', 'PRIVATE-ACTIVE-WARRANTY-NOTE'] as $private) {
             $this->assertStringNotContainsString($private, $response->getContent());
         }
+        // Sensitive original customer fields are only available on explicitly password-confirmed,
+        // per-invoice retrieval; the broad GET summary never includes them.
+        $this->assertStringNotContainsString('42501-0000000-0', $response->getContent());
+        $this->send($ownerClient, 'GET', $docUri)->assertStatus(405);
+        $this->send($ownerClient, 'POST', $docUri, ['password' => 'incorrect',
+            'purpose' => 'Retained invoice review'])->assertForbidden();
+        $this->send($ownerClient, 'POST', $docUri, ['password' => 'SyntheticPass123!',
+            'purpose' => 'short'])->assertStatus(422);
+        $this->send($ownerClient, 'POST', $uri.'/invoices/'.Str::uuid().'/retrieve', $docRequest)
+            ->assertNotFound();
+        $document = $this->send($ownerClient, 'POST', $docUri, $docRequest)->assertOk()
+            ->assertJsonPath('data.invoice_id', $invoicePublicId)
+            ->assertJsonPath('data.outlet_id', $outlet->public_id)
+            ->assertJsonPath('data.customer_name', 'PRIVATE-CUSTOMER-NAME')
+            ->assertJsonPath('data.customer_phone', '03008888888')
+            ->assertJsonPath('data.customer_cnic', '42501-0000000-0')
+            ->assertJsonPath('data.line_count', 1)
+            ->assertJsonPath('data.lines_truncated', false)
+            ->assertJsonPath('data.lines.0.id', DB::table('sales')->where('id', $saleId)->value('public_id'))
+            ->assertJsonPath('data.lines.0.product_id', $product->public_id)
+            ->assertJsonPath('data.lines.0.returned_quantity', 1)
+            ->assertJsonPath('data.retrieval_mode', 'original_database_record_read_only');
+        $this->assertStringContainsString('no-store', (string) $document->headers->get('Cache-Control'));
+        $this->assertSame(1, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
+            ->where('action', 'archived_invoice_document_retrieved')
+            ->where('reference', 'invoice:'.$invoicePublicId.';purpose:Retained invoice review')->count());
+        $this->assertEquals($priorInvoice, DB::table('invoices')->where('id', $invoiceId)->firstOrFail());
+        $this->assertSame(1, DB::table('sales')->where('id', $saleId)->where('returned_quantity', 1)->count());
+        $unrelatedArchived = $this->outlet('Synthetic unrelated historical records', '098');
+        $unrelatedArchived->forceFill(['archived_at' => now()])->save();
+        $otherHistory = '/internal/admin/outlet-management/'.$unrelatedArchived->public_id.'/history';
+        $this->send($ownerClient, 'POST', $otherHistory.'/invoices/'.$invoicePublicId.'/retrieve', $docRequest)
+            ->assertNotFound();
+        $this->send($ownerClient, 'POST', $otherHistory.'/claims/'.$claimPublicId.'/retrieve', $docRequest)
+            ->assertNotFound();
+        $this->send($ownerClient, 'POST', $claimDocUri, ['password' => 'wrong-password',
+            'purpose' => 'Retained warranty case review'])->assertForbidden();
+        $this->send($ownerClient, 'POST', $claimDocUri, ['password' => 'SyntheticPass123!',
+            'purpose' => 'short'])->assertStatus(422);
+        $this->send($ownerClient, 'POST', $uri.'/claims/'.Str::uuid().'/retrieve', $docRequest)
+            ->assertNotFound();
+        $claimDocument = $this->send($ownerClient, 'POST', $claimDocUri, $docRequest)->assertOk()
+            ->assertJsonPath('data.outlet_id', $outlet->public_id)
+            ->assertJsonPath('data.claim_id', $claimPublicId)
+            ->assertJsonPath('data.invoice_id', $invoicePublicId)
+            ->assertJsonPath('data.issue_description', 'PRIVATE-ISSUE-DESCRIPTION')
+            ->assertJsonPath('data.internal_notes', 'PRIVATE-CASE-NOTES')
+            ->assertJsonPath('data.event_count', 1)
+            ->assertJsonPath('data.events_truncated', false)
+            ->assertJsonPath('data.events.0.note', 'PRIVATE-CLAIM-EVENT-NOTE')
+            ->assertJsonPath('data.events.0.snapshot_sha256', hash('sha256', $snapshot))
+            ->assertJsonPath('data.retrieval_mode', 'original_database_record_read_only');
+        $this->assertStringContainsString('no-store', (string) $claimDocument->headers->get('Cache-Control'));
+        $this->assertArrayNotHasKey('snapshot', $claimDocument->json('data.events.0'));
+        $this->assertSame(1, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
+            ->where('action', 'archived_claim_document_retrieved')
+            ->where('reference', 'claim:'.$claimPublicId.';purpose:Retained invoice review')->count());
+        $this->assertEquals($priorClaim, DB::table('claims')->where('id', $claimId)->firstOrFail());
+        $this->assertEquals($priorEvent, DB::table('claim_events')->where('id', $eventId)->firstOrFail());
         $limitedClient = $this->client();
         $this->login($limitedClient, $limited->email)->assertOk();
         $this->send($limitedClient, 'GET', $uri)->assertForbidden();
+        $this->send($limitedClient, 'POST', $docUri, $docRequest)->assertForbidden();
+        $this->send($limitedClient, 'POST', $claimDocUri, $docRequest)->assertForbidden();
         $this->assertEquals($priorInvoice, DB::table('invoices')->where('id', $invoiceId)->firstOrFail());
         $this->assertEquals($priorClaim, DB::table('claims')->where('id', $claimId)->firstOrFail());
         $this->assertEquals($priorEvent, DB::table('claim_events')->where('id', $eventId)->firstOrFail());
@@ -703,6 +796,119 @@ class PosShellTest extends TestCase
         $this->assertSame(hash('sha256', $activeSnapshot), DB::table('claim_events')->where('id', $activeEventId)->value('snapshot_sha256'));
         // MySQL may canonicalize JSON on storage; the signed hash belongs to the original written snapshot bytes.
         $this->assertSame(hash('sha256', $snapshot), $priorEvent->snapshot_sha256);
+        $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
+            ->where('action', 'outlet_archived')->count());
+        // Synthetic anomaly: aggregate outstanding amount nets to zero although two returns
+        // remain individually mismatched; production POS service cannot create this over-refund.
+        $otherReturn = DB::table('returns')->insertGetId(['invoice_id' => $invoiceId,
+            'actor_type' => Admin::class, 'actor_id' => $owner->id, 'reason' => 'Synthetic offset probe',
+            'status' => 'accepted', 'idempotency_key' => 'd03-offset-'.Str::uuid(),
+            'public_id' => (string) Str::uuid()]);
+        DB::table('return_lines')->insert(['return_id' => $otherReturn, 'invoice_id' => $invoiceId,
+            'sale_id' => $saleId, 'public_id' => (string) Str::uuid(), 'quantity' => 1,
+            'condition' => 'opened', 'disposition' => 'sellable', 'unit_price' => '50.00',
+            'discount_amount' => '0.00', 'net_amount' => '50.00', 'purchase_amount' => '20.00',
+            'currency' => 'PKR', 'sale_snapshot' => $returnSnapshot,
+            'snapshot_sha256' => hash('sha256', $returnSnapshot)]);
+        $paymentDestination = DB::table('pos_payment_destinations')->insertGetId([
+            'public_id' => (string) Str::uuid(), 'outlet_id' => $outlet->id, 'method' => 'card',
+            'display_name' => 'Synthetic unmatched historical tender',
+            'created_by_admin_id' => $owner->id]);
+        $tenderSnapshot = json_encode(['contract' => 'd03-offset-tender'], JSON_THROW_ON_ERROR);
+        $originalTender = DB::table('pos_tender_allocations')->insertGetId([
+            'public_id' => (string) Str::uuid(), 'invoice_id' => $invoiceId,
+            'outlet_id' => $outlet->id, 'payment_destination_id' => $paymentDestination,
+            'sequence' => 1, 'method' => 'card', 'amount' => '100.00',
+            'destination_snapshot' => $tenderSnapshot, 'snapshot_sha256' => hash('sha256', $tenderSnapshot),
+            'reconciliation_state' => 'pending', 'created_by_admin_id' => $owner->id]);
+        $refundSnapshot = json_encode(['contract' => 'd03-offset-refund'], JSON_THROW_ON_ERROR);
+        DB::table('pos_refund_allocations')->insert([
+            'public_id' => (string) Str::uuid(), 'return_id' => $otherReturn,
+            'invoice_id' => $invoiceId, 'outlet_id' => $outlet->id,
+            'original_tender_allocation_id' => $originalTender,
+            'refund_destination_id' => $paymentDestination, 'amount' => '90.00',
+            'original_method' => 'card', 'refund_method' => 'card',
+            'requested_by_admin_id' => $owner->id, 'original_tender_snapshot' => $tenderSnapshot,
+            'refund_destination_snapshot' => $refundSnapshot,
+            'snapshot_sha256' => hash('sha256', $refundSnapshot), 'recorded_at' => now()]);
+        $offsetResponse = $this->send($ownerClient, 'GET', $uri)->assertOk()
+            ->assertJsonPath('data.obligations.pos_return_count', 2)
+            ->assertJsonPath('data.obligations.pos_return_amount', '90.00')
+            ->assertJsonPath('data.obligations.pos_refunds_recorded', '90.00')
+            ->assertJsonPath('data.obligations.pos_refund_difference', '0.00')
+            ->assertJsonPath('data.obligations.pos_returns_unmatched_count', 2)
+            ->assertJsonPath('data.obligations.pos_returns_over_refunded_count', 1)
+            ->assertJsonPath('data.obligations.requires_manual_review', true)
+            ->assertJsonPath('data.obligations.archive_eligibility', 'not_approved_for_business_history');
+        $this->assertEquals($priorInvoice, DB::table('invoices')->where('id', $invoiceId)->firstOrFail());
+        $this->assertEquals($priorEvent, DB::table('claim_events')->where('id', $eventId)->firstOrFail());
+        $this->assertStringNotContainsString('PRIVATE-CUSTOMER-NAME', $offsetResponse->getContent());
+
+    }
+
+    public function test_archived_invoice_and_claim_direct_retrieval_caps_large_original_record_sets(): void
+    {
+        $outlet = $this->outlet('D03 bounded historical documents', '099');
+        $fallback = $this->outlet('D03 bounded document fallback', '100');
+        $owner = $this->member('d03-bounded-documents-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($fallback);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
+        $product = new \App\Models\Product;
+        $product->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'D03 bounded test product',
+            'outlet_id' => $outlet->id, 'category' => 'accessory', 'price' => '1.00', 'qty' => 0])->save();
+        $invoicePublicId = (string) Str::uuid();
+        $invoiceId = DB::table('invoices')->insertGetId(['outlet_id' => $outlet->id,
+            'public_id' => $invoicePublicId, 'invoice_number' => 'D03-CAP-'.Str::random(12),
+            'total_bill' => '101.00', 'final_bill' => '101.00', 'currency' => 'PKR',
+            'customer_name' => 'PRIVATE-BOUND-CUSTOMER']);
+        $sales = [];
+        for ($index = 0; $index < 101; $index++) {
+            $sales[] = ['public_id' => (string) Str::uuid(), 'outlet_id' => $outlet->id,
+                'product_id' => $product->id, 'invoice_id' => $invoiceId, 'quantity' => 1,
+                'sale_date' => now()->toDateString(), 'sale_price' => '1.00',
+                'total_price' => '1.00', 'net_total_price' => '1.00'];
+        }
+        DB::table('sales')->insert($sales);
+        $claimPublicId = (string) Str::uuid();
+        $claimId = DB::table('claims')->insertGetId(['outlet_id' => $outlet->id,
+            'public_id' => $claimPublicId, 'claim_number' => 'D03-CAP-'.Str::random(12),
+            'product_id' => $product->id, 'invoice_id' => $invoiceId,
+            'quantity' => 1, 'status' => 'closed', 'issue_description' => 'PRIVATE-BOUND-ISSUE']);
+        $events = [];
+        for ($sequence = 1; $sequence <= 101; $sequence++) {
+            $snapshot = json_encode(['contract' => 'd03-bounded-claim', 'sequence' => $sequence], JSON_THROW_ON_ERROR);
+            $events[] = ['public_id' => (string) Str::uuid(), 'claim_id' => $claimId,
+                'sequence' => $sequence, 'status' => 'closed', 'note' => 'PRIVATE-BOUND-NOTE',
+                'occurred_at' => now(), 'snapshot' => $snapshot,
+                'snapshot_sha256' => hash('sha256', $snapshot)];
+        }
+        DB::table('claim_events')->insert($events);
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
+        $path = '/internal/admin/outlet-management/'.$outlet->public_id.'/history';
+        $input = ['password' => 'SyntheticPass123!', 'purpose' => 'Historical records audit review'];
+        $this->send($client, 'POST', $path.'/invoices/'.$invoicePublicId.'/retrieve', $input)->assertStatus(409);
+        $outlet->forceFill(['archived_at' => now()])->save(); // Synthetic-only bypass, not production archival.
+        $summary = $this->send($client, 'GET', $path)->assertOk();
+        $this->assertStringNotContainsString('PRIVATE-BOUND-CUSTOMER', $summary->getContent());
+        $this->assertStringNotContainsString('PRIVATE-BOUND-ISSUE', $summary->getContent());
+        $invoice = $this->send($client, 'POST', $path.'/invoices/'.$invoicePublicId.'/retrieve', $input)->assertOk()
+            ->assertJsonPath('data.invoice_id', $invoicePublicId)
+            ->assertJsonPath('data.line_count', 101)
+            ->assertJsonPath('data.lines_truncated', true)
+            ->assertJsonPath('data.customer_name', 'PRIVATE-BOUND-CUSTOMER');
+        $this->assertCount(100, $invoice->json('data.lines'));
+        $this->assertSame($sales[0]['public_id'], $invoice->json('data.lines.0.id'));
+        $claim = $this->send($client, 'POST', $path.'/claims/'.$claimPublicId.'/retrieve', $input)->assertOk()
+            ->assertJsonPath('data.claim_id', $claimPublicId)
+            ->assertJsonPath('data.event_count', 101)
+            ->assertJsonPath('data.events_truncated', true)
+            ->assertJsonPath('data.issue_description', 'PRIVATE-BOUND-ISSUE');
+        $this->assertCount(100, $claim->json('data.events'));
+        $this->assertSame($events[0]['public_id'], $claim->json('data.events.0.id'));
+        $this->assertSame(101, DB::table('sales')->where('invoice_id', $invoiceId)->count());
+        $this->assertSame(101, DB::table('claim_events')->where('claim_id', $claimId)->count());
         $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
             ->where('action', 'outlet_archived')->count());
     }

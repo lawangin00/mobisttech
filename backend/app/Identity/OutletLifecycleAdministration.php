@@ -24,6 +24,72 @@ final class OutletLifecycleAdministration
         return Outlet::query()->orderBy('outlet_code')->get()->map(fn (Outlet $outlet) => $this->view($outlet))->all();
     }
 
+    /** Explicit, audited owner-only retrieval of one original archived invoice; never part of the summary. */
+    public function archivedInvoiceDocument(Admin $actor, string $outletId, string $invoiceId, string $password, string $purpose): array
+    {
+        abort_unless($this->canManage($actor), 403);
+        $fresh = $actor->fresh();
+        abort_unless($fresh instanceof Admin && \Illuminate\Support\Facades\Hash::check($password, $fresh->password),
+            403, 'Confirm your current Admin password to retrieve historical invoice data.');
+        $outlet = Outlet::where('public_id', $outletId)->firstOrFail();
+        abort_unless($outlet->archived_at !== null, 409, 'Outlet is not archived.');
+        $invoice = DB::table('invoices')->where('outlet_id', $outlet->id)
+            ->where('public_id', $invoiceId)->firstOrFail();
+        // Select explicit original fields: no payment credential, provider payload, or unrelated customer lookup.
+        $linesQuery = DB::table('sales as s')->join('products as p', 'p.id', '=', 's.product_id')
+            ->where('s.invoice_id', $invoice->id)->where('s.outlet_id', $outlet->id)
+            ->where('p.outlet_id', $outlet->id)->orderBy('s.id');
+        $lines = (clone $linesQuery)->limit(100)
+            ->get(['s.public_id', 'p.public_id as product_id', 'p.name as product_name',
+                's.sale_date', 's.quantity', 's.returned_quantity', 's.sale_price', 's.net_total_price'])
+            ->map(fn ($line) => ['id' => $line->public_id, 'product_id' => $line->product_id,
+                'product_name' => $line->product_name, 'sale_date' => $line->sale_date,
+                'quantity' => (int) $line->quantity, 'returned_quantity' => (int) $line->returned_quantity,
+                'unit_price' => (string) $line->sale_price, 'net_amount' => (string) $line->net_total_price])->all();
+        \App\Identity\IdentityAudit::record('admin', $fresh->id, 'archived_invoice_document_retrieved',
+            'invoice:'.$invoice->public_id.';purpose:'.preg_replace('/\s+/u', ' ', trim($purpose)), $outlet->id);
+        return ['outlet_id' => $outlet->public_id, 'invoice_id' => $invoice->public_id,
+            'invoice_number' => $invoice->invoice_number, 'currency' => $invoice->currency,
+            'total_bill' => (string) $invoice->total_bill, 'final_bill' => (string) $invoice->final_bill,
+            'customer_name' => $invoice->customer_name, 'customer_phone' => $invoice->customer_phone,
+            'customer_cnic' => $invoice->customer_cnic, 'created_at' => $invoice->created_at,
+            'line_count' => (clone $linesQuery)->count(), 'lines_truncated' => (clone $linesQuery)->count() > 100,
+            'lines' => $lines, 'retrieval_mode' => 'original_database_record_read_only'];
+    }
+
+    /** Per-case password-confirmed warranty history. Never include sensitive case notes in archive indexes. */
+    public function archivedClaimDocument(Admin $actor, string $outletId, string $claimId, string $password, string $purpose): array
+    {
+        abort_unless($this->canManage($actor), 403);
+        $fresh = $actor->fresh();
+        abort_unless($fresh instanceof Admin && \Illuminate\Support\Facades\Hash::check($password, $fresh->password),
+            403, 'Confirm your current Admin password to retrieve historical warranty data.');
+        $outlet = Outlet::where('public_id', $outletId)->firstOrFail();
+        abort_unless($outlet->archived_at !== null, 409, 'Outlet is not archived.');
+        $claim = DB::table('claims as c')->join('invoices as i', 'i.id', '=', 'c.invoice_id')
+            ->join('products as p', 'p.id', '=', 'c.product_id')
+            ->where('c.public_id', $claimId)->where('c.outlet_id', $outlet->id)
+            ->where('i.outlet_id', $outlet->id)->where('p.outlet_id', $outlet->id)
+            ->firstOrFail(['c.*', 'i.public_id as invoice_public_id', 'p.public_id as product_public_id']);
+        $eventsQuery = DB::table('claim_events')->where('claim_id', $claim->id)->orderBy('sequence');
+        $events = (clone $eventsQuery)->limit(100)
+            ->get(['public_id', 'sequence', 'status', 'note', 'occurred_at', 'snapshot_sha256'])
+            ->map(fn ($event) => ['id' => $event->public_id, 'sequence' => (int) $event->sequence,
+                'status' => $event->status, 'note' => $event->note,
+                'occurred_at' => $event->occurred_at, 'snapshot_sha256' => $event->snapshot_sha256])->all();
+        \App\Identity\IdentityAudit::record('admin', $fresh->id, 'archived_claim_document_retrieved',
+            'claim:'.$claim->public_id.';purpose:'.preg_replace('/\s+/u', ' ', trim($purpose)), $outlet->id);
+        return ['outlet_id' => $outlet->public_id, 'claim_id' => $claim->public_id,
+            'claim_number' => $claim->claim_number, 'invoice_id' => $claim->invoice_public_id,
+            'product_id' => $claim->product_public_id, 'quantity' => (int) $claim->quantity,
+            'status' => $claim->status, 'issue_description' => $claim->issue_description,
+            'diagnosis' => $claim->diagnosis, 'resolution' => $claim->resolution,
+            'internal_notes' => $claim->internal_notes, 'received_at' => $claim->received_at,
+            'delivered_at' => $claim->delivered_at, 'warranty_expires_at' => $claim->warranty_expires_at,
+            'event_count' => (clone $eventsQuery)->count(), 'events_truncated' => (clone $eventsQuery)->count() > 100,
+            'events' => $events, 'retrieval_mode' => 'original_database_record_read_only'];
+    }
+
     public function archivedHistory(Admin $actor, string $publicId): array
     {
         abort_unless($this->canManage($actor), 403);
@@ -42,6 +108,7 @@ final class OutletLifecycleAdministration
                     'actual_cash' => (string) $row->actual_cash, 'closed_at' => $row->closed_at,
                 ])->all(),
             'obligations' => $this->archivedObligations($outlet),
+            'stock_reconciliation' => $this->archivedStockReconciliation($outlet),
             'procurement_repair_history' => $this->archivedProcurementRepairs($outlet),
             'cash_session_count' => DB::table('cash_sessions')->where('outlet_id', $outlet->id)->count(),
             'cash_entry_count' => DB::table('cash_entries')->where('outlet_id', $outlet->id)->count(),
@@ -81,6 +148,28 @@ final class OutletLifecycleAdministration
                         'quantity_change' => (int) $row->quantity_change,
                         'stock_after' => (int) $row->stock_after, 'created_at' => $row->created_at])->all(),
             ],
+        ];
+    }
+
+    /** Database consistency indicators only. Physical stock must be independently counted and signed off. */
+    private function archivedStockReconciliation(Outlet $outlet): array
+    {
+        $products = DB::table('products as p')->where('p.outlet_id', $outlet->id);
+        $latestMovement = '(SELECT m.stock_after FROM stock_movements m WHERE m.product_id = p.id AND m.outlet_id = p.outlet_id ORDER BY m.id DESC LIMIT 1)';
+        $inStockUnitCount = '(SELECT COUNT(*) FROM stock_units u WHERE u.product_id = p.id AND u.status = \'in_stock\')';
+        return [
+            'negative_stock_product_count' => (clone $products)->where('p.qty', '<', 0)->count(),
+            'latest_movement_disagreement_count' => (clone $products)
+                ->whereRaw($latestMovement.' IS NOT NULL AND p.qty <> '.$latestMovement)->count(),
+            'tracked_unit_disagreement_count' => (clone $products)->where('p.track_imei', true)
+                ->whereRaw('p.qty <> '.$inStockUnitCount)->count(),
+            'untracked_product_with_units_count' => (clone $products)->where('p.track_imei', false)
+                ->whereRaw($inStockUnitCount.' > 0')->count(),
+            'positive_stock_without_movement_count' => (clone $products)->where('p.qty', '>', 0)
+                ->whereRaw($latestMovement.' IS NULL')->count(),
+            'physical_count_verified' => false,
+            'requires_manual_reconciliation' => true,
+            'archive_eligibility' => 'not_approved_for_business_history',
         ];
     }
 
@@ -223,6 +312,11 @@ final class OutletLifecycleAdministration
     private function archivedObligations(Outlet $outlet): array
     {
         $id = $outlet->id;
+        // A net-zero outlet refund sum can conceal one under-refunded and another over-refunded return.
+        $posReturns = DB::table('returns as r')->join('invoices as i', 'i.id', '=', 'r.invoice_id')
+            ->where('i.outlet_id', $id)->whereNull('r.order_id');
+        $returnLineDue = '(SELECT COALESCE(SUM(l.net_amount), 0) FROM return_lines l WHERE l.return_id = r.id)';
+        $returnRefunded = '(SELECT COALESCE(SUM(f.amount), 0) FROM pos_refund_allocations f WHERE f.return_id = r.id AND f.outlet_id = i.outlet_id)';
         $returnDue = (string) DB::table('return_lines as l')
             ->join('returns as r', 'r.id', '=', 'l.return_id')
             ->join('invoices as i', 'i.id', '=', 'r.invoice_id')
@@ -251,6 +345,8 @@ final class OutletLifecycleAdministration
                 ->where('status', 'pending')->count(),
             'unsettled_pos_tenders' => DB::table('pos_tender_allocations')->where('outlet_id', $id)
                 ->whereIn('reconciliation_state', ['pending', 'variance'])->count(),
+            'pos_returns_unmatched_count' => (clone $posReturns)->whereRaw($returnLineDue.' <> '.$returnRefunded)->count(),
+            'pos_returns_over_refunded_count' => (clone $posReturns)->whereRaw($returnRefunded.' > '.$returnLineDue)->count(),
             'pos_return_count' => DB::table('returns as r')->join('invoices as i', 'i.id', '=', 'r.invoice_id')
                 ->where('i.outlet_id', $id)->whereNull('r.order_id')->count(),
             'website_return_count' => DB::table('returns as r')->join('invoices as i', 'i.id', '=', 'r.invoice_id')

@@ -218,6 +218,8 @@ class PosPaymentTest extends TestCase
         $this->assertSame('200.02', $history['obligations']['pos_return_amount']);
         $this->assertSame('200.02', $history['obligations']['pos_refunds_recorded']);
         $this->assertSame('0.00', $history['obligations']['pos_refund_difference']);
+        $this->assertSame(0, $history['obligations']['pos_returns_unmatched_count']);
+        $this->assertSame(0, $history['obligations']['pos_returns_over_refunded_count']);
         $historicalInvoice = $history['sales_claim_history']['invoices'][0];
         $this->assertSame($sale['invoice_id'], $historicalInvoice['id']);
         $this->assertSame(1, $historicalInvoice['sale_line_count']);
