@@ -255,6 +255,27 @@ class ApiContractTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/purchase_price|seller_phone|outlet_id|imei/i', $first->getContent());
     }
 
+    public function test_comparison_search_can_find_a_published_product_after_first_24_options(): void
+    {
+        $this->publishMode('hybrid', 1);
+        for ($i = 0; $i < 25; $i++) {
+            $product = $this->listedProduct('mt75-compare-search-'.($i + 1));
+            $product->forceFill(['name' => 'MT75COMPARE '.($i === 24 ? 'Searchable Twenty Five' : 'Option '.($i + 1))])->save();
+        }
+        $url = '/api/v1/catalogue/products?q=MT75COMPARE&limit=24';
+        $first = $this->getJson($url)->assertOk()->assertJsonCount(24, 'data.items')
+            ->assertJsonPath('data.page.has_more', true);
+        $this->assertNotContains('mt75-compare-search-25', array_column($first->json('data.items'), 'slug'));
+        $target = $this->getJson('/api/v1/catalogue/products?q=Searchable%20Twenty%20Five&limit=24')
+            ->assertOk()->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.slug', 'mt75-compare-search-25')
+            ->assertJsonPath('data.items.0.availability.quantity', 0);
+        $this->assertDoesNotMatchRegularExpression('/purchase_price|seller_phone|imei|outlet_id/i', $target->getContent());
+        $cursor = $first->json('data.page.next_cursor');
+        $this->getJson($url.'&after='.urlencode($cursor))->assertOk()->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.slug', 'mt75-compare-search-25');
+    }
+
     public function test_catalogue_brand_and_model_filters_use_current_public_product_values(): void
     {
         $this->publishMode('hybrid', 1);

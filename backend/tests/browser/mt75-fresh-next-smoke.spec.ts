@@ -288,6 +288,21 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await expect(page.locator('main article').nth(1)).toContainText('Out of stock');
     await expect(page.locator('main article').nth(0)).toContainText('3 in stock');
     expect((await page.content()).toLowerCase()).not.toMatch(/purchase_price|customer_cnic|customer_phone|imei|object_key/);
+    // A search finds a product outside the 24-item default chooser while retaining existing choices.
+    const searched=await page.goto('http://127.0.0.1:13000/compare?q=Tracked&a=mt75-fresh-accessory&b=mt75-fresh-budget-accessory');
+    expect(searched?.status()).toBe(200);
+    await expect(page.getByRole('textbox',{name:'Search comparison products'})).toHaveValue('Tracked');
+    await expect(page.locator('form[action="/compare"]').nth(1).locator('select[name="a"]')).toHaveValue('mt75-fresh-accessory');
+    const otherChoice=page.locator('form[action="/compare"]').nth(1).locator('select[name="b"]');
+    await expect(otherChoice).toHaveValue('mt75-fresh-budget-accessory');
+    await expect(otherChoice.locator('option[value="mt75-fresh-tracked-phone"]')).toHaveCount(1);
+    await expect(page.locator('main article')).toHaveCount(2);
+    await otherChoice.selectOption('mt75-fresh-tracked-phone');
+    await page.locator('form[action="/compare"]').nth(1).getByRole('button',{name:'Compare'}).click();
+    await expect(page).toHaveURL(/compare\?.*q=Tracked/);
+    await expect(page.locator('main article')).toHaveCount(2);
+    await expect(page.locator('main article').nth(1)).toContainText('MT75 Fresh Tracked Phone');
+    expect((await page.content()).toLowerCase()).not.toMatch(/mt75-private-tracked-imei|purchase_price|seller_phone/);
     const compared=await page.goto('http://127.0.0.1:13000/compare?a=mt75-fresh-accessory&b=mt75-fresh-accessory');
     expect(compared?.status()).toBe(200);
     await expect(page.getByRole('heading',{name:'Compare products'})).toBeVisible();
