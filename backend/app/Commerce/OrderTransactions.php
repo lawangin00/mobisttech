@@ -342,6 +342,7 @@ final class OrderTransactions
         $ids = DB::table('reservations')->where('state', 'active')->where('reservation_expires_at', '<=', now())->orderBy('id')->pluck('id');
         foreach ($ids as $id) {
             DB::transaction(function () use ($id) {
+                $this->lockActiveReservationOutlet((int) $id);
                 $reservation = DB::table('reservations')->where('id', $id)->lockForUpdate()->firstOrFail();
                 $this->stock->release($id, true);
                 $order = DB::table('orders')->where('id', $reservation->order_id)->lockForUpdate()->firstOrFail();
@@ -540,6 +541,16 @@ final class OrderTransactions
         abort_unless($order->order_type === 'commerce', 404);
         $outletId = DB::table('reservations')->where('order_id', $order->id)
             ->orderByDesc('attempt')->value('outlet_id');
+        abort_unless($outletId !== null, 404);
+        $outlet = Outlet::whereKey($outletId)->lockForUpdate()->firstOrFail();
+        abort_if($outlet->status || $outlet->archived_at !== null, 403, 'Outlet is not active.');
+
+        return $outlet;
+    }
+
+    private function lockActiveReservationOutlet(int $reservationId): Outlet
+    {
+        $outletId = DB::table('reservations')->where('id', $reservationId)->value('outlet_id');
         abort_unless($outletId !== null, 404);
         $outlet = Outlet::whereKey($outletId)->lockForUpdate()->firstOrFail();
         abort_if($outlet->status || $outlet->archived_at !== null, 403, 'Outlet is not active.');

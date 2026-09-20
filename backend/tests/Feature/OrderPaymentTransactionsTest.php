@@ -208,6 +208,37 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(0, DB::table('sales')->count());
     }
 
+    public function test_expiry_locks_and_rechecks_active_outlet_before_releasing_reservation(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $this->fakeProvider();
+        $order = $this->service()->checkout($this->scope(), $this->customer, $this->key('archive-expiry'),
+            $this->checkoutInput($product->public_id, 'jazzcash'));
+        $paymentId = DB::table('payments')->where('public_id', $order['payment_id'])->value('id');
+        $reservation = DB::table('reservations')->where('website_payment_id', $paymentId)->firstOrFail();
+        DB::table('reservations')->where('id', $reservation->id)->update(['reservation_expires_at' => now()->subSecond()]);
+        $allocation = DB::table('reservation_allocations')->where('reservation_line_id',
+            DB::table('reservation_lines')->where('reservation_id', $reservation->id)->value('id'))->firstOrFail();
+
+        $this->outlet->forceFill(['archived_at' => now(), 'version' => $this->outlet->version + 1])->save();
+        try {
+            $this->service()->expireDue();
+            $this->fail('Archived outlet reservation was expired and released.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $this->assertSame('active', DB::table('reservations')->where('id', $reservation->id)->value('state'));
+        $this->assertNull(DB::table('reservation_allocations')->where('id', $allocation->id)->value('released_at'));
+        $this->assertSame('pending', DB::table('payments')->where('id', $paymentId)->value('status'));
+        $this->assertSame('unpaid', DB::table('orders')->where('public_id', $order['order_id'])->value('payment_status'));
+
+        $this->outlet->forceFill(['archived_at' => null, 'version' => $this->outlet->version + 1])->save();
+        $this->assertSame(1, $this->service()->expireDue());
+        $this->assertSame('expired', DB::table('reservations')->where('id', $reservation->id)->value('state'));
+        $this->assertNotNull(DB::table('reservation_allocations')->where('id', $allocation->id)->value('released_at'));
+    }
+
     public function test_project_milestone_payment_preserves_owner_amount_identity_and_history_when_commerce_is_off(): void
     {
         $fake = $this->fakeProvider();
