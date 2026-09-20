@@ -1366,6 +1366,35 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.obligations.website_paid_provider_payments_without_matching_recorded_receipt', 0)
             ->assertJsonPath('data.obligations.website_shared_orders_held_for_financial_review', 1);
         $this->assertStringNotContainsString($transaction, $financeReport->getContent());
+        // A completed status with no retained refund proof must not silently clear review.
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_completed_refunds_missing_recorded_evidence', 1);
+        DB::table('refunds')->where('payment_id', $singlePaymentId)->update([
+            'provider' => 'manual_verified', 'evidence_hash' => str_repeat('a', 64),
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_completed_refunds_missing_recorded_evidence', 0);
+        DB::table('refunds')->where('payment_id', $singlePaymentId)->update(['evidence_hash' => 'bad-digest']);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_completed_refunds_missing_recorded_evidence', 1);
+        DB::table('refunds')->where('payment_id', $singlePaymentId)->update([
+            'provider' => 'easypaisa', 'evidence_hash' => str_repeat('a', 64),
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_completed_refunds_missing_recorded_evidence', 1);
+        DB::table('refunds')->where('payment_id', $singlePaymentId)->update([
+            'provider_reference' => 'SYNTHETIC-REFUND-REFERENCE',
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_completed_refunds_missing_recorded_evidence', 0);
+        // Shared-order completed refunds are reserved for joint financial attribution.
+        DB::table('refunds')->where('payment_id', $sharedPaymentId)->update([
+            'status' => 'completed', 'completed_at' => now(),
+        ]);
+        $sharedRefundReport = $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_completed_refunds_missing_recorded_evidence', 0)
+            ->assertJsonPath('data.obligations.website_shared_orders_held_for_financial_review', 1);
+        $this->assertStringNotContainsString('SYNTHETIC-REFUND-REFERENCE', $sharedRefundReport->getContent());
 
         $other = $this->client();
         $this->login($other, $limited->email)->assertOk();

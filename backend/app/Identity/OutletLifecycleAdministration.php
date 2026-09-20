@@ -566,6 +566,18 @@ final class OutletLifecycleAdministration
                 ->join('payments as p', 'p.id', '=', 'f.payment_id')
                 ->whereIn('p.order_id', $attributedOrders)
                 ->whereIn('f.status', ['pending', 'unknown', 'failed'])->count(),
+            // A completed refund is only a recorded status. Require its local evidence
+            // pointer, and for non-manual providers also a recorded provider reference;
+            // neither is independent proof that money reached the customer.
+            'website_completed_refunds_missing_recorded_evidence' => DB::table('refunds as f')
+                ->join('payments as p', 'p.id', '=', 'f.payment_id')
+                ->whereIn('p.order_id', $attributedOrders)->where('f.status', 'completed')
+                ->where(fn ($q) => $q->whereNull('f.evidence_hash')
+                    ->orWhereRaw("NOT REGEXP_LIKE(f.evidence_hash, '^[0-9a-f]{64}$', 'c')")
+                    ->orWhere(fn ($external) => $external->where('f.provider', '!=', 'manual_verified')
+                        ->where(fn ($reference) => $reference->whereNull('f.provider_reference')
+                            ->orWhere('f.provider_reference', ''))))
+                ->count(),
             'website_shared_orders_held_for_financial_review' => DB::table('orders')
                 ->whereIn('id', $sharedOrders)->count(),
             'website_orders_for_review' => DB::table('orders as o')
