@@ -123,12 +123,13 @@ async function readWebsiteProfileUncached(): Promise<WebsiteProfile | null> {
 export const readWebsiteProfile = cache(readWebsiteProfileUncached);
 export function readCategories() { return get<Category[]>("/api/v1/catalogue/categories", 60); }
 export function readProduct(slug: string) { return get<ProductDetail>(`/api/v1/catalogue/products/${encodeURIComponent(slug)}`, "live"); }
-export function readCatalogue(input: { limit?: number; after?: string; category?: string; subcategory?: string; q?: string; sort?: string; min_price?: string; max_price?: string; brand?: string; model?: string; condition?: string; pta_status?: string; ram_gb?: string; storage_gb?: string } = {}) {
+export function readCatalogue(input: { limit?: number; after?: string; category?: string; subcategory?: string; availability?: string; q?: string; sort?: string; min_price?: string; max_price?: string; brand?: string; model?: string; condition?: string; pta_status?: string; ram_gb?: string; storage_gb?: string } = {}) {
   const query = new URLSearchParams();
   query.set("limit", String(input.limit ?? 12));
   if (input.after) query.set("after", input.after);
   if (input.category) query.set("category", input.category);
   if (input.subcategory) query.set("subcategory", input.subcategory);
+  if (input.availability) query.set("availability", input.availability);
   if (input.q) query.set("q", input.q);
   if (input.sort) query.set("sort", input.sort);
   if (input.min_price) query.set("min_price", input.min_price);

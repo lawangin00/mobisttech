@@ -474,6 +474,14 @@ test('MT75 public Next.js stock reaches zero under COD hold and returns after ca
     await expect(cards.nth(0)).toContainText('Out of stock');
     await expect(cards.nth(1)).toContainText('MT75 Fresh Accessory');
     await expect(cards.nth(1)).toContainText('Out of stock');
+    const onlyStocked=await page.goto(catalogueUrl+'&availability=in_stock');
+    expect(onlyStocked?.status()).toBe(200);
+    await expect(page.getByRole('combobox',{name:'Stock availability'})).toHaveValue('in_stock');
+    await expect(page.locator('main article')).toHaveCount(0);
+    const onlySoldOut=await page.goto(catalogueUrl+'&availability=out_of_stock');
+    expect(onlySoldOut?.status()).toBe(200);
+    await expect(page.locator('main article')).toHaveCount(2);
+    await expect(page.locator('main article')).toContainText(['MT75 Fresh Budget Accessory','MT75 Fresh Accessory']);
     const pagingUrl='http://127.0.0.1:18080/api/v1/catalogue/products?category=accessory&sort=price_asc&limit=1';
     const firstPage=await page.request.get(pagingUrl);
     expect(firstPage.status()).toBe(200);
@@ -506,6 +514,14 @@ test('MT75 public Next.js stock reaches zero under COD hold and returns after ca
     expect(releasedSecondPage.status()).toBe(200);
     expect((await releasedSecondPage.json() as {data:{items:Array<{slug:string;availability:{quantity:number}}>}}).data.items[0])
         .toMatchObject({slug:'mt75-fresh-accessory',availability:{quantity:3}});
+    const restockedFilter=await page.goto(catalogueUrl+'&availability=in_stock');
+    expect(restockedFilter?.status()).toBe(200);
+    await expect(page.locator('main article')).toHaveCount(1);
+    await expect(page.locator('main article')).toContainText('MT75 Fresh Accessory');
+    const stillSoldOut=await page.goto(catalogueUrl+'&availability=out_of_stock');
+    expect(stillSoldOut?.status()).toBe(200);
+    await expect(page.locator('main article')).toHaveCount(1);
+    await expect(page.locator('main article')).toContainText('MT75 Fresh Budget Accessory');
     const freshPage=await page.goto('http://127.0.0.1:13000/products/mt75-fresh-accessory');
     expect(freshPage?.status()).toBe(200);
     await expect(page.locator('main').getByText('3 available').first()).toBeVisible();

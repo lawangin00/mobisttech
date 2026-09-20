@@ -29,6 +29,7 @@ export default async function Products({
   const q = rawQuery.length >= 2 ? rawQuery : "";
   const category = typeof params.category === "string" ? params.category : "";
   const subcategory = typeof params.subcategory === "string" ? params.subcategory.trim() : "";
+  const availability = typeof params.availability === "string" ? params.availability : "";
   const after = typeof params.after === "string" ? params.after : "";
   const sort = typeof params.sort === "string" ? params.sort : "oldest";
   const minPrice = typeof params.min_price === "string" ? params.min_price : "";
@@ -46,6 +47,7 @@ export default async function Products({
       q: q || undefined,
       category: category || undefined,
       subcategory: subcategory || undefined,
+      availability: availability || undefined,
       after: after || undefined,
       sort,
       min_price: minPrice || undefined,
@@ -66,6 +68,7 @@ export default async function Products({
   if (q) next.set("q", q);
   if (category) next.set("category", category);
   if (subcategory) next.set("subcategory", subcategory);
+  if (availability) next.set("availability", availability);
   if (sort !== "oldest") next.set("sort", sort);
   if (minPrice) next.set("min_price", minPrice);
   if (maxPrice) next.set("max_price", maxPrice);
@@ -113,6 +116,7 @@ export default async function Products({
             </option>
           ))}
         </select>
+        <select name="availability" aria-label="Stock availability" defaultValue={availability} className="rounded-xl border border-slate-300 px-3 py-3"><option value="">Any stock</option><option value="in_stock">In stock</option><option value="out_of_stock">Out of stock</option></select>
         <input name="subcategory" aria-label="Subcategory code" maxLength={100} defaultValue={subcategory} placeholder="Subcategory code" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
         <select name="sort" aria-label="Sort products" defaultValue={sort}
           className="rounded-xl border border-slate-300 px-4 py-3">

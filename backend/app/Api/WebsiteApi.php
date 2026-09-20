@@ -62,6 +62,7 @@ final class WebsiteApi
             'after' => 'nullable|string|max:120',
             'category' => 'nullable|string|max:50',
             'subcategory' => 'nullable|string|min:2|max:100|regex:/\A[a-z0-9]+(?:_[a-z0-9]+)*\z/',
+            'availability' => 'nullable|in:in_stock,out_of_stock',
             'q' => 'nullable|string|min:2|max:80',
             'sort' => 'sometimes|in:oldest,newest,price_asc,price_desc,name_asc,name_desc',
             'min_price' => 'nullable|numeric|min:0|max:999999999',
@@ -79,6 +80,7 @@ final class WebsiteApi
             : $this->decodeCatalogueSortCursor($data['after'] ?? null, $sort);
         $category = isset($data['category']) ? trim($data['category']) : null;
         $subcategory = $data['subcategory'] ?? null;
+        $availability = $data['availability'] ?? null;
         $query = isset($data['q']) ? trim($data['q']) : null;
         $minPrice = isset($data['min_price']) ? (float) $data['min_price'] : null;
         $maxPrice = isset($data['max_price']) ? (float) $data['max_price'] : null;
@@ -91,10 +93,10 @@ final class WebsiteApi
         if ($minPrice !== null && $maxPrice !== null && $minPrice > $maxPrice) {
             throw ValidationException::withMessages(['max_price' => 'Max price must not be lower than min price.']);
         }
-        $resource = json_encode(compact('limit', 'after', 'category', 'subcategory', 'query', 'sort', 'minPrice', 'maxPrice', 'brand', 'model', 'condition', 'ptaStatus', 'ram', 'storage'), JSON_THROW_ON_ERROR);
+        $resource = json_encode(compact('limit', 'after', 'category', 'subcategory', 'availability', 'query', 'sort', 'minPrice', 'maxPrice', 'brand', 'model', 'condition', 'ptaStatus', 'ram', 'storage'), JSON_THROW_ON_ERROR);
 
-        return $this->cache->remember('catalogue', 'api:v1:products:'.$resource, function () use ($limit, $after, $category, $subcategory, $query, $sort, $minPrice, $maxPrice, $brand, $model, $condition, $ptaStatus, $ram, $storage) {
-            return DB::transaction(function () use ($limit, $after, $category, $subcategory, $query, $sort, $minPrice, $maxPrice, $brand, $model, $condition, $ptaStatus, $ram, $storage) {
+        return $this->cache->remember('catalogue', 'api:v1:products:'.$resource, function () use ($limit, $after, $category, $subcategory, $availability, $query, $sort, $minPrice, $maxPrice, $brand, $model, $condition, $ptaStatus, $ram, $storage) {
+            return DB::transaction(function () use ($limit, $after, $category, $subcategory, $availability, $query, $sort, $minPrice, $maxPrice, $brand, $model, $condition, $ptaStatus, $ram, $storage) {
                 $rows = DB::table('product_listings as l')->join('products as p', 'p.id', '=', 'l.product_id')
                     ->where('l.is_online', true)->where('p.isDeleted', false)->whereNull('p.archived_at')
                     ->when($category, fn ($q) => $q->where('p.category', $category))
@@ -138,10 +140,38 @@ final class WebsiteApi
                 } else {
                     $rows->orderBy($column, $descending ? 'desc' : 'asc')->orderBy('l.id');
                 }
-                $rows = $rows->limit($limit + 1)
-                    ->get(['l.id as listing_id', 'l.public_id as listing_public_id', 'l.slug', 'l.image_url',
-                        'p.id as product_id', 'p.public_id as product_public_id', 'p.name', 'p.brand', 'p.model',
-                        'p.category', 'p.sale_price', 'p.warranty_type', 'p.track_imei']);
+                $columns = ['l.id as listing_id', 'l.public_id as listing_public_id', 'l.slug', 'l.image_url',
+                    'p.id as product_id', 'p.public_id as product_public_id', 'p.name', 'p.brand', 'p.model',
+                    'p.category', 'p.sale_price', 'p.warranty_type', 'p.track_imei'];
+                if ($availability !== null) {
+                    // Filter by the authoritative locked stock snapshot BEFORE choosing a page boundary.
+                    // Scan ordered candidates in bounded batches so zero-stock rows cannot break cursors.
+                    $items = [];
+                    $last = null;
+                    $offset = 0;
+                    $hasMore = false;
+                    do {
+                        $batch = (clone $rows)->offset($offset)->limit(48)->get($columns);
+                        foreach ($batch as $candidate) {
+                            $public = $this->productProjection($candidate);
+                            if ($public['availability']['in_stock'] !== ($availability === 'in_stock')) {
+                                continue;
+                            }
+                            if (count($items) === $limit) {
+                                $hasMore = true;
+                                break 2;
+                            }
+                            $items[] = $public;
+                            $last = $candidate;
+                        }
+                        $offset += $batch->count();
+                    } while ($batch->count() === 48);
+
+                    return ['items' => $items, 'page' => ['limit' => $limit, 'has_more' => $hasMore,
+                        'next_cursor' => $hasMore && $last ? ($sort === 'oldest' ? $this->encodeCursor((int) $last->listing_id)
+                            : $this->encodeCatalogueSortCursor($sort, (int) $last->listing_id)) : null]];
+                }
+                $rows = $rows->limit($limit + 1)->get($columns);
                 $hasMore = $rows->count() > $limit;
                 $rows = $rows->take($limit);
                 $items = $rows->map(fn ($row) => $this->productProjection($row))->all();
