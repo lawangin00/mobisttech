@@ -904,4 +904,69 @@ final class OutletArchiveRowLockTest extends TestCase
         }
     }
 
+    public function test_isolated_website_checkout_shares_archive_lock(): void
+    {
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test'
+            && (int) config('database.connections.mysql.port') === 13306, 403);
+        $tag = (string) Str::uuid();
+        $default = DB::getDefaultConnection();
+        $outlet = null; $product = null; $writer = null;
+        $scope = 'guest:'.hash('sha256', 'd03-website-'.$tag);
+        try {
+            $outlet = new Outlet;
+            $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '084',
+                'name' => 'D03 website race '.$tag, 'status' => false, 'version' => 1])->save();
+            $product = new \App\Models\Product;
+            $product->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'D03 website product '.$tag,
+                'category' => 'accessory', 'price' => '100.00', 'sale_price' => '100.00', 'qty' => 1,
+                'track_imei' => false, 'outlet_id' => $outlet->id])->save();
+            $input = ['customer_name' => 'Synthetic Guest', 'customer_mobile' => '03001234567',
+                'gateway' => 'cod', 'lines' => [['product_id' => $product->public_id, 'quantity' => 1]]];
+            config(['database.connections.d03_website_writer' => config('database.connections.mysql')]);
+            $writer = DB::connection('d03_website_writer');
+            $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
+            DB::connection('mysql')->beginTransaction();
+            try {
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->lockForUpdate()->firstOrFail();
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
+                    ->update(['archived_at' => now(), 'version' => 2]);
+                DB::setDefaultConnection('d03_website_writer');
+                $this->assertNull($writer->table('outlets')->where('id', $outlet->id)->value('archived_at'));
+                try {
+                    app(\App\Commerce\OrderTransactions::class)->checkout(
+                        $scope, null, 'd03-website-wait-'.$tag, $input);
+                    $this->fail('Website checkout bypassed the independent archive lock.');
+                } catch (QueryException $exception) {
+                    $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
+                } finally {
+                    DB::setDefaultConnection($default);
+                }
+                DB::connection('mysql')->commit();
+            } finally {
+                DB::setDefaultConnection($default);
+                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            }
+            DB::setDefaultConnection('d03_website_writer');
+            try {
+                app(\App\Commerce\OrderTransactions::class)->checkout(
+                    $scope, null, 'd03-website-retry-'.$tag, $input);
+                $this->fail('Archived outlet accepted a Website checkout.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            } finally {
+                DB::setDefaultConnection($default);
+            }
+            $this->assertSame(0, DB::table('orders')->where('owner_scope_hash', hash('sha256', $scope))->count());
+            $this->assertSame(0, DB::table('idempotency_requests')->where('actor_scope', $scope)->count());
+        } finally {
+            DB::setDefaultConnection($default);
+            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            if ($writer) { $writer->disconnect(); DB::purge('d03_website_writer'); }
+            if ($product) { DB::table('products')->where('id', $product->id)->delete(); }
+            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
+                ->where('name', 'D03 website race '.$tag)->delete(); }
+        }
+    }
+
 }
