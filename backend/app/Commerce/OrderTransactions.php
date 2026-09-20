@@ -236,6 +236,7 @@ final class OrderTransactions
 
         return $this->idempotent($ownerScope, 'commerce.payment.retry', $key, compact('orderPublicId', 'gateway'), function () use ($ownerScope, $orderPublicId, $gateway, $provider) {
             $this->capabilities->assertCreationAllowed('checkout.create');
+            $this->lockActiveOrderOutlet($ownerScope, $orderPublicId);
             $order = DB::table('orders')->where('public_id', $orderPublicId)->where('owner_scope_hash', hash('sha256', $ownerScope))->lockForUpdate()->firstOrFail();
             if ($order->order_type !== 'commerce' || $order->payment_status !== 'failed') {
                 throw new LogicException('Only a definitively failed commerce payment may be retried.');
@@ -281,7 +282,7 @@ final class OrderTransactions
             return ['order_id' => $order->public_id, 'payment_id' => $public, 'payment_status' => 'pending',
                 'reservation_id' => DB::table('reservations')->where('id', $reservationId)->value('reservation_reference'),
                 'amount' => $order->total, 'currency' => 'PKR'];
-        });
+        }, fn () => $this->lockActiveOrderOutlet($ownerScope, $orderPublicId));
     }
 
     public function callback(string $gateway, array $payload): array
@@ -318,6 +319,7 @@ final class OrderTransactions
         $this->owner($ownerScope, $customer);
 
         return $this->idempotent($ownerScope, 'commerce.cancel', $key, ['order_id' => $orderPublicId], function () use ($ownerScope, $orderPublicId) {
+            $this->lockActiveOrderOutlet($ownerScope, $orderPublicId);
             $order = DB::table('orders')->where('public_id', $orderPublicId)->where('owner_scope_hash', hash('sha256', $ownerScope))->lockForUpdate()->firstOrFail();
             if (in_array($order->payment_status, ['paid', 'paid_reconciliation'], true)) {
                 throw new LogicException('A collected order requires explicit refund/reconciliation.');
@@ -332,7 +334,7 @@ final class OrderTransactions
                 'cancelled_at' => now(), 'version' => $order->version + 1, 'updated_at' => now()]);
 
             return ['order_id' => $orderPublicId, 'status' => 'cancelled'];
-        });
+        }, fn () => $this->lockActiveOrderOutlet($ownerScope, $orderPublicId));
     }
 
     public function expireDue(): int
@@ -526,6 +528,20 @@ final class OrderTransactions
             throw ValidationException::withMessages(['lines' => 'A physical checkout must use one outlet.']);
         }
         $outlet = Outlet::whereKey($outletIds->first())->lockForUpdate()->firstOrFail();
+        abort_if($outlet->status || $outlet->archived_at !== null, 403, 'Outlet is not active.');
+
+        return $outlet;
+    }
+
+    private function lockActiveOrderOutlet(string $ownerScope, string $orderPublicId): Outlet
+    {
+        $order = DB::table('orders')->where('public_id', $orderPublicId)
+            ->where('owner_scope_hash', hash('sha256', $ownerScope))->firstOrFail();
+        abort_unless($order->order_type === 'commerce', 404);
+        $outletId = DB::table('reservations')->where('order_id', $order->id)
+            ->orderByDesc('attempt')->value('outlet_id');
+        abort_unless($outletId !== null, 404);
+        $outlet = Outlet::whereKey($outletId)->lockForUpdate()->firstOrFail();
         abort_if($outlet->status || $outlet->archived_at !== null, 403, 'Outlet is not active.');
 
         return $outlet;

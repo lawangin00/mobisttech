@@ -105,6 +105,46 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(1, DB::table('idempotency_requests')->where('operation', 'commerce.checkout')->count());
     }
 
+    public function test_archived_outlet_blocks_retry_cancel_and_their_completed_replays(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 2);
+        $fake = $this->fakeProvider();
+
+        $failedOrder = $this->service()->checkout($this->scope(), $this->customer, $this->key('archive-failed'),
+            $this->checkoutInput($product->public_id, 'jazzcash'));
+        $failedIntent = $this->service()->initiate($failedOrder['payment_id']);
+        $this->service()->callback('jazzcash', $fake->failed('EVT-ARCHIVE', $failedIntent['reference'], '200.02'));
+        $retryKey = $this->key('archive-retry');
+        $this->service()->retry($this->scope(), $this->customer, $failedOrder['order_id'], $retryKey, 'jazzcash');
+
+        $cancelOrder = $this->service()->checkout($this->scope(), $this->customer, $this->key('archive-cancel-order'),
+            $this->checkoutInput($product->public_id, 'cod'));
+        $cancelKey = $this->key('archive-cancel');
+        $this->service()->cancel($this->scope(), $this->customer, $cancelOrder['order_id'], $cancelKey);
+        $counts = [DB::table('orders')->count(), DB::table('reservations')->count(), DB::table('payments')->count(),
+            DB::table('reservation_allocations')->count(), DB::table('idempotency_requests')->count()];
+
+        $this->outlet->forceFill(['archived_at' => now(), 'version' => $this->outlet->version + 1])->save();
+        $attempts = [
+            fn () => $this->service()->retry($this->scope(), $this->customer, $failedOrder['order_id'], $retryKey, 'jazzcash'),
+            fn () => $this->service()->retry($this->scope(), $this->customer, $failedOrder['order_id'], $this->key('archive-retry-fresh'), 'jazzcash'),
+            fn () => $this->service()->cancel($this->scope(), $this->customer, $cancelOrder['order_id'], $cancelKey),
+            fn () => $this->service()->cancel($this->scope(), $this->customer, $cancelOrder['order_id'], $this->key('archive-cancel-fresh')),
+        ];
+        foreach ($attempts as $attempt) {
+            try {
+                $attempt();
+                $this->fail('Archived outlet accepted retry/cancel mutation or completed replay.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+
+        $this->assertSame($counts, [DB::table('orders')->count(), DB::table('reservations')->count(), DB::table('payments')->count(),
+            DB::table('reservation_allocations')->count(), DB::table('idempotency_requests')->count()]);
+    }
+
     public function test_disabled_provider_fails_before_order_and_verified_callback_is_replay_safe_across_mode_switch(): void
     {
         $product = $this->product();
