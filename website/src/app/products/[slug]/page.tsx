@@ -5,6 +5,7 @@ import { AddToCart } from "@/components/add-to-cart";
 import { ProductImage } from "@/components/product-image";
 import { money } from "@/lib/storefront";
 import { readProduct, readWebsiteProfile, WebsiteApiError } from "@/lib/website-api";
+import { readBusinessProfile } from "@/lib/business-profile";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
-  const [{ slug }, profile] = await Promise.all([params, readWebsiteProfile()]);
+  const [{ slug }, profile, business] = await Promise.all([params, readWebsiteProfile(), readBusinessProfile()]);
   if (!profile?.capabilities.commerce) notFound();
   const product = await productOr404(slug);
   const jsonLd = {
@@ -45,7 +46,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       priceCurrency: product.currency,
       price: product.price,
       availability: product.availability.in_stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      url: `/products/${product.slug}`,
+      ...(business ? { url: new URL(`/products/${encodeURIComponent(product.slug)}`, business.public_website).href } : {}),
     },
   };
 
