@@ -34,6 +34,10 @@ export default async function Products({
   const maxPrice = typeof params.max_price === "string" ? params.max_price : "";
   const brand = typeof params.brand === "string" ? params.brand.trim() : "";
   const model = typeof params.model === "string" ? params.model.trim() : "";
+  const condition = typeof params.condition === "string" ? params.condition : "";
+  const ptaStatus = typeof params.pta_status === "string" ? params.pta_status : "";
+  const ram = typeof params.ram_gb === "string" ? params.ram_gb : "";
+  const storage = typeof params.storage_gb === "string" ? params.storage_gb : "";
   let page;
   try {
     page = await readCatalogue({
@@ -46,6 +50,10 @@ export default async function Products({
       max_price: maxPrice || undefined,
       brand: brand || undefined,
       model: model || undefined,
+      condition: condition || undefined,
+      pta_status: ptaStatus || undefined,
+      ram_gb: ram || undefined,
+      storage_gb: storage || undefined,
     });
   } catch (error) {
     if (error instanceof WebsiteApiError && (error.status === 404 || error.status === 422)) notFound();
@@ -60,6 +68,10 @@ export default async function Products({
   if (maxPrice) next.set("max_price", maxPrice);
   if (brand) next.set("brand", brand);
   if (model) next.set("model", model);
+  if (condition) next.set("condition", condition);
+  if (ptaStatus) next.set("pta_status", ptaStatus);
+  if (ram) next.set("ram_gb", ram);
+  if (storage) next.set("storage_gb", storage);
   if (page.page.next_cursor) next.set("after", page.page.next_cursor);
 
   return (
@@ -108,6 +120,10 @@ export default async function Products({
         <input name="max_price" aria-label="Maximum price" type="number" min="0" step="0.01" defaultValue={maxPrice} placeholder="Max PKR" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
         <input name="brand" aria-label="Brand" maxLength={80} defaultValue={brand} placeholder="Brand" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
         <input name="model" aria-label="Model" maxLength={80} defaultValue={model} placeholder="Model" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
+        <select name="condition" aria-label="Device condition" defaultValue={condition} className="rounded-xl border border-slate-300 px-3 py-3"><option value="">Any condition</option><option value="brand_new">Brand new</option><option value="open_box">Open box</option><option value="used">Used / Kit</option><option value="refurbished">Refurbished</option><option value="unknown">Unknown</option></select>
+        <select name="pta_status" aria-label="PTA status" defaultValue={ptaStatus} className="rounded-xl border border-slate-300 px-3 py-3"><option value="">Any PTA status</option><option value="pta_approved">PTA approved</option><option value="non_pta">Non-PTA</option><option value="patch_approved">Patch approved</option><option value="cpid_server_approved">CPID / Server approved</option><option value="unknown">Unknown</option></select>
+        <input type="number" name="ram_gb" aria-label="RAM in GB" min="1" max="2048" step="1" defaultValue={ram} placeholder="RAM GB" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
+        <input type="number" name="storage_gb" aria-label="Storage in GB" min="1" max="8192" step="1" defaultValue={storage} placeholder="Storage GB" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
         <button className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">
           Search
         </button>

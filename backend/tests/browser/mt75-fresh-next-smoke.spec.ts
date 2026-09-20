@@ -168,6 +168,14 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     const unknownBrand=await page.goto('http://127.0.0.1:13000/products?brand=UnknownBrand');
     expect(unknownBrand?.status()).toBe(200);
     await expect(page.getByText('No products match this search.')).toBeVisible();
+    const deviceFilter=await page.goto('http://127.0.0.1:13000/products?category=accessory&condition=used&pta_status=pta_approved&ram_gb=8&storage_gb=256');
+    expect(deviceFilter?.status()).toBe(200);
+    await expect(page.getByRole('combobox',{name:'Device condition'})).toHaveValue('used');
+    await expect(page.getByRole('combobox',{name:'PTA status'})).toHaveValue('pta_approved');
+    await expect(page.getByRole('spinbutton',{name:'RAM in GB'})).toHaveValue('8');
+    await expect(page.getByRole('spinbutton',{name:'Storage in GB'})).toHaveValue('256');
+    await expect(page.getByText('No products match this search.')).toBeVisible();
+    await expect(page.locator('main article')).toHaveCount(0);
     const priced=await page.goto('http://127.0.0.1:13000/products?category=accessory&min_price=80&max_price=100');
     expect(priced?.status()).toBe(200);
     await expect(page.getByRole('spinbutton',{name:'Minimum price'})).toHaveValue('80');

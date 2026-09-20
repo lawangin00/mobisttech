@@ -91,6 +91,52 @@ class ApiContractTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/IMEI|unit_no|purchase_price|seller_phone|outlet_id/i', $detail->getContent());
     }
 
+    public function test_catalogue_device_specs_and_same_unit_condition_pta_filters(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $first = $this->product(true);
+        $second = $this->product(true);
+        foreach ([[$first, 'mt75-device-eight'], [$second, 'mt75-device-twelve']] as [$product, $slug]) {
+            DB::table('product_listings')->insert(['external_source' => 'pos', 'external_id' => 'api-'.$product->id,
+                'slug' => $slug, 'name' => $product->name, 'category' => $product->category, 'is_online' => true,
+                'public_id' => (string) Str::uuid(), 'version' => 1, 'product_id' => $product->id,
+                'created_at' => now(), 'updated_at' => now()]);
+        }
+        $first->forceFill(['ram_gb' => 8, 'storage_gb' => 256])->save();
+        $second->forceFill(['ram_gb' => 12, 'storage_gb' => 512])->save();
+        $this->acquire($first);
+        $black = StockUnit::where('product_id', $first->id)->firstOrFail();
+        $black->forceFill(['color' => 'Black', 'condition' => 'used', 'pta_status' => 'pta_approved'])->save();
+        $this->imeis($first, $black);
+        $this->acquire($first);
+        $blue = StockUnit::where('product_id', $first->id)->orderByDesc('id')->firstOrFail();
+        $blue->forceFill(['color' => 'Blue', 'condition' => 'brand_new', 'pta_status' => 'non_pta'])->save();
+        $this->imeis($first, $blue, [1 => 'MT75-IMEI-PRIVATE-3', 2 => 'MT75-IMEI-PRIVATE-4']);
+        $this->acquire($second);
+        $other = StockUnit::where('product_id', $second->id)->firstOrFail();
+        $other->forceFill(['condition' => 'used', 'pta_status' => 'non_pta'])->save();
+        $this->imeis($second, $other, [1 => 'MT75-IMEI-PRIVATE-5', 2 => 'MT75-IMEI-PRIVATE-6']);
+        $path = '/api/v1/catalogue/products?category=mobile_phone';
+        $this->getJson($path.'&ram_gb=8&storage_gb=256')->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-device-eight');
+        $this->getJson($path.'&ram_gb=12&storage_gb=512')->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-device-twelve');
+        $this->getJson($path.'&condition=used&pta_status=pta_approved')->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-device-eight');
+        $this->getJson($path.'&condition=brand_new&pta_status=pta_approved')->assertOk()
+            ->assertJsonCount(0, 'data.items');
+        $this->getJson($path.'&condition=used&pta_status=non_pta')->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-device-twelve');
+        $this->getJson($path.'&condition=brand_new&pta_status=non_pta&ram_gb=8')->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-device-eight');
+        $this->getJson($path.'&ram_gb=0')->assertUnprocessable();
+        $this->getJson($path.'&storage_gb=999999')->assertUnprocessable();
+        $this->getJson($path.'&condition=fake')->assertUnprocessable();
+        $this->getJson($path.'&pta_status=fake')->assertUnprocessable();
+        $payload = $this->getJson($path.'&condition=used&pta_status=pta_approved')->assertOk()->getContent();
+        $this->assertDoesNotMatchRegularExpression('/IMEI|unit_no|purchase_price|seller_phone|outlet_id/i', $payload);
+    }
+
     public function test_catalogue_brand_and_model_filters_use_current_public_product_values(): void
     {
         $this->publishMode('hybrid', 1);

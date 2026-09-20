@@ -123,7 +123,7 @@ async function readWebsiteProfileUncached(): Promise<WebsiteProfile | null> {
 export const readWebsiteProfile = cache(readWebsiteProfileUncached);
 export function readCategories() { return get<Category[]>("/api/v1/catalogue/categories", 60); }
 export function readProduct(slug: string) { return get<ProductDetail>(`/api/v1/catalogue/products/${encodeURIComponent(slug)}`, "live"); }
-export function readCatalogue(input: { limit?: number; after?: string; category?: string; q?: string; sort?: string; min_price?: string; max_price?: string; brand?: string; model?: string } = {}) {
+export function readCatalogue(input: { limit?: number; after?: string; category?: string; q?: string; sort?: string; min_price?: string; max_price?: string; brand?: string; model?: string; condition?: string; pta_status?: string; ram_gb?: string; storage_gb?: string } = {}) {
   const query = new URLSearchParams();
   query.set("limit", String(input.limit ?? 12));
   if (input.after) query.set("after", input.after);
@@ -134,6 +134,10 @@ export function readCatalogue(input: { limit?: number; after?: string; category?
   if (input.max_price) query.set("max_price", input.max_price);
   if (input.brand) query.set("brand", input.brand);
   if (input.model) query.set("model", input.model);
+  if (input.condition) query.set("condition", input.condition);
+  if (input.pta_status) query.set("pta_status", input.pta_status);
+  if (input.ram_gb) query.set("ram_gb", input.ram_gb);
+  if (input.storage_gb) query.set("storage_gb", input.storage_gb);
   return get<CataloguePage>(`/api/v1/catalogue/products?${query.toString()}`, "live");
 }
 export function readContentIndex() { return get<ContentIndex>("/api/v1/content", "live"); }

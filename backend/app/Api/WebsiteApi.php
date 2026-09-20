@@ -12,9 +12,11 @@ use App\Inventory\StockLedger;
 use App\Migration\SourceRow;
 use App\Models\CustomerAccount;
 use App\Models\Product;
+use App\Models\StockUnit;
 use App\Support\ProductVariantKey;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 final class WebsiteApi
@@ -65,6 +67,10 @@ final class WebsiteApi
             'max_price' => 'nullable|numeric|min:0|max:999999999',
             'brand' => 'nullable|string|min:2|max:80',
             'model' => 'nullable|string|min:2|max:80',
+            'condition' => ['nullable', 'string', Rule::in(array_keys(StockUnit::CONDITIONS))],
+            'pta_status' => ['nullable', 'string', Rule::in(array_keys(StockUnit::PTA_STATUSES))],
+            'ram_gb' => 'nullable|integer|min:1|max:2048',
+            'storage_gb' => 'nullable|integer|min:1|max:8192',
         ])->validate();
         $limit = (int) ($data['limit'] ?? 12);
         $sort = $data['sort'] ?? 'oldest';
@@ -76,13 +82,17 @@ final class WebsiteApi
         $maxPrice = isset($data['max_price']) ? (float) $data['max_price'] : null;
         $brand = isset($data['brand']) ? trim($data['brand']) : null;
         $model = isset($data['model']) ? trim($data['model']) : null;
+        $condition = $data['condition'] ?? null;
+        $ptaStatus = $data['pta_status'] ?? null;
+        $ram = $data['ram_gb'] ?? null;
+        $storage = $data['storage_gb'] ?? null;
         if ($minPrice !== null && $maxPrice !== null && $minPrice > $maxPrice) {
             throw ValidationException::withMessages(['max_price' => 'Max price must not be lower than min price.']);
         }
-        $resource = json_encode(compact('limit', 'after', 'category', 'query', 'sort', 'minPrice', 'maxPrice', 'brand', 'model'), JSON_THROW_ON_ERROR);
+        $resource = json_encode(compact('limit', 'after', 'category', 'query', 'sort', 'minPrice', 'maxPrice', 'brand', 'model', 'condition', 'ptaStatus', 'ram', 'storage'), JSON_THROW_ON_ERROR);
 
-        return $this->cache->remember('catalogue', 'api:v1:products:'.$resource, function () use ($limit, $after, $category, $query, $sort, $minPrice, $maxPrice, $brand, $model) {
-            return DB::transaction(function () use ($limit, $after, $category, $query, $sort, $minPrice, $maxPrice, $brand, $model) {
+        return $this->cache->remember('catalogue', 'api:v1:products:'.$resource, function () use ($limit, $after, $category, $query, $sort, $minPrice, $maxPrice, $brand, $model, $condition, $ptaStatus, $ram, $storage) {
+            return DB::transaction(function () use ($limit, $after, $category, $query, $sort, $minPrice, $maxPrice, $brand, $model, $condition, $ptaStatus, $ram, $storage) {
                 $rows = DB::table('product_listings as l')->join('products as p', 'p.id', '=', 'l.product_id')
                     ->where('l.is_online', true)->where('p.isDeleted', false)->whereNull('p.archived_at')
                     ->when($category, fn ($q) => $q->where('p.category', $category))
@@ -93,7 +103,14 @@ final class WebsiteApi
                         ->whereExists(fn ($managed) => $managed->selectRaw('1')->from('pos_master_data_options as b')
                             ->whereColumn('b.id', 'p.brand_master_data_id')->where('b.label', $brand))
                         ->orWhere(fn ($legacy) => $legacy->whereNull('p.brand_master_data_id')->where('p.brand', $brand))))
-                    ->when($model, fn ($q) => $q->where('p.model', 'like', '%'.$this->escapeLike($model).'%'));
+                    ->when($model, fn ($q) => $q->where('p.model', 'like', '%'.$this->escapeLike($model).'%'))
+                    ->when($ram !== null, fn ($q) => $q->where('p.ram_gb', $ram))
+                    ->when($storage !== null, fn ($q) => $q->where('p.storage_gb', $storage))
+                    ->when($condition !== null || $ptaStatus !== null, fn ($q) => $q->whereExists(
+                        fn ($unit) => $unit->selectRaw('1')->from('stock_units as su')
+                            ->whereColumn('su.product_id', 'p.id')->where('su.status', 'in_stock')
+                            ->when($condition !== null, fn ($u) => $u->where('su.condition', $condition))
+                            ->when($ptaStatus !== null, fn ($u) => $u->where('su.pta_status', $ptaStatus))));
                 $column = str_starts_with($sort, 'price_') ? 'p.sale_price' : 'p.name';
                 $descending = in_array($sort, ['newest', 'price_desc', 'name_desc'], true);
                 if ($after !== null && $sort !== 'oldest' && $sort !== 'newest') {
