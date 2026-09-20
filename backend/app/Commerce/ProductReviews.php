@@ -4,6 +4,7 @@ namespace App\Commerce;
 
 use App\Addendum\WebsiteCapabilities;
 use App\Models\CustomerAccount;
+use App\Models\Outlet;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +26,7 @@ final class ProductReviews
 
         return DB::transaction(function () use ($customer, $data) {
             $this->capabilities->assertCreationAllowed('review.write');
+            $this->lockActiveReviewOutlet($customer, $data['order_id'], $data['product_id']);
             $order = DB::table('orders')->where('public_id', $data['order_id'])
                 ->where('user_id', $customer->id)->lockForUpdate()->firstOrFail();
             abort_unless(in_array($order->payment_status, ['paid', 'paid_reconciliation'], true)
@@ -55,6 +57,20 @@ final class ProductReviews
 
             return $this->payload((int) $id);
         }, 2);
+    }
+
+    private function lockActiveReviewOutlet(CustomerAccount $customer, string $orderPublicId, string $productPublicId): Outlet
+    {
+        $orderId = DB::table('orders')->where('public_id', $orderPublicId)
+            ->where('user_id', $customer->id)->value('id');
+        abort_unless($orderId !== null, 404);
+        $product = DB::table('products')->where('public_id', $productPublicId)->firstOrFail();
+        abort_unless(DB::table('order_items')->where('order_id', $orderId)
+            ->where('product_id', $product->id)->exists(), 404);
+        $outlet = Outlet::whereKey($product->outlet_id)->lockForUpdate()->firstOrFail();
+        abort_if($outlet->status || $outlet->archived_at !== null, 403, 'Outlet is not active.');
+
+        return $outlet;
     }
 
     public function eligible(CustomerAccount $customer): array

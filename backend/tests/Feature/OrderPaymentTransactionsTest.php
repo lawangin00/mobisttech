@@ -7,6 +7,7 @@ use App\Addendum\MoneySnapshot;
 use App\Commerce\OrderTransactions;
 use App\Commerce\PaymentProvider;
 use App\Commerce\PaymentProviders;
+use App\Commerce\ProductReviews;
 use App\Inventory\InventoryOperations;
 use App\Models\CustomerAccount;
 use App\Models\Outlet;
@@ -358,6 +359,30 @@ class OrderPaymentTransactionsTest extends TestCase
         }
         $this->assertSame($counts, [DB::table('payment_receipts')->count(), DB::table('refunds')->count(),
             DB::table('idempotency_requests')->count(), DB::table('identity_audit_events')->count()]);
+    }
+
+    public function test_archived_outlet_blocks_new_product_review(): void
+    {
+        $product = $this->product();
+        DB::table('product_listings')->insert(['external_source' => 'pos', 'external_id' => 'review-'.$product->id,
+            'slug' => 'review-'.$product->public_id, 'name' => $product->name, 'category' => $product->category,
+            'is_online' => true, 'public_id' => (string) Str::uuid(), 'version' => 1, 'product_id' => $product->id,
+            'created_at' => now(), 'updated_at' => now()]);
+        $this->acquire($product);
+        $order = $this->service()->checkout($this->scope(), $this->customer, $this->key('archive-review-order'),
+            $this->checkoutInput($product->public_id, 'cod'));
+        $this->service()->collectCod($this->actor, $this->outlet, $order['order_id'],
+            $this->key('archive-review-collect'), '200.02', 'COD-REVIEW');
+        $this->outlet->forceFill(['archived_at' => now(), 'version' => $this->outlet->version + 1])->save();
+
+        try {
+            app(ProductReviews::class)->submit($this->customer, ['order_id' => $order['order_id'],
+                'product_id' => $product->public_id, 'rating' => 5, 'body' => 'Synthetic archived review']);
+            $this->fail('Archived outlet accepted a product review.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $this->assertSame(0, DB::table('product_reviews')->count());
     }
 
     private function service(): OrderTransactions
