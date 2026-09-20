@@ -54,6 +54,13 @@ class PosShellE2eSeeder extends Seeder
             $digital = $this->member('E2E Digital Operations Manager', 'e2e-digital-operations@example.invalid', 'Digital Operations Manager');
             $reset = $this->member('E2E Reset Administrator', 'e2e-reset@example.invalid', 'Reset Administrator');
             $owner = $this->member('E2E Protected Owner', 'e2e-protected-owner@example.invalid', 'Protected Owner');
+            // Only the explicitly opted-in disposable browser fixture receives a deterministic binding.
+            if (getenv('MT75_D05_E2E_ENABLED') === '1') {
+                $testUuid = '0d055c06-65d1-4d49-a4d5-527597c0de05';
+                abort_unless(DB::table('admins')->where('public_id', $testUuid)->where('id', '!=', $owner->id)->doesntExist()
+                    && ! DB::table('owner_offline_recovery_codes')->where('admin_id', $owner->id)->exists(), 409);
+                $owner->forceFill(['public_id' => $testUuid])->save();
+            }
             $auditOwner = $this->member('E2E Audit Owner', 'e2e-audit-owner@example.invalid', 'Audit Owner');
             $prefOwner = $this->member('E2E Portal Preference Owner', 'e2e-pref-owner@example.invalid', 'Preference Owner');
             $history = $this->member('E2E History Operator', 'e2e-history@example.invalid', 'History Operator');

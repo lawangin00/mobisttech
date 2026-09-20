@@ -150,6 +150,12 @@ class PosShellE2eCleanupSeeder extends Seeder
             }
             DB::table('pos_audit_logs')->whereIn('outlet_id', $outletIds)->whereIn('action', ['MT75 E2E North Audit', 'MT75 E2E South Audit'])->where('actor_email', 'e2e-protected-owner@example.invalid')->delete();
             if ($adminIds) {
+                // Scoped only to this known disposable D05 owner; preserve all other recovery history.
+                $testOwner = DB::table('admins')->where('email', 'e2e-protected-owner@example.invalid')
+                    ->where('public_id', '0d055c06-65d1-4d49-a4d5-527597c0de05')->first();
+                if ($testOwner && in_array((int) $testOwner->id, array_map('intval', $adminIds), true)) {
+                    DB::table('owner_offline_recovery_codes')->where('admin_id', $testOwner->id)->delete();
+                }
                 DB::table('identity_audit_events')->where('realm', 'admin')->whereIn('account_id', $adminIds)->delete();
                 DB::table('account_sessions')->where('guard', 'admin')->whereIn('account_id', $adminIds)->delete();
                 DB::table('admin_roles')->whereIn('admin_id', $adminIds)->delete();
