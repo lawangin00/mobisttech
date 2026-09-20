@@ -4,7 +4,7 @@ const email = 'mt75-fresh-owner@example.invalid';
 const password = 'SyntheticFreshOwner123!';
 
 test('MT75 fresh publication reaches real Next.js product and guest cart', async ({ page }) => {
-    test.setTimeout(125_000);
+    test.setTimeout(175_000);
     await page.goto('/internal/admin/pos/login');
     await page.getByTestId('login-email').fill(email);
     await page.getByTestId('login-password').fill(password);
@@ -87,6 +87,25 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     expect(publicData.data).toMatchObject({name:'MT75 Fresh Accessory',price:'150.00',availability:{quantity:3}});
     expect(JSON.stringify(publicData.data)).not.toMatch(/purchase_price|customer_phone|customer_email|imei|object_key/);
 
+    const categories = await page.request.get('http://127.0.0.1:18080/api/v1/catalogue/categories');
+    expect(categories.status()).toBe(200);
+    const categoryRows = await categories.json() as {data:Array<{code:string;products:number}>};
+    expect(categoryRows.data.some(row=>row.code==='accessory' && row.products>=1)).toBe(true);
+    const filtered = await page.request.get('http://127.0.0.1:18080/api/v1/catalogue/products?category=accessory&q=Fresh');
+    expect(filtered.status()).toBe(200);
+    const filteredData = await filtered.json() as {data:{items:Array<{slug:string;price:string}>}};
+    expect(filteredData.data.items).toContainEqual(expect.objectContaining({slug:'mt75-fresh-accessory',price:'150.00'}));
+    const noMatch = await page.request.get('http://127.0.0.1:18080/api/v1/catalogue/products?category=mobile_phone&q=Fresh');
+    expect(noMatch.status()).toBe(200);
+    expect((await noMatch.json() as {data:{items:unknown[]}}).data.items).toHaveLength(0);
+    const matchedPage = await page.goto('http://127.0.0.1:13000/products?category=accessory&q=Fresh');
+    expect(matchedPage?.status()).toBe(200);
+    await expect(page.locator('main article').getByRole('link',{name:'MT75 Fresh Accessory'}).first()).toBeVisible();
+    const excludedPage = await page.goto('http://127.0.0.1:13000/products?category=mobile_phone&q=Fresh');
+    expect(excludedPage?.status()).toBe(200);
+    await expect(page.getByText('No products match this search.')).toBeVisible();
+    await expect(page.locator('main article')).toHaveCount(0);
+
     const displayed = await page.goto('http://127.0.0.1:13000/products/mt75-fresh-accessory');
     expect(displayed?.status()).toBe(200);
     await expect(page.getByRole('heading',{name:'MT75 Fresh Accessory'})).toBeVisible();
@@ -98,6 +117,27 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await expect(page.getByText('Added to cart.',{exact:true})).toBeVisible();
     await page.goto('http://127.0.0.1:13000/cart');
     await expect(page.getByRole('link',{name:'MT75 Fresh Accessory'})).toBeVisible();
+    // Publish actual protected mode revisions and verify fresh public route isolation.
+    for (const choice of ['digital_only','commerce_only','hybrid'] as const) {
+        await page.goto('/internal/admin/platform');
+        const modes=page.getByRole('heading',{name:'Website operating mode'}).locator('xpath=ancestor::section[1]');
+        await modes.locator('select').selectOption(choice);
+        const drafted=page.waitForResponse(r=>r.url().endsWith('/internal/admin/platform/website-mode/draft') && r.request().method()==='POST');
+        await modes.getByRole('button',{name:'Save mode draft'}).click();
+        expect((await drafted).ok()).toBe(true);
+        const published=page.waitForResponse(r=>/\/website-mode\/[^/]+\/publish$/.test(r.url()) && r.request().method()==='POST');
+        await modes.getByRole('button',{name:'Publish',exact:true}).first().click();
+        expect((await published).ok()).toBe(true);
+        await expect(modes).toContainText('Current: '+choice);
+        const profile=await page.request.get('http://127.0.0.1:18080/api/v1/website-profile');
+        expect(profile.status()).toBe(200);
+        expect((await profile.json() as {data:{mode:string}}).data.mode).toBe(choice);
+        const listing=await page.request.get('http://127.0.0.1:18080/api/v1/catalogue/products/mt75-fresh-accessory');
+        expect(listing.status()).toBe(choice==='digital_only'?404:200);
+        const nextPage=await page.goto('http://127.0.0.1:13000/products/mt75-fresh-accessory');
+        expect(nextPage?.status()).toBe(choice==='digital_only'?404:200);
+        if(choice!=='digital_only') await expect(page.getByRole('heading',{name:'MT75 Fresh Accessory'})).toBeVisible();
+    }
 });
 
 test('MT75 fresh customer registers, validates own cart and cancels COD checkout', async ({ page, browser }) => {
