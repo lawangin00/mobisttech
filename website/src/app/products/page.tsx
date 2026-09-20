@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
+import { normalizeCatalogueFilters } from "@/lib/catalogue-legacy-filters";
 import {
   readCatalogue,
   readCategories,
@@ -21,7 +22,7 @@ export default async function Products({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const params = await searchParams;
+  const params = normalizeCatalogueFilters(await searchParams);
   const profile = await readWebsiteProfile();
   if (!profile?.capabilities.commerce) notFound();
 

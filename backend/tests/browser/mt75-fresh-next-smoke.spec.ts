@@ -147,6 +147,23 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     expect(trackedFilter?.status()).toBe(200);
     await expect(page.locator('main article')).toHaveCount(1);
     await expect(page.locator('main article')).toContainText('MT75 Fresh Tracked Phone');
+    // Original source links use pta/ram/storage; public Next translates these to POS keys.
+    for (const oldUrl of [
+        '/products?category=mobile_phone&pta=pta_approved&ram=8&storage=128',
+        '/products/mobiles?pta=pta_approved&ram=8&storage=128',
+    ]) {
+        const oldFiltered=await page.goto('http://127.0.0.1:13000'+oldUrl);
+        expect(oldFiltered?.status(), oldUrl).toBe(200);
+        await expect(page.locator('main article')).toHaveCount(1);
+        await expect(page.locator('main article')).toContainText('MT75 Fresh Tracked Phone');
+        await expect(page.getByRole('combobox',{name:'PTA status'})).toHaveValue('pta_approved');
+        await expect(page.getByRole('spinbutton',{name:'RAM in GB'})).toHaveValue('8');
+        await expect(page.getByRole('spinbutton',{name:'Storage in GB'})).toHaveValue('128');
+    }
+    const modernWins=await page.goto('http://127.0.0.1:13000/products?category=mobile_phone&pta=pta_approved&pta_status=non_pta&ram=8&ram_gb=8');
+    expect(modernWins?.status()).toBe(200);
+    await expect(page.getByRole('combobox',{name:'PTA status'})).toHaveValue('non_pta');
+    await expect(page.locator('main article')).toHaveCount(0);
     const sortedPage=await page.goto('http://127.0.0.1:13000/products?sort=price_desc&category=accessory');
     expect(sortedPage?.status()).toBe(200);
     await expect(page.getByRole('combobox',{name:'Sort products'})).toHaveValue('price_desc');
