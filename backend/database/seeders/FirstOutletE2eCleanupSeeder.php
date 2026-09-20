@@ -51,7 +51,7 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
                 DB::table('pos_payment_destinations')->whereIn('id', $destinationIds)->delete();
 
                 $products = DB::table('products')->where('outlet_id', $outlet->id)
-                    ->where('name', 'MT75 Fresh Accessory')->get();
+                    ->whereIn('name', ['MT75 Fresh Accessory', 'MT75 Fresh Budget Accessory'])->get();
                 abort_unless(DB::table('products')->where('outlet_id', $outlet->id)->count() === $products->count(), 409);
                 $productIds = $products->pluck('id')->all();
                 $productPublicIds = $products->pluck('public_id')->all();

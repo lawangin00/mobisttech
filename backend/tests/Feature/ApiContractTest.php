@@ -91,6 +91,25 @@ class ApiContractTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/IMEI|unit_no|purchase_price|seller_phone|outlet_id/i', $detail->getContent());
     }
 
+    public function test_catalogue_price_bounds_follow_live_pos_prices_without_leaking_private_cost(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $budget = $this->listedProduct('mt75-bound-budget');
+        $premium = $this->listedProduct('mt75-bound-premium');
+        $budget->forceFill(['name' => 'MT75BOUND Budget', 'sale_price' => '90.00'])->save();
+        $premium->forceFill(['name' => 'MT75BOUND Premium', 'sale_price' => '150.00'])->save();
+        $url = '/api/v1/catalogue/products?q=MT75BOUND';
+        $this->getJson($url.'&min_price=100&max_price=150')->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-bound-premium')
+            ->assertJsonPath('data.items.0.price', '150.00');
+        $this->getJson($url.'&max_price=99.99')->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-bound-budget');
+        $this->getJson($url.'&min_price=151')->assertOk()->assertJsonCount(0, 'data.items');
+        $this->getJson($url.'&min_price=151&max_price=90')->assertUnprocessable();
+        $this->getJson($url.'&min_price=-1')->assertUnprocessable();
+        $this->getJson($url.'&max_price=invalid')->assertUnprocessable();
+    }
+
     public function test_catalogue_sort_uses_live_price_name_and_sort_scoped_cursor(): void
     {
         $this->publishMode('hybrid', 1);

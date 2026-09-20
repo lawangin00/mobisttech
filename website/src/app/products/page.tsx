@@ -30,6 +30,8 @@ export default async function Products({
   const category = typeof params.category === "string" ? params.category : "";
   const after = typeof params.after === "string" ? params.after : "";
   const sort = typeof params.sort === "string" ? params.sort : "oldest";
+  const minPrice = typeof params.min_price === "string" ? params.min_price : "";
+  const maxPrice = typeof params.max_price === "string" ? params.max_price : "";
   let page;
   try {
     page = await readCatalogue({
@@ -38,6 +40,8 @@ export default async function Products({
       category: category || undefined,
       after: after || undefined,
       sort,
+      min_price: minPrice || undefined,
+      max_price: maxPrice || undefined,
     });
   } catch (error) {
     if (error instanceof WebsiteApiError && (error.status === 404 || error.status === 422)) notFound();
@@ -48,6 +52,8 @@ export default async function Products({
   if (q) next.set("q", q);
   if (category) next.set("category", category);
   if (sort !== "oldest") next.set("sort", sort);
+  if (minPrice) next.set("min_price", minPrice);
+  if (maxPrice) next.set("max_price", maxPrice);
   if (page.page.next_cursor) next.set("after", page.page.next_cursor);
 
   return (
@@ -64,7 +70,7 @@ export default async function Products({
       </div>
       <form
         action="/products"
-        className="mt-8 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[1fr_12rem_12rem_auto]"
+        className="mt-8 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 lg:grid-cols-[1fr_10rem_10rem_8rem_8rem_auto]"
       >
         <input
           name="q"
@@ -92,6 +98,8 @@ export default async function Products({
           <option value="price_asc">Price: low to high</option><option value="price_desc">Price: high to low</option>
           <option value="name_asc">Name: A to Z</option><option value="name_desc">Name: Z to A</option>
         </select>
+        <input name="min_price" aria-label="Minimum price" type="number" min="0" step="0.01" defaultValue={minPrice} placeholder="Min PKR" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
+        <input name="max_price" aria-label="Maximum price" type="number" min="0" step="0.01" defaultValue={maxPrice} placeholder="Max PKR" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
         <button className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">
           Search
         </button>
