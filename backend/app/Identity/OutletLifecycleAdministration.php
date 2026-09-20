@@ -505,6 +505,14 @@ final class OutletLifecycleAdministration
             ->where('i.outlet_id', $id)->whereNull('r.order_id')->sum('l.net_amount');
         $recordedRefunds = (string) DB::table('pos_refund_allocations')->where('outlet_id', $id)->sum('amount');
         $remaining = bcsub($returnDue, $recordedRefunds, 2);
+        // Orders with mixed/unassigned outlet lines are not independently attributable.
+        // Count them separately; never assign their payment/refund amounts to this outlet.
+        $otherOutletOrders = DB::table('order_items')->where(fn ($q) => $q
+            ->where('outlet_id', '!=', $id)->orWhereNull('outlet_id'))->select('order_id');
+        $attributedOrders = DB::table('order_items')->where('outlet_id', $id)
+            ->whereNotIn('order_id', $otherOutletOrders)->select('order_id');
+        $sharedOrders = DB::table('order_items')->where('outlet_id', $id)
+            ->whereIn('order_id', $otherOutletOrders)->select('order_id');
         $counts = [
             'on_hand_quantity' => (int) DB::table('products')->where('outlet_id', $id)
                 ->selectRaw('COALESCE(SUM(GREATEST(qty, 0)), 0) as total')->value('total'),
@@ -534,6 +542,17 @@ final class OutletLifecycleAdministration
             'website_return_count' => DB::table('returns as r')->join('invoices as i', 'i.id', '=', 'r.invoice_id')
                 ->where('i.outlet_id', $id)->whereNotNull('r.order_id')->count(),
             'website_order_line_count' => DB::table('order_items')->where('outlet_id', $id)->count(),
+            // Internal state is review evidence, not a provider/bank settlement certificate.
+            'website_payments_for_reconciliation' => DB::table('payments')
+                ->whereIn('order_id', $attributedOrders)
+                ->where(fn ($q) => $q->whereIn('status', ['pending', 'unknown', 'paid_reconciliation'])
+                    ->orWhereNotNull('reconciliation_required_at'))->count(),
+            'website_refunds_for_reconciliation' => DB::table('refunds as f')
+                ->join('payments as p', 'p.id', '=', 'f.payment_id')
+                ->whereIn('p.order_id', $attributedOrders)
+                ->whereIn('f.status', ['pending', 'unknown', 'failed'])->count(),
+            'website_shared_orders_held_for_financial_review' => DB::table('orders')
+                ->whereIn('id', $sharedOrders)->count(),
             'website_orders_for_review' => DB::table('orders as o')
                 ->join('order_items as oi', 'oi.order_id', '=', 'o.id')->where('oi.outlet_id', $id)
                 ->whereNotIn('o.fulfillment_status', ['delivered', 'completed', 'cancelled'])

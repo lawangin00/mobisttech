@@ -1298,6 +1298,46 @@ class PosShellTest extends TestCase
         $this->assertCount(50, $sharedReport->json('data.promotion_history.claims'));
         $this->assertStringNotContainsString($ambiguousClaim, $sharedReport->getContent());
         $this->assertStringNotContainsString('PRIVATE-SHARED-ORDER-CUSTOMER', $sharedReport->getContent());
+        // No provider calls: synthetic internal payment/refund statuses, isolated DB only.
+        $originalSinglePaymentCount = DB::table('payments')->count();
+        $singlePaymentId = DB::table('payments')->insertGetId([
+            'order_id' => $orderId, 'status' => 'unknown', 'amount' => '1.00',
+            'gateway' => 'easypaisa', 'merchant' => 'test-merchant', 'mode' => 'sandbox',
+            'attempt_key' => 'D03-single-'.Str::random(12), 'public_id' => (string) Str::uuid(),
+            'reconciliation_required_at' => now(),
+        ]);
+        $sharedPaymentId = DB::table('payments')->insertGetId([
+            'order_id' => $sharedOrderId, 'status' => 'unknown', 'amount' => '1.00',
+            'gateway' => 'easypaisa', 'merchant' => 'test-merchant', 'mode' => 'sandbox',
+            'attempt_key' => 'D03-shared-'.Str::random(12), 'public_id' => (string) Str::uuid(),
+            'reconciliation_required_at' => now(),
+        ]);
+        foreach ([$singlePaymentId, $sharedPaymentId] as $paymentId) {
+            DB::table('refunds')->insert([
+                'payment_id' => $paymentId, 'amount' => '1.00', 'status' => 'pending',
+                'operation_key' => 'D03-refund-'.Str::random(12), 'provider' => 'manual',
+                'public_id' => (string) Str::uuid(),
+            ]);
+        }
+        $financeReport = $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_payments_for_reconciliation', 1)
+            ->assertJsonPath('data.obligations.website_refunds_for_reconciliation', 1)
+            ->assertJsonPath('data.obligations.website_shared_orders_held_for_financial_review', 1)
+            ->assertJsonPath('data.obligations.requires_manual_review', true);
+        $this->assertStringNotContainsString('test-merchant', $financeReport->getContent());
+        $this->assertSame($originalSinglePaymentCount + 2, DB::table('payments')->count());
+        // The synthetic shared-order payment/refund cannot be silently assigned to either outlet.
+        $this->assertSame(2, DB::table('refunds')->whereIn('payment_id', [$singlePaymentId, $sharedPaymentId])->count());
+        DB::table('payments')->where('id', $singlePaymentId)->update([
+            'status' => 'paid', 'reconciliation_required_at' => null, 'completed_at' => now(),
+        ]);
+        DB::table('refunds')->where('payment_id', $singlePaymentId)->update([
+            'status' => 'completed', 'completed_at' => now(),
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.obligations.website_payments_for_reconciliation', 0)
+            ->assertJsonPath('data.obligations.website_refunds_for_reconciliation', 0)
+            ->assertJsonPath('data.obligations.website_shared_orders_held_for_financial_review', 1);
 
         $other = $this->client();
         $this->login($other, $limited->email)->assertOk();
