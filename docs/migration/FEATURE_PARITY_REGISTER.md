@@ -24,7 +24,7 @@ All 1,224 tracked files have one or more family assignments; the unmapped list i
 - **Reuse** means retain a proven rule, registry, validation, calculation, state machine or assertion with minimal change.
 - **Adapt** means keep behavior while changing framework boundary, path, REST contract, presentation or storage integration.
 - **Refactor** means move working controller/transport/process behavior behind shared services without changing its contract.
-- **Migrate** means preserve schema/data/history/identity with explicit mappings and reconciliation.
+- **Migrate** is a historical source-characterization vocabulary item only; the 20-Sep-2026 owner decision removes importing ALL old POS/Website business data and identities from current MT-7.5 acceptance. Current target schema/feature transitions preserve only newly created mobiSTtech records, with isolated synthetic target fixtures.
 - **Rewrite** is limited to source structures that cannot satisfy the target: Blade presentation adapters become React/Next interfaces; dual-database transport becomes shared transactions; Control process ownership must be made safe. This does not justify rewriting their business contracts.
 
 ## Capability register
@@ -35,13 +35,13 @@ Source coverage: 470 tracked files; 54 resolved routes. Target owner: backend sh
 
 **Preserve:** Preserve three guards, assigned-outlet operator context, immutable OUTLET3 identity, permission defaults, password recovery and session revocation.
 
-**Decision:** Migrate identities with explicit collision maps; adapt guards/controllers; reuse permission checks. Do not equate POS outlet User with Website customer.
+**Decision:** Provision NEW Admin/Customer accounts and NEW outlets; adapt source guard/controller business rules to the approved two-realm target and reuse permission checks. Historical old-POS identities or collision maps are NOT imported or required. POS outlet identity must never be equated with Website customer.
 
-**Parity gate:** Cross-role and cross-outlet direct requests denied; credential/reset/session behavior and historical shop ownership retained.
+**Parity gate:** Cross-role and cross-outlet direct requests denied; NEW Admin login, new outlet creation/configuration, Customer signup, credential/reset/session and FUTURE target shop ownership verified with isolated synthetic target data. No source shop/identity transfer.
 
 ### P02 - POS products and master data
 
-Source coverage: 45 tracked files; 18 resolved routes. Target owner: backend shared services and protected React/Inertia POS administration. Gates: MT-2.3, MT-4.2. Target status: Complete (MT-7.5 P02 target-only closure; see `../audit/MT-7.5_P02_ROUTE_CROSSWALK.md` and `../audit/MT-7.5_FAST_TRACK_REVIEW.md`; cross-family gates and live data cutover remain independently OPEN).
+Source coverage: 45 tracked files; 18 resolved routes. Target owner: backend shared services and protected React/Inertia POS administration. Gates: MT-2.3, MT-4.2. Target status: Complete (MT-7.5 P02 target-only closure; see `../audit/MT-7.5_P02_ROUTE_CROSSWALK.md` and `../audit/MT-7.5_FAST_TRACK_REVIEW.md`; cross-family functional gates remain independently OPEN; old data cutover is excluded).
 
 **Preserve:** Preserve protected categories, variant key, brand/model/capacity/condition options, acquisition source, managed unit status and historical option usage.
 
@@ -278,3 +278,7 @@ Target parity remains Pending for every family. During later points, evidence mu
 `../PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md` adds approved requirements beyond source parity. `../REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md` maps every leaf clause to the v1.6 roadmap and fresh acceptance gates. P02/P03 acquisition/inventory, P04 sales, P05 claims, P06 reporting, P08 operations, W02/W03/W04 commerce, W05 digital and W06/W07 CMS families are reuse anchors, not proof that added stocktake/transfer/procurement/reset/mode/digital functionality exists. Completed backend component evidence remains in the ledger; full family parity still includes pending interfaces and integration.
 
 New features are approved extensions, not retroactive source capabilities or source completion claims. Original source family IDs, source inventories/counts, characterization and retirement decisions remain unchanged. MT-7.5 and FINAL-AUDIT must close both this source register and the addendum clause register; no new priority/optional feature may be silently relabeled Deferred.
+
+## 20-Sep-2026 fresh-business acceptance override
+
+The original source inventory, route/feature and behavior descriptions above remain historical READ-ONLY references, not instructions to transfer any old POS/Website outlets, inventory, customers, sales, invoices, payments, warranty/repair, supplier, media or identity records. Earlier statements such as "migrate history", "original-source data cutover", "source-qualified imported product" or "historical shop ownership" describe previous design/test characterization ONLY; they are not current MT-7.5 prerequisites. Each pending target family now closes on current REQUIRED functional/business-rule parity and complete new-outlet target journeys using newly generated synthetic records under isolated MySQL. Preserve retention/immutable references and financial, stock, warranty and audit integrity for future mobiSTtech-generated history; no legacy database snapshot, migration, old financial reconciliation or cutover. The operative owner requirement and D04 retirement are recorded in `../audit/MT-7.5_FRESH_BUSINESS_SCOPE.md`.

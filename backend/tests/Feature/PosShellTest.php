@@ -182,6 +182,48 @@ class PosShellTest extends TestCase
         $this->send($ownerClient, 'GET', $uri)->assertForbidden();
     }
 
+    public function test_fresh_protected_owner_can_sign_in_before_first_outlet_without_shop_access(): void
+    {
+        $owner = $this->member('fresh-bootstrap-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id,
+            ['assigned_at' => now()]);
+        $unassigned = $this->member('fresh-bootstrap-operator@example.invalid', ['shops.enter', 'shop.sales']);
+        $unprotected = $this->member('fresh-bootstrap-unprotected@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $this->assertSame(0, $owner->shops()->count());
+        $operatorClient = $this->client();
+        $this->login($operatorClient, $unassigned->email)->assertForbidden();
+        $unprotectedClient = $this->client();
+        $this->login($unprotectedClient, $unprotected->email)->assertForbidden();
+
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
+        $this->send($client, 'GET', '/internal/admin/pos')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('shell.active_outlet', null)
+                ->has('shell.outlets', 0)->has('shell.navigation', 0)
+                ->where('shell.can_manage_outlets', true));
+        $this->send($client, 'GET', '/internal/admin/pos/workspace/sales')->assertForbidden();
+        $this->send($client, 'GET', '/internal/admin/pos/workspace/inventory')->assertForbidden();
+        $this->send($client, 'GET', '/internal/admin/outlet-management')->assertOk();
+        $created = $this->send($client, 'POST', '/internal/admin/outlet-management', [
+            'name' => 'Fresh synthetic first outlet', 'business_address' => 'Test-only address',
+        ])->assertCreated();
+        $newId = $created->json('data.id');
+        $this->assertMatchesRegularExpression('/^[0-9]{3}$/', $created->json('data.outlet_code'));
+        $this->assertTrue($owner->shops()->where('outlets.public_id', $newId)->exists());
+        $this->assertNull(Outlet::where('public_id', $newId)->value('legacy_password'));
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
+            ->where('action', 'outlet_created')->where('outlet_id',
+                Outlet::where('public_id', $newId)->value('id'))->count());
+        $freshOperatorClient = $this->client();
+        $this->login($freshOperatorClient, $unassigned->email)->assertForbidden();
+        $this->send($client, 'GET', '/internal/admin/pos/workspace/sales')->assertForbidden();
+        $this->send($client, 'POST', '/internal/admin/outlets/select', ['outlet_id' => $newId])->assertOk();
+        $this->send($client, 'GET', '/internal/admin/pos')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('shell.active_outlet.id', $newId));
+    }
+
     public function test_protected_full_access_outlet_create_archive_and_direct_permission_barriers(): void
     {
         $existing = $this->outlet('Existing Protected Outlet', '051');

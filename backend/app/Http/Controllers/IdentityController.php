@@ -6,6 +6,7 @@ use App\Identity\Access;
 use App\Identity\CustomerIdentity;
 use App\Identity\IdentityAudit;
 use App\Identity\OfflineOwnerRecovery;
+use App\Identity\OutletLifecycleAdministration;
 use App\Identity\PosSessions;
 use App\Identity\RealmSessionPolicy;
 use App\Integrations\GmailRecovery;
@@ -89,7 +90,9 @@ class IdentityController extends Controller
         }
         if ($realm === 'admin' && $user->hasPermission('shops.enter')) {
             $outlets = $user->shops()->where('outlets.status', false)->whereNull('outlets.archived_at')->get();
-            if ($outlets->isEmpty()) {
+            // Fresh-business bootstrap: only the protected owner may sign in with no
+            // assigned outlet to create the first one; all shop actions still need scope.
+            if ($outlets->isEmpty() && ! app(OutletLifecycleAdministration::class)->canManage($user)) {
                 app(PosSessions::class)->release($request, $realm, $user->id);
                 $guard->logout();
                 $request->session()->invalidate();
@@ -162,7 +165,9 @@ class IdentityController extends Controller
         $user = Auth::guard($realm)->user();
         abort_unless(Hash::check($data['password'], $user->password), 422, 'Password is incorrect.');
         app(RealmSessionPolicy::class)->confirmRecentAuthentication($request);
-        if ($realm === 'admin') { $request->session()->put('identity_explicit_password_confirmed_at', now()->timestamp); }
+        if ($realm === 'admin') {
+            $request->session()->put('identity_explicit_password_confirmed_at', now()->timestamp);
+        }
         IdentityAudit::record($realm, $user->id, 'recent_authentication_confirmed');
 
         return response()->json(['data' => ['confirmed' => true, 'valid_for_minutes' => config('identity.sessions.'.$realm.'.recent_auth_minutes')]]);
@@ -198,6 +203,7 @@ class IdentityController extends Controller
         $actor = Auth::guard('admin')->user();
         abort_unless($actor instanceof Admin, 401);
         $response = response()->json(['data' => $recovery->rotate($actor, $data['current_password'])]);
+
         return $response->header('Cache-Control', 'private, no-store, max-age=0')
             ->header('Referrer-Policy', 'no-referrer');
     }
@@ -209,6 +215,7 @@ class IdentityController extends Controller
             'code' => ['required', 'string', 'max:64'],
             'password' => ['required', 'string', 'min:8', 'max:128', 'confirmed']]);
         $recovery->redeem($data['email'], $data['code'], $data['password']);
+
         return response()->json(['data' => ['message' => 'Password reset. Sign in again.']])
             ->header('Cache-Control', 'private, no-store, max-age=0')
             ->header('Referrer-Policy', 'no-referrer');
