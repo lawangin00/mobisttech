@@ -6,6 +6,7 @@ use App\Documents\CanonicalDocuments;
 use App\Identity\Access;
 use App\Models\Admin;
 use App\Models\Outlet;
+use App\Pos\PortalPreferences;
 use App\Pos\PosHistoryListing;
 use App\Pos\PosWarrantyIntakeSearch;
 use App\Reporting\OperationalReports;
@@ -34,12 +35,12 @@ final class PosCustomerReportingController extends Controller
                 DB::table('invoices as i')->where('i.outlet_id', $outlet->id));
             $pagination = $listing['pagination'];
             $invoices = collect($listing['rows'])->map(fn ($row) => [
-                    'id' => $row->public_id, 'number' => $row->invoice_number, 'customer_id' => $row->customer_id,
-                    'customer_name' => $row->customer_name, 'customer_phone' => $row->customer_phone,
-                    'customer_email' => $row->customer_email, 'customer_cnic' => $row->customer_cnic,
-                    'salesperson_name' => $row->salesperson_name, 'final_bill' => (string) $row->final_bill,
-                    'currency' => $row->currency, 'created_at' => $row->created_at,
-                ])->all();
+                'id' => $row->public_id, 'number' => $row->invoice_number, 'customer_id' => $row->customer_id,
+                'customer_name' => $row->customer_name, 'customer_phone' => $row->customer_phone,
+                'customer_email' => $row->customer_email, 'customer_cnic' => $row->customer_cnic,
+                'salesperson_name' => $row->salesperson_name, 'final_bill' => (string) $row->final_bill,
+                'currency' => $row->currency, 'created_at' => $row->created_at,
+            ])->all();
             $customerIds = collect($invoices)->pluck('customer_id')->filter()->unique()->values();
             if ($customerIds->isNotEmpty()) {
                 $customers = DB::table('customers')->whereIn('id', $customerIds)->whereNull('archived_at')
@@ -65,13 +66,13 @@ final class PosCustomerReportingController extends Controller
                 $claimRows = collect($listing['rows']);
             }
             $claims = $claimRows->map(fn ($row) => [
-                    'id' => $row->public_id, 'number' => $row->claim_number, 'status' => $row->status,
-                    'version' => (int) $row->version, 'quantity' => (int) $row->quantity,
-                    'received_at' => $row->received_at, 'expected_completion_at' => $row->expected_completion_at,
-                    'invoice_id' => $row->invoice_id, 'invoice_number' => $row->invoice_number,
-                    'customer_name' => $row->customer_name, 'customer_phone' => $row->customer_phone,
-                    'product_name' => $row->product_name,
-                ])->all();
+                'id' => $row->public_id, 'number' => $row->claim_number, 'status' => $row->status,
+                'version' => (int) $row->version, 'quantity' => (int) $row->quantity,
+                'received_at' => $row->received_at, 'expected_completion_at' => $row->expected_completion_at,
+                'invoice_id' => $row->invoice_id, 'invoice_number' => $row->invoice_number,
+                'customer_name' => $row->customer_name, 'customer_phone' => $row->customer_phone,
+                'product_name' => $row->product_name,
+            ])->all();
 
             $saleCandidates = DB::table('sales as s')->join('invoices as i', 'i.id', '=', 's.invoice_id')
                 ->join('products as p', 'p.id', '=', 's.product_id')->where('s.outlet_id', $outlet->id)
@@ -86,7 +87,7 @@ final class PosCustomerReportingController extends Controller
 
                     return [
                         'sale_id' => $row->public_id, 'invoice_id' => $row->invoice_id, 'invoice_number' => $row->invoice_number,
-                        'customer_name' => $row->customer_name, 'product_name' => $row->product_name,
+                        'customer_name' => $row->customer_name, 'product_name' => $snapshot['name'] ?? $row->product_name,
                         'quantity' => (int) $row->quantity, 'returned_quantity' => (int) $row->returned_quantity,
                         'track_imei' => (bool) $row->track_imei, 'units' => $units,
                         'warranty_type' => $snapshot['warranty_type'] ?? null,
@@ -105,7 +106,7 @@ final class PosCustomerReportingController extends Controller
             'can_send_documents' => app(Access::class)->allows($actor, 'shop.documents.send', $outlet),
             'invoices' => $invoices, 'customers' => $customers, 'claims' => $claims,
             'sale_candidates' => $saleCandidates, 'report' => $report, 'pagination' => $pagination,
-            'warranty_intake_category' => $area === 'claims' ? app(\App\Pos\PortalPreferences::class)->current()['warranty_search_category'] : null,
+            'warranty_intake_category' => $area === 'claims' ? app(PortalPreferences::class)->current()['warranty_search_category'] : null,
         ]]);
     }
 
@@ -113,6 +114,7 @@ final class PosCustomerReportingController extends Controller
     {
         [$actor, $outlet] = $this->context($request);
         $this->authorizeArea($actor, $outlet, 'claims');
+
         return response()->json(['data' => ['sale_candidates' => $search->search($request, $outlet)]]);
     }
 

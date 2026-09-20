@@ -275,14 +275,21 @@ class PosTransactionInterfaceTest extends TestCase
             ->assertJsonPath('data.cash_change_total', '50.00');
         $invoiceId = $completed->json('data.invoice_id');
         $saleId = $completed->json('data.sale_ids.0');
+        $saleTimeName = $product->name;
 
         $replay = $this->send($client, 'POST', '/internal/admin/pos/sales', ['sale' => $sale, 'payments' => $payments], true,
             ['HTTP_IDEMPOTENCY_KEY' => $key])->assertOk();
         $this->assertSame($invoiceId, $replay->json('data.invoice_id'));
         $this->assertSame(1, DB::table('invoices')->where('public_id', $invoiceId)->count());
 
+        $product->forceFill(['name' => 'Renamed after sale'])->save();
         $invoice = $this->send($client, 'GET', '/internal/admin/pos/invoices/'.$invoiceId)->assertOk();
         $this->assertCount(2, $invoice->json('data.payments'));
+        $invoice->assertJsonPath('data.lines.0.name', $saleTimeName);
+        $storedInvoice = DB::table('invoices')->where('public_id', $invoiceId)->firstOrFail();
+        $business = json_decode($storedInvoice->business_snapshot, true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame('canonical-business-at-sale.v2', $business['contract']);
+        $this->assertSame($this->outlet->public_id, $business['outlet_id']);
         $returned = $this->send($client, 'POST', '/internal/admin/pos/returns', [
             'invoice_id' => $invoiceId, 'reason' => 'HTTP accepted return',
             'lines' => [['sale_id' => $saleId, 'quantity' => 1, 'stock_unit_id' => null, 'condition' => 'returned', 'disposition' => 'sellable']],

@@ -224,13 +224,16 @@ final class PosTransactionController extends Controller
         $lines = DB::table('sales as s')->join('products as p', 'p.id', '=', 's.product_id')
             ->where('s.invoice_id', $row->id)->orderBy('s.id')
             ->get(['s.public_id as sale_id', 'p.public_id as product_id', 'p.name', 's.quantity', 's.returned_quantity',
-                's.sale_price', 's.net_total_price', 'p.track_imei'])
+                's.sale_price', 's.net_total_price', 's.invoice_detail_snapshot', 'p.track_imei'])
             ->map(function ($line) use ($row) {
+                $snapshot = json_decode($line->invoice_detail_snapshot, true) ?: [];
                 $units = $line->track_imei ? DB::table('stock_units')->where('sale_id',
                     DB::table('sales')->where('public_id', $line->sale_id)->value('id'))
                     ->where('invoice_id', $row->id)->get(['public_id', 'unit_code'])->map(fn ($u) => (array) $u)->all() : [];
 
-                return (array) $line + ['units' => $units];
+                unset($line->invoice_detail_snapshot);
+
+                return array_replace((array) $line, ['name' => $snapshot['name'] ?? $line->name, 'units' => $units]);
             })->all();
 
         return response()->json(['data' => $summary + ['lines' => $lines]]);
