@@ -32,6 +32,8 @@ export default async function Products({
   const sort = typeof params.sort === "string" ? params.sort : "oldest";
   const minPrice = typeof params.min_price === "string" ? params.min_price : "";
   const maxPrice = typeof params.max_price === "string" ? params.max_price : "";
+  const brand = typeof params.brand === "string" ? params.brand.trim() : "";
+  const model = typeof params.model === "string" ? params.model.trim() : "";
   let page;
   try {
     page = await readCatalogue({
@@ -42,6 +44,8 @@ export default async function Products({
       sort,
       min_price: minPrice || undefined,
       max_price: maxPrice || undefined,
+      brand: brand || undefined,
+      model: model || undefined,
     });
   } catch (error) {
     if (error instanceof WebsiteApiError && (error.status === 404 || error.status === 422)) notFound();
@@ -54,6 +58,8 @@ export default async function Products({
   if (sort !== "oldest") next.set("sort", sort);
   if (minPrice) next.set("min_price", minPrice);
   if (maxPrice) next.set("max_price", maxPrice);
+  if (brand) next.set("brand", brand);
+  if (model) next.set("model", model);
   if (page.page.next_cursor) next.set("after", page.page.next_cursor);
 
   return (
@@ -70,7 +76,7 @@ export default async function Products({
       </div>
       <form
         action="/products"
-        className="mt-8 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 lg:grid-cols-[1fr_10rem_10rem_8rem_8rem_auto]"
+        className="mt-8 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 lg:grid-cols-4 xl:grid-cols-8"
       >
         <input
           name="q"
@@ -100,6 +106,8 @@ export default async function Products({
         </select>
         <input name="min_price" aria-label="Minimum price" type="number" min="0" step="0.01" defaultValue={minPrice} placeholder="Min PKR" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
         <input name="max_price" aria-label="Maximum price" type="number" min="0" step="0.01" defaultValue={maxPrice} placeholder="Max PKR" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
+        <input name="brand" aria-label="Brand" maxLength={80} defaultValue={brand} placeholder="Brand" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
+        <input name="model" aria-label="Model" maxLength={80} defaultValue={model} placeholder="Model" className="min-w-0 rounded-xl border border-slate-300 px-3 py-3" />
         <button className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">
           Search
         </button>

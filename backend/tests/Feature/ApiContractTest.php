@@ -91,6 +91,26 @@ class ApiContractTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/IMEI|unit_no|purchase_price|seller_phone|outlet_id/i', $detail->getContent());
     }
 
+    public function test_catalogue_brand_and_model_filters_use_current_public_product_values(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $managed = $this->listedProduct('mt75-brand-managed');
+        $legacy = $this->listedProduct('mt75-brand-legacy');
+        $managed->forceFill(['name' => 'MT75BRAND Managed', 'brand' => 'Old Brand', 'model' => 'Alpha 128'])->save();
+        $legacy->forceFill(['name' => 'MT75BRAND Legacy', 'brand_master_data_id' => null,
+            'brand' => 'Legacy Budget', 'model' => 'Beta 64'])->save();
+        $url = '/api/v1/catalogue/products?q=MT75BRAND';
+        $this->getJson($url.'&brand=Synthetic%20brand&model=Alpha')->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-brand-managed');
+        $this->getJson($url.'&brand=Old%20Brand')->assertOk()->assertJsonCount(0, 'data.items');
+        $this->getJson($url.'&brand=Legacy%20Budget&model=Beta')->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-brand-legacy');
+        $this->getJson($url.'&model=Alpha')->assertOk()->assertJsonCount(1, 'data.items');
+        $this->getJson($url.'&brand=Unknown')->assertOk()->assertJsonCount(0, 'data.items');
+        $this->getJson($url.'&brand=x')->assertUnprocessable();
+        $this->getJson($url.'&model=x')->assertUnprocessable();
+    }
+
     public function test_catalogue_price_bounds_follow_live_pos_prices_without_leaking_private_cost(): void
     {
         $this->publishMode('hybrid', 1);

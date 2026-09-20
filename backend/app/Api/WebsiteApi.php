@@ -63,6 +63,8 @@ final class WebsiteApi
             'sort' => 'sometimes|in:oldest,newest,price_asc,price_desc,name_asc,name_desc',
             'min_price' => 'nullable|numeric|min:0|max:999999999',
             'max_price' => 'nullable|numeric|min:0|max:999999999',
+            'brand' => 'nullable|string|min:2|max:80',
+            'model' => 'nullable|string|min:2|max:80',
         ])->validate();
         $limit = (int) ($data['limit'] ?? 12);
         $sort = $data['sort'] ?? 'oldest';
@@ -72,19 +74,26 @@ final class WebsiteApi
         $query = isset($data['q']) ? trim($data['q']) : null;
         $minPrice = isset($data['min_price']) ? (float) $data['min_price'] : null;
         $maxPrice = isset($data['max_price']) ? (float) $data['max_price'] : null;
+        $brand = isset($data['brand']) ? trim($data['brand']) : null;
+        $model = isset($data['model']) ? trim($data['model']) : null;
         if ($minPrice !== null && $maxPrice !== null && $minPrice > $maxPrice) {
             throw ValidationException::withMessages(['max_price' => 'Max price must not be lower than min price.']);
         }
-        $resource = json_encode(compact('limit', 'after', 'category', 'query', 'sort', 'minPrice', 'maxPrice'), JSON_THROW_ON_ERROR);
+        $resource = json_encode(compact('limit', 'after', 'category', 'query', 'sort', 'minPrice', 'maxPrice', 'brand', 'model'), JSON_THROW_ON_ERROR);
 
-        return $this->cache->remember('catalogue', 'api:v1:products:'.$resource, function () use ($limit, $after, $category, $query, $sort, $minPrice, $maxPrice) {
-            return DB::transaction(function () use ($limit, $after, $category, $query, $sort, $minPrice, $maxPrice) {
+        return $this->cache->remember('catalogue', 'api:v1:products:'.$resource, function () use ($limit, $after, $category, $query, $sort, $minPrice, $maxPrice, $brand, $model) {
+            return DB::transaction(function () use ($limit, $after, $category, $query, $sort, $minPrice, $maxPrice, $brand, $model) {
                 $rows = DB::table('product_listings as l')->join('products as p', 'p.id', '=', 'l.product_id')
                     ->where('l.is_online', true)->where('p.isDeleted', false)->whereNull('p.archived_at')
                     ->when($category, fn ($q) => $q->where('p.category', $category))
                     ->when($query, fn ($q) => $q->where('p.name', 'like', '%'.$this->escapeLike($query).'%'))
                     ->when($minPrice !== null, fn ($q) => $q->where('p.sale_price', '>=', $minPrice))
-                    ->when($maxPrice !== null, fn ($q) => $q->where('p.sale_price', '<=', $maxPrice));
+                    ->when($maxPrice !== null, fn ($q) => $q->where('p.sale_price', '<=', $maxPrice))
+                    ->when($brand, fn ($q) => $q->where(fn ($matching) => $matching
+                        ->whereExists(fn ($managed) => $managed->selectRaw('1')->from('pos_master_data_options as b')
+                            ->whereColumn('b.id', 'p.brand_master_data_id')->where('b.label', $brand))
+                        ->orWhere(fn ($legacy) => $legacy->whereNull('p.brand_master_data_id')->where('p.brand', $brand))))
+                    ->when($model, fn ($q) => $q->where('p.model', 'like', '%'.$this->escapeLike($model).'%'));
                 $column = str_starts_with($sort, 'price_') ? 'p.sale_price' : 'p.name';
                 $descending = in_array($sort, ['newest', 'price_desc', 'name_desc'], true);
                 if ($after !== null && $sort !== 'oldest' && $sort !== 'newest') {

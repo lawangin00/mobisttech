@@ -52,6 +52,7 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await expect(page.getByTestId('outlet-profile-code')).toHaveCount(0);
 
     await page.getByPlaceholder('Product name').fill('MT75 Fresh Accessory');
+    await page.getByPlaceholder('Model').fill('MT75 Premium 128');
     await page.getByTestId('product-category').selectOption({ label: 'Accessories' });
     await page.getByPlaceholder('Purchase price').fill('100.00');
     await page.getByPlaceholder('Sale price').fill('150.00');
@@ -144,6 +145,7 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     // Create a second independent POS definition and explicitly publish it; no duplicate listing fixture.
     await page.goto('/internal/admin/pos/workspace/inventory');
     await page.getByPlaceholder('Product name').fill('MT75 Fresh Budget Accessory');
+    await page.getByPlaceholder('Model').fill('MT75 Budget 64');
     await page.getByTestId('product-category').selectOption({label:'Accessories'});
     await page.getByPlaceholder('Purchase price').fill('50.00');
     await page.getByPlaceholder('Sale price').fill('90.00');
@@ -154,6 +156,18 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await expect(page.getByTestId('website-listing-editor')).toContainText('MT75 Fresh Budget Accessory');
     await page.getByTestId('website-listing-publish').click();
     await expect(page.getByTestId('website-listing-editor')).toHaveCount(0);
+    const budgetModel=await page.goto('http://127.0.0.1:13000/products?model=Budget&category=accessory');
+    expect(budgetModel?.status()).toBe(200);
+    await expect(page.getByRole('textbox',{name:'Model'})).toHaveValue('Budget');
+    await expect(page.locator('main article')).toHaveCount(1);
+    await expect(page.locator('main article')).toContainText('MT75 Fresh Budget Accessory');
+    const premiumModel=await page.goto('http://127.0.0.1:13000/products?model=Premium&category=accessory');
+    expect(premiumModel?.status()).toBe(200);
+    await expect(page.locator('main article')).toHaveCount(1);
+    await expect(page.locator('main article')).toContainText('MT75 Fresh Accessory');
+    const unknownBrand=await page.goto('http://127.0.0.1:13000/products?brand=UnknownBrand');
+    expect(unknownBrand?.status()).toBe(200);
+    await expect(page.getByText('No products match this search.')).toBeVisible();
     const priced=await page.goto('http://127.0.0.1:13000/products?category=accessory&min_price=80&max_price=100');
     expect(priced?.status()).toBe(200);
     await expect(page.getByRole('spinbutton',{name:'Minimum price'})).toHaveValue('80');
