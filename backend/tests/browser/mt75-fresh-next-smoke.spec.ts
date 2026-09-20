@@ -409,6 +409,26 @@ test('MT75 public Next.js stock reaches zero under COD hold and returns after ca
     expect(soldOut.status()).toBe(200);
     expect((await soldOut.json() as {data:{availability:{quantity:number;in_stock:boolean}}}).data.availability)
         .toMatchObject({quantity:0,in_stock:false});
+    // W02 catalogue page retains sold-out listings while the COD hold is active.
+    const catalogueUrl='http://127.0.0.1:13000/products?category=accessory&sort=price_asc';
+    const heldIndex=await page.goto(catalogueUrl);
+    expect(heldIndex?.status()).toBe(200);
+    const cards=page.locator('main article');
+    await expect(cards).toHaveCount(2);
+    await expect(cards.nth(0)).toContainText('MT75 Fresh Budget Accessory');
+    await expect(cards.nth(0)).toContainText('Out of stock');
+    await expect(cards.nth(1)).toContainText('MT75 Fresh Accessory');
+    await expect(cards.nth(1)).toContainText('Out of stock');
+    const pagingUrl='http://127.0.0.1:18080/api/v1/catalogue/products?category=accessory&sort=price_asc&limit=1';
+    const firstPage=await page.request.get(pagingUrl);
+    expect(firstPage.status()).toBe(200);
+    const firstRow=await firstPage.json() as {data:{items:Array<{slug:string}>;page:{next_cursor:string;has_more:boolean}}};
+    expect(firstRow.data.items[0].slug).toBe('mt75-fresh-budget-accessory');
+    expect(firstRow.data.page.has_more).toBe(true);
+    const secondPage=await page.request.get(pagingUrl+'&after='+encodeURIComponent(firstRow.data.page.next_cursor));
+    expect(secondPage.status()).toBe(200);
+    const secondRow=await secondPage.json() as {data:{items:Array<{slug:string;availability:{quantity:number}}>}};
+    expect(secondRow.data.items[0]).toMatchObject({slug:'mt75-fresh-accessory',availability:{quantity:0}});
     const unavailable=await page.goto('http://127.0.0.1:13000/products/mt75-fresh-accessory');
     expect(unavailable?.status()).toBe(200);
     await expect(page.getByRole('button',{name:'Out of stock'})).toBeDisabled();
@@ -421,6 +441,16 @@ test('MT75 public Next.js stock reaches zero under COD hold and returns after ca
     expect(restocked.status()).toBe(200);
     expect((await restocked.json() as {data:{availability:{quantity:number;in_stock:boolean}}}).data.availability)
         .toMatchObject({quantity:3,in_stock:true});
+    const restockedIndex=await page.goto(catalogueUrl);
+    expect(restockedIndex?.status()).toBe(200);
+    await expect(page.locator('main article')).toHaveCount(2);
+    await expect(page.locator('main article').nth(0)).toContainText('Out of stock');
+    await expect(page.locator('main article').nth(1)).toContainText('MT75 Fresh Accessory');
+    await expect(page.locator('main article').nth(1)).toContainText('3 in stock');
+    const releasedSecondPage=await page.request.get(pagingUrl+'&after='+encodeURIComponent(firstRow.data.page.next_cursor));
+    expect(releasedSecondPage.status()).toBe(200);
+    expect((await releasedSecondPage.json() as {data:{items:Array<{slug:string;availability:{quantity:number}}>}}).data.items[0])
+        .toMatchObject({slug:'mt75-fresh-accessory',availability:{quantity:3}});
     const freshPage=await page.goto('http://127.0.0.1:13000/products/mt75-fresh-accessory');
     expect(freshPage?.status()).toBe(200);
     await expect(page.locator('main').getByText('3 available').first()).toBeVisible();

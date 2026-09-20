@@ -150,6 +150,46 @@ class ApiContractTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/IMEI|unit_no|purchase_price|seller_phone|outlet_id/i', $payload);
     }
 
+    public function test_catalogue_cursor_preserves_zero_stock_and_revalidates_live_hold(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $budget = $this->listedProduct('mt75-page-budget');
+        $middle = $this->listedProduct('mt75-page-middle');
+        $premium = $this->listedProduct('mt75-page-premium');
+        foreach ([[$budget, 'Budget', '90.00'], [$middle, 'Middle', '150.00'], [$premium, 'Premium', '210.00']] as [$product, $name, $price]) {
+            $product->forceFill(['name' => 'MT75PAGE '.$name, 'sale_price' => $price])->save();
+        }
+        $this->acquire($middle, 3);
+        $this->acquire($premium);
+        $url = '/api/v1/catalogue/products?category=accessory&q=MT75PAGE&sort=price_asc&limit=1';
+        $first = $this->getJson($url)->assertOk()->assertJsonPath('data.items.0.slug', 'mt75-page-budget')
+            ->assertJsonPath('data.items.0.availability.quantity', 0)->assertJsonPath('data.page.has_more', true);
+        $cursor = (string) $first->json('data.page.next_cursor');
+        $this->assertNotSame('', $cursor);
+        $middleUrl = $url.'&after='.urlencode($cursor);
+        $second = $this->getJson($middleUrl)->assertOk()->assertJsonPath('data.items.0.slug', 'mt75-page-middle')
+            ->assertJsonPath('data.items.0.availability.quantity', 3)->assertJsonPath('data.page.has_more', true);
+        $next = (string) $second->json('data.page.next_cursor');
+        $this->getJson($url.'&after='.urlencode($next))->assertOk()->assertJsonPath('data.items.0.slug', 'mt75-page-premium')
+            ->assertJsonPath('data.items.0.availability.quantity', 1)->assertJsonPath('data.page.has_more', false);
+        $hold = $this->reservation($middle, 3);
+        DB::transaction(fn () => app(TransactionalStock::class)->reserve($hold['line']));
+        $held = $this->getJson($middleUrl)->assertOk()->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.slug', 'mt75-page-middle')
+            ->assertJsonPath('data.items.0.availability.quantity', 0)
+            ->assertJsonPath('data.items.0.availability.in_stock', false)->assertJsonPath('data.page.has_more', true);
+        $this->assertNotSame($second->headers->get('ETag'), $held->headers->get('ETag'));
+        $this->getJson($url.'&after='.urlencode($next))->assertOk()->assertJsonPath('data.items.0.slug', 'mt75-page-premium')
+            ->assertJsonPath('data.items.0.availability.quantity', 1);
+        DB::transaction(fn () => app(TransactionalStock::class)->release($hold['reservation']));
+        $this->getJson($middleUrl)->assertOk()->assertJsonPath('data.items.0.availability.quantity', 3)
+            ->assertJsonPath('data.items.0.availability.in_stock', true);
+        $this->getJson($url.'&min_price=200')->assertOk()->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.slug', 'mt75-page-premium')->assertJsonPath('data.page.has_more', false);
+        $this->getJson(str_replace('price_asc', 'name_desc', $middleUrl))->assertUnprocessable();
+        $this->assertDoesNotMatchRegularExpression('/IMEI|unit_no|purchase_price|seller_phone|outlet_id/i', $held->getContent());
+    }
+
     public function test_catalogue_brand_and_model_filters_use_current_public_product_values(): void
     {
         $this->publishMode('hybrid', 1);
