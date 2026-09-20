@@ -594,6 +594,31 @@ test('MT75 public sitemap 241 published products reaches real Next XML', async (
         const last = await page.request.get('http://127.0.0.1:13000/products/mt75-sitemap-fixture-241');
         expect(last.status()).toBe(200);
         expect((await last.text())).toContain('MT75 Sitemap Fixture 241');
+        const fourSlugs=['mt75-fresh-accessory','mt75-fresh-budget-accessory','mt75-fresh-tracked-phone','mt75-sitemap-fixture-004'];
+        const four=await page.goto('http://127.0.0.1:13000/compare?'+new URLSearchParams({
+            a:fourSlugs[0],b:fourSlugs[1],c:fourSlugs[2],d:fourSlugs[3],e:'mt75-sitemap-fixture-005',
+        }));
+        expect(four?.status()).toBe(200);
+        await expect(page.locator('main article')).toHaveCount(4);
+        for(let i=0;i<4;i++) await expect(page.locator('main article').nth(i)).toContainText(
+            ['MT75 Fresh Accessory','MT75 Fresh Budget Accessory','MT75 Fresh Tracked Phone','MT75 Sitemap Fixture 004'][i]);
+        await expect(page.locator('form[action="/compare"]').nth(1).locator('select')).toHaveCount(4);
+        expect((await page.content()).toLowerCase()).not.toMatch(/purchase_price|seller_phone|customer_cnic|mt75-private-tracked-imei/);
+        const legacy=await page.goto('http://127.0.0.1:13000/compare?products='+fourSlugs.join(',')+',mt75-sitemap-fixture-005');
+        expect(legacy?.status()).toBe(200);
+        await expect(page.locator('main article')).toHaveCount(4);
+        await page.getByRole('textbox',{name:'Search comparison products'}).fill('Fixture 241');
+        await page.getByRole('button',{name:'Find products'}).click();
+        await expect(page.locator('main article')).toHaveCount(4);
+        const selected=page.locator('form[action="/compare"]').nth(1).locator('select[name="d"]');
+        await expect(selected).toHaveValue('mt75-sitemap-fixture-004');
+        await expect(selected.locator('option[value="mt75-sitemap-fixture-241"]')).toHaveCount(1);
+        await selected.selectOption('mt75-sitemap-fixture-241');
+        await page.locator('form[action="/compare"]').nth(1).getByRole('button',{name:'Compare'}).click();
+        await expect(page.locator('main article')).toHaveCount(4);
+        await expect(page.locator('main article').nth(3)).toContainText('MT75 Sitemap Fixture 241');
+        expect((await page.content()).toLowerCase()).not.toMatch(/purchase_price|seller_phone|customer_cnic|mt75-private-tracked-imei/);
+
     } finally {
         fixture('cleanup');
     }
