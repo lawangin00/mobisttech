@@ -327,4 +327,35 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
     await release.getByPlaceholder('new-canonical-slug').fill('publisher-can-rename');
     await release.getByPlaceholder('Approved reason').fill('Synthetic publisher approval');
     await expect(release.getByRole('button', { name: 'Change canonical slug' })).toBeEnabled();
+    // P07: each POS domain has independent editable controls and revision permissions.
+    data.pos_configuration.domains.branding.revisions = [
+        { id: 82, domain: 'branding', version: 1, state: 'draft', snapshot: { 'branding.header_logo_media_id': 91 }, published_at: null, restored_from_revision_id: null, created_at: '2026-09-18' },
+        { id: 83, domain: 'branding', version: 2, state: 'superseded', snapshot: { 'branding.header_logo_media_id': 0 }, published_at: '2026-09-18', restored_from_revision_id: null, created_at: '2026-09-18' },
+    ];
+    data.permissions = ['config.documents.manage'];
+    await page.reload();
+    await page.getByRole('button', { name: 'POS configuration' }).click();
+    const documentOnly = page.getByRole('heading', { name: 'POS document & output defaults' }).locator('xpath=ancestor::section[1]');
+    const themeOnly = page.getByRole('heading', { name: 'POS theme' }).locator('xpath=ancestor::section[1]');
+    const brandingOnly = page.getByRole('heading', { name: 'POS branding assets' }).locator('xpath=ancestor::section[1]');
+    await expect(documentOnly.locator('select').first()).toBeEnabled();
+    await expect(documentOnly.getByRole('button', { name: 'Save draft revision' })).toBeEnabled();
+    await expect(themeOnly.locator('input[type="color"]').first()).toBeDisabled();
+    await expect(themeOnly.getByRole('button', { name: 'Save draft revision' })).toBeDisabled();
+    await expect(brandingOnly.locator('select').first()).toBeDisabled();
+    await expect(brandingOnly.locator('input[type="file"]')).toBeDisabled();
+    await expect(brandingOnly.getByPlaceholder('Alternative text')).toBeDisabled();
+    await expect(brandingOnly.getByRole('button', { name: 'Publish', exact: true })).toBeDisabled();
+    await expect(brandingOnly.getByRole('button', { name: 'Rollback', exact: true })).toBeDisabled();
+    data.permissions = ['config.branding.manage'];
+    await page.reload();
+    await page.getByRole('button', { name: 'POS configuration' }).click();
+    await expect(documentOnly.locator('select').first()).toBeDisabled();
+    await expect(themeOnly.locator('input[type="color"]').first()).toBeDisabled();
+    await expect(brandingOnly.locator('select').first()).toBeEnabled();
+    await expect(brandingOnly.getByRole('button', { name: 'Publish', exact: true })).toBeEnabled();
+    await brandingOnly.getByRole('button', { name: 'Publish', exact: true }).click();
+    await expect.poll(() => calls.some(call => call.path.endsWith('/pos-config/revisions/82/publish'))).toBe(true);
+    await brandingOnly.getByRole('button', { name: 'Rollback', exact: true }).click();
+    await expect.poll(() => calls.some(call => call.path.endsWith('/pos-config/revisions/83/rollback'))).toBe(true);
 });

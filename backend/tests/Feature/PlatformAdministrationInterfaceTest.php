@@ -82,6 +82,16 @@ class PlatformAdministrationInterfaceTest extends TestCase
         $this->assertArrayNotHasKey('branding', $scoped['pos_configuration']['domains']);
         $this->assertSame([], $scoped['payment_destinations']);
         $this->assertSame([], $scoped['integrations']);
+        // P07: a documents-only Admin cannot invoke other POS domains directly.
+        $this->send($documentsClient, 'POST', '/internal/admin/platform/pos-config/theme/preview', [
+            'settings' => ['theme.primary' => '#008080'],
+        ])->assertForbidden();
+        $this->send($documentsClient, 'POST', '/internal/admin/platform/pos-config/branding/draft', [
+            'settings' => ['branding.header_logo_media_id' => 0],
+        ])->assertForbidden();
+        $this->send($documentsClient, 'POST', '/internal/admin/platform/pos-config/branding/media', [
+            'base64' => 'not-a-valid-image', 'extension' => 'png', 'original_name' => 'synthetic.png',
+        ])->assertForbidden();
     }
 
     public function test_pos_configuration_drafts_are_isolated_and_publish_rollback_refreshes_runtime_cache(): void
