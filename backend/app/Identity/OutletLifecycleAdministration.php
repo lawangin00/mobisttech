@@ -2,6 +2,7 @@
 
 namespace App\Identity;
 
+use App\Addendum\MoneySnapshot;
 use App\Documents\CanonicalDocuments;
 use App\Models\Admin;
 use App\Models\Outlet;
@@ -385,6 +386,35 @@ final class OutletLifecycleAdministration
             ->whereRaw("NOT (a.kind = 'promotion' AND a.treatment = 'discount' AND a.currency = 'PKR'
                 AND a.amount = c.discount_amount AND (a.invoice_id <=> c.invoice_id)
                 AND (a.order_id <=> c.order_id))"))->count();
+        // Financial adjustment v1 has a defined canonical digest; claim JSON does not
+        // retain its original serialized bytes. Check ALL attributed bound claims.
+        $financialSnapshotMismatches = 0;
+        foreach ((clone $bound)->join('monetary_adjustments as a', 'a.source_reference', '=', 'c.public_id')
+            ->select(['a.id', 'a.kind', 'a.treatment', 'a.amount', 'a.currency', 'a.source_reference',
+                'a.snapshot', 'a.snapshot_sha256', 'a.invoice_id', 'a.order_id',
+                'c.invoice_id as claim_invoice_id', 'c.order_id as claim_order_id'])->cursor() as $entry) {
+            try {
+                $snapshot = json_decode($entry->snapshot, true, flags: JSON_THROW_ON_ERROR);
+                if (! is_array($snapshot) || ! is_string($snapshot['reason'] ?? null)) {
+                    throw new \UnexpectedValueException('Invalid adjustment snapshot.');
+                }
+                $canonical = MoneySnapshot::adjustment(
+                    $entry->id, $entry->kind, (string) $entry->amount,
+                    $snapshot['reason'], $entry->source_reference);
+                ksort($snapshot);
+                ksort($canonical);
+                if ($snapshot !== $canonical
+                    || ! hash_equals((string) $entry->snapshot_sha256, MoneySnapshot::digest($canonical))
+                    || $entry->kind !== $canonical['kind'] || $entry->treatment !== $canonical['treatment']
+                    || $entry->currency !== $canonical['currency'] || (string) $entry->amount !== $canonical['amount']
+                    || $entry->invoice_id !== $entry->claim_invoice_id
+                    || $entry->order_id !== $entry->claim_order_id) {
+                    $financialSnapshotMismatches++;
+                }
+            } catch (\Throwable $exception) {
+                $financialSnapshotMismatches++;
+            }
+        }
         // JSON field reconciliation is deliberately separate from original byte-hash provenance.
         // A missing v1 contract/amount is a review anomaly, never silently treated as zero.
         $snapshotMismatch = (clone $claims)->whereRaw("(JSON_UNQUOTE(JSON_EXTRACT(c.snapshot, '$.contract')) IS NULL
@@ -399,9 +429,11 @@ final class OutletLifecycleAdministration
             'claims_truncated' => $claimCount > 50, 'claims' => $lines,
             'missing_financial_references' => $financialReferenceMissing,
             'mismatched_financial_references' => $financialReferenceMismatch,
+            'financial_snapshot_digest_mismatches' => $financialSnapshotMismatches,
             'snapshot_contract_or_amount_mismatches' => $snapshotMismatch,
             'requires_review' => $campaignCount > 0 || $claimCount > 0
-                || $financialReferenceMissing > 0 || $financialReferenceMismatch > 0 || $snapshotMismatch > 0,
+                || $financialReferenceMissing > 0 || $financialReferenceMismatch > 0
+                || $financialSnapshotMismatches > 0 || $snapshotMismatch > 0,
             'archive_eligibility' => 'not_approved_for_business_history'];
     }
 

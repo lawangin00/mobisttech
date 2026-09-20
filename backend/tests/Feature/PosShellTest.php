@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Addendum\MoneySnapshot;
 use App\Cash\CashSessionOperations;
 use App\Documents\CanonicalDocuments;
 use App\Models\Admin;
@@ -1085,6 +1086,7 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.promotion_history.claims_truncated', false)
             ->assertJsonPath('data.promotion_history.missing_financial_references', 2)
             ->assertJsonPath('data.promotion_history.mismatched_financial_references', 0)
+            ->assertJsonPath('data.promotion_history.financial_snapshot_digest_mismatches', 0)
             ->assertJsonPath('data.promotion_history.snapshot_contract_or_amount_mismatches', 2)
             ->assertJsonPath('data.promotion_history.claims.0.id', $websiteClaim)
             ->assertJsonPath('data.promotion_history.claims.0.channel', 'website')
@@ -1116,14 +1118,51 @@ class PosShellTest extends TestCase
         $divergent = $this->send($client, 'GET', $path)->assertOk()
             ->assertJsonPath('data.promotion_history.missing_financial_references', 0)
             ->assertJsonPath('data.promotion_history.mismatched_financial_references', 1)
+            ->assertJsonPath('data.promotion_history.financial_snapshot_digest_mismatches', 2)
             ->assertJsonPath('data.promotion_history.snapshot_contract_or_amount_mismatches', 2);
         $this->assertStringNotContainsString($outsideLinkedClaim, $divergent->getContent());
         DB::table('monetary_adjustments')->where('source_reference', $globalClaim)->update(['amount' => '1.00']);
         $matched = $this->send($client, 'GET', $path)->assertOk()
             ->assertJsonPath('data.promotion_history.missing_financial_references', 0)
             ->assertJsonPath('data.promotion_history.mismatched_financial_references', 0)
+            ->assertJsonPath('data.promotion_history.financial_snapshot_digest_mismatches', 2)
             ->assertJsonPath('data.promotion_history.snapshot_contract_or_amount_mismatches', 2);
         $this->assertStringNotContainsString($outsideLinkedClaim, $matched->getContent());
+        // Replace synthetic malformed finance snapshots with the actual canonical v1
+        // digest contract. The original promotion claim snapshot remains untouched.
+        $financialSnapshots = [];
+        foreach ([$globalClaim, $websiteClaim] as $claimPublic) {
+            $row = DB::table('monetary_adjustments')->where('source_reference', $claimPublic)->firstOrFail();
+            $snapshot = MoneySnapshot::adjustment($row->id, 'promotion',
+                '1.00', 'Synthetic booked promotion', $claimPublic);
+            DB::table('monetary_adjustments')->where('id', $row->id)->update([
+                'snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR),
+                'snapshot_sha256' => MoneySnapshot::digest($snapshot),
+            ]);
+            $financialSnapshots[$claimPublic] = $snapshot;
+        }
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.financial_snapshot_digest_mismatches', 0)
+            ->assertJsonPath('data.promotion_history.missing_financial_references', 0)
+            ->assertJsonPath('data.promotion_history.mismatched_financial_references', 0);
+        $originalDigest = MoneySnapshot::digest($financialSnapshots[$globalClaim]);
+        DB::table('monetary_adjustments')->where('source_reference', $globalClaim)->update([
+            'snapshot' => json_encode([...$financialSnapshots[$globalClaim],
+                'reason' => 'Synthetic tampered text'], JSON_THROW_ON_ERROR),
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.financial_snapshot_digest_mismatches', 1);
+        DB::table('monetary_adjustments')->where('source_reference', $globalClaim)->update([
+            'snapshot' => json_encode($financialSnapshots[$globalClaim], JSON_THROW_ON_ERROR),
+            'snapshot_sha256' => str_repeat('0', 64),
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.financial_snapshot_digest_mismatches', 1);
+        DB::table('monetary_adjustments')->where('source_reference', $globalClaim)->update([
+            'snapshot_sha256' => $originalDigest,
+        ]);
+        $this->send($client, 'GET', $path)->assertOk()
+            ->assertJsonPath('data.promotion_history.financial_snapshot_digest_mismatches', 0);
         $this->assertEquals($before, DB::table('promotion_claims')
             ->whereIn('public_id', [$directClaim, $linkedClaim, $globalClaim, $websiteClaim])->orderBy('id')->get()->all());
         for ($index = 0; $index < 51; $index++) {
