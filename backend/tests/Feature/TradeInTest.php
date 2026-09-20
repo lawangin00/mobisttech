@@ -112,6 +112,28 @@ class TradeInTest extends TestCase
             $this->input(['imeis' => ['352099001761508', '352099001761516']])));
     }
 
+    public function test_archived_outlet_blocks_new_trade_in_mutations_and_completed_replay(): void
+    {
+        $product = $this->product(true);
+        $key = (string) Str::uuid();
+        $created = $this->trade()->create($this->actor, $this->outlet, $product->public_id, $key, $this->input());
+        $before = DB::table('trade_ins')->where('public_id', $created['trade_in_id'])->firstOrFail();
+        $events = DB::table('trade_in_events')->where('trade_in_id', $before->id)->count();
+
+        DB::table('outlets')->where('id', $this->outlet->id)->update(['archived_at' => now(), 'version' => 2]);
+
+        $this->reject(fn () => $this->trade()->create($this->actor, $this->outlet, $product->public_id, $key, $this->input()));
+        $this->reject(fn () => $this->trade()->create($this->actor, $this->outlet, $product->public_id, (string) Str::uuid(),
+            $this->input(['imeis' => ['352099001761508', '352099001761516']])));
+        $this->reject(fn () => $this->trade()->approve($this->actor, $this->outlet, $created['trade_in_id'], (string) Str::uuid(), ['version' => 1]));
+
+        $after = DB::table('trade_ins')->where('id', $before->id)->firstOrFail();
+        $this->assertSame($before->status, $after->status);
+        $this->assertSame($before->version, $after->version);
+        $this->assertSame($events, DB::table('trade_in_events')->where('trade_in_id', $before->id)->count());
+        $this->assertSame(1, DB::table('trade_ins')->count());
+    }
+
     private function input(array $overrides = []): array
     {
         return ['seller_name' => 'Synthetic Seller', 'seller_cnic' => '42101-1234567-1', 'seller_phone' => '03001234567',

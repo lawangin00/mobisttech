@@ -254,8 +254,10 @@ final class TradeInOperations
     private function mutate(Admin $actor, Outlet $outlet, string $operation, string $key, mixed $payload, callable $callback): array
     {
         return DB::transaction(function () use ($actor, $outlet, $operation, $key, $payload, $callback) {
+            // Serialize every mutation and completed replay with outlet archival.
+            $lockedOutlet = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
             $fresh = $actor->fresh();
-            abort_unless($fresh instanceof Admin && app(Access::class)->allows($fresh, 'shop.trade-in', $outlet->fresh()), 403);
+            abort_unless($fresh instanceof Admin && app(Access::class)->allows($fresh, 'shop.trade-in', $lockedOutlet), 403);
             Validator::make(['key' => $key], ['key' => 'required|string|max:100'])->validate();
             $digest = hash('sha256', json_encode($this->canonical($payload), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
             $identity = ['actor_scope' => Admin::class.':'.$fresh->id, 'operation' => 'trade-in.'.$operation, 'key' => $key];
