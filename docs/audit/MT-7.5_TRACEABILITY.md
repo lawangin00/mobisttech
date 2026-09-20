@@ -6,7 +6,7 @@ Status: Active review; no whole-product parity or production approval is asserte
 |---|---|---|
 | P01 identity/outlets | `IdentitySecurityTest`, `TeamMemberSessionSecurityTest`, `pos-shell.spec.ts` | Cross-role/outlet, imported identity, reset/session and actual UI journey against the source parity gate. |
 | P02 catalogue/master data | `ProductMasterDataTest`, `PosTransactionInterfaceTest`, `pos-transaction.spec.ts` | Protected categories, option usage/deletion and original-source mapping comparison. |
-| P03 stock/acquisition | `InventoryConcurrencyTest`, `StockMigrationTest`, `pos-stock-control.spec.ts` | Full source movement/IMEI equivalence, UI/stock reconciliation and synthetic migration mapping. |
+| P03 stock/acquisition | `InventoryConcurrencyTest`, `StockMigrationTest`, `PosTransactionInterfaceTest`, fresh-owner Edge journey and `docs/audit/MT-7.5_P03_STOCK_PARITY.md` | Accepted: all 12 source routes, protected acquisition/movement history, quantity/physical stock, IMEI slots and historical/current claims, rollback, concurrency, sellable-return totals and outlet/role boundaries are reconciled. |
 | P04 sale/returns | `SalesOperationsTest`, `SalesMigrationTest`, `pos-transaction.spec.ts` | Negative sale/return, exact totals, saved Invoice and history cross-outlet output. |
 | P05 warranty/claims | `WarrantyClausesTest`, `ClaimOperationsTest`, `pos-customer-reporting.spec.ts` | Expiry boundary, historical clauses, claim document and role UI evidence. |
 | P06 reporting/documents | `DocumentReportingServicesTest`, `PosCustomerReportingInterfaceTest`, `pos-customer-reporting.spec.ts` | Thermal/A4 real PDF/print, optional email, assisted WhatsApp, CSV, filters and role-bound totals. |

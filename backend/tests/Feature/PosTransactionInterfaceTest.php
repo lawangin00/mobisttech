@@ -82,6 +82,16 @@ class PosTransactionInterfaceTest extends TestCase
         $this->send($client, 'POST', '/internal/admin/pos/inventory/products/'.$productId.'/adjust', [
             'type' => 'correction_out', 'quantity' => 1, 'reason' => 'HTTP correction', 'unit_id' => null,
         ], true, ['HTTP_IDEMPOTENCY_KEY' => 'mt42-adjust-'.Str::uuid()])->assertOk();
+        $history = $this->send($client, 'GET', '/internal/admin/pos/catalogue?mode=inventory&category=product_name&q='.
+            urlencode($created->json('data.name')))->assertOk();
+        $history->assertJsonPath('data.products.0.acquisitions.0.source_type', 'supplier')
+            ->assertJsonPath('data.products.0.acquisitions.0.quantity', 2)
+            ->assertJsonPath('data.products.0.movements.0.type', 'correction_out')
+            ->assertJsonPath('data.products.0.movements.0.quantity_change', -1)
+            ->assertJsonPath('data.products.0.movements.1.type', 'restock');
+        $this->assertStringNotContainsString('seller_cnic', $history->getContent());
+        $this->assertStringNotContainsString('seller_phone', $history->getContent());
+        $this->assertStringNotContainsString('cnic_front_path', $history->getContent());
 
         $condition = PosMasterDataOption::where('list_key', 'unit_condition')->where('is_active', true)->firstOrFail();
         $this->send($client, 'PATCH', '/internal/admin/pos/inventory/units/'.$unit->public_id, [

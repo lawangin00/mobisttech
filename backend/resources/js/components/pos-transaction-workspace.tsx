@@ -4,7 +4,7 @@ import {tabSearchOptedIn,tabSearchCategory,tabSearchConsent,tabSearchSaveCategor
 import { DocumentActions } from './pos-customer-reporting-workspace';
 
 type Unit = { id: string; code: string; status: string; version: number; imeis: string[] };
-type Product = { website_listing?:{slug:string;description:string;is_online:boolean;version:number}|null; category_master_data_id?:number|null;subcategory_master_data_id?:number|null;brand_master_data_id?:number|null;ram_master_data_id?:number|null;storage_master_data_id?:number|null;sim_master_data_id?:number|null;warranty_type?:string|null;warranty_unit?:number|null;warranty_duration?:number|null; id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[]; subcategory_display?: string | null; ram_display?: string | null; storage_display?: string | null; sim_display?: string | null };
+type Product = { website_listing?:{slug:string;description:string;is_online:boolean;version:number}|null; category_master_data_id?:number|null;subcategory_master_data_id?:number|null;brand_master_data_id?:number|null;ram_master_data_id?:number|null;storage_master_data_id?:number|null;sim_master_data_id?:number|null;warranty_type?:string|null;warranty_unit?:number|null;warranty_duration?:number|null; id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[]; acquisitions?:Array<{source_type:string;quantity:number;unit_purchase_price:string;acquired_at:string}>; movements?:Array<{type:string;quantity_change:number;stock_before:number;stock_after:number;created_at:string}>; subcategory_display?: string | null; ram_display?: string | null; storage_display?: string | null; sim_display?: string | null };
 type Destination = { public_id: string; method: string; display_name: string };
 type Master = { id: number; list_key: string; code: string; label: string; metadata: Record<string, unknown> };
 type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean };
@@ -165,6 +165,14 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
                 <button data-testid={'product-website-'+p.id} onClick={()=>openWebsiteEditor(p)} className="mt-2 mr-2 rounded border px-2 py-1 text-xs">Website listing</button>
                 <button onClick={() => void run(() => printLabel('product', p.id))} className="mt-2 rounded border px-2 py-1 text-xs">Print product label</button>
                 {p.units.length > 0 && <p className="mt-2 text-xs text-slate-500">{p.units.map((u) => u.code + (u.imeis.length ? ' (' + u.imeis.join(', ') + ')' : '')).join(' · ')}</p>}
+                <div data-testid={'inventory-history-'+p.id} className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
+                    <div><strong className="text-slate-800">Acquisition history</strong>{p.acquisitions?.length
+                        ? <ul className="mt-1 space-y-1">{p.acquisitions.map((row,index)=><li key={index}>{row.source_type} · {row.quantity} @ PKR {row.unit_purchase_price}</li>)}</ul>
+                        : <p className="mt-1">No acquisition recorded.</p>}</div>
+                    <div><strong className="text-slate-800">Stock movement history</strong>{p.movements?.length
+                        ? <ul className="mt-1 space-y-1">{p.movements.map((row,index)=><li key={index}>{row.type.replaceAll('_',' ')} · {row.quantity_change>0?'+':''}{row.quantity_change} · {row.stock_before} → {row.stock_after}</li>)}</ul>
+                        : <p className="mt-1">No movement recorded.</p>}</div>
+                </div>
             </div>)}</div>
         </section>
         {websiteProduct && <section data-testid="website-listing-editor" className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Website listing: {websiteProduct.name}</h3>

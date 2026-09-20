@@ -71,6 +71,9 @@ test('fresh protected owner creates, configures and explicitly enters the first 
     await receive.getByPlaceholder('Address').fill('Target-only supplier address');
     await page.getByTestId('acquire-submit').click();
     await expect(page.getByRole('button', { name: /MT75 Fresh Accessory/ })).toContainText('Qty 3');
+    const initialHistory = page.locator('[data-testid^="inventory-history-"]').first();
+    await expect(initialHistory).toContainText('supplier · 3 @ PKR 100.00');
+    await expect(initialHistory).toContainText('restock · +3 · 0 → 3');
     await page.goto('/internal/admin/platform');
     const modeSection = page.getByRole('heading', { name: 'Website operating mode' }).locator('xpath=ancestor::section[1]');
     await modeSection.getByRole('button', { name: 'Save mode draft' }).click();
@@ -125,6 +128,11 @@ test('fresh protected owner creates, configures and explicitly enters the first 
     await expect(returns).toContainText('Refund due: PKR 150.00');
     await returns.getByRole('button', { name: 'Record refund' }).click();
     await expect(page.getByTestId('refund-result')).toContainText('PKR 150.00 via bank_transfer');
+    await page.goto('/internal/admin/pos/workspace/inventory');
+    const returnedHistory = page.locator('[data-testid^="inventory-history-"]').first();
+    await expect(returnedHistory).toContainText('customer return · +1 · 2 → 3');
+    await expect(returnedHistory).toContainText('sale · -1 · 3 → 2');
+    await expect(returnedHistory).toContainText('restock · +3 · 0 → 3');
 
     const reportResponse = await page.request.get('/internal/admin/pos/customer-reporting/reports');
     expect(reportResponse.status()).toBe(200);

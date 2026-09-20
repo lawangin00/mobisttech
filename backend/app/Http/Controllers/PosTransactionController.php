@@ -47,19 +47,19 @@ final class PosTransactionController extends Controller
             $page = $paging['page'];
             $hasMore = $page < $paging['pages'];
         } else {
-        if ($q !== '') {
-            $matchedProductId = $this->lookupProductId($outlet, $q);
-            $query->where(function ($builder) use ($q, $matchedProductId) {
-                $builder->where('name', 'like', '%'.$q.'%')->orWhere('product_code', $q)
-                    ->orWhere('public_id', $q);
-                if ($matchedProductId) {
-                    $builder->orWhereKey($matchedProductId);
-                }
-            });
-        }
-        $rows = $query->orderBy('name')->skip(($page - 1) * 20)->limit(21)->get();
-        $hasMore = $rows->count() > 20;
-        $rows = $rows->take(20)->values();
+            if ($q !== '') {
+                $matchedProductId = $this->lookupProductId($outlet, $q);
+                $query->where(function ($builder) use ($q, $matchedProductId) {
+                    $builder->where('name', 'like', '%'.$q.'%')->orWhere('product_code', $q)
+                        ->orWhere('public_id', $q);
+                    if ($matchedProductId) {
+                        $builder->orWhereKey($matchedProductId);
+                    }
+                });
+            }
+            $rows = $query->orderBy('name')->skip(($page - 1) * 20)->limit(21)->get();
+            $hasMore = $rows->count() > 20;
+            $rows = $rows->take(20)->values();
         }
         $products = $rows->map(fn (Product $product) => $this->productPayload($product, $inventory))->all();
         $destinations = [];
@@ -124,6 +124,7 @@ final class PosTransactionController extends Controller
     public function websiteListing(Request $request, string $product, ProductWebsitePublication $publication)
     {
         [$actor, $outlet] = $this->context($request, ['shop.inventory']);
+
         return response()->json(['data' => $publication->save($actor, $outlet, $product, $request->all())]);
     }
 
@@ -335,11 +336,23 @@ final class PosTransactionController extends Controller
     {
         $units = $product->track_imei ? StockUnit::where('product_id', $product->id)->where('status', 'in_stock')
             ->orderBy('unit_no')->limit(30)->get()->map(fn (StockUnit $unit) => $this->unitPayload($unit))->all() : [];
+        $acquisitions = $inventory ? DB::table('stock_acquisitions')->where('product_id', $product->id)
+            ->where('outlet_id', $product->outlet_id)->latest('id')->limit(20)
+            ->get(['source_type', 'quantity', 'unit_purchase_price', 'acquired_at'])
+            ->map(fn ($row) => ['source_type' => $row->source_type, 'quantity' => (int) $row->quantity,
+                'unit_purchase_price' => (string) $row->unit_purchase_price, 'acquired_at' => $row->acquired_at])->all() : [];
+        $movements = $inventory ? DB::table('stock_movements')->where('product_id', $product->id)
+            ->where('outlet_id', $product->outlet_id)->latest('id')->limit(30)
+            ->get(['type', 'quantity_change', 'stock_before', 'stock_after', 'created_at'])
+            ->map(fn ($row) => ['type' => $row->type, 'quantity_change' => (int) $row->quantity_change,
+                'stock_before' => (int) $row->stock_before, 'stock_after' => (int) $row->stock_after,
+                'created_at' => $row->created_at])->all() : [];
 
         return ['id' => $product->public_id, 'code' => $product->product_code, 'name' => $product->name,
             'category' => $product->category, 'model' => $product->model, 'purchase_price' => (string) $product->purchase_price,
             'sale_price' => (string) $product->sale_price, 'qty' => (int) $product->qty, 'track_imei' => (bool) $product->track_imei,
             'version' => (int) $product->version, 'units' => $units,
+            'acquisitions' => $acquisitions, 'movements' => $movements,
             'brand_snapshot' => $inventory ? $product->brand : null,
             'brand_display' => $inventory ? $product->brandDisplay() : null,
             'subcategory_display' => $inventory ? $product->subcategoryDisplay() : null,
