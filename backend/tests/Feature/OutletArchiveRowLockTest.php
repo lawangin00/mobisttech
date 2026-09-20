@@ -969,4 +969,86 @@ final class OutletArchiveRowLockTest extends TestCase
         }
     }
 
+    public function test_isolated_website_callback_waits_for_archive_then_preserves_reconciliation(): void
+    {
+        abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test'
+            && (int) config('database.connections.mysql.port') === 13306, 403);
+        $tag = (string) Str::uuid();
+        $default = DB::getDefaultConnection();
+        $outlet = null; $orderId = null; $writer = null;
+        try {
+            $outlet = new Outlet;
+            $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '085',
+                'name' => 'D03 callback race '.$tag, 'status' => false, 'version' => 1])->save();
+            $orderId = DB::table('orders')->insertGetId(['order_number' => 'D03-CB-'.$tag, 'order_type' => 'commerce',
+                'status' => 'pending', 'fulfillment_status' => 'pending', 'customer_name' => 'Synthetic',
+                'customer_mobile' => '03001234567', 'subtotal' => '100.00', 'total' => '100.00', 'currency' => 'PKR',
+                'payment_status' => 'unpaid', 'owner_scope_hash' => hash('sha256', 'guest:'.$tag),
+                'public_id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now()]);
+            $paymentPublic = (string) Str::uuid();
+            $paymentId = DB::table('payments')->insertGetId(['order_id' => $orderId, 'gateway' => 'jazzcash',
+                'status' => 'pending', 'amount' => '100.00', 'currency' => 'PKR', 'public_id' => $paymentPublic,
+                'merchant' => 'd03-merchant', 'mode' => 'test', 'attempt_key' => 'checkout-1',
+                'intent_hash' => str_repeat('a', 64), 'gateway_order_reference' => 'D03-GW-'.$tag,
+                'initiated_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('reservations')->insert(['order_id' => $orderId, 'attempt' => 1, 'outlet_id' => $outlet->id,
+                'website_order_number' => 'D03-CB-'.$tag, 'reservation_reference' => (string) Str::uuid(),
+                'state' => 'active', 'currency' => 'PKR', 'customer_name' => 'Synthetic', 'customer_mobile' => '03001234567',
+                'total_amount' => '100.00', 'reservation_expires_at' => now()->addMinutes(20), 'gateway' => 'jazzcash',
+                'website_payment_id' => (string) $paymentId, 'contract_hash' => str_repeat('b', 64),
+                'created_at' => now(), 'updated_at' => now()]);
+            $event = ['event_id' => 'D03-EVT-'.$tag, 'transaction_reference' => 'D03-TX-'.$tag,
+                'order_reference' => 'D03-GW-'.$tag, 'amount' => '100.00', 'currency' => 'PKR', 'status' => 'paid',
+                'payload_hash' => hash('sha256', $tag)];
+            config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'd03-merchant', 'mode' => 'test']);
+            $providers = new \App\Commerce\PaymentProviders;
+            $providers->register('jazzcash', new class($event) implements \App\Commerce\PaymentProvider {
+                public function __construct(private array $event) {}
+                public function initiate(array $intent): array { return []; }
+                public function verify(array $payload): array { return $this->event; }
+            });
+            $this->app->instance(\App\Commerce\PaymentProviders::class, $providers);
+            config(['database.connections.d03_callback_writer' => config('database.connections.mysql')]);
+            $writer = DB::connection('d03_callback_writer');
+            $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
+            DB::connection('mysql')->beginTransaction();
+            try {
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)->lockForUpdate()->firstOrFail();
+                DB::connection('mysql')->table('outlets')->where('id', $outlet->id)->update(['archived_at' => now(), 'version' => 2]);
+                DB::setDefaultConnection('d03_callback_writer');
+                try {
+                    app(\App\Commerce\OrderTransactions::class)->callback('jazzcash', ['synthetic' => true]);
+                    $this->fail('Provider callback bypassed the independent archive lock.');
+                } catch (QueryException $exception) {
+                    $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
+                } finally {
+                    DB::setDefaultConnection($default);
+                }
+                DB::connection('mysql')->commit();
+            } finally {
+                DB::setDefaultConnection($default);
+                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            }
+            DB::setDefaultConnection('d03_callback_writer');
+            $result = app(\App\Commerce\OrderTransactions::class)->callback('jazzcash', ['synthetic' => true]);
+            DB::setDefaultConnection($default);
+            $this->assertSame('paid_reconciliation', $result['payment_status']);
+            $this->assertTrue($result['reconciliation_required']);
+            $this->assertSame(1, DB::table('payment_receipts')->where('payment_id', $paymentId)->count());
+            $this->assertSame(0, DB::table('invoices')->where('order_id', $orderId)->count());
+        } finally {
+            DB::setDefaultConnection($default);
+            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            if ($writer) { $writer->disconnect(); DB::purge('d03_callback_writer'); }
+            if ($orderId) {
+                DB::table('payment_receipts')->whereIn('payment_id', DB::table('payments')->where('order_id', $orderId)->pluck('id'))->delete();
+                DB::table('reservations')->where('order_id', $orderId)->delete();
+                DB::table('payments')->where('order_id', $orderId)->delete();
+                DB::table('orders')->where('id', $orderId)->delete();
+            }
+            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
+                ->where('name', 'D03 callback race '.$tag)->delete(); }
+        }
+    }
+
 }
