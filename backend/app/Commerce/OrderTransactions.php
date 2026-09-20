@@ -296,22 +296,22 @@ final class OrderTransactions
     {
         return $this->idempotent($actor::class.':'.$actor->id, 'commerce.cod.collect', $key,
             compact('orderPublicId', 'amount', 'receiptReference'), function () use ($actor, $outlet, $orderPublicId, $key, $amount, $receiptReference) {
-                abort_unless(app(Access::class)->allows($actor->fresh(), 'shop.sales', $outlet->fresh()), 403);
+                $lockedOutlet = $this->lockAuthorizedOutlet($actor, $outlet->id, 'shop.sales');
                 $order = DB::table('orders')->where('public_id', $orderPublicId)->lockForUpdate()->firstOrFail();
                 $reservation = DB::table('reservations')->where('order_id', $order->id)->where('state', 'held_cod')->lockForUpdate()->firstOrFail();
-                if ($reservation->outlet_id !== $outlet->id) {
+                if ($reservation->outlet_id !== $lockedOutlet->id) {
                     throw new LogicException('COD collection outlet mismatch.');
                 }
                 $payment = DB::table('payments')->where('order_id', $order->id)->where('gateway', 'cod')->lockForUpdate()->firstOrFail();
                 $event = ['event_id' => 'cod:'.$key, 'transaction_reference' => $receiptReference, 'order_reference' => $payment->public_id,
                     'amount' => SourceRow::money($amount), 'currency' => 'PKR', 'status' => 'paid',
-                    'payload_hash' => hash('sha256', $actor->id.'|'.$outlet->id.'|'.$receiptReference.'|'.$amount),
+                    'payload_hash' => hash('sha256', $actor->id.'|'.$lockedOutlet->id.'|'.$receiptReference.'|'.$amount),
                     'merchant' => $payment->merchant, 'mode' => $payment->mode];
                 $result = $this->applyReceipt('cod', $event);
-                IdentityAudit::record('admin', $actor->id, 'cod_collected', 'order:'.$order->order_number, $outlet->id);
+                IdentityAudit::record('admin', $actor->id, 'cod_collected', 'order:'.$order->order_number, $lockedOutlet->id);
 
                 return $result;
-            });
+            }, fn () => $this->lockAuthorizedOutlet($actor, $outlet->id, 'shop.sales'));
     }
 
     public function cancel(string $ownerScope, ?CustomerAccount $customer, string $orderPublicId, string $key): array
@@ -367,11 +367,12 @@ final class OrderTransactions
             if (! preg_match('/\A[0-9a-f]{64}\z/', $evidenceHash)) {
                 throw ValidationException::withMessages(['evidence' => 'A verified SHA-256 evidence digest is required.']);
             }
+            $outlet = $this->lockActiveReturnOutlet($returnPublicId);
+            abort_unless(app(Access::class)->allows($actor->fresh(), 'shop.sales', $outlet), 403);
             $refundAmount = SourceRow::money($amount);
             $return = DB::table('returns')->where('public_id', $returnPublicId)->lockForUpdate()->firstOrFail();
             $invoice = DB::table('invoices')->where('id', $return->invoice_id)->lockForUpdate()->firstOrFail();
-            $outlet = Outlet::whereKey($invoice->outlet_id)->firstOrFail();
-            abort_unless(app(Access::class)->allows($actor->fresh(), 'shop.sales', $outlet), 403);
+            abort_unless($invoice->outlet_id === $outlet->id, 404);
             $payment = DB::table('payments')->where('public_id', $paymentPublicId)->where('order_id', $return->order_id)->lockForUpdate()->firstOrFail();
             if (! in_array($payment->status, ['paid', 'paid_reconciliation'], true)) {
                 throw new LogicException('Refund requires verified collected payment.');
@@ -395,11 +396,12 @@ final class OrderTransactions
             IdentityAudit::record('admin', $actor->id, 'manual_refund_verified', 'refund:'.$public, $outlet->id);
 
             return ['refund_id' => $public, 'status' => 'completed', 'amount' => $refundAmount, 'currency' => 'PKR'];
-        });
+        }, fn () => $this->lockAuthorizedReturnOutlet($actor, $returnPublicId));
     }
 
     private function applyReceipt(string $gateway, array $event): array
     {
+        $receiptOutlet = $this->lockReceiptOutlet($gateway, $event);
         $payment = DB::table('payments')->where('gateway', $gateway)
             ->where(fn ($q) => $q->where('gateway_order_reference', $event['order_reference'])->orWhere('public_id', $event['order_reference']))
             ->lockForUpdate()->firstOrFail();
@@ -421,6 +423,22 @@ final class OrderTransactions
             'mode' => $event['mode'], 'event_id' => $event['event_id'], 'transaction_reference' => $event['transaction_reference'],
             'amount' => $payment->amount, 'currency' => 'PKR', 'payload_hash' => $event['payload_hash'], 'outcome' => $event['status'],
             'received_at' => now(), 'verified_at' => now()]);
+        if ($receiptOutlet && ($receiptOutlet->status || $receiptOutlet->archived_at !== null)) {
+            $paid = $event['status'] === 'paid';
+            DB::table('payments')->where('id', $payment->id)->update([
+                'status' => $paid ? 'paid_reconciliation' : 'unknown',
+                'transaction_reference' => $event['transaction_reference'],
+                'failure_code' => $paid ? null : 'inactive_outlet_'.$event['status'],
+                'paid_at' => $paid ? now() : null, 'completed_at' => $paid ? now() : null,
+                'reconciliation_required_at' => now(), 'updated_at' => now(),
+            ]);
+            DB::table('orders')->where('id', $order->id)->update([
+                'payment_status' => $paid ? 'paid_reconciliation' : 'reconciliation_required',
+                'paid_at' => $paid ? now() : null, 'updated_at' => now(),
+            ]);
+
+            return $this->paymentResult($payment->id);
+        }
         if ($event['status'] === 'failed') {
             if (! in_array($payment->status, ['paid', 'paid_reconciliation'], true)) {
                 $reservation = DB::table('reservations')->where('order_id', $order->id)->where('website_payment_id', $payment->id)->lockForUpdate()->first();
@@ -556,6 +574,50 @@ final class OrderTransactions
         abort_if($outlet->status || $outlet->archived_at !== null, 403, 'Outlet is not active.');
 
         return $outlet;
+    }
+
+    private function lockAuthorizedOutlet(Admin $actor, int $outletId, string $permission): Outlet
+    {
+        $outlet = Outlet::whereKey($outletId)->lockForUpdate()->firstOrFail();
+        abort_unless(app(Access::class)->allows($actor->fresh(), $permission, $outlet), 403);
+
+        return $outlet;
+    }
+
+    private function lockActiveReturnOutlet(string $returnPublicId): Outlet
+    {
+        $invoiceId = DB::table('returns')->where('public_id', $returnPublicId)->value('invoice_id');
+        abort_unless($invoiceId !== null, 404);
+        $outletId = DB::table('invoices')->where('id', $invoiceId)->value('outlet_id');
+        abort_unless($outletId !== null, 404);
+        $outlet = Outlet::whereKey($outletId)->lockForUpdate()->firstOrFail();
+        abort_if($outlet->status || $outlet->archived_at !== null, 403, 'Outlet is not active.');
+
+        return $outlet;
+    }
+
+    private function lockAuthorizedReturnOutlet(Admin $actor, string $returnPublicId): Outlet
+    {
+        $outlet = $this->lockActiveReturnOutlet($returnPublicId);
+        abort_unless(app(Access::class)->allows($actor->fresh(), 'shop.sales', $outlet), 403);
+
+        return $outlet;
+    }
+
+    private function lockReceiptOutlet(string $gateway, array $event): ?Outlet
+    {
+        $payment = DB::table('payments')->where('gateway', $gateway)
+            ->where(fn ($q) => $q->where('gateway_order_reference', $event['order_reference'])
+                ->orWhere('public_id', $event['order_reference']))->firstOrFail();
+        $order = DB::table('orders')->where('id', $payment->order_id)->firstOrFail();
+        if ($order->order_type === 'digital') {
+            return null;
+        }
+        $outletId = DB::table('reservations')->where('order_id', $order->id)
+            ->where('website_payment_id', $payment->id)->value('outlet_id');
+        abort_unless($outletId !== null, 404);
+
+        return Outlet::whereKey($outletId)->lockForUpdate()->firstOrFail();
     }
 
     private function owner(string $scope, ?CustomerAccount $customer): void

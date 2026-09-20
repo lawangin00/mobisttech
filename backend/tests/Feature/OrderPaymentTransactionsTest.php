@@ -166,6 +166,26 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->reject(fn () => $this->service()->callback('jazzcash', [...$payload, 'amount' => '200.03']));
     }
 
+    public function test_archived_outlet_preserves_verified_callback_as_reconciliation_without_sale(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $fake = $this->fakeProvider();
+        $order = $this->service()->checkout($this->scope(), $this->customer, $this->key('archive-callback'),
+            $this->checkoutInput($product->public_id, 'jazzcash'));
+        $intent = $this->service()->initiate($order['payment_id']);
+        $payload = $fake->paid('EVT-ARCHIVED-CALLBACK', $intent['reference'], '200.02');
+        $this->outlet->forceFill(['archived_at' => now(), 'version' => $this->outlet->version + 1])->save();
+
+        $result = $this->service()->callback('jazzcash', $payload);
+        $this->assertSame('paid_reconciliation', $result['payment_status']);
+        $this->assertTrue($result['reconciliation_required']);
+        $this->assertSame($result, $this->service()->callback('jazzcash', $payload));
+        $this->assertSame(1, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+        $this->assertSame(1, DB::table('reservation_allocations')->whereNull('released_at')->count());
+    }
+
     public function test_failure_releases_stock_and_late_payment_is_preserved_for_reconciliation_without_sale(): void
     {
         $product = $this->product();
@@ -277,6 +297,45 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame('partial', DB::table('orders')->where('public_id', $order['order_id'])->value('refund_status'));
         $this->reject(fn () => $this->service()->manualRefund($this->actor, $return['return_id'], $order['payment_id'], $this->key('refund-too-much'), '200.02', str_repeat('c', 64)));
         $this->assertSame(1, DB::table('refunds')->count());
+    }
+
+    public function test_archived_outlet_blocks_cod_and_refund_completed_replays_and_fresh_mutations(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 2);
+        $order = $this->service()->checkout($this->scope(), $this->customer, $this->key('archive-money-order'),
+            $this->checkoutInput($product->public_id, 'cod', 2));
+        $collectKey = $this->key('archive-collect');
+        $this->service()->collectCod($this->actor, $this->outlet, $order['order_id'], $collectKey, '400.04', 'COD-ARCHIVE');
+        $invoice = DB::table('invoices')->whereNotNull('order_id')->firstOrFail();
+        $sale = DB::table('sales')->where('invoice_id', $invoice->id)->firstOrFail();
+        $return = app(SalesOperations::class)->acceptReturn($this->actor, $this->outlet, $this->key('archive-return'), [
+            'invoice_id' => $invoice->public_id, 'reason' => 'Synthetic archive refund',
+            'lines' => [['sale_id' => $sale->public_id, 'quantity' => 1, 'condition' => 'opened', 'disposition' => 'sellable']],
+        ]);
+        $refundKey = $this->key('archive-refund');
+        $evidence = str_repeat('d', 64);
+        $this->service()->manualRefund($this->actor, $return['return_id'], $order['payment_id'], $refundKey, '200.02', $evidence);
+        $counts = [DB::table('payment_receipts')->count(), DB::table('refunds')->count(),
+            DB::table('idempotency_requests')->count(), DB::table('identity_audit_events')->count()];
+
+        $this->outlet->forceFill(['archived_at' => now(), 'version' => $this->outlet->version + 1])->save();
+        $attempts = [
+            fn () => $this->service()->collectCod($this->actor, $this->outlet, $order['order_id'], $collectKey, '400.04', 'COD-ARCHIVE'),
+            fn () => $this->service()->collectCod($this->actor, $this->outlet, $order['order_id'], $this->key('archive-collect-fresh'), '400.04', 'COD-ARCHIVE-2'),
+            fn () => $this->service()->manualRefund($this->actor, $return['return_id'], $order['payment_id'], $refundKey, '200.02', $evidence),
+            fn () => $this->service()->manualRefund($this->actor, $return['return_id'], $order['payment_id'], $this->key('archive-refund-fresh'), '200.02', str_repeat('e', 64)),
+        ];
+        foreach ($attempts as $attempt) {
+            try {
+                $attempt();
+                $this->fail('Archived outlet accepted COD/refund mutation or completed replay.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+        $this->assertSame($counts, [DB::table('payment_receipts')->count(), DB::table('refunds')->count(),
+            DB::table('idempotency_requests')->count(), DB::table('identity_audit_events')->count()]);
     }
 
     private function service(): OrderTransactions
