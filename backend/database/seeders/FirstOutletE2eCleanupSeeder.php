@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\CustomerAccount;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -14,6 +15,7 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
             && getenv('MT75_FIRST_OUTLET_E2E_ENABLED') === '1', 403);
 
         DB::transaction(function () {
+            $this->cleanupFreshWebsiteCustomer();
             $owner = DB::table('admins')->where('email', 'mt75-fresh-owner@example.invalid')
                 ->where('name', 'MT75 Fresh Protected Owner')->first();
             if (! $owner) {
@@ -103,6 +105,36 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
             DB::table('pos_master_data_options')->delete();
             $this->purgeOrphanedFixtureResidue();
         });
+    }
+
+    private function cleanupFreshWebsiteCustomer(): void
+    {
+        $user = DB::table('users')->where('email', 'mt75-new-customer@example.invalid')
+            ->where('name', 'MT75 Website Buyer')->first();
+        if (! $user) {
+            return;
+        }
+        $orders = DB::table('orders')->where('user_id', $user->id)->get();
+        abort_unless($orders->every(fn ($order) => $order->order_type === 'commerce'
+            && $order->customer_email === $user->email), 409);
+        $orderIds = $orders->pluck('id')->all();
+        $reservationIds = DB::table('reservations')->whereIn('order_id', $orderIds)->pluck('id')->all();
+        $lineIds = DB::table('reservation_lines')->whereIn('reservation_id', $reservationIds)->pluck('id')->all();
+        $paymentIds = DB::table('payments')->whereIn('order_id', $orderIds)->pluck('id')->all();
+        DB::table('reservation_allocations')->whereIn('reservation_line_id', $lineIds)->delete();
+        DB::table('reservation_lines')->whereIn('id', $lineIds)->delete();
+        DB::table('payment_receipts')->whereIn('payment_id', $paymentIds)->delete();
+        DB::table('reservations')->whereIn('id', $reservationIds)->delete();
+        DB::table('payments')->whereIn('id', $paymentIds)->delete();
+        DB::table('order_items')->whereIn('order_id', $orderIds)->delete();
+        DB::table('orders')->whereIn('id', $orderIds)->delete();
+        DB::table('idempotency_requests')->where('actor_scope', CustomerAccount::class.':'.$user->id)->delete();
+        DB::table('account_sessions')->where('guard', 'customer')->where('account_id', $user->id)->delete();
+        DB::table('identity_audit_events')->where('realm', 'customer')->where('account_id', $user->id)->delete();
+        DB::table('notification_preferences')->where('customer_account_id', $user->id)->delete();
+        DB::table('notification_rate_buckets')->where('customer_account_id', $user->id)->delete();
+        DB::table('customers')->where('website_user_id', $user->id)->delete();
+        DB::table('users')->where('id', $user->id)->delete();
     }
 
     private function purgeOrphanedFixtureResidue(): void
