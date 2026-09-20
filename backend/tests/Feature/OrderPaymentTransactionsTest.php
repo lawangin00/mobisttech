@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use LogicException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
 
@@ -76,6 +77,32 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->reject(fn () => $this->service()->checkout($this->scope(), $this->customer, $this->key('mixed'), $input));
         $this->publishMode('digital_only', 2);
         $this->reject(fn () => $this->service()->checkout($this->scope(), $this->customer, $this->key('mode'), $this->checkoutInput($product->public_id, 'cod')));
+    }
+
+    public function test_archived_outlet_blocks_physical_checkout_and_completed_replay(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $key = $this->key('archive-replay');
+        $input = $this->checkoutInput($product->public_id, 'cod');
+        $created = $this->service()->checkout($this->scope(), $this->customer, $key, $input);
+        $orderCount = DB::table('orders')->count();
+        $reservationCount = DB::table('reservations')->count();
+
+        $this->outlet->forceFill(['archived_at' => now(), 'version' => $this->outlet->version + 1])->save();
+        foreach ([$key, $this->key('archive-fresh')] as $attempt) {
+            try {
+                $this->service()->checkout($this->scope(), $this->customer, $attempt, $input);
+                $this->fail('Archived outlet accepted a physical checkout or completed replay.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+
+        $this->assertSame($orderCount, DB::table('orders')->count());
+        $this->assertSame($reservationCount, DB::table('reservations')->count());
+        $this->assertSame($created['order_id'], DB::table('orders')->sole()->public_id);
+        $this->assertSame(1, DB::table('idempotency_requests')->where('operation', 'commerce.checkout')->count());
     }
 
     public function test_disabled_provider_fails_before_order_and_verified_callback_is_replay_safe_across_mode_switch(): void

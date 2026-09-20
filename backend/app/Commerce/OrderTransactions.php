@@ -57,13 +57,13 @@ final class OrderTransactions
             }
             $prepared = [];
             $total = '0.00';
-            $outlet = null;
+            $outletModel = $this->lockActivePhysicalOutlet($data['lines']);
+            $outlet = $outletModel->id;
             foreach ($lines as $line) {
                 $product = Product::where('public_id', $line['product_id'])->where('isDeleted', false)->lockForUpdate()->firstOrFail();
-                if ($outlet !== null && $outlet !== $product->outlet_id) {
+                if ($outlet !== $product->outlet_id) {
                     throw ValidationException::withMessages(['lines' => 'A physical checkout must use one outlet.']);
                 }
-                $outlet = $product->outlet_id;
                 $variant = $line['variant_key'] ?? 'standard';
                 $this->ledger->select($product, (int) $line['quantity'], $variant);
                 $unit = SourceRow::money((string) $product->sale_price);
@@ -71,7 +71,6 @@ final class OrderTransactions
                 $total = bcadd($total, $lineTotal, 2);
                 $prepared[] = compact('product', 'variant', 'unit', 'lineTotal') + ['quantity' => (int) $line['quantity']];
             }
-            $outletModel = Outlet::whereKey($outlet)->lockForUpdate()->firstOrFail();
             $customerId = $customer ? DB::table('customers')->where('website_user_id', $customer->id)->value('id') : null;
             $loyaltyPoints = (int) ($data['loyalty_points'] ?? 0);
             if ($loyaltyPoints > 0 && ! empty($data['coupon_codes'])) {
@@ -157,7 +156,7 @@ final class OrderTransactions
                 'payment_id' => $paymentPublic, 'payment_status' => $data['gateway'] === 'cod' ? 'pending_collection' : 'pending',
                 'amount' => $total, 'currency' => 'PKR', 'promotion_claim_ids' => array_column($promotion['applications'], 'claim_id'),
                 'loyalty_claim_ids' => array_column($loyalty['applications'], 'claim_id')];
-        });
+        }, fn () => $this->lockActivePhysicalOutlet($data['lines']));
     }
 
     public function milestone(CustomerAccount $customer, string $key, array $input): array
@@ -492,12 +491,13 @@ final class OrderTransactions
             'reconciliation_required' => $payment->reconciliation_required_at !== null];
     }
 
-    private function idempotent(string $scope, string $operation, string $key, array $input, callable $callback): array
+    private function idempotent(string $scope, string $operation, string $key, array $input, callable $callback, ?callable $beforeReplay = null): array
     {
         Validator::make(['key' => $key], ['key' => ['required', 'string', 'min:16', 'max:128', 'regex:/\A[\x21-\x7E]+\z/']])->validate();
         $hash = $this->digest($this->canonical($input));
 
-        return DB::transaction(function () use ($scope, $operation, $key, $hash, $callback) {
+        return DB::transaction(function () use ($scope, $operation, $key, $hash, $callback, $beforeReplay) {
+            $beforeReplay?->__invoke();
             $identity = ['actor_scope' => $scope, 'operation' => $operation, 'key' => $key];
             DB::table('idempotency_requests')->insertOrIgnore([...$identity, 'request_hash' => $hash, 'status' => 'processing', 'created_at' => now(), 'updated_at' => now()]);
             $request = DB::table('idempotency_requests')->where($identity)->lockForUpdate()->firstOrFail();
@@ -513,6 +513,22 @@ final class OrderTransactions
 
             return $result;
         }, 3);
+    }
+
+    private function lockActivePhysicalOutlet(array $lines): Outlet
+    {
+        $productIds = collect($lines)->pluck('product_id')->unique()->values();
+        $products = Product::query()->whereIn('public_id', $productIds)->where('isDeleted', false)
+            ->get(['public_id', 'outlet_id']);
+        abort_unless($products->count() === $productIds->count(), 404);
+        $outletIds = $products->pluck('outlet_id')->unique()->values();
+        if ($outletIds->count() !== 1) {
+            throw ValidationException::withMessages(['lines' => 'A physical checkout must use one outlet.']);
+        }
+        $outlet = Outlet::whereKey($outletIds->first())->lockForUpdate()->firstOrFail();
+        abort_if($outlet->status || $outlet->archived_at !== null, 403, 'Outlet is not active.');
+
+        return $outlet;
     }
 
     private function owner(string $scope, ?CustomerAccount $customer): void
