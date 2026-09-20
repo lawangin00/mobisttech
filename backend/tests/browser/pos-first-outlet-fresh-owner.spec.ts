@@ -51,6 +51,25 @@ test('fresh protected owner creates, configures and explicitly enters the first 
     await expect(page.getByTestId('workspace-inventory')).toBeVisible();
     await expect(page.getByTestId('outlet-profile-code')).toHaveCount(0);
 
+    await page.getByPlaceholder('Product name').fill('MT75 Fresh Accessory');
+    await page.getByTestId('product-category').selectOption({ label: 'Accessories' });
+    await page.getByPlaceholder('Purchase price').fill('100.00');
+    await page.getByPlaceholder('Sale price').fill('150.00');
+    await page.getByTestId('product-save').click();
+    const product = page.getByRole('button', { name: /MT75 Fresh Accessory/ });
+    await expect(product).toContainText('Qty 0');
+
+    const receive = page.getByRole('heading', { name: 'Receive stock' }).locator('xpath=ancestor::section[1]');
+    await receive.locator('select').nth(0).selectOption({ label: 'MT75 Fresh Accessory' });
+    await receive.getByPlaceholder('Qty').fill('3');
+    await receive.getByPlaceholder('Unit cost').fill('100.00');
+    await receive.locator('select').nth(1).selectOption({ label: 'Supplier' });
+    await receive.getByPlaceholder('Business / seller name').fill('MT75 Synthetic Supplier');
+    await receive.getByPlaceholder('03XXXXXXXXX').fill('03000000000');
+    await receive.getByPlaceholder('Address').fill('Target-only supplier address');
+    await page.getByTestId('acquire-submit').click();
+    await expect(page.getByRole('button', { name: /MT75 Fresh Accessory/ })).toContainText('Qty 3');
+
     await page.getByTestId('logout').click();
     await page.waitForURL('**/internal/admin/pos/login');
 });
