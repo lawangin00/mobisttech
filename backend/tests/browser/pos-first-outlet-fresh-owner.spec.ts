@@ -93,9 +93,21 @@ test('fresh protected owner creates, configures and explicitly enters the first 
     await page.getByTestId('server-totals').click();
     await expect(page.getByTestId('authoritative-totals')).toContainText('Remaining');
     await expect(page.getByTestId('authoritative-totals')).toContainText('PKR 0.00');
+    const saleCreated = page.waitForResponse(response => response.url().endsWith('/internal/admin/pos/sales')
+        && response.request().method() === 'POST');
     await page.getByTestId('finalize-sale').click();
+    const salePayload = await (await saleCreated).json() as { data: { invoice_id: string } };
     await expect(page.getByTestId('sale-result')).toContainText('Sale complete:');
     await expect(page.getByTestId('sale-result')).toContainText('Final PKR 150.00');
+
+    const returns = page.getByRole('heading', { name: 'Return / refund' }).locator('xpath=ancestor::section[1]');
+    await returns.getByPlaceholder('Invoice public ID').fill(salePayload.data.invoice_id);
+    await returns.getByRole('button', { name: 'Load invoice' }).click();
+    await returns.locator('select').first().selectOption({ index: 1 });
+    await returns.getByRole('button', { name: 'Accept return' }).click();
+    await expect(returns).toContainText('Refund due: PKR 150.00');
+    await returns.getByRole('button', { name: 'Record refund' }).click();
+    await expect(page.getByTestId('refund-result')).toContainText('PKR 150.00 via bank_transfer');
 
     await page.getByTestId('logout').click();
     await page.waitForURL('**/internal/admin/pos/login');

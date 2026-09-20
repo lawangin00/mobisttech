@@ -31,9 +31,12 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
                 abort_unless(DB::table('invoices')->where('outlet_id', $outlet->id)->count() === $invoices->count(), 409);
                 $invoiceIds = $invoices->pluck('id')->all();
                 $customerIds = $invoices->pluck('customer_id')->filter()->all();
+                $returnIds = DB::table('returns')->whereIn('invoice_id', $invoiceIds)->pluck('id')->all();
                 $tenderIds = DB::table('pos_tender_allocations')->whereIn('invoice_id', $invoiceIds)->pluck('id')->all();
                 DB::table('pos_settlement_events')->whereIn('tender_allocation_id', $tenderIds)->delete();
                 DB::table('pos_refund_allocations')->whereIn('invoice_id', $invoiceIds)->delete();
+                DB::table('return_lines')->whereIn('return_id', $returnIds)->delete();
+                DB::table('returns')->whereIn('id', $returnIds)->delete();
                 DB::table('pos_tender_allocations')->whereIn('id', $tenderIds)->delete();
 
                 $destinations = DB::table('pos_payment_destinations')->where('outlet_id', $outlet->id)
