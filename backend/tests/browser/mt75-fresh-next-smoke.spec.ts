@@ -146,6 +146,31 @@ test('MT75 fresh customer registers, validates own cart and cancels COD checkout
     expect(order.data).toMatchObject({payment_status:'pending_collection',amount:'150.00'});
     await expect(page).toHaveURL('http://127.0.0.1:13000/account/orders/'+order.data.order_id);
     await expect(page.getByRole('heading',{name:'Order status'})).toBeVisible();
+    // Reuse the exact signed customer session, CSRF and completed checkout key.
+    const csrfResponse=await page.request.get('http://127.0.0.1:13000/api/customer/auth/csrf-cookie');
+    expect(csrfResponse.status()).toBe(200);
+    const csrf=(await csrfResponse.json() as {data:{csrf_token:string}}).data.csrf_token;
+    const checkoutKey=orderResponse.request().headers()['idempotency-key'];
+    expect(checkoutKey).toBeTruthy();
+    const originalBody=orderResponse.request().postDataJSON() as Record<string,unknown>;
+    const replay=await page.request.post('http://127.0.0.1:13000/api/customer/orders',{
+        headers:{'X-CSRF-TOKEN':csrf,'Idempotency-Key':checkoutKey,Accept:'application/json'},
+        data:originalBody,
+    });
+    expect(replay.status(),await replay.text()).toBe(201);
+    expect((await replay.json() as {data:{order_id:string}}).data.order_id).toBe(order.data.order_id);
+    const lines=originalBody.lines as Array<{product_id:string;quantity:number}>;
+    expect(lines).toHaveLength(1);
+    const overflow={...originalBody,lines:[{product_id:lines[0].product_id,quantity:4}]};
+    const oversell=await page.request.post('http://127.0.0.1:13000/api/customer/orders',{
+        headers:{'X-CSRF-TOKEN':csrf,'Idempotency-Key':crypto.randomUUID(),Accept:'application/json'},
+        data:overflow,
+    });
+    expect([409,422]).toContain(oversell.status());
+    const ownOrders=await page.request.get('http://127.0.0.1:13000/api/customer/orders');
+    expect(ownOrders.status()).toBe(200);
+    const orderRows=await ownOrders.json() as {data:{items:Array<{id:string}>}};
+    expect(orderRows.data.items.filter(row=>row.id===order.data.order_id)).toHaveLength(1);
     const stranger=await browser.newContext();
     try {
         const denied=await stranger.request.get('http://127.0.0.1:13000/api/customer/orders/'+order.data.order_id);

@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Cash\CashSessionOperations;
+use App\Cms\WebsiteModePublication;
+use App\Models\Outlet;
 use App\Models\PosMasterDataOption;
 use App\Models\StockUnit;
 use App\Payments\PosPaymentOperations;
+use App\Services\PosInventoryMasterData;
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
@@ -91,8 +94,8 @@ class PosTransactionInterfaceTest extends TestCase
         $product = $this->product();
         $this->acquire($product, 2);
         $client = $this->authenticatedClient();
-        $draft = app(\App\Cms\WebsiteModePublication::class)->saveDraft($this->actor, 'hybrid');
-        app(\App\Cms\WebsiteModePublication::class)->publish($this->actor, $draft['id']);
+        $draft = app(WebsiteModePublication::class)->saveDraft($this->actor, 'hybrid');
+        app(WebsiteModePublication::class)->publish($this->actor, $draft['id']);
         $slug = 'mt75-fresh-'.strtolower(Str::random(10));
         $public = '/api/v1/catalogue/products/'.$slug;
         $this->getJson($public)->assertNotFound();
@@ -116,11 +119,33 @@ class PosTransactionInterfaceTest extends TestCase
         $this->assertSame(1, DB::table('product_listings')->where('product_id', $product->id)->count());
     }
 
+    public function test_fresh_website_listing_denies_cross_outlet_and_inventory_only_roles(): void
+    {
+        $product = $this->product();
+        $firstOutlet = $this->outlet;
+        $client = $this->authenticatedClient();
+        $url = '/internal/admin/pos/inventory/products/'.$product->public_id.'/website-listing';
+        $payload = ['slug' => 'mt75-denial-'.strtolower(Str::random(8)),
+            'description' => 'Synthetic cross-outlet access denial.', 'is_online' => true, 'expected_version' => 0];
+        $second = new Outlet;
+        $second->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'MT75 second outlet', 'outlet_code' => '026'])->save();
+        $this->actor->shops()->attach($second);
+        $this->send($client, 'POST', '/internal/admin/outlets/select', ['outlet_id' => $second->public_id])->assertOk();
+        $this->send($client, 'GET', '/internal/admin/pos/catalogue?mode=inventory')->assertOk()
+            ->assertJsonPath('data.products', []);
+        $this->send($client, 'POST', $url, $payload)->assertNotFound();
+        $this->assertSame(0, DB::table('product_listings')->where('product_id', $product->id)->count());
+        $this->send($client, 'POST', '/internal/admin/outlets/select', ['outlet_id' => $firstOutlet->public_id])->assertOk();
+        $this->actor->forceFill(['permissions' => ['shops.enter', 'shop.inventory']])->save();
+        $this->send($client, 'POST', $url, $payload)->assertForbidden();
+        $this->assertSame(0, DB::table('product_listings')->where('product_id', $product->id)->count());
+    }
+
     public function test_existing_inventory_definition_requires_current_version_and_preserves_stock(): void
     {
         $product = $this->product(true);
         $originalBrand = $product->brand;
-        app(\App\Services\PosInventoryMasterData::class)->update($product->brandMasterOption, ['label' => 'Updated managed brand']);
+        app(PosInventoryMasterData::class)->update($product->brandMasterOption, ['label' => 'Updated managed brand']);
         $client = $this->authenticatedClient();
         $url = '/internal/admin/pos/inventory/products';
         $input = [
@@ -149,21 +174,26 @@ class PosTransactionInterfaceTest extends TestCase
 
     public function test_inventory_portal_preferences_page_search_and_sales_catalogue_remain_independent(): void
     {
-        $tracked = $this->product(true); $this->acquire($tracked); $this->imeis($tracked);
-        $base = $this->product(); $original = $base->getAttributes(); unset($original['id']);
+        $tracked = $this->product(true);
+        $this->acquire($tracked);
+        $this->imeis($tracked);
+        $base = $this->product();
+        $original = $base->getAttributes();
+        unset($original['id']);
         $rows = [];
         for ($i = 1; $i <= 110; $i++) {
             $rows[] = [...$original, 'public_id' => (string) Str::uuid(), 'product_code' => null,
                 'sku' => null, 'name' => sprintf('MT75 Inventory %03d', $i)];
         }
         DB::table('products')->insert($rows);
-        $other = new \App\Models\Outlet;
+        $other = new Outlet;
         $other->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Other outlet inventory',
             'outlet_code' => '087'])->save();
         DB::table('products')->insert([...$original, 'outlet_id' => $other->id,
             'public_id' => (string) Str::uuid(), 'product_code' => null, 'sku' => null,
             'name' => 'MT75 Inventory Other Outlet']);
-        $client = $this->authenticatedClient(); $url = '/internal/admin/pos/catalogue';
+        $client = $this->authenticatedClient();
+        $url = '/internal/admin/pos/catalogue';
         $first = $this->send($client, 'GET', $url.'?mode=inventory')->assertOk();
         $first->assertJsonPath('data.pagination.total', 112)->assertJsonPath('data.pagination.per_page', 10)
             ->assertJsonPath('data.pagination.pages', 12)->assertJsonPath('data.pagination.category', 'all')
