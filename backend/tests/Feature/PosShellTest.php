@@ -352,6 +352,31 @@ class PosShellTest extends TestCase
             'stock_transfer_receipt_id' => $receiptId, 'stock_transfer_id' => $transferId,
             'stock_transfer_line_id' => $transferLineId, 'received_quantity' => 1,
             'line_snapshot' => $receiptLineSnapshot, 'snapshot_sha256' => hash('sha256', $receiptLineSnapshot)]);
+        $stocktakeId = DB::table('stocktake_sessions')->insertGetId([
+            'public_id' => (string) Str::uuid(), 'outlet_id' => $outlet->id,
+            'session_number' => 'D03-STOCKTAKE-'.Str::random(10),
+            'kind' => 'full', 'status' => 'counting', 'version' => 1,
+            'notes' => 'PRIVATE-UNAPPROVED-STOCKTAKE-NOTES',
+            'started_by_admin_id' => $owner->id, 'started_at' => now()]);
+        $websiteOrderId = DB::table('orders')->insertGetId([
+            'public_id' => (string) Str::uuid(), 'order_number' => 'D03-WEB-'.Str::random(12),
+            'order_type' => 'mobile', 'customer_name' => 'PRIVATE-WEBSITE-CUSTOMER',
+            'customer_mobile' => '03001112222', 'fulfillment_status' => 'pending']);
+        $websiteLineId = DB::table('order_items')->insertGetId([
+            'order_id' => $websiteOrderId, 'item_type' => 'mobile', 'title' => 'Synthetic ordered unit',
+            'quantity' => 1, 'product_id' => $product->id, 'outlet_id' => $outlet->id]);
+        $reservationId = DB::table('reservations')->insertGetId([
+            'order_id' => $websiteOrderId, 'outlet_id' => $outlet->id,
+            'website_order_number' => 'D03-RES-'.Str::random(10),
+            'reservation_reference' => (string) Str::uuid(), 'state' => 'active',
+            'customer_name' => 'PRIVATE-RESERVATION-CUSTOMER', 'customer_mobile' => '03003334444']);
+        $tradeId = DB::table('trade_ins')->insertGetId([
+            'public_id' => (string) Str::uuid(), 'outlet_id' => $outlet->id,
+            'product_id' => $product->id, 'created_by_admin_id' => $owner->id,
+            'seller_name' => 'PRIVATE-TRADE-SELLER', 'seller_cnic' => '42501-0000000-1',
+            'seller_phone' => '03005556666', 'seller_address' => 'PRIVATE-TRADE-ADDRESS',
+            'device_condition' => 'used', 'diagnostics' => json_encode(['private' => 'PRIVATE-TRADE-DIAGNOSTICS']),
+            'valuation_amount' => '100.00', 'settlement_mode' => 'purchase', 'status' => 'pending']);
         $ownerClient = $this->client();
         $this->login($ownerClient, $owner->email)->assertOk();
         $path = '/internal/admin/outlet-management/'.$outlet->public_id.'/history';
@@ -386,9 +411,27 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.stock_history.transfers.0.receipts.0.received_quantity', 1)
             ->assertJsonPath('data.stock_history.products.0.id', $product->public_id)
             ->assertJsonPath('data.stock_history.products.0.quantity', 1)
-            ->assertJsonPath('data.stock_history.movements.0.stock_after', 1);
+            ->assertJsonPath('data.stock_history.movements.0.stock_after', 1)
+            ->assertJsonPath('data.obligations.on_hand_quantity', 1)
+            ->assertJsonPath('data.obligations.unresolved_transfer_quantity', 0)
+            ->assertJsonPath('data.obligations.active_custody_hold_quantity', 0)
+            ->assertJsonPath('data.obligations.unapproved_stocktakes', 1)
+            ->assertJsonPath('data.obligations.website_order_line_count', 1)
+            ->assertJsonPath('data.obligations.website_orders_for_review', 1)
+            ->assertJsonPath('data.obligations.active_website_reservations', 1)
+            ->assertJsonPath('data.obligations.trade_in_count', 1)
+            ->assertJsonPath('data.obligations.pending_trade_ins', 1)
+            ->assertJsonPath('data.obligations.website_return_count', 0)
+            ->assertJsonPath('data.obligations.requires_manual_review', true)
+            ->assertJsonPath('data.obligations.archive_eligibility', 'not_approved_for_business_history');
         $this->assertStringNotContainsString('DO-NOT-EXPOSE-SELLER', $response->getContent());
         $this->assertStringNotContainsString('PRIVATE-TRANSFER-NOTES', $response->getContent());
+        $this->assertStringNotContainsString('PRIVATE-UNAPPROVED-STOCKTAKE-NOTES', $response->getContent());
+        foreach (['PRIVATE-WEBSITE-CUSTOMER', '03001112222', 'PRIVATE-RESERVATION-CUSTOMER',
+            '03003334444', 'PRIVATE-TRADE-SELLER', '42501-0000000-1',
+            '03005556666', 'PRIVATE-TRADE-ADDRESS', 'PRIVATE-TRADE-DIAGNOSTICS'] as $private) {
+            $this->assertStringNotContainsString($private, $response->getContent());
+        }
         foreach (['PRIVATE-LINE-SNAPSHOT', 'PRIVATE-RECEIPT-SNAPSHOT', 'PRIVATE-RECEIPT-NOTES',
             'PRIVATE-RECEIPT-LINE'] as $private) {
             $this->assertStringNotContainsString($private, $response->getContent());
@@ -411,6 +454,11 @@ class PosShellTest extends TestCase
         $this->assertEquals($beforeUnit, DB::table('stock_units')->where('id', $unit->id)->firstOrFail());
         $this->assertEquals($beforeMovement, DB::table('stock_movements')->where('id', $movementId)->firstOrFail());
         $this->assertSame(1, DB::table('stock_acquisitions')->where('id', $acquisitionId)->count());
+        $this->assertSame('counting', DB::table('stocktake_sessions')->where('id', $stocktakeId)->value('status'));
+        $this->assertSame('pending', DB::table('orders')->where('id', $websiteOrderId)->value('fulfillment_status'));
+        $this->assertSame($outlet->id, (int) DB::table('order_items')->where('id', $websiteLineId)->value('outlet_id'));
+        $this->assertSame('active', DB::table('reservations')->where('id', $reservationId)->value('state'));
+        $this->assertSame('pending', DB::table('trade_ins')->where('id', $tradeId)->value('status'));
         $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)
             ->where('action', 'outlet_archived')->count());
     }
@@ -465,7 +513,9 @@ class PosShellTest extends TestCase
                 ->assertJsonPath('data.stock_history.transfers.0.line_count', 1)
                 ->assertJsonPath('data.stock_history.transfers.0.receipt_count', 0)
                 ->assertJsonPath('data.stock_history.transfers.0.unresolved_quantity', 1)
-                ->assertJsonPath('data.stock_history.transfers.0.requires_review', true);
+                ->assertJsonPath('data.stock_history.transfers.0.requires_review', true)
+                ->assertJsonPath('data.obligations.unresolved_transfer_quantity', 1)
+                ->assertJsonPath('data.obligations.requires_manual_review', true);
             $this->assertStringNotContainsString('PRIVATE-TRANSFER-IN-TRANSIT', $response->getContent());
             $this->assertStringNotContainsString('DO-NOT-EXPOSE-TRANSIT', $response->getContent());
         }
@@ -511,6 +561,64 @@ class PosShellTest extends TestCase
             'public_id' => (string) Str::uuid(), 'sequence' => 1, 'status' => 'closed',
             'note' => 'PRIVATE-CLAIM-EVENT-NOTE', 'occurred_at' => now(),
             'snapshot' => $snapshot, 'snapshot_sha256' => hash('sha256', $snapshot)]);
+        // All rows are rollback-only synthetic obligations; production archival still refuses them.
+        $returnId = DB::table('returns')->insertGetId(['invoice_id' => $invoiceId,
+            'actor_type' => Admin::class, 'actor_id' => $owner->id, 'reason' => 'Synthetic unrefunded return',
+            'status' => 'accepted', 'idempotency_key' => 'd03-return-'.Str::uuid(),
+            'public_id' => (string) Str::uuid()]);
+        $returnSnapshot = json_encode(['contract' => 'd03-return.v1'], JSON_THROW_ON_ERROR);
+        $returnLineId = DB::table('return_lines')->insertGetId(['return_id' => $returnId,
+            'invoice_id' => $invoiceId, 'sale_id' => $saleId, 'public_id' => (string) Str::uuid(),
+            'quantity' => 1, 'condition' => 'opened', 'disposition' => 'sellable',
+            'unit_price' => '40.00', 'discount_amount' => '0.00', 'net_amount' => '40.00',
+            'purchase_amount' => '20.00', 'currency' => 'PKR', 'sale_snapshot' => $returnSnapshot,
+            'snapshot_sha256' => hash('sha256', $returnSnapshot)]);
+        DB::table('sales')->where('id', $saleId)->update(['returned_quantity' => 1]);
+        $supplierId = DB::table('suppliers')->insertGetId(['outlet_id' => $outlet->id,
+            'public_id' => (string) Str::uuid(), 'supplier_code' => 'D03-SUP-'.Str::random(8),
+            'name' => 'PRIVATE-SUPPLIER-NAME', 'tax_identifier' => 'PRIVATE-SUPPLIER-TAX',
+            'created_by_admin_id' => $owner->id, 'updated_by_admin_id' => $owner->id]);
+        $poId = DB::table('purchase_orders')->insertGetId(['outlet_id' => $outlet->id,
+            'public_id' => (string) Str::uuid(), 'supplier_id' => $supplierId,
+            'supplier_code_snapshot' => 'D03', 'supplier_name_snapshot' => 'PRIVATE-SUPPLIER-NAME',
+            'order_number' => 'D03-PO-'.Str::random(12), 'status' => 'partially_received',
+            'ordered_at' => now(), 'created_by_admin_id' => $owner->id]);
+        $poLineId = DB::table('purchase_order_lines')->insertGetId([
+            'public_id' => (string) Str::uuid(), 'purchase_order_id' => $poId,
+            'outlet_id' => $outlet->id, 'product_id' => $product->id, 'ordered_quantity' => 5,
+            'received_quantity' => 2, 'ordered_unit_cost' => '10.00', 'planned_landed_unit_cost' => '11.00']);
+        $repairId = DB::table('repair_jobs')->insertGetId(['outlet_id' => $outlet->id,
+            'public_id' => (string) Str::uuid(), 'repair_number' => 'D03-REPAIR-'.Str::random(10),
+            'customer_name' => 'PRIVATE-REPAIR-CUSTOMER', 'device_label' => 'Test device',
+            'issue_description' => 'PRIVATE-REPAIR-ISSUE',
+            'identifier_type' => 'serial', 'identifier_value' => 'PRIVATE-REPAIR-SERIAL',
+            'status' => 'ready_for_collection', 'handled_by_admin_id' => $owner->id,
+            'handled_by_name' => 'Synthetic owner', 'received_at' => now()]);
+        $poSnapshot = json_encode(['contract' => 'd03-po-event.v1', 'private' => 'PRIVATE-PO-EVENT'], JSON_THROW_ON_ERROR);
+        $poEventId = DB::table('purchase_order_events')->insertGetId([
+            'purchase_order_id' => $poId, 'sequence' => 1, 'event' => 'partially_received',
+            'actor_admin_id' => $owner->id, 'actor_name_snapshot' => 'PRIVATE-PO-ACTOR',
+            'actor_role_snapshot' => 'PRIVATE-PO-ROLE', 'outlet_name_snapshot' => 'PRIVATE-PO-OUTLET',
+            'snapshot' => $poSnapshot, 'snapshot_sha256' => hash('sha256', $poSnapshot),
+            'occurred_at' => now()]);
+        $repairSnapshot = json_encode(['contract' => 'd03-repair-event.v1', 'private' => 'PRIVATE-REPAIR-EVENT'], JSON_THROW_ON_ERROR);
+        $repairEventId = DB::table('repair_events')->insertGetId([
+            'repair_job_id' => $repairId, 'sequence' => 1, 'event_type' => 'status_changed',
+            'status' => 'ready_for_collection', 'actor_admin_id' => $owner->id,
+            'actor_name' => 'PRIVATE-REPAIR-ACTOR', 'snapshot' => $repairSnapshot,
+            'snapshot_sha256' => hash('sha256', $repairSnapshot), 'created_at' => now()]);
+        $activeClaimPublic = (string) Str::uuid();
+        $activeClaimId = DB::table('claims')->insertGetId(['outlet_id' => $outlet->id,
+            'product_id' => $product->id, 'invoice_id' => $invoiceId, 'sale_id' => $saleId,
+            'public_id' => $activeClaimPublic, 'claim_number' => 'D03-ACT-'.Str::random(12),
+            'quantity' => 1, 'status' => 'ready_for_collection',
+            'issue_description' => 'PRIVATE-ACTIVE-WARRANTY-ISSUE']);
+        $activeSnapshot = json_encode(['contract' => 'd03-active-claim.v1',
+            'note' => 'PRIVATE-ACTIVE-WARRANTY-EVENT'], JSON_THROW_ON_ERROR);
+        $activeEventId = DB::table('claim_events')->insertGetId(['claim_id' => $activeClaimId,
+            'public_id' => (string) Str::uuid(), 'sequence' => 1, 'status' => 'ready_for_collection',
+            'note' => 'PRIVATE-ACTIVE-WARRANTY-NOTE', 'occurred_at' => now(),
+            'snapshot' => $activeSnapshot, 'snapshot_sha256' => hash('sha256', $activeSnapshot)]);
         $ownerClient = $this->client();
         $this->login($ownerClient, $owner->email)->assertOk();
         $uri = '/internal/admin/outlet-management/'.$outlet->public_id.'/history';
@@ -523,15 +631,60 @@ class PosShellTest extends TestCase
         $response = $this->send($ownerClient, 'GET', $uri)->assertOk()
             ->assertJsonPath('data.sales_claim_history.invoice_count', 1)
             ->assertJsonPath('data.sales_claim_history.sale_line_count', 1)
-            ->assertJsonPath('data.sales_claim_history.claim_count', 1)
-            ->assertJsonPath('data.sales_claim_history.claim_event_count', 1)
+            ->assertJsonPath('data.sales_claim_history.claim_count', 2)
+            ->assertJsonPath('data.sales_claim_history.claim_event_count', 2)
             ->assertJsonPath('data.sales_claim_history.invoices.0.id', $invoicePublicId)
             ->assertJsonPath('data.sales_claim_history.invoices.0.final_bill', '200.00')
-            ->assertJsonPath('data.sales_claim_history.claims.0.id', $claimPublicId)
-            ->assertJsonPath('data.sales_claim_history.claims.0.invoice_id', $invoicePublicId)
-            ->assertJsonPath('data.sales_claim_history.claims.0.status', 'closed');
+            ->assertJsonPath('data.sales_claim_history.invoices.0.sale_line_count', 1)
+            ->assertJsonPath('data.sales_claim_history.invoices.0.sales.0.returned_quantity', 1)
+            ->assertJsonPath('data.sales_claim_history.invoices.0.return_count', 1)
+            ->assertJsonPath('data.sales_claim_history.invoices.0.returns.0.channel', 'pos')
+            ->assertJsonPath('data.sales_claim_history.invoices.0.returns.0.line_count', 1)
+            ->assertJsonPath('data.sales_claim_history.invoices.0.refund_count', 0)
+            ->assertJsonPath('data.sales_claim_history.claims.0.id', $activeClaimPublic)
+            ->assertJsonPath('data.sales_claim_history.claims.0.status', 'ready_for_collection')
+            ->assertJsonPath('data.sales_claim_history.claims.0.event_count', 1)
+            ->assertJsonPath('data.sales_claim_history.claims.0.requires_review', true)
+            ->assertJsonPath('data.sales_claim_history.claims.0.events.0.snapshot_sha256', hash('sha256', $activeSnapshot))
+            ->assertJsonPath('data.sales_claim_history.claims.1.id', $claimPublicId)
+            ->assertJsonPath('data.sales_claim_history.claims.1.invoice_id', $invoicePublicId)
+            ->assertJsonPath('data.sales_claim_history.claims.1.status', 'closed')
+            ->assertJsonPath('data.sales_claim_history.claims.1.event_count', 1)
+            ->assertJsonPath('data.sales_claim_history.claims.1.events.0.snapshot_sha256',
+                hash('sha256', $snapshot))
+            ->assertJsonPath('data.sales_claim_history.claims.1.requires_review', false)
+            ->assertJsonPath('data.obligations.pos_return_count', 1)
+            ->assertJsonPath('data.obligations.pos_return_amount', '40.00')
+            ->assertJsonPath('data.obligations.pos_refunds_recorded', '0')
+            ->assertJsonPath('data.obligations.pos_refund_difference', '40.00')
+            ->assertJsonPath('data.obligations.open_purchase_orders', 1)
+            ->assertJsonPath('data.obligations.unreceived_purchase_order_quantity', 3)
+            ->assertJsonPath('data.obligations.active_paid_repairs', 1)
+            ->assertJsonPath('data.obligations.active_unbilled_paid_repairs', 1)
+            ->assertJsonPath('data.obligations.open_warranty_claims', 1)
+            ->assertJsonPath('data.obligations.requires_manual_review', true)
+            ->assertJsonPath('data.obligations.archive_eligibility', 'not_approved_for_business_history')
+            ->assertJsonPath('data.procurement_repair_history.supplier_count', 1)
+            ->assertJsonPath('data.procurement_repair_history.purchase_order_count', 1)
+            ->assertJsonPath('data.procurement_repair_history.repair_count', 1)
+            ->assertJsonPath('data.procurement_repair_history.purchase_orders.0.status', 'partially_received')
+            ->assertJsonPath('data.procurement_repair_history.purchase_orders.0.supplier_id',
+                DB::table('suppliers')->where('id', $supplierId)->value('public_id'))
+            ->assertJsonPath('data.procurement_repair_history.purchase_orders.0.line_count', 1)
+            ->assertJsonPath('data.procurement_repair_history.purchase_orders.0.unreceived_quantity', 3)
+            ->assertJsonPath('data.procurement_repair_history.purchase_orders.0.event_count', 1)
+            ->assertJsonPath('data.procurement_repair_history.purchase_orders.0.events.0.snapshot_sha256',
+                hash('sha256', $poSnapshot))
+            ->assertJsonPath('data.procurement_repair_history.repairs.0.status', 'ready_for_collection')
+            ->assertJsonPath('data.procurement_repair_history.repairs.0.requires_review', true)
+            ->assertJsonPath('data.procurement_repair_history.repairs.0.event_count', 1)
+            ->assertJsonPath('data.procurement_repair_history.repairs.0.events.0.snapshot_sha256',
+                hash('sha256', $repairSnapshot));
         foreach (['PRIVATE-CUSTOMER-NAME', '03008888888', 'PRIVATE-ISSUE-DESCRIPTION',
-            'PRIVATE-CASE-NOTES', 'PRIVATE-CLAIM-SNAPSHOT', 'PRIVATE-CLAIM-EVENT-NOTE'] as $private) {
+            'PRIVATE-CASE-NOTES', 'PRIVATE-CLAIM-SNAPSHOT', 'PRIVATE-CLAIM-EVENT-NOTE', 'PRIVATE-SUPPLIER-NAME', 'PRIVATE-SUPPLIER-TAX',
+            'PRIVATE-REPAIR-CUSTOMER', 'PRIVATE-REPAIR-SERIAL', 'PRIVATE-REPAIR-ISSUE', 'PRIVATE-PO-EVENT', 'PRIVATE-PO-ACTOR', 'PRIVATE-PO-ROLE',
+            'PRIVATE-PO-OUTLET', 'PRIVATE-REPAIR-EVENT', 'PRIVATE-REPAIR-ACTOR', 'PRIVATE-ACTIVE-WARRANTY-ISSUE',
+            'PRIVATE-ACTIVE-WARRANTY-EVENT', 'PRIVATE-ACTIVE-WARRANTY-NOTE'] as $private) {
             $this->assertStringNotContainsString($private, $response->getContent());
         }
         $limitedClient = $this->client();
@@ -540,6 +693,14 @@ class PosShellTest extends TestCase
         $this->assertEquals($priorInvoice, DB::table('invoices')->where('id', $invoiceId)->firstOrFail());
         $this->assertEquals($priorClaim, DB::table('claims')->where('id', $claimId)->firstOrFail());
         $this->assertEquals($priorEvent, DB::table('claim_events')->where('id', $eventId)->firstOrFail());
+        $this->assertSame(1, DB::table('return_lines')->where('id', $returnLineId)->count());
+        $this->assertSame(1, DB::table('purchase_order_lines')->where('id', $poLineId)
+            ->where('received_quantity', 2)->count());
+        $this->assertSame('ready_for_collection', DB::table('repair_jobs')->where('id', $repairId)->value('status'));
+        $this->assertSame(hash('sha256', $poSnapshot), DB::table('purchase_order_events')->where('id', $poEventId)->value('snapshot_sha256'));
+        $this->assertSame(hash('sha256', $repairSnapshot), DB::table('repair_events')->where('id', $repairEventId)->value('snapshot_sha256'));
+        $this->assertSame('ready_for_collection', DB::table('claims')->where('id', $activeClaimId)->value('status'));
+        $this->assertSame(hash('sha256', $activeSnapshot), DB::table('claim_events')->where('id', $activeEventId)->value('snapshot_sha256'));
         // MySQL may canonicalize JSON on storage; the signed hash belongs to the original written snapshot bytes.
         $this->assertSame(hash('sha256', $snapshot), $priorEvent->snapshot_sha256);
         $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $outlet->id)

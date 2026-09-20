@@ -207,6 +207,37 @@ class PosPaymentTest extends TestCase
             'return_id' => $return['return_id'], 'original_tender_id' => $originalTender,
             'refund_destination_id' => $card['destination_id'], 'amount' => '0.01',
         ]));
+        // Read-only archive projection checks real, fully recorded POS refunds; never archive this product-bearing outlet.
+        $this->actor->roles()->attach(\App\Models\Role::where('name', 'Full Access')->firstOrFail()->id,
+            ['assigned_at' => now()]);
+        $this->outlet->forceFill(['archived_at' => now()])->save();
+        $beforeRefund = DB::table('pos_refund_allocations')->where('public_id', $override['refund_id'])->firstOrFail();
+        $history = app(\App\Identity\OutletLifecycleAdministration::class)
+            ->archivedHistory($this->actor, $this->outlet->public_id);
+        $this->assertSame(1, $history['obligations']['pos_return_count']);
+        $this->assertSame('200.02', $history['obligations']['pos_return_amount']);
+        $this->assertSame('200.02', $history['obligations']['pos_refunds_recorded']);
+        $this->assertSame('0.00', $history['obligations']['pos_refund_difference']);
+        $historicalInvoice = $history['sales_claim_history']['invoices'][0];
+        $this->assertSame($sale['invoice_id'], $historicalInvoice['id']);
+        $this->assertSame(1, $historicalInvoice['sale_line_count']);
+        $this->assertSame(1, $historicalInvoice['return_count']);
+        $this->assertSame(1, $historicalInvoice['tender_count']);
+        $this->assertSame(2, $historicalInvoice['refund_count']);
+        $this->assertSame('pos', $historicalInvoice['returns'][0]['channel']);
+        $this->assertSame(2, $historicalInvoice['returns'][0]['recorded_pos_refund_count']);
+        $this->assertSame($override['refund_id'], $historicalInvoice['refunds'][1]['id']);
+        $this->assertSame('100.02', $historicalInvoice['refunds'][1]['amount']);
+        $this->assertSame($beforeRefund->snapshot_sha256, $historicalInvoice['refunds'][1]['snapshot_sha256']);
+        $this->assertStringNotContainsString('MANUAL-REF-1', json_encode($history, JSON_THROW_ON_ERROR));
+        $this->assertStringNotContainsString('TERM-03', json_encode($history, JSON_THROW_ON_ERROR));
+        $this->assertSame(1, $history['obligations']['unsettled_pos_tenders']);
+        $this->assertTrue($history['obligations']['requires_manual_review']);
+        $this->assertSame('not_approved_for_business_history', $history['obligations']['archive_eligibility']);
+        $this->assertEquals($beforeRefund, DB::table('pos_refund_allocations')->where('id', $beforeRefund->id)->firstOrFail());
+        $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $this->outlet->id)
+            ->where('action', 'outlet_archived')->count());
+
     }
 
     public function test_archived_outlet_rejects_payment_replays_and_settlement_without_touching_financial_history(): void

@@ -41,6 +41,8 @@ final class OutletLifecycleAdministration
                     'status' => $row->status, 'expected_cash' => (string) $row->expected_cash,
                     'actual_cash' => (string) $row->actual_cash, 'closed_at' => $row->closed_at,
                 ])->all(),
+            'obligations' => $this->archivedObligations($outlet),
+            'procurement_repair_history' => $this->archivedProcurementRepairs($outlet),
             'cash_session_count' => DB::table('cash_sessions')->where('outlet_id', $outlet->id)->count(),
             'cash_entry_count' => DB::table('cash_entries')->where('outlet_id', $outlet->id)->count(),
             // Owner-only historical invoice/sale and warranty-claim summary, without customer PII,
@@ -51,18 +53,8 @@ final class OutletLifecycleAdministration
                 'claim_count' => DB::table('claims')->where('outlet_id', $outlet->id)->count(),
                 'claim_event_count' => DB::table('claim_events as e')->join('claims as c', 'c.id', '=', 'e.claim_id')
                     ->where('c.outlet_id', $outlet->id)->count(),
-                'invoices' => DB::table('invoices')->where('outlet_id', $outlet->id)
-                    ->orderByDesc('id')->limit(50)
-                    ->get(['public_id', 'invoice_number', 'currency', 'final_bill', 'created_at'])
-                    ->map(fn ($row) => ['id' => $row->public_id, 'number' => $row->invoice_number,
-                        'currency' => $row->currency, 'final_bill' => (string) $row->final_bill,
-                        'created_at' => $row->created_at])->all(),
-                'claims' => DB::table('claims as c')->join('invoices as i', 'i.id', '=', 'c.invoice_id')
-                    ->where('c.outlet_id', $outlet->id)->where('i.outlet_id', $outlet->id)
-                    ->orderByDesc('c.id')->limit(50)
-                    ->get(['c.public_id', 'c.claim_number', 'c.status', 'i.public_id as invoice_id'])
-                    ->map(fn ($row) => ['id' => $row->public_id, 'number' => $row->claim_number,
-                        'status' => $row->status, 'invoice_id' => $row->invoice_id])->all(),
+                'invoices' => $this->archivedInvoices($outlet),
+                'claims' => $this->archivedClaims($outlet),
             ],
             // Protected read-only stock and transfer summaries exclude supplier identities, documents and IMEIs.
             'stock_history' => [
@@ -90,6 +82,212 @@ final class OutletLifecycleAdministration
                         'stock_after' => (int) $row->stock_after, 'created_at' => $row->created_at])->all(),
             ],
         ];
+    }
+
+    /** Restricted warranty lineage: immutable audit hashes only, never customer or case narrative. */
+    private function archivedClaims(Outlet $outlet): array
+    {
+        return DB::table('claims as c')->join('invoices as i', 'i.id', '=', 'c.invoice_id')
+            ->where('c.outlet_id', $outlet->id)->where('i.outlet_id', $outlet->id)
+            ->orderByDesc('c.id')->limit(50)
+            ->get(['c.id', 'c.public_id', 'c.claim_number', 'c.status', 'c.quantity',
+                'c.warranty_expires_at', 'c.received_at', 'c.delivered_at', 'i.public_id as invoice_id'])
+            ->map(function ($claim) {
+                $events = DB::table('claim_events')->where('claim_id', $claim->id)
+                    ->orderBy('sequence')->limit(50)
+                    ->get(['public_id', 'sequence', 'status', 'snapshot_sha256', 'occurred_at'])
+                    ->map(fn ($row) => ['id' => $row->public_id, 'sequence' => (int) $row->sequence,
+                        'status' => $row->status, 'snapshot_sha256' => $row->snapshot_sha256,
+                        'occurred_at' => $row->occurred_at])->all();
+                return ['id' => $claim->public_id, 'number' => $claim->claim_number,
+                    'status' => $claim->status, 'invoice_id' => $claim->invoice_id,
+                    'quantity' => (int) $claim->quantity, 'warranty_expires_at' => $claim->warranty_expires_at,
+                    'received_at' => $claim->received_at, 'delivered_at' => $claim->delivered_at,
+                    'event_count' => DB::table('claim_events')->where('claim_id', $claim->id)->count(),
+                    'requires_review' => $claim->status !== 'closed', 'events' => $events];
+            })->all();
+    }
+
+    /** Owner-only references: no supplier contacts, supplier prices, device identifiers or repair case notes. */
+    private function archivedProcurementRepairs(Outlet $outlet): array
+    {
+        $id = $outlet->id;
+        return [
+            'supplier_count' => DB::table('suppliers')->where('outlet_id', $id)->count(),
+            'purchase_order_count' => DB::table('purchase_orders')->where('outlet_id', $id)->count(),
+            'repair_count' => DB::table('repair_jobs')->where('outlet_id', $id)->count(),
+            'purchase_orders' => DB::table('purchase_orders as p')
+                ->join('suppliers as s', 's.id', '=', 'p.supplier_id')
+                ->where('p.outlet_id', $id)->where('s.outlet_id', $id)
+                ->orderByDesc('p.id')->limit(50)
+                ->get(['p.id', 'p.public_id', 'p.order_number', 'p.status', 'p.ordered_at',
+                    's.public_id as supplier_id'])
+                ->map(function ($po) use ($id) {
+                    $lineCount = DB::table('purchase_order_lines')->where('purchase_order_id', $po->id)
+                        ->where('outlet_id', $id)->count();
+                    $outstanding = DB::table('purchase_order_lines')->where('purchase_order_id', $po->id)
+                        ->where('outlet_id', $id)
+                        ->selectRaw('COALESCE(SUM(GREATEST(ordered_quantity - received_quantity, 0)), 0) as total')
+                        ->value('total');
+                    $events = DB::table('purchase_order_events')->where('purchase_order_id', $po->id)
+                        ->orderBy('sequence')->limit(50)->get(['sequence', 'event', 'snapshot_sha256', 'occurred_at'])
+                        ->map(fn ($event) => ['sequence' => (int) $event->sequence, 'event' => $event->event,
+                            'snapshot_sha256' => $event->snapshot_sha256, 'occurred_at' => $event->occurred_at])->all();
+                    return ['id' => $po->public_id, 'number' => $po->order_number, 'status' => $po->status,
+                        'supplier_id' => $po->supplier_id, 'ordered_at' => $po->ordered_at,
+                        'line_count' => $lineCount,
+                        'receipt_count' => DB::table('purchase_order_receipts')->where('purchase_order_id', $po->id)
+                            ->where('outlet_id', $id)->count(),
+                        'event_count' => DB::table('purchase_order_events')->where('purchase_order_id', $po->id)->count(),
+                        'unreceived_quantity' => (int) $outstanding,
+                        'requires_review' => in_array($po->status, ['ordered', 'partially_received'], true),
+                        'events' => $events];
+                })->all(),
+            'repairs' => DB::table('repair_jobs as j')
+                ->leftJoin('invoices as i', function ($join) use ($id) {
+                    $join->on('i.id', '=', 'j.invoice_id')->where('i.outlet_id', '=', $id);
+                })->where('j.outlet_id', $id)->orderByDesc('j.id')->limit(50)
+                ->get(['j.id', 'j.public_id', 'j.repair_number', 'j.status',
+                    'j.invoice_id', 'i.public_id as invoice_public_id', 'j.received_at', 'j.closed_at'])
+                ->map(function ($repair) {
+                    $events = DB::table('repair_events')->where('repair_job_id', $repair->id)
+                        ->orderBy('sequence')->limit(50)->get(['sequence', 'event_type', 'status', 'snapshot_sha256'])
+                        ->map(fn ($event) => ['sequence' => (int) $event->sequence,
+                            'event_type' => $event->event_type, 'status' => $event->status,
+                            'snapshot_sha256' => $event->snapshot_sha256])->all();
+                    return ['id' => $repair->public_id, 'number' => $repair->repair_number,
+                        'status' => $repair->status, 'invoice_id' => $repair->invoice_public_id,
+                        'received_at' => $repair->received_at, 'closed_at' => $repair->closed_at,
+                        'event_count' => DB::table('repair_events')->where('repair_job_id', $repair->id)->count(),
+                        'part_consumption_count' => DB::table('repair_part_consumptions')
+                            ->where('repair_job_id', $repair->id)->count(),
+                        'payment_record_count' => DB::table('repair_payment_links')
+                            ->where('repair_job_id', $repair->id)->count(),
+                        'requires_review' => ! in_array($repair->status, ['closed', 'cancelled'], true)
+                            || ($repair->invoice_id !== null && $repair->invoice_public_id === null),
+                        'events' => $events];
+                })->all(),
+        ];
+    }
+
+    /** Owner-only invoice lineage with immutable reference hashes; no customers, destinations or payloads. */
+    private function archivedInvoices(Outlet $outlet): array
+    {
+        return DB::table('invoices')->where('outlet_id', $outlet->id)
+            ->orderByDesc('id')->limit(50)
+            ->get(['id', 'public_id', 'invoice_number', 'currency', 'final_bill', 'created_at'])
+            ->map(function ($invoice) use ($outlet) {
+                $sales = DB::table('sales as s')->join('products as p', 'p.id', '=', 's.product_id')
+                    ->where('s.invoice_id', $invoice->id)->where('s.outlet_id', $outlet->id)
+                    ->where('p.outlet_id', $outlet->id)->orderBy('s.id')->limit(50)
+                    ->get(['s.public_id', 'p.public_id as product_id', 's.quantity',
+                        's.returned_quantity', 's.net_total_price'])
+                    ->map(fn ($line) => ['id' => $line->public_id, 'product_id' => $line->product_id,
+                        'quantity' => (int) $line->quantity, 'returned_quantity' => (int) $line->returned_quantity,
+                        'net_total_price' => (string) $line->net_total_price])->all();
+                $returns = DB::table('returns')->where('invoice_id', $invoice->id)
+                    ->orderBy('id')->limit(50)->get(['id', 'public_id', 'status', 'order_id'])
+                    ->map(fn ($row) => ['id' => $row->public_id, 'status' => $row->status,
+                        'channel' => $row->order_id === null ? 'pos' : 'website',
+                        'line_count' => DB::table('return_lines')->where('return_id', $row->id)->count(),
+                        'recorded_pos_refund_count' => DB::table('pos_refund_allocations')
+                            ->where('invoice_id', $invoice->id)->where('outlet_id', $outlet->id)
+                            ->where('return_id', $row->id)->count()])->all();
+                $tenders = DB::table('pos_tender_allocations')->where('invoice_id', $invoice->id)
+                    ->where('outlet_id', $outlet->id)->orderBy('id')->limit(50)
+                    ->get(['public_id', 'method', 'amount', 'reconciliation_state', 'snapshot_sha256'])
+                    ->map(fn ($row) => ['id' => $row->public_id, 'method' => $row->method,
+                        'amount' => (string) $row->amount, 'reconciliation_state' => $row->reconciliation_state,
+                        'snapshot_sha256' => $row->snapshot_sha256])->all();
+                $refunds = DB::table('pos_refund_allocations')->where('invoice_id', $invoice->id)
+                    ->where('outlet_id', $outlet->id)->orderBy('id')->limit(50)
+                    ->get(['public_id', 'original_method', 'refund_method', 'amount', 'is_override', 'snapshot_sha256'])
+                    ->map(fn ($row) => ['id' => $row->public_id, 'original_method' => $row->original_method,
+                        'refund_method' => $row->refund_method, 'amount' => (string) $row->amount,
+                        'is_override' => (bool) $row->is_override, 'snapshot_sha256' => $row->snapshot_sha256])->all();
+                return ['id' => $invoice->public_id, 'number' => $invoice->invoice_number,
+                    'currency' => $invoice->currency, 'final_bill' => (string) $invoice->final_bill,
+                    'created_at' => $invoice->created_at,
+                    'sale_line_count' => DB::table('sales')->where('invoice_id', $invoice->id)
+                        ->where('outlet_id', $outlet->id)->count(),
+                    'return_count' => DB::table('returns')->where('invoice_id', $invoice->id)->count(),
+                    'tender_count' => DB::table('pos_tender_allocations')->where('invoice_id', $invoice->id)
+                        ->where('outlet_id', $outlet->id)->count(),
+                    'refund_count' => DB::table('pos_refund_allocations')->where('invoice_id', $invoice->id)
+                        ->where('outlet_id', $outlet->id)->count(),
+                    'sales' => $sales, 'returns' => $returns, 'tenders' => $tenders, 'refunds' => $refunds];
+            })->all();
+    }
+
+    /** Conservative read-only obligation indicators, NOT an archival clearance or settlement decision. */
+    private function archivedObligations(Outlet $outlet): array
+    {
+        $id = $outlet->id;
+        $returnDue = (string) DB::table('return_lines as l')
+            ->join('returns as r', 'r.id', '=', 'l.return_id')
+            ->join('invoices as i', 'i.id', '=', 'r.invoice_id')
+            ->where('i.outlet_id', $id)->whereNull('r.order_id')->sum('l.net_amount');
+        $recordedRefunds = (string) DB::table('pos_refund_allocations')->where('outlet_id', $id)->sum('amount');
+        $remaining = bcsub($returnDue, $recordedRefunds, 2);
+        $counts = [
+            'on_hand_quantity' => (int) DB::table('products')->where('outlet_id', $id)
+                ->selectRaw('COALESCE(SUM(GREATEST(qty, 0)), 0) as total')->value('total'),
+            'active_custody_hold_quantity' => (int) DB::table('inventory_custody_holds as h')
+                ->join('products as src', 'src.id', '=', 'h.product_id')
+                ->join('products as dst', 'dst.id', '=', 'h.destination_product_id')
+                ->whereNull('h.released_at')->where(fn ($q) => $q->where('src.outlet_id', $id)
+                    ->orWhere('dst.outlet_id', $id))->sum('h.quantity'),
+            'unapproved_stocktakes' => DB::table('stocktake_sessions')->where('outlet_id', $id)
+                ->where('status', '!=', 'approved')->count(),
+            'unresolved_transfer_quantity' => (int) DB::table('stock_transfer_lines as l')
+                ->join('stock_transfers as t', 't.id', '=', 'l.stock_transfer_id')
+                ->where(fn ($q) => $q->where('t.source_outlet_id', $id)
+                    ->orWhere('t.destination_outlet_id', $id))
+                ->selectRaw('COALESCE(SUM(GREATEST(l.quantity - l.received_quantity - l.rejected_quantity, 0)), 0) as total')
+                ->value('total'),
+            'open_cash_sessions' => DB::table('cash_sessions')->where('outlet_id', $id)
+                ->where('status', 'open')->count(),
+            'pending_cash_entries' => DB::table('cash_entries')->where('outlet_id', $id)
+                ->where('status', 'pending')->count(),
+            'unsettled_pos_tenders' => DB::table('pos_tender_allocations')->where('outlet_id', $id)
+                ->whereIn('reconciliation_state', ['pending', 'variance'])->count(),
+            'pos_return_count' => DB::table('returns as r')->join('invoices as i', 'i.id', '=', 'r.invoice_id')
+                ->where('i.outlet_id', $id)->whereNull('r.order_id')->count(),
+            'website_return_count' => DB::table('returns as r')->join('invoices as i', 'i.id', '=', 'r.invoice_id')
+                ->where('i.outlet_id', $id)->whereNotNull('r.order_id')->count(),
+            'website_order_line_count' => DB::table('order_items')->where('outlet_id', $id)->count(),
+            'website_orders_for_review' => DB::table('orders as o')
+                ->join('order_items as oi', 'oi.order_id', '=', 'o.id')->where('oi.outlet_id', $id)
+                ->whereNotIn('o.fulfillment_status', ['delivered', 'completed', 'cancelled'])
+                ->distinct()->count('o.id'),
+            'active_website_reservations' => DB::table('reservations')->where('outlet_id', $id)
+                ->whereIn('state', ['active', 'held_cod'])->count(),
+            'trade_in_count' => DB::table('trade_ins')->where('outlet_id', $id)->count(),
+            'pending_trade_ins' => DB::table('trade_ins')->where('outlet_id', $id)
+                ->whereIn('status', ['pending', 'approved'])->count(),
+            'open_warranty_claims' => DB::table('claims')->where('outlet_id', $id)
+                ->where('status', '!=', 'closed')->count(),
+            'open_purchase_orders' => DB::table('purchase_orders')->where('outlet_id', $id)
+                ->whereIn('status', ['ordered', 'partially_received'])->count(),
+            'unreceived_purchase_order_quantity' => (int) DB::table('purchase_order_lines as l')
+                ->join('purchase_orders as p', 'p.id', '=', 'l.purchase_order_id')
+                ->where('p.outlet_id', $id)->whereIn('p.status', ['ordered', 'partially_received'])
+                ->selectRaw('COALESCE(SUM(GREATEST(l.ordered_quantity - l.received_quantity, 0)), 0) as total')
+                ->value('total'),
+            'active_paid_repairs' => DB::table('repair_jobs')->where('outlet_id', $id)
+                ->whereNotIn('status', ['closed', 'cancelled'])->count(),
+            'active_unbilled_paid_repairs' => DB::table('repair_jobs')->where('outlet_id', $id)
+                ->whereNotIn('status', ['closed', 'cancelled'])->whereNull('invoice_id')->count(),
+        ];
+        return [...$counts, 'pos_return_amount' => $returnDue,
+            'pos_refunds_recorded' => $recordedRefunds, 'pos_refund_difference' => $remaining,
+            // A zero difference is NOT proof that website/provider refunds or warranty duties are settled.
+            'requires_manual_review' => collect($counts)->contains(fn ($value) => $value > 0)
+                || bccomp($remaining, '0.00', 2) !== 0
+                || DB::table('invoices')->where('outlet_id', $id)->exists()
+                || DB::table('suppliers')->where('outlet_id', $id)->exists()
+                || DB::table('repair_jobs')->where('outlet_id', $id)->exists(),
+            'archive_eligibility' => 'not_approved_for_business_history'];
     }
 
     /** Summaries only: no notes, customer details, serialized-unit identities or snapshot payloads. */
