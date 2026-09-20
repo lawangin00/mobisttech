@@ -41,7 +41,11 @@ final class PosShellController extends Controller
     public function manageAccount()
     {
         $actor = $this->profileActor();
-        return Inertia::render('admin-account', ['identity' => [
+        return Inertia::render('admin-account', ['offline_owner_recovery_available' =>
+            config('identity.offline_owner_recovery.enabled') === true
+            && hash_equals((string) config('identity.offline_owner_recovery.owner_admin_public_id'), (string) $actor->public_id)
+            && app(\App\Identity\OutletLifecycleAdministration::class)->canManage($actor),
+            'identity' => [
             'name' => $actor->name, 'email' => $actor->email,
             'job_title' => $actor->job_title, 'roles' => $actor->roleNames(), 'has_photo' => (bool) $actor->profile_photo,
         ]]);
@@ -59,7 +63,9 @@ final class PosShellController extends Controller
 
     private function recoveryPage(string $mode)
     {
-        $response = Inertia::render('admin-recovery', ['mode' => $mode])->toResponse(request());
+        $response = Inertia::render('admin-recovery', ['mode' => $mode,
+            'offline_owner_recovery_available' => config('identity.offline_owner_recovery.enabled') === true
+                && \Illuminate\Support\Str::isUuid((string) config('identity.offline_owner_recovery.owner_admin_public_id'))])->toResponse(request());
         $response->headers->set('Cache-Control', 'no-store');
         $response->headers->set('Referrer-Policy', 'no-referrer');
         return $response;

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Identity\Access;
 use App\Identity\CustomerIdentity;
 use App\Identity\IdentityAudit;
+use App\Identity\OfflineOwnerRecovery;
 use App\Identity\PosSessions;
 use App\Identity\RealmSessionPolicy;
 use App\Integrations\GmailRecovery;
@@ -189,6 +190,30 @@ class IdentityController extends Controller
         return response()->json(['data' => ['outlet_id' => $outlet->public_id]]);
     }
 
+    /** Disabled and unbound by default; explicit bound owner must confirm a fresh password. */
+    public function rotateOfflineOwnerCodes(Request $request, OfflineOwnerRecovery $recovery)
+    {
+        $this->only($request, ['current_password']);
+        $data = $request->validate(['current_password' => ['required', 'string', 'max:128']]);
+        $actor = Auth::guard('admin')->user();
+        abort_unless($actor instanceof Admin, 401);
+        $response = response()->json(['data' => $recovery->rotate($actor, $data['current_password'])]);
+        return $response->header('Cache-Control', 'private, no-store, max-age=0')
+            ->header('Referrer-Policy', 'no-referrer');
+    }
+
+    public function redeemOfflineOwnerCode(Request $request, OfflineOwnerRecovery $recovery)
+    {
+        $this->only($request, ['email', 'code', 'password', 'password_confirmation']);
+        $data = $request->validate(['email' => ['required', 'email', 'max:255'],
+            'code' => ['required', 'string', 'max:64'],
+            'password' => ['required', 'string', 'min:8', 'max:128', 'confirmed']]);
+        $recovery->redeem($data['email'], $data['code'], $data['password']);
+        return response()->json(['data' => ['message' => 'Password reset. Sign in again.']])
+            ->header('Cache-Control', 'private, no-store, max-age=0')
+            ->header('Referrer-Policy', 'no-referrer');
+    }
+
     public function forgot(Request $request)
     {
         $this->only($request, ['email']);
@@ -249,6 +274,11 @@ class IdentityController extends Controller
     {
         $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60), 'auth_version' => $user->auth_version + 1])->save();
         DB::table('account_sessions')->where('guard', $realm)->where('account_id', $user->id)->update(['revoked_at' => now()]);
+        if ($realm === 'admin') {
+            // A normal password change/email reset revokes stale offline owner codes as well.
+            DB::table('owner_offline_recovery_codes')->where('admin_id', $user->id)
+                ->whereNull('used_at')->whereNull('revoked_at')->update(['revoked_at' => now()]);
+        }
         IdentityAudit::record($realm, $user->id, 'password_replaced');
         event(new PasswordReset($user));
     }

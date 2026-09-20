@@ -2,7 +2,7 @@ import {Head, Link} from '@inertiajs/react';
 import {FormEvent, useState} from 'react';
 import {adminAuthRequest} from '../components/admin-auth-request';
 type Identity = {name:string;email:string;job_title:string|null;roles:string[];has_photo:boolean};
-export default function AdminAccount({identity}:{identity:Identity}) {
+export default function AdminAccount({identity,offline_owner_recovery_available=false}:{identity:Identity;offline_owner_recovery_available?:boolean}) {
     const [current,setCurrent]=useState('');
     const [next,setNext]=useState('');
     const [confirm,setConfirm]=useState('');
@@ -11,6 +11,9 @@ export default function AdminAccount({identity}:{identity:Identity}) {
     const [photoRevision,setPhotoRevision]=useState(0);
     const [file,setFile]=useState<File|null>(null);
     const [message,setMessage]=useState('');
+    const [offlinePassword,setOfflinePassword]=useState('');
+    const [offlineCodes,setOfflineCodes]=useState<string[]>([]);
+    const [offlineMessage,setOfflineMessage]=useState('');
     async function mutatePhoto(method:'POST'|'DELETE') {
         if(method==='POST'&&!file){setMessage('Choose a JPG, PNG or WebP image.');return;}
         setBusy(true);setMessage('');
@@ -27,6 +30,19 @@ export default function AdminAccount({identity}:{identity:Identity}) {
             setMessage(method==='POST'?'Profile photo updated.':'Profile photo removed.');
         }catch(error){setMessage(error instanceof Error?error.message:'Photo update failed.');}
         finally{setBusy(false);}
+    }
+    async function rotateOfflineCodes(event:FormEvent<HTMLFormElement>) {
+        event.preventDefault();setBusy(true);setOfflineCodes([]);setOfflineMessage('');
+        try {
+            const data=await adminAuthRequest('/internal/admin/auth/offline-owner-recovery/rotate',
+                'POST',{current_password:offlinePassword});
+            const codes=data.codes;
+            if(!Array.isArray(codes)||codes.length!==8||!codes.every(code=>typeof code==='string'))
+                throw new Error('Recovery codes could not be displayed; contact the administrator.');
+            setOfflineCodes(codes as string[]);
+            setOfflineMessage('Write these codes down and keep them offline. They are shown only once; older codes have been revoked.');
+        } catch(error){setOfflineMessage(error instanceof Error?error.message:'Unable to rotate recovery codes.');}
+        finally{setOfflinePassword('');setBusy(false);}
     }
     async function change(event:FormEvent<HTMLFormElement>){
         event.preventDefault(); setBusy(true); setMessage('');
@@ -53,6 +69,16 @@ export default function AdminAccount({identity}:{identity:Identity}) {
             <div className="mt-3 flex gap-2"><button data-testid="account-photo-upload" disabled={busy||!file} onClick={()=>void mutatePhoto('POST')} className="rounded bg-slate-950 px-3 py-2 text-sm text-white disabled:opacity-50">Upload photo</button>
                 <button data-testid="account-photo-remove" disabled={busy||!photo} onClick={()=>void mutatePhoto('DELETE')} className="rounded border px-3 py-2 text-sm disabled:opacity-50">Remove photo</button></div>
         </section>
+        {offline_owner_recovery_available&&<section data-testid="offline-owner-enrollment" className="rounded-2xl border bg-white p-5">
+            <h2 className="text-lg font-semibold">Offline owner recovery codes</h2>
+            <p className="mt-2 text-sm text-slate-600">Generate eight single-use codes to keep in a secure offline location. Rotating immediately revokes unused older codes. Codes are never sent by email or shown again after leaving this page.</p>
+            <form className="mt-3 space-y-2" onSubmit={rotateOfflineCodes}>
+                <label className="block text-sm">Confirm current password<input data-testid="offline-owner-current" type="password" autoComplete="current-password" required value={offlinePassword} onChange={e=>setOfflinePassword(e.target.value)} className="mt-1 block w-full rounded border p-2"/></label>
+                <button data-testid="offline-owner-rotate" type="submit" disabled={busy||!offlinePassword} className="rounded bg-slate-950 px-3 py-2 text-sm text-white disabled:opacity-50">Generate / rotate offline codes</button>
+            </form>
+            {offlineMessage&&<p role="status" className="mt-2 text-sm">{offlineMessage}</p>}
+            {offlineCodes.length>0&&<div data-testid="offline-owner-codes" className="mt-3 space-y-2 rounded border p-3"><p className="text-sm font-semibold">One-time secret codes - store them offline now</p><ol className="list-inside list-decimal font-mono text-sm">{offlineCodes.map(code=><li key={code}>{code}</li>)}</ol><button type="button" onClick={()=>{setOfflineCodes([]);setOfflineMessage('Codes hidden. If lost, rotate with your current password.');}} className="rounded border px-3 py-1 text-sm">Hide secret codes</button></div>}
+        </section>}
         <section className="rounded-2xl border bg-white p-5"><h2 className="text-lg font-semibold">Change password</h2><p className="mt-2 text-sm text-slate-600">A successful change revokes active sessions and requires a new sign-in.</p>
             <form onSubmit={change} className="mt-4 space-y-3">
                 <label className="block text-sm">Current password<input data-testid="account-current" type="password" autoComplete="current-password" required value={current} onChange={e=>setCurrent(e.target.value)} className="mt-1 w-full rounded border p-2"/></label>

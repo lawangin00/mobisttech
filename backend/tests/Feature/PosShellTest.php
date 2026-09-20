@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -1190,6 +1191,137 @@ class PosShellTest extends TestCase
             'HTTP_ACCEPT' => 'application/json', 'HTTP_USER_AGENT' => $client['agent'],
             'HTTP_X_CSRF_TOKEN' => $client['tokens']['XSRF-TOKEN-admin'],
         ]);
+    }
+
+    public function test_offline_owner_recovery_is_disabled_and_unbound_by_default(): void
+    {
+        $outlet = $this->outlet('D05 disabled recovery', '101');
+        $owner = $this->member('d05-disabled-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($outlet);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id,
+            ['assigned_at' => now()]);
+        config(['identity.offline_owner_recovery.enabled' => false,
+            'identity.offline_owner_recovery.owner_admin_public_id' => '']);
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
+        $uri = '/internal/admin/auth/offline-owner-recovery';
+        $this->send($client, 'POST', $uri.'/rotate', ['current_password' => 'SyntheticPass123!'])
+            ->assertStatus(503);
+        $this->send($client, 'POST', $uri.'/redeem', ['email' => $owner->email,
+            'code' => 'AAAAAA-BBBBBB-CCCCCC-DDDDDD-EEEEEE-FFFFFF',
+            'password' => 'AnotherPass123!', 'password_confirmation' => 'AnotherPass123!'])
+            ->assertStatus(503);
+        $this->assertSame(0, DB::table('owner_offline_recovery_codes')->where('admin_id', $owner->id)->count());
+    }
+
+    public function test_offline_owner_recovery_codes_are_one_time_owner_bound_rotated_and_revoke_sessions(): void
+    {
+        $outlet = $this->outlet('D05 isolated owner recovery', '102');
+        $owner = $this->member('d05-bound-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($outlet);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id,
+            ['assigned_at' => now()]);
+        $limited = $this->member('d05-recovery-operator@example.invalid', ['shops.enter']);
+        $limited->shops()->attach($outlet);
+        config(['identity.offline_owner_recovery.enabled' => true,
+            'identity.offline_owner_recovery.owner_admin_public_id' => $owner->public_id]);
+        $uri = '/internal/admin/auth/offline-owner-recovery';
+        $ownerClient = $this->client();
+        $this->login($ownerClient, $owner->email)->assertOk();
+        $limitedClient = $this->client();
+        $this->login($limitedClient, $limited->email)->assertOk();
+        $this->send($limitedClient, 'POST', $uri.'/rotate',
+            ['current_password' => 'SyntheticPass123!'])->assertForbidden();
+        $this->send($ownerClient, 'POST', $uri.'/rotate',
+            ['current_password' => 'wrong-password'])->assertForbidden();
+        $issued = $this->send($ownerClient, 'POST', $uri.'/rotate',
+            ['current_password' => 'SyntheticPass123!'])->assertOk()->json('data.codes');
+        $this->assertCount(8, $issued);
+        $this->assertCount(8, array_unique($issued));
+        $this->assertMatchesRegularExpression('/\A(?:[A-F0-9]{6}-){5}[A-F0-9]{6}\z/D', $issued[0]);
+        $this->assertStringNotContainsString($issued[0], json_encode(DB::table('owner_offline_recovery_codes')
+            ->where('admin_id', $owner->id)->get()->all(), JSON_THROW_ON_ERROR));
+        $this->assertStringNotContainsString($issued[0], json_encode(DB::table('identity_audit_events')
+            ->where('account_id', $owner->id)->get()->all(), JSON_THROW_ON_ERROR));
+        $this->assertSame(8, DB::table('owner_offline_recovery_codes')->where('admin_id', $owner->id)
+            ->whereNull('revoked_at')->count());
+        $rotated = $this->send($ownerClient, 'POST', $uri.'/rotate',
+            ['current_password' => 'SyntheticPass123!'])->assertOk();
+        $freshCodes = $rotated->json('data.codes');
+        $this->assertCount(8, $freshCodes);
+        $this->assertSame(8, DB::table('owner_offline_recovery_codes')->where('admin_id', $owner->id)
+            ->whereNotNull('revoked_at')->count());
+        $this->assertStringContainsString('no-store', (string) $rotated->headers->get('Cache-Control'));
+        $emailToken = Password::broker('admin')->createToken($owner); // Synthetic only; never delivered.
+        $this->assertNotEmpty($emailToken);
+        $this->assertSame(1, DB::table('admin_password_reset_tokens')->where('email', $owner->email)->count());
+        $reset = ['email' => $owner->email, 'password' => 'UpdatedOfflinePass123!',
+            'password_confirmation' => 'UpdatedOfflinePass123!'];
+        $this->send($limitedClient, 'POST', $uri.'/redeem', [...$reset, 'code' => $issued[0]])
+            ->assertUnprocessable();
+        $this->send($limitedClient, 'POST', $uri.'/redeem',
+            [...$reset, 'email' => $limited->email, 'code' => $freshCodes[0]])->assertUnprocessable();
+        $guestClient = $this->client();
+        $valid = $this->send($guestClient, 'POST', $uri.'/redeem',
+            [...$reset, 'code' => $freshCodes[0]])->assertOk();
+        $this->assertStringContainsString('no-store', (string) $valid->headers->get('Cache-Control'));
+        $this->assertTrue(Hash::check('UpdatedOfflinePass123!', $owner->fresh()->password));
+        $this->assertSame(0, DB::table('admin_password_reset_tokens')->where('email', $owner->email)->count());
+        $this->assertSame(2, (int) $owner->fresh()->auth_version);
+        $this->assertSame(1, DB::table('owner_offline_recovery_codes')->where('admin_id', $owner->id)
+            ->whereNotNull('used_at')->count());
+        $this->assertSame(0, DB::table('account_sessions')->where('guard', 'admin')
+            ->where('account_id', $owner->id)->whereNull('revoked_at')->count());
+        $this->send($ownerClient, 'GET', '/internal/admin/account')->assertUnauthorized();
+        $this->send($guestClient, 'POST', $uri.'/redeem',
+            [...$reset, 'code' => $freshCodes[0]])->assertUnprocessable();
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
+            ->where('action', 'owner_offline_code_consumed')->count());
+        $this->assertSame(3, DB::table('identity_audit_events')->where('action', 'owner_offline_recovery_denied')->count());
+        $this->assertSame(2, DB::table('identity_audit_events')->where('account_id', $owner->id)
+            ->where('action', 'owner_offline_codes_rotated')->count());
+        $this->assertTrue(Hash::check('SyntheticPass123!', $limited->fresh()->password));
+    }
+
+    public function test_offline_owner_codes_revoke_on_normal_password_change_and_pages_stay_bound(): void
+    {
+        $outlet = $this->outlet('D05 password change', '103');
+        $owner = $this->member('d05-change-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($outlet);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id,
+            ['assigned_at' => now()]);
+        $other = $this->member('d05-change-staff@example.invalid', ['shops.enter']);
+        $other->shops()->attach($outlet);
+        config(['identity.offline_owner_recovery.enabled' => true,
+            'identity.offline_owner_recovery.owner_admin_public_id' => $owner->public_id]);
+        $ownerClient = $this->client();
+        $this->login($ownerClient, $owner->email)->assertOk();
+        $staffClient = $this->client();
+        $this->login($staffClient, $other->email)->assertOk();
+        $this->send($ownerClient, 'GET', '/internal/admin/manage-account')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('offline_owner_recovery_available', true));
+        $this->send($staffClient, 'GET', '/internal/admin/manage-account')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('offline_owner_recovery_available', false));
+        $this->send($staffClient, 'GET', '/internal/admin/reset-password')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('offline_owner_recovery_available', true));
+        $codes = $this->send($ownerClient, 'POST', '/internal/admin/auth/offline-owner-recovery/rotate',
+            ['current_password' => 'SyntheticPass123!'])->assertOk()->json('data.codes');
+        $this->send($ownerClient, 'PATCH', '/internal/admin/auth/password',
+            ['current_password' => 'SyntheticPass123!', 'password' => 'OwnerChangedPass123!',
+                'password_confirmation' => 'OwnerChangedPass123!'])->assertOk();
+        $this->assertTrue(Hash::check('OwnerChangedPass123!', $owner->fresh()->password));
+        $this->assertSame(8, DB::table('owner_offline_recovery_codes')->where('admin_id', $owner->id)
+            ->whereNotNull('revoked_at')->whereNull('used_at')->count());
+        $guest = $this->client();
+        $this->send($guest, 'POST', '/internal/admin/auth/offline-owner-recovery/redeem',
+            ['email' => $owner->email, 'code' => $codes[0], 'password' => 'BadResetPass123!',
+                'password_confirmation' => 'BadResetPass123!'])->assertUnprocessable();
+        $this->assertTrue(Hash::check('OwnerChangedPass123!', $owner->fresh()->password));
+        $this->assertSame(0, DB::table('identity_audit_events')->where('account_id', $owner->id)
+            ->where('action', 'owner_offline_code_consumed')->count());
     }
 
     private function member(string $email, array $permissions): Admin
