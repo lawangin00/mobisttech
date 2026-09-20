@@ -109,6 +109,10 @@ final class WebsiteApi
                     ->when($condition !== null || $ptaStatus !== null, fn ($q) => $q->whereExists(
                         fn ($unit) => $unit->selectRaw('1')->from('stock_units as su')
                             ->whereColumn('su.product_id', 'p.id')->where('su.status', 'in_stock')
+                            ->whereNotExists(fn ($hold) => $hold->selectRaw('1')->from('reservation_allocations as ra')
+                                ->whereColumn('ra.stock_unit_id', 'su.id')->whereNull('ra.released_at'))
+                            ->whereNotExists(fn ($custody) => $custody->selectRaw('1')->from('inventory_custody_holds as ch')
+                                ->whereColumn('ch.stock_unit_id', 'su.id')->whereNull('ch.released_at'))
                             ->when($condition !== null, fn ($u) => $u->where('su.condition', $condition))
                             ->when($ptaStatus !== null, fn ($u) => $u->where('su.pta_status', $ptaStatus))));
                 $column = str_starts_with($sort, 'price_') ? 'p.sale_price' : 'p.name';

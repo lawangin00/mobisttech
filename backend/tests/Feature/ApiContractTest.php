@@ -7,9 +7,11 @@ use App\Cms\WebsiteCms;
 use App\Commerce\PaymentProvider;
 use App\Commerce\PaymentProviders;
 use App\Digital\DigitalServiceLeads;
+use App\Inventory\TransactionalStock;
 use App\Loyalty\LoyaltyServices;
 use App\Models\CustomerAccount;
 use App\Models\StockUnit;
+use App\Support\ProductVariantKey;
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
@@ -128,6 +130,17 @@ class ApiContractTest extends TestCase
         $this->getJson($path.'&condition=used&pta_status=non_pta')->assertOk()
             ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-device-twelve');
         $this->getJson($path.'&condition=brand_new&pta_status=non_pta&ram_gb=8')->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-device-eight');
+        // The matching used/PTA-approved physical unit is reserved; its other available variant must not satisfy the filter.
+        $hold = $this->reservation($first, 1, ProductVariantKey::forUnit($black));
+        DB::transaction(fn () => app(TransactionalStock::class)->reserve($hold['line']));
+        $this->getJson($path.'&condition=used&pta_status=pta_approved')->assertOk()->assertJsonCount(0, 'data.items');
+        $this->getJson('/api/v1/catalogue/products/mt75-device-eight')->assertOk()
+            ->assertJsonPath('data.availability.quantity', 1)->assertJsonCount(1, 'data.variants');
+        $this->getJson($path.'&condition=brand_new&pta_status=non_pta&ram_gb=8')->assertOk()
+            ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-device-eight');
+        DB::transaction(fn () => app(TransactionalStock::class)->release($hold['reservation']));
+        $this->getJson($path.'&condition=used&pta_status=pta_approved')->assertOk()
             ->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.slug', 'mt75-device-eight');
         $this->getJson($path.'&ram_gb=0')->assertUnprocessable();
         $this->getJson($path.'&storage_gb=999999')->assertUnprocessable();

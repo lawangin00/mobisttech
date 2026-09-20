@@ -51,7 +51,7 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
                 DB::table('pos_payment_destinations')->whereIn('id', $destinationIds)->delete();
 
                 $products = DB::table('products')->where('outlet_id', $outlet->id)
-                    ->whereIn('name', ['MT75 Fresh Accessory', 'MT75 Fresh Budget Accessory'])->get();
+                    ->whereIn('name', ['MT75 Fresh Accessory', 'MT75 Fresh Budget Accessory', 'MT75 Fresh Tracked Phone'])->get();
                 abort_unless(DB::table('products')->where('outlet_id', $outlet->id)->count() === $products->count(), 409);
                 $productIds = $products->pluck('id')->all();
                 $productPublicIds = $products->pluck('public_id')->all();
@@ -63,6 +63,8 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
                 DB::table('inventory_custody_holds')->whereIn('product_id', $productIds)->delete();
                 DB::table('product_imeis')->whereIn('product_id', $productIds)->delete();
                 DB::table('active_imeis')->whereIn('stock_unit_id', $unitIds)->delete();
+                DB::table('pos_master_data_usages')->where('usage_type', 'stock_unit')
+                    ->whereIn('usage_id', array_map('strval', $unitIds))->delete();
                 DB::table('stock_units')->whereIn('product_id', $productIds)->delete();
                 DB::table('stock_movements')->whereIn('product_id', $productIds)->delete();
                 DB::table('pos_master_data_usages')->where('usage_type', 'stock_acquisition')
