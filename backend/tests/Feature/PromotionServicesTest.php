@@ -107,6 +107,16 @@ class PromotionServicesTest extends TestCase
         $this->assertSame(1, DB::table('promotion_claims')->where('status', 'active')->count());
     }
 
+    public function test_archived_outlet_blocks_promotion_configuration(): void
+    {
+        $product = $this->product();
+        $this->outlet->forceFill(['archived_at' => now(), 'version' => $this->outlet->version + 1])->save();
+
+        $this->reject(fn () => $this->coupon($product->public_id, 'ARCHIVED10', 'percentage', '10.00', 1));
+        $this->assertSame(0, DB::table('promotions')->count());
+        $this->assertSame(0, DB::table('promotion_events')->count());
+    }
+
     private function coupon(string $productId, string $code, string $type, string $value, int $usageLimit): void
     {
         app(PromotionServices::class)->configure($this->actor, null, [

@@ -48,6 +48,7 @@ final class PromotionServices
             $fresh = $actor->fresh();
             abort_unless($fresh && app(Access::class)->allows($fresh, 'config.promotions.manage'), 403);
             $outlet = ! empty($data['outlet_id']) ? Outlet::where('public_id', $data['outlet_id'])->lockForUpdate()->firstOrFail() : null;
+            abort_if($outlet && ($outlet->status || $outlet->archived_at !== null), 403, 'Outlet is not active.');
             $productIds = [];
             foreach (array_values(array_unique($data['product_ids'] ?? [])) as $id) {
                 $product = Product::where('public_id', $id)->where('isDeleted', false)->lockForUpdate()->firstOrFail();
