@@ -559,3 +559,42 @@ test('MT75 public Next.js stock reaches zero under COD hold and returns after ca
     await expect(page.locator('main').getByText('3 available').first()).toBeVisible();
     await expect(page.getByRole('button',{name:'Add to cart'})).toBeEnabled();
 });
+
+// W02 full HTTP pipeline: three genuine protected POS publications plus 238 guarded
+// target-only synthetic published rows; never claims all 241 were entered through the UI.
+test('MT75 public sitemap 241 published products reaches real Next XML', async ({ page }) => {
+    test.setTimeout(150_000);
+    const { execFileSync } = await import('node:child_process');
+    const fixture = (action: 'seed' | 'cleanup') => execFileSync('php', [
+        'artisan', 'db:seed', '--class=Database\\Seeders\\Sitemap241E2eSeeder', '--env=testing', '--force',
+    ], { cwd: process.cwd(), env: { ...process.env, MT75_SITEMAP241_ENABLED: '1',
+        MT75_SITEMAP241_ACTION: action }, timeout: 90_000, stdio: 'pipe' });
+    try {
+        fixture('seed');
+        const api = await page.request.get('http://127.0.0.1:18080/api/v1/catalogue/products?limit=24');
+        expect(api.status()).toBe(200);
+        const head = await api.json() as { data: { items: Array<{slug:string}>; page: {has_more:boolean} } };
+        expect(head.data.items).toHaveLength(24);
+        expect(head.data.page.has_more).toBe(true);
+        const response = await page.request.get('http://127.0.0.1:13000/sitemap.xml', { timeout: 120_000 });
+        expect(response.status()).toBe(200);
+        const xml = await response.text();
+        const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]);
+        const products = locs.filter(loc => new URL(loc).pathname.startsWith('/products/'));
+        expect(products).toHaveLength(241);
+        expect(new Set(products).size).toBe(241);
+        for (const slug of ['mt75-fresh-accessory', 'mt75-fresh-budget-accessory', 'mt75-fresh-tracked-phone']) {
+            expect(products.some(loc => new URL(loc).pathname === '/products/'+slug), slug).toBe(true);
+        }
+        for (let i = 4; i <= 241; i++) {
+            const slug = `mt75-sitemap-fixture-${String(i).padStart(3, '0')}`;
+            expect(products.some(loc => new URL(loc).pathname === '/products/'+slug), slug).toBe(true);
+        }
+        expect(xml.toLowerCase()).not.toMatch(/purchase_price|seller_phone|customer_phone|mt75-private-tracked-imei|\/internal\/|\/account\/|\/checkout\/|\/compare\//);
+        const last = await page.request.get('http://127.0.0.1:13000/products/mt75-sitemap-fixture-241');
+        expect(last.status()).toBe(200);
+        expect((await last.text())).toContain('MT75 Sitemap Fixture 241');
+    } finally {
+        fixture('cleanup');
+    }
+});
