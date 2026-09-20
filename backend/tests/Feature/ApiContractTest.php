@@ -64,6 +64,30 @@ class ApiContractTest extends TestCase
             ->assertJsonPath('error.code', 'api_404');
     }
 
+    public function test_catalogue_sort_uses_live_price_name_and_sort_scoped_cursor(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $alpha = $this->listedProduct('mt75-sort-alpha');
+        $zulu = $this->listedProduct('mt75-sort-zulu');
+        $alpha->forceFill(['name' => 'MT75SORT Alpha', 'sale_price' => '300.00'])->save();
+        $zulu->forceFill(['name' => 'MT75SORT Zulu', 'sale_price' => '100.00'])->save();
+        $url = '/api/v1/catalogue/products?q=MT75SORT&limit=1&sort=';
+        $first = $this->getJson($url.'price_asc')->assertOk()
+            ->assertJsonPath('data.items.0.slug', 'mt75-sort-zulu')
+            ->assertJsonPath('data.items.0.price', '100.00');
+        $cursor = $first->json('data.page.next_cursor');
+        $this->assertNotNull($cursor);
+        $this->getJson($url.'price_asc&after='.urlencode($cursor))->assertOk()
+            ->assertJsonPath('data.items.0.slug', 'mt75-sort-alpha')
+            ->assertJsonPath('data.page.has_more', false);
+        $this->getJson($url.'name_asc')->assertOk()->assertJsonPath('data.items.0.slug', 'mt75-sort-alpha');
+        $this->getJson($url.'name_desc')->assertOk()->assertJsonPath('data.items.0.slug', 'mt75-sort-zulu');
+        $this->getJson($url.'price_desc')->assertOk()->assertJsonPath('data.items.0.slug', 'mt75-sort-alpha');
+        $this->getJson($url.'newest')->assertOk()->assertJsonPath('data.items.0.slug', 'mt75-sort-zulu');
+        $this->getJson($url.'price_desc&after='.urlencode($cursor))->assertUnprocessable();
+        $this->getJson($url.'invalid')->assertUnprocessable();
+    }
+
     public function test_website_profile_exposes_authoritative_mode_navigation_cta_and_seo_plan(): void
     {
         $this->publishMode('hybrid', 1);

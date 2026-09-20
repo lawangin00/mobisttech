@@ -123,12 +123,13 @@ async function readWebsiteProfileUncached(): Promise<WebsiteProfile | null> {
 export const readWebsiteProfile = cache(readWebsiteProfileUncached);
 export function readCategories() { return get<Category[]>("/api/v1/catalogue/categories", 60); }
 export function readProduct(slug: string) { return get<ProductDetail>(`/api/v1/catalogue/products/${encodeURIComponent(slug)}`, "live"); }
-export function readCatalogue(input: { limit?: number; after?: string; category?: string; q?: string } = {}) {
+export function readCatalogue(input: { limit?: number; after?: string; category?: string; q?: string; sort?: string } = {}) {
   const query = new URLSearchParams();
   query.set("limit", String(input.limit ?? 12));
   if (input.after) query.set("after", input.after);
   if (input.category) query.set("category", input.category);
   if (input.q) query.set("q", input.q);
+  if (input.sort) query.set("sort", input.sort);
   return get<CataloguePage>(`/api/v1/catalogue/products?${query.toString()}`, "live");
 }
 export function readContentIndex() { return get<ContentIndex>("/api/v1/content", "live"); }

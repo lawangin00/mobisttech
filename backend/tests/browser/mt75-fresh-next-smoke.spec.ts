@@ -86,6 +86,30 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     const publicData = await publicProduct.json() as { data: { name: string; price: string; availability: {quantity:number} } };
     expect(publicData.data).toMatchObject({name:'MT75 Fresh Accessory',price:'150.00',availability:{quantity:3}});
     expect(JSON.stringify(publicData.data)).not.toMatch(/purchase_price|customer_phone|customer_email|imei|object_key/);
+    const detailVariants = (await publicProduct.json() as {data:{variants:Array<{key:string;availability:{quantity:number}}>}}).data.variants;
+    expect(detailVariants).toMatchObject([{key:'standard',availability:{quantity:3}}]);
+    expect(JSON.stringify(detailVariants).toLowerCase()).not.toMatch(/imei|unit_no|purchase_price/);
+    const sortedPage=await page.goto('http://127.0.0.1:13000/products?sort=price_desc&category=accessory');
+    expect(sortedPage?.status()).toBe(200);
+    await expect(page.getByRole('combobox',{name:'Sort products'})).toHaveValue('price_desc');
+    await expect(page.locator('main article').getByRole('link',{name:'MT75 Fresh Accessory'}).first()).toBeVisible();
+    for (const [oldPath, destination] of [
+        ['/mobiles','/products?category=mobile_phone'],
+        ['/mobiles/mt75-fresh-accessory','/products/mt75-fresh-accessory'],
+        ['/product/mt75-fresh-accessory','/products/mt75-fresh-accessory'],
+        ['/products/mobiles','/products?category=mobile_phone'],
+        ['/products/tablets','/products?category=tablet'],
+        ['/products/accessories','/products?category=accessory'],
+    ]) {
+        const redirect=await page.request.get('http://127.0.0.1:13000'+oldPath,{maxRedirects:0});
+        expect(redirect.status(),oldPath).toBe(301);
+        const target=new URL(redirect.headers()['location'],'http://127.0.0.1:13000');
+        expect(target.pathname+target.search).toBe(destination);
+    }
+    const legacyProduct=await page.goto('http://127.0.0.1:13000/product/mt75-fresh-accessory');
+    expect(legacyProduct?.status()).toBe(200);
+    await expect(page).toHaveURL('http://127.0.0.1:13000/products/mt75-fresh-accessory');
+
 
     const categories = await page.request.get('http://127.0.0.1:18080/api/v1/catalogue/categories');
     expect(categories.status()).toBe(200);

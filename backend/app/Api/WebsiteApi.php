@@ -60,21 +60,41 @@ final class WebsiteApi
             'after' => 'nullable|string|max:120',
             'category' => 'nullable|string|max:50',
             'q' => 'nullable|string|min:2|max:80',
+            'sort' => 'sometimes|in:oldest,newest,price_asc,price_desc,name_asc,name_desc',
         ])->validate();
         $limit = (int) ($data['limit'] ?? 12);
-        $after = $this->decodeCursor($data['after'] ?? null);
+        $sort = $data['sort'] ?? 'oldest';
+        $after = $sort === 'oldest' ? $this->decodeCursor($data['after'] ?? null)
+            : $this->decodeCatalogueSortCursor($data['after'] ?? null, $sort);
         $category = isset($data['category']) ? trim($data['category']) : null;
         $query = isset($data['q']) ? trim($data['q']) : null;
-        $resource = json_encode(compact('limit', 'after', 'category', 'query'), JSON_THROW_ON_ERROR);
+        $resource = json_encode(compact('limit', 'after', 'category', 'query', 'sort'), JSON_THROW_ON_ERROR);
 
-        return $this->cache->remember('catalogue', 'api:v1:products:'.$resource, function () use ($limit, $after, $category, $query) {
-            return DB::transaction(function () use ($limit, $after, $category, $query) {
+        return $this->cache->remember('catalogue', 'api:v1:products:'.$resource, function () use ($limit, $after, $category, $query, $sort) {
+            return DB::transaction(function () use ($limit, $after, $category, $query, $sort) {
                 $rows = DB::table('product_listings as l')->join('products as p', 'p.id', '=', 'l.product_id')
                     ->where('l.is_online', true)->where('p.isDeleted', false)->whereNull('p.archived_at')
-                    ->when($after !== null, fn ($q) => $q->where('l.id', '>', $after))
                     ->when($category, fn ($q) => $q->where('p.category', $category))
-                    ->when($query, fn ($q) => $q->where('l.name', 'like', '%'.$this->escapeLike($query).'%'))
-                    ->orderBy('l.id')->limit($limit + 1)
+                    ->when($query, fn ($q) => $q->where('p.name', 'like', '%'.$this->escapeLike($query).'%'));
+                $column = str_starts_with($sort, 'price_') ? 'p.sale_price' : 'p.name';
+                $descending = in_array($sort, ['newest', 'price_desc', 'name_desc'], true);
+                if ($after !== null && $sort !== 'oldest' && $sort !== 'newest') {
+                    $anchor = DB::table('product_listings as l')->join('products as p', 'p.id', '=', 'l.product_id')
+                        ->where('l.id', $after)->value($column);
+                    if ($anchor === null) {
+                        throw ValidationException::withMessages(['after' => 'Invalid pagination cursor.']);
+                    }
+                    $rows->where(fn ($q) => $q->where($column, $descending ? '<' : '>', $anchor)
+                        ->orWhere(fn ($tie) => $tie->where($column, $anchor)->where('l.id', '>', $after)));
+                } elseif ($after !== null) {
+                    $rows->where('l.id', $sort === 'newest' ? '<' : '>', $after);
+                }
+                if ($sort === 'oldest' || $sort === 'newest') {
+                    $rows->orderBy('l.id', $sort === 'newest' ? 'desc' : 'asc');
+                } else {
+                    $rows->orderBy($column, $descending ? 'desc' : 'asc')->orderBy('l.id');
+                }
+                $rows = $rows->limit($limit + 1)
                     ->get(['l.id as listing_id', 'l.public_id as listing_public_id', 'l.slug', 'l.image_url',
                         'p.id as product_id', 'p.public_id as product_public_id', 'p.name', 'p.brand', 'p.model',
                         'p.category', 'p.sale_price', 'p.warranty_type', 'p.track_imei']);
@@ -84,7 +104,8 @@ final class WebsiteApi
                 $last = $rows->last();
 
                 return ['items' => $items, 'page' => ['limit' => $limit, 'has_more' => $hasMore,
-                    'next_cursor' => $hasMore && $last ? $this->encodeCursor((int) $last->listing_id) : null]];
+                    'next_cursor' => $hasMore && $last ? ($sort === 'oldest' ? $this->encodeCursor((int) $last->listing_id)
+                        : $this->encodeCatalogueSortCursor($sort, (int) $last->listing_id)) : null]];
             }, 2);
         });
     }
@@ -419,6 +440,26 @@ final class WebsiteApi
     private function assertScope(string $scope): void
     {
         abort_unless($this->capabilities->allowsScope($scope), 404, 'The requested Website capability is not active.');
+    }
+
+    private function encodeCatalogueSortCursor(string $sort, int $id): string
+    {
+        return rtrim(strtr(base64_encode('v2:'.$sort.':'.$id), '+/', '-_'), '=');
+    }
+
+    private function decodeCatalogueSortCursor(?string $cursor, string $sort): ?int
+    {
+        if ($cursor === null || $cursor === '') {
+            return null;
+        }
+        $raw = strtr($cursor, '-_', '+/');
+        $decoded = base64_decode($raw.str_repeat('=', (4 - strlen($raw) % 4) % 4), true);
+        if (! is_string($decoded) || ! preg_match('/\Av2:([a-z_]+):([1-9][0-9]*)\z/', $decoded, $match)
+            || $match[1] !== $sort) {
+            throw ValidationException::withMessages(['after' => 'Invalid pagination cursor.']);
+        }
+
+        return (int) $match[2];
     }
 
     private function encodeCursor(int $id): string

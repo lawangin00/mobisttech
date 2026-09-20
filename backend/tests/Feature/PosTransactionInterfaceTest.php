@@ -111,6 +111,10 @@ class PosTransactionInterfaceTest extends TestCase
         $this->assertStringNotContainsString('100.01', $visible->getContent());
         $this->send($client, 'POST', $url, $input)->assertStatus(409);
         $this->send($client, 'POST', $url, [...$input, 'slug' => '../invalid', 'expected_version' => 1])->assertUnprocessable();
+        foreach (['mobiles', 'tablets', 'accessories'] as $reserved) {
+            $this->send($client, 'POST', $url, [...$input, 'slug' => $reserved, 'expected_version' => 1])
+                ->assertUnprocessable();
+        }
         $this->acquire($product, 1);
         $this->getJson($public)->assertOk()->assertJsonPath('data.availability.quantity', 3);
         $this->send($client, 'POST', $url, [...$input, 'expected_version' => 1, 'is_online' => false])->assertOk()

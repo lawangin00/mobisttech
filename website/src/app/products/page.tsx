@@ -29,6 +29,7 @@ export default async function Products({
   const q = rawQuery.length >= 2 ? rawQuery : "";
   const category = typeof params.category === "string" ? params.category : "";
   const after = typeof params.after === "string" ? params.after : "";
+  const sort = typeof params.sort === "string" ? params.sort : "oldest";
   let page;
   try {
     page = await readCatalogue({
@@ -36,6 +37,7 @@ export default async function Products({
       q: q || undefined,
       category: category || undefined,
       after: after || undefined,
+      sort,
     });
   } catch (error) {
     if (error instanceof WebsiteApiError && (error.status === 404 || error.status === 422)) notFound();
@@ -45,6 +47,7 @@ export default async function Products({
   const next = new URLSearchParams();
   if (q) next.set("q", q);
   if (category) next.set("category", category);
+  if (sort !== "oldest") next.set("sort", sort);
   if (page.page.next_cursor) next.set("after", page.page.next_cursor);
 
   return (
@@ -61,7 +64,7 @@ export default async function Products({
       </div>
       <form
         action="/products"
-        className="mt-8 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_16rem_auto]"
+        className="mt-8 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[1fr_12rem_12rem_auto]"
       >
         <input
           name="q"
@@ -82,6 +85,12 @@ export default async function Products({
               {item.label} ({item.products})
             </option>
           ))}
+        </select>
+        <select name="sort" aria-label="Sort products" defaultValue={sort}
+          className="rounded-xl border border-slate-300 px-4 py-3">
+          <option value="oldest">Oldest first</option><option value="newest">Newest first</option>
+          <option value="price_asc">Price: low to high</option><option value="price_desc">Price: high to low</option>
+          <option value="name_asc">Name: A to Z</option><option value="name_desc">Name: Z to A</option>
         </select>
         <button className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">
           Search
