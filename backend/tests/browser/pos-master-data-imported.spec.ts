@@ -50,4 +50,9 @@ test('P02 source-qualified synthetic imported product remains editable, historic
     expect((await changedOutlet).status()).toBe(200);
     const foreign=await page.request.get(search);expect(foreign.status()).toBe(200);
     expect((await foreign.json() as {data:{products:unknown[]}}).data.products).toHaveLength(0);
+    // Browser specs use separate device cookies; release this owner's desktop session
+    // before the next spec logs in, preserving the production single-desktop policy.
+    const signedOut=page.waitForResponse(r=>r.url().endsWith('/internal/admin/auth/logout')&&r.request().method()==='POST');
+    await page.getByTestId('logout').click();
+    expect((await signedOut).status()).toBe(200);
 });
