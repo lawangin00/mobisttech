@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "3d30e4d49c5c21b36f732be507bfabaee36f9824",
+  "reason": "necessary",
+  "gate": "website",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T16:41:56Z",
+  "description": "W04 exact-source hosted PHP style preflight after new payment matrix test: investigate local Pint discrepancy before changing unrelated baseline formatting. Other gates remain unwaived."
+}
