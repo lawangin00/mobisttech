@@ -80,6 +80,52 @@ test('MT-5.3 COD checkout exposes exactly four channels and preserves owned stat
     await expect(page.getByText('Your cart is empty.', { exact: true })).toBeVisible();
 });
 
+test('MT-7.5 W04 synthetic hosted initiation failure keeps the created order recoverable without resubmission', async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.goto('/products/mt51-alpha-phone');
+    await page.getByRole('button', { name: 'Add to cart' }).click();
+    await expect(page.getByText('Added to cart.', { exact: true })).toBeVisible();
+    await login(page);
+
+    // Browser-only response stubs: no real wallet credentials, payment activation, or server-side order mutation.
+    await page.route('**/api/customer/checkout/channels', async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [
+            { code: 'cod', label: 'Cash on Delivery', available: true, kind: 'offline' },
+            { code: 'jazzcash', label: 'JazzCash', available: true, kind: 'hosted' },
+            { code: 'easypaisa', label: 'Easypaisa', available: false, kind: 'hosted' },
+            { code: 'card', label: 'Credit / Debit Card', available: false, kind: 'hosted' },
+        ] } }) });
+    });
+    const fakeOrderId = '00000000-0000-4000-8000-000000000075';
+    const fakePaymentId = '00000000-0000-4000-8000-000000000076';
+    let orderSubmits = 0;
+    await page.route('**/api/customer/orders', async (route) => {
+        if (route.request().method() !== 'POST') return route.continue();
+        orderSubmits += 1;
+        await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: {
+            order_id: fakeOrderId, order_number: 'MT75-SYNTHETIC-RECOVERY', payment_id: fakePaymentId,
+            payment_status: 'pending', amount: '50000.00', currency: 'PKR',
+        } }) });
+    });
+    let initiationAttempts = 0;
+    await page.route(`**/api/customer/payments/${fakePaymentId}/initiate`, async (route) => {
+        initiationAttempts += 1;
+        await route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ message: 'Synthetic gateway temporarily unavailable.' }) });
+    });
+
+    await page.goto('/checkout');
+    await expect(page.getByRole('radio', { name: /JazzCash/ })).toBeEnabled();
+    await page.getByRole('radio', { name: /JazzCash/ }).check();
+    await page.getByLabel('City').fill('Karachi');
+    await page.getByLabel('Delivery address').fill('Synthetic W04 recovery address');
+    await page.getByRole('button', { name: 'Place order' }).click();
+    await expect(page.getByRole('alert')).toHaveText('Synthetic gateway temporarily unavailable.');
+    await expect(page.getByRole('link', { name: 'View order and continue payment' }))
+        .toHaveAttribute('href', `/account/orders/${fakeOrderId}`);
+    await expect(page.getByRole('button', { name: 'Place order' })).toHaveCount(0);
+    expect(orderSubmits).toBe(1);
+    expect(initiationAttempts).toBe(1);
+});
 
 test('MT-5.3 digital-only mode prunes checkout while historical account stays available', async ({ page }) => {
     test.setTimeout(60_000);
