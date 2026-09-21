@@ -202,10 +202,13 @@ final class PosCustomerReportingController extends Controller
             'requires_attachment' => 'sometimes|boolean',
         ]);
         $input = array_filter($data, fn ($value) => $value !== null);
+        $prepared = $service->prepareWhatsapp($actor, $outlet, $type, $document, $this->key($request), $input);
+        if (is_array($prepared['attachment'] ?? null)) {
+            $prepared['attachment']['pdf_base64'] = base64_encode($prepared['attachment']['pdf']);
+            unset($prepared['attachment']['pdf']);
+        }
 
-        return response()->json(['data' => $service->prepareWhatsapp(
-            $actor, $outlet, $type, $document, $this->key($request), $input,
-        )]);
+        return response()->json(['data' => $prepared]);
     }
 
     public function whatsappOpened(Request $request, string $attempt, CanonicalDocuments $service)
