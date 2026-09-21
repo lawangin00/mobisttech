@@ -1,5 +1,10 @@
 import {execFileSync} from 'node:child_process';
 import {expect,test} from '@playwright/test';
+import { releaseSyntheticAdminSession } from './synthetic-admin-session';
+
+test.afterEach(async ({ page }) => {
+    await releaseSyntheticAdminSession(page);
+});
 
 test('actual inventory and warranty lists consume saved portal paging and category search',async ({page,browser})=>{
     execFileSync('php',['artisan','db:seed','--class=Database\\Seeders\\PosInventoryWarrantyE2eSeeder','--env=testing','--force'],{cwd:process.cwd(),stdio:'inherit'});
@@ -25,8 +30,8 @@ test('actual inventory and warranty lists consume saved portal paging and catego
     await page.getByRole('button',{name:'Search',exact:true}).first().click();
     await expect(page.getByTestId('inventory-page')).toContainText('1 products');
     const context=await browser.newContext();
+    const warranty=await context.newPage();
     try{
-        const warranty=await context.newPage();
         await warranty.goto('/internal/admin/pos/login');
         await warranty.getByTestId('login-email').fill('e2e-iw-warranty@example.invalid');
         await warranty.getByTestId('login-password').fill('SyntheticPass123!');
@@ -43,5 +48,5 @@ test('actual inventory and warranty lists consume saved portal paging and catego
         await warranty.getByTestId('history-apply').click();
         await expect(warranty.getByTestId('history-total')).toContainText('1 records');
         await expect(warranty.getByTestId('mt43-warranty').locator('option').filter({hasText:'MT75-IW-CLAIM-019'})).toHaveCount(1);
-    }finally{await context.close();}
+    }finally{await releaseSyntheticAdminSession(warranty); await context.close();}
 });

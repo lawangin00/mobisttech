@@ -261,12 +261,12 @@ test('personal Admin photo upload and removal stay inside the authenticated acco
     await page.reload();
     await expect(page.getByTestId('account-photo-image')).toHaveJSProperty('naturalWidth',192);
     const other=await browser.newContext();
+    const guest=await other.newPage();
     try {
-        const guest=await other.newPage();
         expect((await guest.goto('/internal/admin/manage-account/photo'))?.status()).toBe(401);
         await login(guest,'e2e-inventory@example.invalid');
         expect((await guest.goto('/internal/admin/manage-account/photo'))?.status()).toBe(404);
-    } finally {await other.close();}
+    } finally { await releaseSyntheticAdminSession(guest); await other.close(); }
     const removed=page.waitForResponse(r=>r.url().endsWith('/internal/admin/manage-account/photo')&&r.request().method()==='DELETE');
     await page.getByTestId('account-photo-remove').click();
     expect((await removed).status()).toBe(200);

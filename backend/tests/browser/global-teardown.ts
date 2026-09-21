@@ -5,6 +5,7 @@ export default async function globalTeardown() {
         'artisan',
         'db:seed',
         '--class=Database\\Seeders\\PosShellE2eCleanupSeeder',
+        '-vvv',
         '--env=testing',
         '--force',
     ], {
