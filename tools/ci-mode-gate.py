@@ -18,6 +18,8 @@ STATE_API = 'https://api.github.com/repos/lawangin00/references/contents/UNIVERS
 STATE_RAW = 'https://raw.githubusercontent.com/lawangin00/references/refs/heads/main/UNIVERSAL_EXECUTION_MODE.json'
 REQUEST_ROOT = '.github/ci-requests/'
 W01_FOCUS = 'W01-customer'
+P02_FOCUS = 'P02-variants'
+FOCUSED_SCOPES = (W01_FOCUS, P02_FOCUS)
 
 
 def allowed(state, event, request=None):
@@ -33,7 +35,7 @@ def allowed(state, event, request=None):
     assert request.get('reason') in ('stage', 'milestone', 'necessary')
     assert request.get('gate') in ('website', 'full', 'all', 'verify')
     if request['gate'] == 'verify':
-        assert request.get('stage_id') == 'MT-7.5' and request.get('focus') == W01_FOCUS, 'Unrecognized isolated verification scope'
+        assert request.get('stage_id') == 'MT-7.5' and request.get('focus') in FOCUSED_SCOPES, 'Unrecognized isolated verification scope'
     mode = exceptions.get(PROJECT_ID, state['global_mode'])
     return mode == 'GITHUB' or request['reason'] in ('milestone', 'necessary')
 
@@ -50,6 +52,7 @@ def self_test():
     assert allowed({**local, 'exceptions': {PROJECT_ID: 'GITHUB'}}, 'push', request)
     focused = {**request, 'gate': 'verify', 'stage_id': 'MT-7.5', 'focus': W01_FOCUS}
     assert allowed(gh, 'push', focused)
+    assert allowed(gh, 'push', {**focused, 'focus': P02_FOCUS})
     for invalid in ({**focused, 'focus': 'other'}, {**focused, 'stage_id': 'MT-7.6'}, {**request, 'gate': 'verify'}):
         try:
             allowed(gh, 'push', invalid)
@@ -124,7 +127,7 @@ def main():
         assert event == 'push', 'Unexpected CI event'
         request = read_request()
         selected = allowed(canonical_mode(), event, request)
-        focus = W01_FOCUS if request['gate'] == 'verify' else 'full'
+        focus = request['focus'] if request['gate'] == 'verify' else 'full'
     with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
         output.write('run_tests=' + ('true' if selected else 'false') + '\n')
         output.write('run_scope=' + focus + '\n')
