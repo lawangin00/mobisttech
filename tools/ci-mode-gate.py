@@ -17,6 +17,7 @@ PROJECT_ID = '282dba2f-a2d9-47e8-aa8d-e499fbe1706c'
 STATE_API = 'https://api.github.com/repos/lawangin00/references/contents/UNIVERSAL_EXECUTION_MODE.json?ref=main'
 STATE_RAW = 'https://raw.githubusercontent.com/lawangin00/references/refs/heads/main/UNIVERSAL_EXECUTION_MODE.json'
 REQUEST_ROOT = '.github/ci-requests/'
+W01_FOCUS = 'W01-customer'
 
 
 def allowed(state, event, request=None):
@@ -31,6 +32,8 @@ def allowed(state, event, request=None):
     assert request.get('project_id') == PROJECT_ID
     assert request.get('reason') in ('stage', 'milestone', 'necessary')
     assert request.get('gate') in ('website', 'full', 'all', 'verify')
+    if request['gate'] == 'verify':
+        assert request.get('stage_id') == 'MT-7.5' and request.get('focus') == W01_FOCUS, 'Unrecognized isolated verification scope'
     mode = exceptions.get(PROJECT_ID, state['global_mode'])
     return mode == 'GITHUB' or request['reason'] in ('milestone', 'necessary')
 
@@ -45,6 +48,15 @@ def self_test():
     assert allowed(local, 'workflow_dispatch')
     assert not allowed({**gh, 'exceptions': {PROJECT_ID: 'RDC'}}, 'push', request)
     assert allowed({**local, 'exceptions': {PROJECT_ID: 'GITHUB'}}, 'push', request)
+    focused = {**request, 'gate': 'verify', 'stage_id': 'MT-7.5', 'focus': W01_FOCUS}
+    assert allowed(gh, 'push', focused)
+    for invalid in ({**focused, 'focus': 'other'}, {**focused, 'stage_id': 'MT-7.6'}, {**request, 'gate': 'verify'}):
+        try:
+            allowed(gh, 'push', invalid)
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError('Unrecognized isolated verification scope accepted')
     try:
         allowed(local, 'push', {**request, 'project_id': 'wrong'})
     except AssertionError:
@@ -107,14 +119,17 @@ def main():
     event = os.environ['GITHUB_EVENT_NAME']
     if event == 'workflow_dispatch':
         selected = True
+        focus = 'full'
     else:
         assert event == 'push', 'Unexpected CI event'
         request = read_request()
         selected = allowed(canonical_mode(), event, request)
-    result = 'true' if selected else 'false'
+        focus = W01_FOCUS if request['gate'] == 'verify' else 'full'
     with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
-        output.write('run_tests=' + result + '\n')
-    print('CI_REQUEST_RUN_TESTS=' + result)
+        output.write('run_tests=' + ('true' if selected else 'false') + '\n')
+        output.write('run_scope=' + focus + '\n')
+    print('CI_REQUEST_RUN_TESTS=' + ('true' if selected else 'false'))
+    print('CI_REQUEST_RUN_SCOPE=' + focus)
 
 
 if __name__ == '__main__':
