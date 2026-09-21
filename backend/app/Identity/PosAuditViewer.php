@@ -40,8 +40,12 @@ final class PosAuditViewer
                 });
             }
         }
-        if (! empty($filter['actor_type'])) { $query->where('log.actor_type', $filter['actor_type']); }
-        if (! empty($filter['method'])) { $query->where('log.method', $filter['method']); }
+        if (! empty($filter['actor_type'])) {
+            $query->where('log.actor_type', $filter['actor_type']);
+        }
+        if (! empty($filter['method'])) {
+            $query->where('log.method', $filter['method']);
+        }
         if (! empty($filter['outlet'])) {
             $id = Outlet::where('public_id', $filter['outlet'])->value('id');
             abort_if($id === null, 404);
@@ -52,6 +56,7 @@ final class PosAuditViewer
             'log.action', 'log.method', 'log.path', 'log.status_code',
             'log.created_at', 'outlet.name as outlet_name', 'outlet.outlet_code',
         ])->paginate(60);
+
         return ['records' => $page->items(), 'current_page' => $page->currentPage(),
             'last_page' => $page->lastPage(), 'total' => $page->total(),
             'filters' => array_intersect_key($filter, array_flip(['q', 'actor_type', 'method', 'outlet'])),

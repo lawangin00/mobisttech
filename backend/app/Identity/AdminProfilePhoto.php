@@ -29,7 +29,9 @@ final class AdminProfilePhoto
         }
         $file = $request->validate(['profile_photo' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120']])['profile_photo'];
         $mime = $file->getMimeType();
-        $extension = match ($mime) {'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', default => null};
+        $extension = match ($mime) {
+            'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', default => null
+        };
         if ($extension === null) {
             throw ValidationException::withMessages(['profile_photo' => 'Unsupported image format.']);
         }
@@ -43,6 +45,7 @@ final class AdminProfilePhoto
                 $previous = $locked->profile_photo;
                 $locked->forceFill(['profile_photo' => $path])->save();
                 IdentityAudit::record('admin', $actor->id, 'admin_profile_photo_updated', 'admin:'.$actor->public_id);
+
                 return $previous;
             });
         } catch (\Throwable $error) {
@@ -52,8 +55,10 @@ final class AdminProfilePhoto
         if ($this->owned($actor, $previous) && $previous !== $path) {
             Storage::disk('local')->delete($previous);
         }
+
         return ['photo_url' => '/internal/admin/manage-account/photo', 'has_photo' => true];
     }
+
     public function remove(Admin $actor): array
     {
         $previous = DB::transaction(function () use ($actor) {
@@ -64,11 +69,13 @@ final class AdminProfilePhoto
                 $locked->forceFill(['profile_photo' => null])->save();
                 IdentityAudit::record('admin', $actor->id, 'admin_profile_photo_removed', 'admin:'.$actor->public_id);
             }
+
             return $previous;
         });
         if ($this->owned($actor, $previous)) {
             Storage::disk('local')->delete($previous);
         }
+
         return ['has_photo' => false];
     }
 
@@ -76,7 +83,10 @@ final class AdminProfilePhoto
     {
         $path = $actor->fresh()->profile_photo;
         abort_unless($this->owned($actor, $path) && Storage::disk('local')->exists($path), 404);
-        $mime = match (pathinfo($path, PATHINFO_EXTENSION)) {'jpg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'};
+        $mime = match (pathinfo($path, PATHINFO_EXTENSION)) {
+            'jpg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'
+        };
+
         return response()->file(Storage::disk('local')->path($path), [
             'Content-Type' => $mime, 'Cache-Control' => 'private, no-store',
             'Referrer-Policy' => 'no-referrer', 'X-Content-Type-Options' => 'nosniff',

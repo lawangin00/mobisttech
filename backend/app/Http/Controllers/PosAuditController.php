@@ -18,6 +18,7 @@ final class PosAuditController extends Controller
         $response = Inertia::render('pos-audit-viewer', $data)->toResponse($request);
         $response->headers->set('Cache-Control', 'private, no-store');
         $response->headers->set('Referrer-Policy', 'no-referrer');
+
         return $response;
     }
 }

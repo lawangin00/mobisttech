@@ -57,6 +57,7 @@ final class PosMasterDataImportedE2eSeeder extends Seeder
                 'decimal' => '0.00', default => 'Synthetic',
             };
         }
+
         return [...$row, ...$values];
     }
 }

@@ -10,6 +10,7 @@ use App\Sales\SalesOperations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
 
@@ -193,7 +194,7 @@ class CashSessionTest extends TestCase
             try {
                 $attempt();
                 $this->fail('Archived outlet served a cached cash mutation or accepted a new write.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }

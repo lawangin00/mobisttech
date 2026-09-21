@@ -12,20 +12,22 @@ final class PortalPreferences
 {
     // Source inventory: global portal preferences, not individual operator credentials.
     private const OPTIONS = [
-        'invoice_page_length' => ['10','15','25','50','100'],
-        'inventory_page_length' => ['10','15','25','50','100'],
-        'claims_page_length' => ['10','15','25','50','100'],
-        'invoice_search_category' => ['all','invoice_id','customer_name','contact_number','item','imei','invoice_date','total'],
-        'inventory_search_category' => ['all','product_name','sku','category','brand','model','variant','color','condition','pta_status','carrier_lock','mdm_status','purchase_price','sale_price','in_stock','sold','imei','warranty'],
-        'warranty_search_category' => ['all','invoice_id','customer_name','customer_cnic','contact_number','product','imei'],
-        'claims_search_category' => ['all','claim','invoice','customer','contact','product','imei','status','assigned'],
+        'invoice_page_length' => ['10', '15', '25', '50', '100'],
+        'inventory_page_length' => ['10', '15', '25', '50', '100'],
+        'claims_page_length' => ['10', '15', '25', '50', '100'],
+        'invoice_search_category' => ['all', 'invoice_id', 'customer_name', 'contact_number', 'item', 'imei', 'invoice_date', 'total'],
+        'inventory_search_category' => ['all', 'product_name', 'sku', 'category', 'brand', 'model', 'variant', 'color', 'condition', 'pta_status', 'carrier_lock', 'mdm_status', 'purchase_price', 'sale_price', 'in_stock', 'sold', 'imei', 'warranty'],
+        'warranty_search_category' => ['all', 'invoice_id', 'customer_name', 'customer_cnic', 'contact_number', 'product', 'imei'],
+        'claims_search_category' => ['all', 'claim', 'invoice', 'customer', 'contact', 'product', 'imei', 'status', 'assigned'],
     ];
+
     private const DEFAULTS = [
         'invoice_page_length' => '15', 'inventory_page_length' => '10', 'claims_page_length' => '15',
         'invoice_search_category' => 'all', 'inventory_search_category' => 'all',
         'warranty_search_category' => 'all', 'claims_search_category' => 'all',
         'auto_focus_search' => true, 'remember_search' => false,
     ];
+
     public function canManage(Admin $actor): bool
     {
         return app(OutletLifecycleAdministration::class)->canManage($actor)
@@ -50,6 +52,7 @@ final class PortalPreferences
                 $values[$key] = $raw;
             }
         }
+
         return $values;
     }
 
@@ -61,8 +64,10 @@ final class PortalPreferences
     public function catalogue(Admin $actor): array
     {
         $this->authorize($actor);
+
         return ['values' => $this->current(), 'options' => self::OPTIONS];
     }
+
     public function update(Admin $actor, array $input): array
     {
         $this->authorize($actor);
@@ -93,6 +98,7 @@ final class PortalPreferences
             }
             IdentityAudit::record('admin', $actor->id, 'pos_portal_preferences_updated', 'portal:preferences');
         });
+
         return $this->current();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Pos\PortalPreferences;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -36,7 +37,7 @@ class PosShellE2eCleanupSeeder extends Seeder
             $prefOwnerId = DB::table('admins')->where('email', 'e2e-pref-owner@example.invalid')->value('id');
             if ($prefOwnerId && DB::table('identity_audit_events')->where('realm', 'admin')
                 ->where('account_id', $prefOwnerId)->where('action', 'pos_portal_preferences_updated')->exists()) {
-                $keys = array_map(fn ($key) => 'portal.'.$key, array_keys(app(\App\Pos\PortalPreferences::class)->current()));
+                $keys = array_map(fn ($key) => 'portal.'.$key, array_keys(app(PortalPreferences::class)->current()));
                 abort_unless(DB::table('pos_settings')->where('group', 'portal')->count() === count($keys), 409);
                 DB::table('pos_settings')->whereIn('key', $keys)->where('group', 'portal')->delete();
             }
@@ -47,8 +48,12 @@ class PosShellE2eCleanupSeeder extends Seeder
                 DB::table('pos_settings')->where('key', 'portal.warranty_search_category')
                     ->where('value', 'invoice_id')->where('group', 'portal')->delete();
             }
-            if ($intakeInvoices) DB::table('sales')->whereIn('invoice_id', $intakeInvoices)->whereIn('outlet_id', $outletIds)->delete();
-            if ($intakeInvoices) DB::table('invoices')->whereIn('id', $intakeInvoices)->delete();
+            if ($intakeInvoices) {
+                DB::table('sales')->whereIn('invoice_id', $intakeInvoices)->whereIn('outlet_id', $outletIds)->delete();
+            }
+            if ($intakeInvoices) {
+                DB::table('invoices')->whereIn('id', $intakeInvoices)->delete();
+            }
             DB::table('products')->whereIn('outlet_id', $outletIds)->where('name', 'MT75 Intake Product')->delete();
             DB::table('claims')->whereIn('outlet_id', $outletIds)
                 ->where('claim_number', 'like', 'MT75-IW-CLAIM-%')->delete();
@@ -171,8 +176,11 @@ class PosShellE2eCleanupSeeder extends Seeder
                 DB::table('outlet_admins')->whereIn('outlet_id', $outletIds)->delete();
                 DB::table('outlets')->whereIn('id', $outletIds)->delete();
             }
+
             return $photos;
         });
-        if ($photoPaths) { Storage::disk('local')->delete($photoPaths); }
+        if ($photoPaths) {
+            Storage::disk('local')->delete($photoPaths);
+        }
     }
 }

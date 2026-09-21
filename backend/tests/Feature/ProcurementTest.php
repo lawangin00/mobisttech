@@ -9,6 +9,7 @@ use App\Procurement\SupplierProcurement;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
 
@@ -78,7 +79,7 @@ class ProcurementTest extends TestCase
             try {
                 $attempt();
                 $this->fail('Archived outlet accepted procurement mutation or completed replay.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }

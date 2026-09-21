@@ -14,12 +14,15 @@ final class OutletProfileAdministration
     public function show(Admin $actor, Outlet $outlet, bool $managed = false): array
     {
         $this->authorize($actor, $outlet->fresh(), $managed);
+
         return $this->view($outlet->fresh());
     }
 
     public function update(Admin $actor, Outlet $outlet, array $input, bool $managed = false): array
     {
-        if ($managed) { $this->authorize($actor, $outlet->fresh(), true); }
+        if ($managed) {
+            $this->authorize($actor, $outlet->fresh(), true);
+        }
         if (array_diff(array_keys($input), [...self::FIELDS, 'version'])) {
             throw ValidationException::withMessages(['input' => 'Unexpected outlet profile fields.']);
         }
@@ -46,6 +49,7 @@ final class OutletProfileAdministration
         foreach (['business_legal_name', 'business_address', 'business_hours'] as $field) {
             $data[$field] = trim((string) ($data[$field] ?? '')) ?: null;
         }
+
         return DB::transaction(function () use ($actor, $outlet, $data, $managed) {
             $locked = Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
             $this->authorize($actor, $locked, $managed);
@@ -53,6 +57,7 @@ final class OutletProfileAdministration
             $values = array_intersect_key($data, array_flip(self::FIELDS));
             $locked->forceFill([...$values, 'version' => $locked->version + 1])->save();
             IdentityAudit::record('admin', $actor->id, 'outlet_profile_updated', 'outlet:'.$locked->public_id.':v'.$locked->version, $locked->id);
+
             return $this->view($locked);
         });
     }
@@ -62,6 +67,7 @@ final class OutletProfileAdministration
         if ($managed) {
             abort_unless(app(OutletLifecycleAdministration::class)->canManage($actor), 403);
             abort_if($outlet->status || $outlet->archived_at !== null, 403, 'Outlet is unavailable.');
+
             return;
         }
         abort_unless(app(Access::class)->allows($actor->fresh(), 'shop.profile', $outlet), 403);

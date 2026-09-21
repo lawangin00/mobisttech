@@ -2,15 +2,20 @@
 
 namespace Tests\Feature;
 
+use App\Identity\OutletLifecycleAdministration;
 use App\Inventory\InventoryOperations;
 use App\Inventory\StockLedger;
 use App\Inventory\TransactionalStock;
 use App\Migration\StockImporter;
 use App\Models\Admin;
+use App\Models\Outlet;
+use App\Models\Role;
 use App\Models\StockUnit;
 use App\Support\ProductVariantKey;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
 
@@ -27,18 +32,18 @@ class InventoryTest extends TestCase
     public function test_zero_stock_definition_and_stock_history_block_outlet_archive_and_archived_inventory_writes(): void
     {
         $product = $this->product();
-        $fallback = new \App\Models\Outlet;
-        $fallback->forceFill(['public_id' => (string) \Illuminate\Support\Str::uuid(),
+        $fallback = new Outlet;
+        $fallback->forceFill(['public_id' => (string) Str::uuid(),
             'name' => 'D03 inventory fallback', 'outlet_code' => '067'])->save();
         $owner = new Admin;
         $owner->forceFill(['name' => 'D03 inventory archive owner',
-            'email' => 'd03-inventory-'.\Illuminate\Support\Str::uuid().'@example.invalid',
+            'email' => 'd03-inventory-'.Str::uuid().'@example.invalid',
             'password' => 'SyntheticPass123!', 'permissions' => [
                 'shops.enter', 'team-members.full-access.assign', 'admin.business-profile.manage']])->save();
-        $owner->roles()->attach(\App\Models\Role::where('name', 'Full Access')->firstOrFail()->id,
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id,
             ['assigned_at' => now()]);
         $owner->shops()->attach($fallback);
-        $archive = app(\App\Identity\OutletLifecycleAdministration::class);
+        $archive = app(OutletLifecycleAdministration::class);
         foreach ([0, 2] as $quantity) {
             if ($quantity) {
                 $this->acquire($product, $quantity, 'd03-inventory-receipt');
@@ -46,7 +51,7 @@ class InventoryTest extends TestCase
             try {
                 $archive->archive($owner, $this->outlet->public_id, (int) $this->outlet->version);
                 $this->fail('A product definition or its stock history was silently archived.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(409, $exception->getStatusCode());
             }
             $this->assertNull($this->outlet->fresh()->archived_at);
@@ -64,7 +69,7 @@ class InventoryTest extends TestCase
             try {
                 $service->acquire($this->actor, $this->outlet, $product->public_id, $key, $entry);
                 $this->fail('Archived outlet accepted stock receipt or a completed-key replay.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }
@@ -72,7 +77,7 @@ class InventoryTest extends TestCase
             $service->adjust($this->actor, $this->outlet, $product->public_id,
                 'd03-inventory-adjust', ['type' => 'lost', 'quantity' => 1, 'reason' => 'Synthetic']);
             $this->fail('Archived outlet accepted stock adjustment.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());
         }
         $this->assertSame($keys, DB::table('idempotency_requests')->count());

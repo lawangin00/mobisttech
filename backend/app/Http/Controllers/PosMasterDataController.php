@@ -18,12 +18,14 @@ final class PosMasterDataController extends Controller
         $actor = Auth::guard('admin')->user();
         abort_unless($actor instanceof Admin, 401);
         abort_unless(app(Access::class)->allows($actor, 'config.master-data.manage'), 403);
+
         return $actor;
     }
 
     public function index()
     {
         $this->actor();
+
         return response()->json(['data' => [
             'lists' => PosInventoryMasterData::LISTS,
             'options' => PosMasterDataOption::query()->withCount('usages')
@@ -58,6 +60,7 @@ final class PosMasterDataController extends Controller
         } catch (\LogicException $error) {
             throw ValidationException::withMessages(['action' => 'This protected or referenced master-data option cannot be changed as requested.']);
         }
+
         return response()->json(['data' => ['id' => $result?->id, 'action' => $action]]);
     }
 }

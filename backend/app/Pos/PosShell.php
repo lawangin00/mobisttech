@@ -3,6 +3,7 @@
 namespace App\Pos;
 
 use App\Identity\Access;
+use App\Identity\OutletLifecycleAdministration;
 use App\Identity\RealmSessionPolicy;
 use App\Models\Admin;
 use App\Models\Outlet;
@@ -53,7 +54,7 @@ final class PosShell
             ],
             'outlets' => $outlets->map(fn ($outlet) => ['id' => $outlet->public_id, 'name' => $outlet->name])->values()->all(),
             'active_outlet' => $active ? ['id' => $active->public_id, 'name' => $active->name] : null,
-            'can_manage_outlets' => app(\App\Identity\OutletLifecycleAdministration::class)->canManage($actor),
+            'can_manage_outlets' => app(OutletLifecycleAdministration::class)->canManage($actor),
             'navigation' => $navigation,
             'session_policy' => app(RealmSessionPolicy::class)->publicContract('admin'),
             'session_state' => app(RealmSessionPolicy::class)->publicState($request, 'admin', $actor),

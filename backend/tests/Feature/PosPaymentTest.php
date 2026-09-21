@@ -3,13 +3,16 @@
 namespace Tests\Feature;
 
 use App\Cash\CashSessionOperations;
+use App\Identity\OutletLifecycleAdministration;
 use App\Models\Admin;
 use App\Models\Outlet;
+use App\Models\Role;
 use App\Payments\PosPaymentOperations;
 use App\Sales\SalesOperations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
 
@@ -208,11 +211,11 @@ class PosPaymentTest extends TestCase
             'refund_destination_id' => $card['destination_id'], 'amount' => '0.01',
         ]));
         // Read-only archive projection checks real, fully recorded POS refunds; never archive this product-bearing outlet.
-        $this->actor->roles()->attach(\App\Models\Role::where('name', 'Full Access')->firstOrFail()->id,
+        $this->actor->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id,
             ['assigned_at' => now()]);
         $this->outlet->forceFill(['archived_at' => now()])->save();
         $beforeRefund = DB::table('pos_refund_allocations')->where('public_id', $override['refund_id'])->firstOrFail();
-        $history = app(\App\Identity\OutletLifecycleAdministration::class)
+        $history = app(OutletLifecycleAdministration::class)
             ->archivedHistory($this->actor, $this->outlet->public_id);
         $this->assertSame(1, $history['obligations']['pos_return_count']);
         $this->assertSame('200.02', $history['obligations']['pos_return_amount']);
@@ -282,7 +285,7 @@ class PosPaymentTest extends TestCase
             try {
                 $attempt();
                 $this->fail('Archived outlet served cached payment response or accepted a financial write.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }

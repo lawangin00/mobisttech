@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Identity\AdminProfilePhoto;
+use App\Identity\OutletLifecycleAdministration;
 use App\Identity\OutletProfileAdministration;
 use App\Models\Admin;
 use App\Models\Outlet;
 use App\Pos\PosShell;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 final class PosShellController extends Controller
@@ -41,14 +43,14 @@ final class PosShellController extends Controller
     public function manageAccount()
     {
         $actor = $this->profileActor();
-        return Inertia::render('admin-account', ['offline_owner_recovery_available' =>
-            config('identity.offline_owner_recovery.enabled') === true
+
+        return Inertia::render('admin-account', ['offline_owner_recovery_available' => config('identity.offline_owner_recovery.enabled') === true
             && hash_equals((string) config('identity.offline_owner_recovery.owner_admin_public_id'), (string) $actor->public_id)
-            && app(\App\Identity\OutletLifecycleAdministration::class)->canManage($actor),
+            && app(OutletLifecycleAdministration::class)->canManage($actor),
             'identity' => [
-            'name' => $actor->name, 'email' => $actor->email,
-            'job_title' => $actor->job_title, 'roles' => $actor->roleNames(), 'has_photo' => (bool) $actor->profile_photo,
-        ]]);
+                'name' => $actor->name, 'email' => $actor->email,
+                'job_title' => $actor->job_title, 'roles' => $actor->roleNames(), 'has_photo' => (bool) $actor->profile_photo,
+            ]]);
     }
 
     public function recoveryRequest()
@@ -65,9 +67,10 @@ final class PosShellController extends Controller
     {
         $response = Inertia::render('admin-recovery', ['mode' => $mode,
             'offline_owner_recovery_available' => config('identity.offline_owner_recovery.enabled') === true
-                && \Illuminate\Support\Str::isUuid((string) config('identity.offline_owner_recovery.owner_admin_public_id'))])->toResponse(request());
+                && Str::isUuid((string) config('identity.offline_owner_recovery.owner_admin_public_id'))])->toResponse(request());
         $response->headers->set('Cache-Control', 'no-store');
         $response->headers->set('Referrer-Policy', 'no-referrer');
+
         return $response;
     }
 
@@ -85,6 +88,7 @@ final class PosShellController extends Controller
     {
         $actor = Auth::guard('admin')->user();
         abort_unless($actor instanceof Admin, 401);
+
         return $actor;
     }
 
@@ -92,6 +96,7 @@ final class PosShellController extends Controller
     {
         $id = (int) $request->session()->get('active_outlet_id', 0);
         abort_unless($id > 0, 403, 'Select an outlet first.');
+
         return Outlet::whereKey($id)->firstOrFail();
     }
 

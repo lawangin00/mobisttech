@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Outlet;
 use App\Payments\PosPaymentOperations;
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -174,8 +175,10 @@ class PosCustomerReportingInterfaceTest extends TestCase
     {
         [$sale, $product] = $this->saleWithPayments('history@example.invalid');
         $original = (array) DB::table('invoices')->where('public_id', $sale['invoice_id'])->firstOrFail();
-        $base = $original; unset($base['id']);
-        $invoices = []; $claims = [];
+        $base = $original;
+        unset($base['id']);
+        $invoices = [];
+        $claims = [];
         for ($n = 1; $n <= 125; $n++) {
             $invoice = [...$base, 'public_id' => (string) Str::uuid(), 'invoice_number' => sprintf('MT75-HISTORY-%03d', $n),
                 'customer_name' => sprintf('History Customer %03d', $n)];
@@ -186,7 +189,7 @@ class PosCustomerReportingInterfaceTest extends TestCase
                 'claim_number' => sprintf('MT75-CLAIM-%03d', $n), 'status' => 'received', 'assigned_to' => 'Test bench'];
         }
         DB::table('claims')->insert($claims);
-        $other = new \App\Models\Outlet;
+        $other = new Outlet;
         $other->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Other synthetic outlet', 'outlet_code' => '089'])->save();
         DB::table('invoices')->insert([...$base, 'outlet_id' => $other->id,
             'public_id' => (string) Str::uuid(), 'invoice_number' => 'MT75-HISTORY-OTHER',

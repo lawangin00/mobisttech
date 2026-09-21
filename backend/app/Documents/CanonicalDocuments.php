@@ -4,6 +4,7 @@ namespace App\Documents;
 
 use App\Identity\Access;
 use App\Identity\IdentityAccount;
+use App\Identity\OutletLifecycleAdministration;
 use App\Integrations\GmailApi;
 use App\Models\Admin;
 use App\Models\Outlet;
@@ -54,7 +55,7 @@ final class CanonicalDocuments
     /** An explicitly labelled reconstruction, NEVER the originally issued PDF or a proof of settlement. */
     public function reconstructArchivedInvoice(Admin $actor, Outlet $outlet, string $documentId): array
     {
-        abort_unless(app(\App\Identity\OutletLifecycleAdministration::class)->canManage($actor), 403);
+        abort_unless(app(OutletLifecycleAdministration::class)->canManage($actor), 403);
         abort_unless($outlet->fresh()->archived_at !== null, 409, 'Outlet is not archived.');
         $invoice = DB::table('invoices')->where('public_id', $documentId)
             ->where('outlet_id', $outlet->id)->firstOrFail();
@@ -79,8 +80,9 @@ final class CanonicalDocuments
             'Historical review only; source records may be transliterated.', ...$this->lines($payload)];
         abort_unless(count($lines) <= 55, 409, 'Historical PDF exceeds the safe single-page reconstruction limit.');
         $pdf = $this->pdf($lines, 'a4');
+
         return ['filename' => 'reconstructed-'.preg_replace('/[^A-Za-z0-9._-]+/', '-',
-                (string) ($invoice->invoice_number ?: $invoice->public_id)).'-a4.pdf',
+            (string) ($invoice->invoice_number ?: $invoice->public_id)).'-a4.pdf',
             'pdf_base64' => base64_encode($pdf), 'document_sha256' => hash('sha256', $pdf),
             'document_version' => self::VERSION, 'reconstruction_only' => true,
             'original_issued_pdf_preserved' => false, 'format' => 'a4'];

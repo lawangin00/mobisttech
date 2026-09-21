@@ -13,6 +13,7 @@ use App\Sales\SalesOperations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
 
@@ -142,7 +143,7 @@ class StockTransferTest extends TestCase
                     'destination_product_id' => $target->public_id, 'quantity' => 1]],
             ]);
             $this->fail('Archived destination unexpectedly accepted stock transfer creation.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());
         }
         $this->assertSame(0, DB::table('stock_transfers')->where('destination_outlet_id', $destination->id)->count());
@@ -170,7 +171,7 @@ class StockTransferTest extends TestCase
             try {
                 $attempt();
                 $this->fail('Archived transfer destination accepted a mutation or completed-key replay.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }
@@ -192,7 +193,7 @@ class StockTransferTest extends TestCase
             try {
                 $attempt();
                 $this->fail('Archived transfer source accepted dispatch replay or destination-side receipt.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }
@@ -204,7 +205,7 @@ class StockTransferTest extends TestCase
         try {
             $service->receive($this->actor, $destination, $transferId, 'd03-denied-receive-dest', $receiveInput);
             $this->fail('Archived receipt destination accepted transfer receipt.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());
         }
         $destination->forceFill(['archived_at' => null])->save();
@@ -216,7 +217,7 @@ class StockTransferTest extends TestCase
         try {
             $service->receive($this->actor, $destination, $transferId, 'd03-valid-receive', $receiveInput);
             $this->fail('Archived source allowed a completed receipt replay.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());
         }
         $this->assertSame(1, DB::table('stock_transfer_receipts')->count());

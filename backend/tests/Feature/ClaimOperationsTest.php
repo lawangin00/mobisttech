@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
 
@@ -53,7 +54,7 @@ class ClaimOperationsTest extends TestCase
             try {
                 $service->open($this->actor, $this->outlet, $key, $openInput);
                 $this->fail('Archived outlet accepted a new claim or completed open replay.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }
@@ -62,14 +63,14 @@ class ClaimOperationsTest extends TestCase
                 $service->update($this->actor, $this->outlet,
                     $claim['claim_id'], $key, $updateInput);
                 $this->fail('Archived outlet accepted a claim update or completed replay.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }
         try {
             $service->view($this->actor, $this->outlet, $claim['claim_id']);
             $this->fail('Archived claim leaked through operational view.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());
         }
         $this->assertEquals($savedClaim, DB::table('claims')->where('id', $savedClaim->id)->firstOrFail());

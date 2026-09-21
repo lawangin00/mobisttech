@@ -9,6 +9,7 @@ use App\Repairs\PaidRepairOperations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
 
@@ -69,7 +70,7 @@ class PaidRepairOperationsTest extends TestCase
             try {
                 $attempt();
                 $this->fail('Archived outlet accepted paid repair mutation or completed replay.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }

@@ -23,7 +23,9 @@ final class PosWarrantyIntakeSearch
             'product_category' => ['sometimes', 'string', 'in:mobile_phone,tablet,accessory'],
         ])->validate();
         $term = trim($input['q']);
-        if ($term === '') throw ValidationException::withMessages(['q' => 'Enter a warranty invoice search value.']);
+        if ($term === '') {
+            throw ValidationException::withMessages(['q' => 'Enter a warranty invoice search value.']);
+        }
         $category = $input['category'];
         $match = '%'.addcslashes($term, '%_\\').'%';
         $digits = preg_replace('/\D+/', '', $term);
@@ -35,9 +37,13 @@ final class PosWarrantyIntakeSearch
             ->where(function (Builder $q) use ($category, $match, $digits, $term) {
                 foreach (['invoice_id' => 'i.invoice_number', 'customer_name' => 'i.customer_name',
                     'product' => 'p.name'] as $key => $column) {
-                    if ($category === 'all' || $category === $key) $q->orWhere($column, 'like', $match);
+                    if ($category === 'all' || $category === $key) {
+                        $q->orWhere($column, 'like', $match);
+                    }
                 }
-                if (in_array($category, ['all', 'product'], true)) $q->orWhere('p.product_code', 'like', $match);
+                if (in_array($category, ['all', 'product'], true)) {
+                    $q->orWhere('p.product_code', 'like', $match);
+                }
                 if ($digits !== '' && in_array($category, ['all', 'customer_cnic', 'contact_number'], true)) {
                     foreach (['customer_cnic' => 'i.customer_cnic', 'contact_number' => 'i.customer_phone'] as $key => $column) {
                         if ($category === 'all' || $category === $key) {
@@ -45,18 +51,24 @@ final class PosWarrantyIntakeSearch
                         }
                     }
                 }
-                if (in_array($category, ['all', 'imei'], true)) $q->orWhereExists(fn (Builder $sub) => $sub->selectRaw('1')
-                    ->from('product_imeis as pi')->whereColumn('pi.sale_id', 's.id')->where('pi.imei', 'like', $match));
-                if (in_array($category, ['all', 'invoice_id'], true) && ctype_digit($term)) $q->orWhere('i.id', (int) $term);
+                if (in_array($category, ['all', 'imei'], true)) {
+                    $q->orWhereExists(fn (Builder $sub) => $sub->selectRaw('1')
+                        ->from('product_imeis as pi')->whereColumn('pi.sale_id', 's.id')->where('pi.imei', 'like', $match));
+                }
+                if (in_array($category, ['all', 'invoice_id'], true) && ctype_digit($term)) {
+                    $q->orWhere('i.id', (int) $term);
+                }
             })->orderByDesc('i.id')->orderByDesc('s.id')->limit(20)
             ->get(['s.id', 's.public_id', 's.quantity', 's.returned_quantity', 's.invoice_detail_snapshot',
                 'i.public_id as invoice_id', 'i.invoice_number', 'i.customer_name', 'i.customer_phone',
                 'p.name as product_name', 'p.track_imei']);
+
         return $rows->map(function ($row) {
             $snapshot = json_decode($row->invoice_detail_snapshot, true) ?: [];
             $units = $row->track_imei ? DB::table('stock_units')->where('sale_id', $row->id)
                 ->where('status', 'sold')->get(['public_id', 'unit_code'])
                 ->map(fn ($unit) => ['id' => $unit->public_id, 'code' => $unit->unit_code])->all() : [];
+
             return ['sale_id' => $row->public_id, 'invoice_id' => $row->invoice_id,
                 'invoice_number' => $row->invoice_number, 'customer_name' => $row->customer_name,
                 'customer_phone' => $row->customer_phone, 'product_name' => $row->product_name,

@@ -2,10 +2,29 @@
 
 namespace Tests\Feature;
 
+use App\Cash\CashSessionOperations;
+use App\Commerce\OrderTransactions;
+use App\Commerce\PaymentProvider;
+use App\Commerce\PaymentProviders;
+use App\Identity\Access;
+use App\Identity\OutletLifecycleAdministration;
+use App\Inventory\InventoryOperations;
+use App\Inventory\StocktakeOperations;
+use App\Inventory\StockTransferOperations;
+use App\Models\Admin;
 use App\Models\Outlet;
+use App\Models\Product;
+use App\Models\Role;
+use App\Payments\PosPaymentOperations;
+use App\Procurement\SupplierProcurement;
+use App\Repairs\PaidRepairOperations;
+use App\Sales\SalesOperations;
+use App\TradeIn\TradeInOperations;
+use App\Warranty\ClaimOperations;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 final class OutletArchiveRowLockTest extends TestCase
@@ -40,7 +59,9 @@ final class OutletArchiveRowLockTest extends TestCase
                     ->update(['archived_at' => now(), 'version' => 2]);
                 DB::commit();
             } finally {
-                if (DB::transactionLevel() > 0) { DB::rollBack(); }
+                if (DB::transactionLevel() > 0) {
+                    DB::rollBack();
+                }
             }
             $observed = $other->transaction(fn () => $other->table('outlets')
                 ->where('id', $outlet->id)->lockForUpdate()->firstOrFail());
@@ -66,14 +87,14 @@ final class OutletArchiveRowLockTest extends TestCase
         $historical = new Outlet;
         $historical->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'D03 service archive '.$tag,
             'status' => false, 'version' => 1])->save();
-        $owner = new \App\Models\Admin;
+        $owner = new Admin;
         $owner->forceFill(['name' => 'D03 synthetic archive owner', 'email' => 'd03-owner-'.$tag.'@example.invalid',
             'password' => 'not-a-live-password', 'permissions' => ['shops.enter',
                 'team-members.full-access.assign', 'admin.business-profile.manage']])->save();
-        $owner->roles()->attach(\App\Models\Role::where('name', 'Full Access')->firstOrFail()->id,
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id,
             ['assigned_at' => now()]);
         $owner->shops()->attach($fallback);
-        $cashActor = new \App\Models\Admin;
+        $cashActor = new Admin;
         $cashActor->forceFill(['name' => 'D03 synthetic cash actor', 'email' => 'd03-cash-'.$tag.'@example.invalid',
             'password' => 'not-a-live-password', 'permissions' => ['shops.enter', 'shop.cash']])->save();
         $cashActor->shops()->attach($historical);
@@ -84,10 +105,10 @@ final class OutletArchiveRowLockTest extends TestCase
         try {
             // Actual closed cash history remains eligible for the real archival service.
             $historyOpenKey = 'd03-cash-history-open-'.$tag;
-            $opened = app(\App\Cash\CashSessionOperations::class)->open(
+            $opened = app(CashSessionOperations::class)->open(
                 $cashActor, $historical, $historyOpenKey, ['opening_cash' => '10.00']);
             $historicalSessionId = $opened['session_id'];
-            $closed = app(\App\Cash\CashSessionOperations::class)->close(
+            $closed = app(CashSessionOperations::class)->close(
                 $cashActor, $historical, $historicalSessionId, 'd03-cash-history-close-'.$tag,
                 ['session_version' => 1, 'actual_cash' => '10.00']);
             $this->assertSame('closed', $closed['status']);
@@ -96,14 +117,14 @@ final class OutletArchiveRowLockTest extends TestCase
             DB::connection('mysql')->beginTransaction();
             try {
                 // The actual archive service holds its outlet lock in an outer, uncommitted transaction.
-                $result = app(\App\Identity\OutletLifecycleAdministration::class)
+                $result = app(OutletLifecycleAdministration::class)
                     ->archive($owner, $historical->public_id, 1);
                 $this->assertSame('archived', $result['status']);
                 DB::setDefaultConnection('d03_service_writer');
                 $this->assertNull($writer->table('outlets')->where('id', $historical->id)->value('archived_at'));
                 // Explicitly bind BOTH Eloquent models to the independent writer connection.
                 // Switching DB facade default alone does not rebind models from the main connection.
-                $writerActor = \App\Models\Admin::on('d03_service_writer')->findOrFail($cashActor->id);
+                $writerActor = Admin::on('d03_service_writer')->findOrFail($cashActor->id);
                 $writerOutlet = Outlet::on('d03_service_writer')->findOrFail($historical->id);
                 $this->assertTrue($writerActor->usable(), 'Writer actor is not usable.');
                 $this->assertTrue($writerActor->hasPermission('shop.cash'), 'Writer lacks shop.cash.');
@@ -112,11 +133,11 @@ final class OutletArchiveRowLockTest extends TestCase
                 $this->assertNull($writerOutlet->archived_at, 'Writer outlet appears archived before commit.');
                 $this->assertTrue($writerActor->shops()->whereKey($historical->id)->exists(),
                     'Writer lacks a committed outlet assignment.');
-                $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                $this->assertTrue(app(Access::class)->allows(
                     $writerActor, 'shop.cash', $writerOutlet),
                     'The independent writer must be authorized against its own pre-commit snapshot.');
                 try {
-                    app(\App\Cash\CashSessionOperations::class)->open($writerActor, $writerOutlet,
+                    app(CashSessionOperations::class)->open($writerActor, $writerOutlet,
                         'd03-overlap-'.$tag, ['opening_cash' => '10.00']);
                     $this->fail('The cash service bypassed the real archive transaction lock.');
                 } catch (QueryException $exception) {
@@ -136,10 +157,10 @@ final class OutletArchiveRowLockTest extends TestCase
             try {
                 foreach ([$historyOpenKey, 'd03-postcommit-'.$tag] as $deniedKey) {
                     try {
-                        app(\App\Cash\CashSessionOperations::class)->open($writerActor, $writerOutlet,
+                        app(CashSessionOperations::class)->open($writerActor, $writerOutlet,
                             $deniedKey, ['opening_cash' => '10.00']);
                         $this->fail('Archived outlet accepted an original completed cash key or a fresh open.');
-                    } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                    } catch (HttpException $exception) {
                         $this->assertSame(403, $exception->getStatusCode());
                     }
                 }
@@ -150,18 +171,20 @@ final class OutletArchiveRowLockTest extends TestCase
             $this->assertEquals($historyBefore, DB::table('cash_sessions')->where('public_id', $historicalSessionId)->firstOrFail());
             $this->assertSame(hash('sha256', $historyBefore->closing_snapshot), $historyBefore->snapshot_sha256);
             $this->assertSame(0, DB::table('idempotency_requests')
-                ->where('actor_scope', \App\Models\Admin::class.':'.$cashActor->id)
+                ->where('actor_scope', Admin::class.':'.$cashActor->id)
                 ->where('operation', 'cash-sessions.open')
                 ->whereIn('key', ['d03-overlap-'.$tag, 'd03-postcommit-'.$tag])->count());
         } finally {
             DB::setDefaultConnection($originalDefault);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
             $writer->disconnect();
             DB::purge('d03_service_writer');
             if ($historicalSessionId) {
                 DB::table('cash_sessions')->where('public_id', $historicalSessionId)
                     ->where('outlet_id', $historical->id)->delete();
-                DB::table('idempotency_requests')->where('actor_scope', \App\Models\Admin::class.':'.$cashActor->id)
+                DB::table('idempotency_requests')->where('actor_scope', Admin::class.':'.$cashActor->id)
                     ->whereIn('key', [$historyOpenKey, 'd03-cash-history-close-'.$tag])->delete();
             }
             DB::table('identity_audit_events')->whereIn('account_id', [$owner->id, $cashActor->id])->delete();
@@ -172,6 +195,7 @@ final class OutletArchiveRowLockTest extends TestCase
                 ->where('name', 'like', 'D03 service %'.$tag)->delete();
         }
     }
+
     public function test_isolated_inventory_service_waits_for_archive_lock_and_denies_stale_post_commit_write(): void
     {
         // Actual independent-connection inventory SERVICE vs outlet archive row-lock protocol.
@@ -189,12 +213,12 @@ final class OutletArchiveRowLockTest extends TestCase
             $outlet = new Outlet;
             $outlet->forceFill(['public_id' => (string) Str::uuid(),
                 'name' => 'D03 inventory lock '.$tag, 'outlet_code' => '069', 'status' => false, 'version' => 1])->save();
-            $actor = new \App\Models\Admin;
+            $actor = new Admin;
             $actor->forceFill(['name' => 'D03 inventory lock actor',
                 'email' => 'd03-inventory-lock-'.$tag.'@example.invalid',
                 'password' => 'not-a-live-password', 'permissions' => ['shops.enter', 'shop.inventory']])->save();
             $actor->shops()->attach($outlet);
-            $product = new \App\Models\Product;
+            $product = new Product;
             $product->forceFill(['public_id' => (string) Str::uuid(),
                 'name' => 'D03 zero-stock inventory lock '.$tag, 'category' => 'accessory',
                 'price' => '20.00', 'qty' => 0, 'outlet_id' => $outlet->id])->save();
@@ -210,12 +234,12 @@ final class OutletArchiveRowLockTest extends TestCase
                     ->update(['archived_at' => now(), 'version' => 2]);
                 DB::setDefaultConnection('d03_inventory_writer');
                 $this->assertNull($writer->table('outlets')->where('id', $outlet->id)->value('archived_at'));
-                $writerActor = \App\Models\Admin::on('d03_inventory_writer')->findOrFail($actor->id);
+                $writerActor = Admin::on('d03_inventory_writer')->findOrFail($actor->id);
                 $writerOutlet = Outlet::on('d03_inventory_writer')->findOrFail($outlet->id);
-                $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                $this->assertTrue(app(Access::class)->allows(
                     $writerActor, 'shop.inventory', $writerOutlet));
                 try {
-                    app(\App\Inventory\InventoryOperations::class)->archive(
+                    app(InventoryOperations::class)->archive(
                         $writerActor, $writerOutlet, $product->public_id, 'd03-inventory-lock-'.$tag);
                     $this->fail('Inventory service bypassed an independent outlet archive lock.');
                 } catch (QueryException $exception) {
@@ -233,30 +257,39 @@ final class OutletArchiveRowLockTest extends TestCase
             $this->assertNotNull($outlet->fresh()->archived_at);
             DB::setDefaultConnection('d03_inventory_writer');
             try {
-                app(\App\Inventory\InventoryOperations::class)->archive(
+                app(InventoryOperations::class)->archive(
                     $writerActor, $writerOutlet, $product->public_id, 'd03-inventory-after-'.$tag);
                 $this->fail('Inventory service accepted an archived-outlet product mutation.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             } finally {
                 DB::setDefaultConnection($originalDefault);
             }
             $this->assertFalse((bool) $product->fresh()->isDeleted);
             $this->assertSame(0, DB::table('idempotency_requests')
-                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('actor_scope', Admin::class.':'.$actor->id)
                 ->where('operation', 'inventory.archive')->where('key', 'like', 'd03-inventory-%'.$tag)->count());
         } finally {
             DB::setDefaultConnection($originalDefault);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
-            if ($writer) { $writer->disconnect(); DB::purge('d03_inventory_writer'); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
+            if ($writer) {
+                $writer->disconnect();
+                DB::purge('d03_inventory_writer');
+            }
             if ($actor) {
                 DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
                 DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
                 DB::table('admins')->where('id', $actor->id)->delete();
             }
-            if ($product) { DB::table('products')->where('id', $product->id)->delete(); }
-            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
-                ->where('name', 'D03 inventory lock '.$tag)->delete(); }
+            if ($product) {
+                DB::table('products')->where('id', $product->id)->delete();
+            }
+            if ($outlet) {
+                DB::table('outlets')->where('id', $outlet->id)
+                    ->where('name', 'D03 inventory lock '.$tag)->delete();
+            }
         }
     }
 
@@ -281,7 +314,7 @@ final class OutletArchiveRowLockTest extends TestCase
             $destination->forceFill(['public_id' => (string) Str::uuid(),
                 'name' => 'D03 transfer destination '.$tag, 'outlet_code' => '073',
                 'status' => false, 'version' => 1])->save();
-            $actor = new \App\Models\Admin;
+            $actor = new Admin;
             $actor->forceFill(['name' => 'D03 independent transfer actor',
                 'email' => 'd03-transfer-race-'.$tag.'@example.invalid',
                 'password' => 'not-a-live-password',
@@ -302,12 +335,12 @@ final class OutletArchiveRowLockTest extends TestCase
                     ->update(['archived_at' => now(), 'version' => 2]);
                 DB::setDefaultConnection('d03_transfer_writer');
                 $this->assertNull($writer->table('outlets')->where('id', $destination->id)->value('archived_at'));
-                $writerActor = \App\Models\Admin::on('d03_transfer_writer')->findOrFail($actor->id);
+                $writerActor = Admin::on('d03_transfer_writer')->findOrFail($actor->id);
                 $writerSource = Outlet::on('d03_transfer_writer')->findOrFail($source->id);
-                $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                $this->assertTrue(app(Access::class)->allows(
                     $writerActor, 'shop.transfers.dispatch', $writerSource));
                 try {
-                    app(\App\Inventory\StockTransferOperations::class)->create(
+                    app(StockTransferOperations::class)->create(
                         $writerActor, $writerSource, 'd03-transfer-wait-'.$tag, $input);
                     $this->fail('Transfer create bypassed independent destination archive lock.');
                 } catch (QueryException $exception) {
@@ -318,15 +351,17 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->commit();
             } finally {
                 DB::setDefaultConnection($default);
-                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+                if (DB::connection('mysql')->transactionLevel() > 0) {
+                    DB::connection('mysql')->rollBack();
+                }
             }
             $this->assertNotNull($destination->fresh()->archived_at);
             DB::setDefaultConnection('d03_transfer_writer');
             try {
-                app(\App\Inventory\StockTransferOperations::class)->create(
+                app(StockTransferOperations::class)->create(
                     $writerActor, $writerSource, 'd03-transfer-retry-'.$tag, $input);
                 $this->fail('Transfer create accepted a post-archive destination.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             } finally {
                 DB::setDefaultConnection($default);
@@ -334,20 +369,27 @@ final class OutletArchiveRowLockTest extends TestCase
             $this->assertSame(0, DB::table('stock_transfers')
                 ->where('destination_outlet_id', $destination->id)->count());
             $this->assertSame(0, DB::table('idempotency_requests')
-                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('actor_scope', Admin::class.':'.$actor->id)
                 ->where('operation', 'transfer.create')->where('key', 'like', 'd03-transfer-%'.$tag)->count());
         } finally {
             DB::setDefaultConnection($default);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
-            if ($writer) { $writer->disconnect(); DB::purge('d03_transfer_writer'); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
+            if ($writer) {
+                $writer->disconnect();
+                DB::purge('d03_transfer_writer');
+            }
             if ($actor) {
                 DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
                 DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
                 DB::table('admins')->where('id', $actor->id)->delete();
             }
             foreach ([$source, $destination] as $outlet) {
-                if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
-                    ->where('name', 'like', 'D03 transfer %'.$tag)->delete(); }
+                if ($outlet) {
+                    DB::table('outlets')->where('id', $outlet->id)
+                        ->where('name', 'like', 'D03 transfer %'.$tag)->delete();
+                }
             }
         }
     }
@@ -374,7 +416,7 @@ final class OutletArchiveRowLockTest extends TestCase
             $destination->forceFill(['public_id' => (string) Str::uuid(),
                 'name' => 'D03 receipt destination '.$tag, 'outlet_code' => '075',
                 'status' => false, 'version' => 1])->save();
-            $actor = new \App\Models\Admin;
+            $actor = new Admin;
             $actor->forceFill(['name' => 'D03 independent receipt actor',
                 'email' => 'd03-receipt-race-'.$tag.'@example.invalid',
                 'password' => 'not-a-live-password',
@@ -399,12 +441,12 @@ final class OutletArchiveRowLockTest extends TestCase
                     ->update(['archived_at' => now(), 'version' => 2]);
                 DB::setDefaultConnection('d03_transfer_receive_writer');
                 $this->assertNull($writer->table('outlets')->where('id', $source->id)->value('archived_at'));
-                $writerActor = \App\Models\Admin::on('d03_transfer_receive_writer')->findOrFail($actor->id);
+                $writerActor = Admin::on('d03_transfer_receive_writer')->findOrFail($actor->id);
                 $writerDestination = Outlet::on('d03_transfer_receive_writer')->findOrFail($destination->id);
-                $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                $this->assertTrue(app(Access::class)->allows(
                     $writerActor, 'shop.transfers.receive', $writerDestination));
                 try {
-                    app(\App\Inventory\StockTransferOperations::class)->receive(
+                    app(StockTransferOperations::class)->receive(
                         $writerActor, $writerDestination, $transferPublic, 'd03-receipt-wait-'.$tag, $input);
                     $this->fail('Transfer receive bypassed independent source archive lock.');
                 } catch (QueryException $exception) {
@@ -415,15 +457,17 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->commit();
             } finally {
                 DB::setDefaultConnection($default);
-                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+                if (DB::connection('mysql')->transactionLevel() > 0) {
+                    DB::connection('mysql')->rollBack();
+                }
             }
             $this->assertNotNull($source->fresh()->archived_at);
             DB::setDefaultConnection('d03_transfer_receive_writer');
             try {
-                app(\App\Inventory\StockTransferOperations::class)->receive(
+                app(StockTransferOperations::class)->receive(
                     $writerActor, $writerDestination, $transferPublic, 'd03-receipt-retry-'.$tag, $input);
                 $this->fail('Transfer receive accepted a post-archive source outlet.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             } finally {
                 DB::setDefaultConnection($default);
@@ -431,21 +475,30 @@ final class OutletArchiveRowLockTest extends TestCase
             $this->assertSame('in_transit', DB::table('stock_transfers')->where('id', $transferId)->value('status'));
             $this->assertSame(0, DB::table('stock_transfer_receipts')->where('stock_transfer_id', $transferId)->count());
             $this->assertSame(0, DB::table('idempotency_requests')
-                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('actor_scope', Admin::class.':'.$actor->id)
                 ->where('operation', 'transfer.receive')->where('key', 'like', 'd03-receipt-%'.$tag)->count());
         } finally {
             DB::setDefaultConnection($default);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
-            if ($writer) { $writer->disconnect(); DB::purge('d03_transfer_receive_writer'); }
-            if ($transferId) { DB::table('stock_transfers')->where('id', $transferId)->delete(); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
+            if ($writer) {
+                $writer->disconnect();
+                DB::purge('d03_transfer_receive_writer');
+            }
+            if ($transferId) {
+                DB::table('stock_transfers')->where('id', $transferId)->delete();
+            }
             if ($actor) {
                 DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
                 DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
                 DB::table('admins')->where('id', $actor->id)->delete();
             }
             foreach ([$source, $destination] as $outlet) {
-                if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
-                    ->where('name', 'like', 'D03 receipt %'.$tag)->delete(); }
+                if ($outlet) {
+                    DB::table('outlets')->where('id', $outlet->id)
+                        ->where('name', 'like', 'D03 receipt %'.$tag)->delete();
+                }
             }
         }
     }
@@ -467,13 +520,13 @@ final class OutletArchiveRowLockTest extends TestCase
             $outlet->forceFill(['public_id' => (string) Str::uuid(),
                 'name' => 'D03 stocktake race '.$tag, 'outlet_code' => '076',
                 'status' => false, 'version' => 1])->save();
-            $actor = new \App\Models\Admin;
+            $actor = new Admin;
             $actor->forceFill(['name' => 'D03 independent stocktake actor',
                 'email' => 'd03-stocktake-race-'.$tag.'@example.invalid',
                 'password' => 'not-a-live-password',
                 'permissions' => ['shops.enter', 'shop.stocktake']])->save();
             $actor->shops()->attach($outlet);
-            $product = new \App\Models\Product;
+            $product = new Product;
             $product->forceFill(['public_id' => (string) Str::uuid(),
                 'name' => 'D03 stocktake fixture '.$tag, 'category' => 'accessory',
                 'price' => '30.00', 'qty' => 0, 'outlet_id' => $outlet->id])->save();
@@ -489,12 +542,12 @@ final class OutletArchiveRowLockTest extends TestCase
                     ->update(['archived_at' => now(), 'version' => 2]);
                 DB::setDefaultConnection('d03_stocktake_writer');
                 $this->assertNull($writer->table('outlets')->where('id', $outlet->id)->value('archived_at'));
-                $writerActor = \App\Models\Admin::on('d03_stocktake_writer')->findOrFail($actor->id);
+                $writerActor = Admin::on('d03_stocktake_writer')->findOrFail($actor->id);
                 $writerOutlet = Outlet::on('d03_stocktake_writer')->findOrFail($outlet->id);
-                $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                $this->assertTrue(app(Access::class)->allows(
                     $writerActor, 'shop.stocktake', $writerOutlet));
                 try {
-                    app(\App\Inventory\StocktakeOperations::class)->start(
+                    app(StocktakeOperations::class)->start(
                         $writerActor, $writerOutlet, 'd03-stocktake-wait-'.$tag, ['kind' => 'full']);
                     $this->fail('Stocktake start bypassed independent outlet archive lock.');
                 } catch (QueryException $exception) {
@@ -505,36 +558,47 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->commit();
             } finally {
                 DB::setDefaultConnection($default);
-                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+                if (DB::connection('mysql')->transactionLevel() > 0) {
+                    DB::connection('mysql')->rollBack();
+                }
             }
             $this->assertNotNull($outlet->fresh()->archived_at);
             DB::setDefaultConnection('d03_stocktake_writer');
             try {
-                app(\App\Inventory\StocktakeOperations::class)->start(
+                app(StocktakeOperations::class)->start(
                     $writerActor, $writerOutlet, 'd03-stocktake-retry-'.$tag, ['kind' => 'full']);
                 $this->fail('Stocktake start accepted a post-archive outlet.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             } finally {
                 DB::setDefaultConnection($default);
             }
             $this->assertSame(0, DB::table('stocktake_sessions')->where('outlet_id', $outlet->id)->count());
             $this->assertSame(0, DB::table('idempotency_requests')
-                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('actor_scope', Admin::class.':'.$actor->id)
                 ->where('operation', 'stocktake.start')->where('key', 'like', 'd03-stocktake-%'.$tag)->count());
             $this->assertFalse((bool) $product->fresh()->isDeleted);
         } finally {
             DB::setDefaultConnection($default);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
-            if ($writer) { $writer->disconnect(); DB::purge('d03_stocktake_writer'); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
+            if ($writer) {
+                $writer->disconnect();
+                DB::purge('d03_stocktake_writer');
+            }
             if ($actor) {
                 DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
                 DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
                 DB::table('admins')->where('id', $actor->id)->delete();
             }
-            if ($product) { DB::table('products')->where('id', $product->id)->delete(); }
-            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
-                ->where('name', 'D03 stocktake race '.$tag)->delete(); }
+            if ($product) {
+                DB::table('products')->where('id', $product->id)->delete();
+            }
+            if ($outlet) {
+                DB::table('outlets')->where('id', $outlet->id)
+                    ->where('name', 'D03 stocktake race '.$tag)->delete();
+            }
         }
     }
 
@@ -546,17 +610,22 @@ final class OutletArchiveRowLockTest extends TestCase
             && (int) config('database.connections.mysql.port') === 13306, 403);
         $tag = (string) Str::uuid();
         $default = DB::getDefaultConnection();
-        $outlet = null; $actor = null; $product = null; $invoiceId = null; $saleId = null; $writer = null;
+        $outlet = null;
+        $actor = null;
+        $product = null;
+        $invoiceId = null;
+        $saleId = null;
+        $writer = null;
         try {
             $outlet = new Outlet;
             $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '080',
                 'name' => 'D03 sales claim race '.$tag, 'status' => false, 'version' => 1])->save();
-            $actor = new \App\Models\Admin;
+            $actor = new Admin;
             $actor->forceFill(['name' => 'D03 synthetic sales claim operator',
                 'email' => 'd03-sales-claim-'.$tag.'@example.invalid', 'password' => 'not-a-live-password',
                 'permissions' => ['shops.enter', 'shop.sales', 'shop.claims']])->save();
             $actor->shops()->attach($outlet);
-            $product = new \App\Models\Product;
+            $product = new Product;
             $product->forceFill(['name' => 'D03 retained warranty product', 'outlet_id' => $outlet->id,
                 'category' => 'accessory', 'price' => '100.00', 'sale_price' => '100.00', 'qty' => 1,
                 'warranty_type' => 'shop_warranty', 'warranty_unit' => 0, 'warranty_duration' => 30])->save();
@@ -582,19 +651,19 @@ final class OutletArchiveRowLockTest extends TestCase
                     ->update(['archived_at' => now(), 'version' => 2]);
                 DB::setDefaultConnection('d03_sale_claim_writer');
                 $this->assertNull($writer->table('outlets')->where('id', $outlet->id)->value('archived_at'));
-                $writerActor = \App\Models\Admin::on('d03_sale_claim_writer')->findOrFail($actor->id);
+                $writerActor = Admin::on('d03_sale_claim_writer')->findOrFail($actor->id);
                 $writerOutlet = Outlet::on('d03_sale_claim_writer')->findOrFail($outlet->id);
                 foreach (['shop.sales', 'shop.claims'] as $permission) {
-                    $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                    $this->assertTrue(app(Access::class)->allows(
                         $writerActor, $permission, $writerOutlet));
                 }
                 foreach (['sale', 'claim'] as $kind) {
                     try {
                         if ($kind === 'sale') {
-                            app(\App\Sales\SalesOperations::class)->sell($writerActor, $writerOutlet,
+                            app(SalesOperations::class)->sell($writerActor, $writerOutlet,
                                 'd03-sale-wait-'.$tag, $saleInput);
                         } else {
-                            app(\App\Warranty\ClaimOperations::class)->open($writerActor, $writerOutlet,
+                            app(ClaimOperations::class)->open($writerActor, $writerOutlet,
                                 'd03-claim-wait-'.$tag, $claimInput);
                         }
                         $this->fail('A '.$kind.' write bypassed the independent outlet archive lock.');
@@ -606,7 +675,9 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->commit();
             } finally {
                 DB::setDefaultConnection($default);
-                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+                if (DB::connection('mysql')->transactionLevel() > 0) {
+                    DB::connection('mysql')->rollBack();
+                }
             }
             $this->assertNotNull($outlet->fresh()->archived_at);
             DB::setDefaultConnection('d03_sale_claim_writer');
@@ -614,14 +685,14 @@ final class OutletArchiveRowLockTest extends TestCase
                 foreach (['sale', 'claim'] as $kind) {
                     try {
                         if ($kind === 'sale') {
-                            app(\App\Sales\SalesOperations::class)->sell($writerActor, $writerOutlet,
+                            app(SalesOperations::class)->sell($writerActor, $writerOutlet,
                                 'd03-sale-retry-'.$tag, $saleInput);
                         } else {
-                            app(\App\Warranty\ClaimOperations::class)->open($writerActor, $writerOutlet,
+                            app(ClaimOperations::class)->open($writerActor, $writerOutlet,
                                 'd03-claim-retry-'.$tag, $claimInput);
                         }
                         $this->fail('A '.$kind.' service accepted a post-archive retry.');
-                    } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                    } catch (HttpException $exception) {
                         $this->assertSame(403, $exception->getStatusCode());
                     }
                 }
@@ -632,22 +703,35 @@ final class OutletArchiveRowLockTest extends TestCase
             $this->assertSame(1, DB::table('invoices')->where('id', $invoiceId)->count());
             $this->assertSame(0, DB::table('claims')->where('outlet_id', $outlet->id)->count());
             $this->assertSame(0, DB::table('idempotency_requests')
-                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('actor_scope', Admin::class.':'.$actor->id)
                 ->where('key', 'like', 'd03-%'.$tag)->count());
         } finally {
             DB::setDefaultConnection($default);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
-            if ($writer) { $writer->disconnect(); DB::purge('d03_sale_claim_writer'); }
-            if ($saleId) { DB::table('sales')->where('id', $saleId)->delete(); }
-            if ($invoiceId) { DB::table('invoices')->where('id', $invoiceId)->delete(); }
-            if ($product) { DB::table('products')->where('id', $product->id)->delete(); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
+            if ($writer) {
+                $writer->disconnect();
+                DB::purge('d03_sale_claim_writer');
+            }
+            if ($saleId) {
+                DB::table('sales')->where('id', $saleId)->delete();
+            }
+            if ($invoiceId) {
+                DB::table('invoices')->where('id', $invoiceId)->delete();
+            }
+            if ($product) {
+                DB::table('products')->where('id', $product->id)->delete();
+            }
             if ($actor) {
                 DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
                 DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
                 DB::table('admins')->where('id', $actor->id)->delete();
             }
-            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
-                ->where('name', 'D03 sales claim race '.$tag)->delete(); }
+            if ($outlet) {
+                DB::table('outlets')->where('id', $outlet->id)
+                    ->where('name', 'D03 sales claim race '.$tag)->delete();
+            }
         }
     }
 
@@ -659,12 +743,14 @@ final class OutletArchiveRowLockTest extends TestCase
             && (int) config('database.connections.mysql.port') === 13306, 403);
         $tag = (string) Str::uuid();
         $default = DB::getDefaultConnection();
-        $outlet = null; $actor = null; $writer = null;
+        $outlet = null;
+        $actor = null;
+        $writer = null;
         try {
             $outlet = new Outlet;
             $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '081',
                 'name' => 'D03 payment race '.$tag, 'status' => false, 'version' => 1])->save();
-            $actor = new \App\Models\Admin;
+            $actor = new Admin;
             $actor->forceFill(['name' => 'D03 synthetic payment operator',
                 'email' => 'd03-payment-race-'.$tag.'@example.invalid',
                 'password' => 'not-a-live-password',
@@ -682,12 +768,12 @@ final class OutletArchiveRowLockTest extends TestCase
                     ->update(['archived_at' => now(), 'version' => 2]);
                 DB::setDefaultConnection('d03_payment_writer');
                 $this->assertNull($writer->table('outlets')->where('id', $outlet->id)->value('archived_at'));
-                $writerActor = \App\Models\Admin::on('d03_payment_writer')->findOrFail($actor->id);
+                $writerActor = Admin::on('d03_payment_writer')->findOrFail($actor->id);
                 $writerOutlet = Outlet::on('d03_payment_writer')->findOrFail($outlet->id);
-                $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                $this->assertTrue(app(Access::class)->allows(
                     $writerActor, 'config.payments.manage', $writerOutlet));
                 try {
-                    app(\App\Payments\PosPaymentOperations::class)->createDestination(
+                    app(PosPaymentOperations::class)->createDestination(
                         $writerActor, $writerOutlet, 'd03-payment-wait-'.$tag, $input);
                     $this->fail('Payment configuration bypassed the independent archive lock.');
                 } catch (QueryException $exception) {
@@ -698,35 +784,44 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->commit();
             } finally {
                 DB::setDefaultConnection($default);
-                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+                if (DB::connection('mysql')->transactionLevel() > 0) {
+                    DB::connection('mysql')->rollBack();
+                }
             }
             $this->assertNotNull($outlet->fresh()->archived_at);
             DB::setDefaultConnection('d03_payment_writer');
             try {
-                app(\App\Payments\PosPaymentOperations::class)->createDestination(
+                app(PosPaymentOperations::class)->createDestination(
                     $writerActor, $writerOutlet, 'd03-payment-retry-'.$tag, $input);
                 $this->fail('Payment service accepted a post-archive destination.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             } finally {
                 DB::setDefaultConnection($default);
             }
             $this->assertSame(0, DB::table('pos_payment_destinations')->where('outlet_id', $outlet->id)->count());
             $this->assertSame(0, DB::table('idempotency_requests')
-                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('actor_scope', Admin::class.':'.$actor->id)
                 ->where('operation', 'pos-payments.destination.create')
                 ->where('key', 'like', 'd03-payment-%'.$tag)->count());
         } finally {
             DB::setDefaultConnection($default);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
-            if ($writer) { $writer->disconnect(); DB::purge('d03_payment_writer'); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
+            if ($writer) {
+                $writer->disconnect();
+                DB::purge('d03_payment_writer');
+            }
             if ($actor) {
                 DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
                 DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
                 DB::table('admins')->where('id', $actor->id)->delete();
             }
-            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
-                ->where('name', 'D03 payment race '.$tag)->delete(); }
+            if ($outlet) {
+                DB::table('outlets')->where('id', $outlet->id)
+                    ->where('name', 'D03 payment race '.$tag)->delete();
+            }
         }
     }
 
@@ -737,12 +832,14 @@ final class OutletArchiveRowLockTest extends TestCase
             && (int) config('database.connections.mysql.port') === 13306, 403);
         $tag = (string) Str::uuid();
         $default = DB::getDefaultConnection();
-        $outlet = null; $actor = null; $writer = null;
+        $outlet = null;
+        $actor = null;
+        $writer = null;
         try {
             $outlet = new Outlet;
             $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '082',
                 'name' => 'D03 supplier repair race '.$tag, 'status' => false, 'version' => 1])->save();
-            $actor = new \App\Models\Admin;
+            $actor = new Admin;
             $actor->forceFill(['name' => 'D03 synthetic supplier repair actor',
                 'email' => 'd03-supplier-repair-'.$tag.'@example.invalid', 'password' => 'not-a-live-password',
                 'permissions' => ['shops.enter', 'shop.procurement', 'shop.repairs']])->save();
@@ -760,19 +857,19 @@ final class OutletArchiveRowLockTest extends TestCase
                     ->update(['archived_at' => now(), 'version' => 2]);
                 DB::setDefaultConnection('d03_procurement_repair_writer');
                 $this->assertNull($writer->table('outlets')->where('id', $outlet->id)->value('archived_at'));
-                $writerActor = \App\Models\Admin::on('d03_procurement_repair_writer')->findOrFail($actor->id);
+                $writerActor = Admin::on('d03_procurement_repair_writer')->findOrFail($actor->id);
                 $writerOutlet = Outlet::on('d03_procurement_repair_writer')->findOrFail($outlet->id);
                 foreach (['shop.procurement', 'shop.repairs'] as $permission) {
-                    $this->assertTrue(app(\App\Identity\Access::class)->allows(
+                    $this->assertTrue(app(Access::class)->allows(
                         $writerActor, $permission, $writerOutlet));
                 }
                 foreach (['supplier', 'repair'] as $kind) {
                     try {
                         if ($kind === 'supplier') {
-                            app(\App\Procurement\SupplierProcurement::class)->createSupplier(
+                            app(SupplierProcurement::class)->createSupplier(
                                 $writerActor, $writerOutlet, 'd03-supplier-wait-'.$tag, $supplierInput);
                         } else {
-                            app(\App\Repairs\PaidRepairOperations::class)->configure(
+                            app(PaidRepairOperations::class)->configure(
                                 $writerActor, $writerOutlet, 'd03-repair-wait-'.$tag, $repairInput);
                         }
                         $this->fail('The '.$kind.' service bypassed the archive row lock.');
@@ -784,7 +881,9 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->commit();
             } finally {
                 DB::setDefaultConnection($default);
-                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+                if (DB::connection('mysql')->transactionLevel() > 0) {
+                    DB::connection('mysql')->rollBack();
+                }
             }
             $this->assertNotNull($outlet->fresh()->archived_at);
             DB::setDefaultConnection('d03_procurement_repair_writer');
@@ -792,14 +891,14 @@ final class OutletArchiveRowLockTest extends TestCase
                 foreach (['supplier', 'repair'] as $kind) {
                     try {
                         if ($kind === 'supplier') {
-                            app(\App\Procurement\SupplierProcurement::class)->createSupplier(
+                            app(SupplierProcurement::class)->createSupplier(
                                 $writerActor, $writerOutlet, 'd03-supplier-retry-'.$tag, $supplierInput);
                         } else {
-                            app(\App\Repairs\PaidRepairOperations::class)->configure(
+                            app(PaidRepairOperations::class)->configure(
                                 $writerActor, $writerOutlet, 'd03-repair-retry-'.$tag, $repairInput);
                         }
                         $this->fail('Archived outlet accepted '.$kind.' mutation.');
-                    } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                    } catch (HttpException $exception) {
                         $this->assertSame(403, $exception->getStatusCode());
                     }
                 }
@@ -809,19 +908,26 @@ final class OutletArchiveRowLockTest extends TestCase
             $this->assertSame(0, DB::table('suppliers')->where('outlet_id', $outlet->id)->count());
             $this->assertSame(0, DB::table('repair_settings')->where('outlet_id', $outlet->id)->count());
             $this->assertSame(0, DB::table('idempotency_requests')
-                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)
+                ->where('actor_scope', Admin::class.':'.$actor->id)
                 ->where('key', 'like', 'd03-%'.$tag)->count());
         } finally {
             DB::setDefaultConnection($default);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
-            if ($writer) { $writer->disconnect(); DB::purge('d03_procurement_repair_writer'); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
+            if ($writer) {
+                $writer->disconnect();
+                DB::purge('d03_procurement_repair_writer');
+            }
             if ($actor) {
                 DB::table('identity_audit_events')->where('account_id', $actor->id)->delete();
                 DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
                 DB::table('admins')->where('id', $actor->id)->delete();
             }
-            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
-                ->where('name', 'D03 supplier repair race '.$tag)->delete(); }
+            if ($outlet) {
+                DB::table('outlets')->where('id', $outlet->id)
+                    ->where('name', 'D03 supplier repair race '.$tag)->delete();
+            }
         }
     }
 
@@ -831,7 +937,10 @@ final class OutletArchiveRowLockTest extends TestCase
             && (int) config('database.connections.mysql.port') === 13306, 403);
         $tag = (string) Str::uuid();
         $default = DB::getDefaultConnection();
-        $outlet = null; $actor = null; $product = null; $writer = null;
+        $outlet = null;
+        $actor = null;
+        $product = null;
+        $writer = null;
         $input = ['seller_name' => 'Synthetic Seller', 'seller_cnic' => '42101-1234567-1',
             'seller_phone' => '03001234567', 'seller_address' => 'Synthetic private address',
             'device_serial' => 'D03-RACE', 'imeis' => ['352099001761466', '352099001761474'],
@@ -841,12 +950,12 @@ final class OutletArchiveRowLockTest extends TestCase
             $outlet = new Outlet;
             $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '083',
                 'name' => 'D03 trade-in race '.$tag, 'status' => false, 'version' => 1])->save();
-            $actor = new \App\Models\Admin;
+            $actor = new Admin;
             $actor->forceFill(['name' => 'D03 synthetic trade-in actor',
                 'email' => 'd03-trade-in-'.$tag.'@example.invalid', 'password' => 'not-a-live-password',
                 'permissions' => ['shops.enter', 'shop.trade-in']])->save();
             $actor->shops()->attach($outlet);
-            $product = new \App\Models\Product;
+            $product = new Product;
             $product->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'D03 trade-in product '.$tag,
                 'category' => 'mobile_phone', 'price' => '100.00', 'sale_price' => '100.00', 'qty' => 0,
                 'track_imei' => true, 'sim_configuration' => 'dual_physical', 'outlet_id' => $outlet->id])->save();
@@ -860,12 +969,12 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->table('outlets')->where('id', $outlet->id)
                     ->update(['archived_at' => now(), 'version' => 2]);
                 DB::setDefaultConnection('d03_trade_in_writer');
-                $writerActor = \App\Models\Admin::on('d03_trade_in_writer')->findOrFail($actor->id);
+                $writerActor = Admin::on('d03_trade_in_writer')->findOrFail($actor->id);
                 $writerOutlet = Outlet::on('d03_trade_in_writer')->findOrFail($outlet->id);
-                $writerProduct = \App\Models\Product::on('d03_trade_in_writer')->findOrFail($product->id);
-                $this->assertTrue(app(\App\Identity\Access::class)->allows($writerActor, 'shop.trade-in', $writerOutlet));
+                $writerProduct = Product::on('d03_trade_in_writer')->findOrFail($product->id);
+                $this->assertTrue(app(Access::class)->allows($writerActor, 'shop.trade-in', $writerOutlet));
                 try {
-                    app(\App\TradeIn\TradeInOperations::class)->create(
+                    app(TradeInOperations::class)->create(
                         $writerActor, $writerOutlet, $writerProduct->public_id, 'd03-trade-in-wait-'.$tag, $input);
                     $this->fail('Trade-in service bypassed the archive row lock.');
                 } catch (QueryException $exception) {
@@ -875,32 +984,43 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->commit();
             } finally {
                 DB::setDefaultConnection($default);
-                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+                if (DB::connection('mysql')->transactionLevel() > 0) {
+                    DB::connection('mysql')->rollBack();
+                }
             }
             DB::setDefaultConnection('d03_trade_in_writer');
             try {
-                app(\App\TradeIn\TradeInOperations::class)->create(
+                app(TradeInOperations::class)->create(
                     $writerActor, $writerOutlet, $writerProduct->public_id, 'd03-trade-in-retry-'.$tag, $input);
                 $this->fail('Archived outlet accepted a trade-in mutation.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             } finally {
                 DB::setDefaultConnection($default);
             }
             $this->assertSame(0, DB::table('trade_ins')->where('outlet_id', $outlet->id)->count());
             $this->assertSame(0, DB::table('idempotency_requests')
-                ->where('actor_scope', \App\Models\Admin::class.':'.$actor->id)->count());
+                ->where('actor_scope', Admin::class.':'.$actor->id)->count());
         } finally {
             DB::setDefaultConnection($default);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
-            if ($writer) { $writer->disconnect(); DB::purge('d03_trade_in_writer'); }
-            if ($product) { DB::table('products')->where('id', $product->id)->delete(); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
+            if ($writer) {
+                $writer->disconnect();
+                DB::purge('d03_trade_in_writer');
+            }
+            if ($product) {
+                DB::table('products')->where('id', $product->id)->delete();
+            }
             if ($actor) {
                 DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
                 DB::table('admins')->where('id', $actor->id)->delete();
             }
-            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
-                ->where('name', 'D03 trade-in race '.$tag)->delete(); }
+            if ($outlet) {
+                DB::table('outlets')->where('id', $outlet->id)
+                    ->where('name', 'D03 trade-in race '.$tag)->delete();
+            }
         }
     }
 
@@ -910,13 +1030,15 @@ final class OutletArchiveRowLockTest extends TestCase
             && (int) config('database.connections.mysql.port') === 13306, 403);
         $tag = (string) Str::uuid();
         $default = DB::getDefaultConnection();
-        $outlet = null; $product = null; $writer = null;
+        $outlet = null;
+        $product = null;
+        $writer = null;
         $scope = 'guest:'.hash('sha256', 'd03-website-'.$tag);
         try {
             $outlet = new Outlet;
             $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '084',
                 'name' => 'D03 website race '.$tag, 'status' => false, 'version' => 1])->save();
-            $product = new \App\Models\Product;
+            $product = new Product;
             $product->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'D03 website product '.$tag,
                 'category' => 'accessory', 'price' => '100.00', 'sale_price' => '100.00', 'qty' => 1,
                 'track_imei' => false, 'outlet_id' => $outlet->id])->save();
@@ -934,7 +1056,7 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::setDefaultConnection('d03_website_writer');
                 $this->assertNull($writer->table('outlets')->where('id', $outlet->id)->value('archived_at'));
                 try {
-                    app(\App\Commerce\OrderTransactions::class)->checkout(
+                    app(OrderTransactions::class)->checkout(
                         $scope, null, 'd03-website-wait-'.$tag, $input);
                     $this->fail('Website checkout bypassed the independent archive lock.');
                 } catch (QueryException $exception) {
@@ -945,14 +1067,16 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->commit();
             } finally {
                 DB::setDefaultConnection($default);
-                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+                if (DB::connection('mysql')->transactionLevel() > 0) {
+                    DB::connection('mysql')->rollBack();
+                }
             }
             DB::setDefaultConnection('d03_website_writer');
             try {
-                app(\App\Commerce\OrderTransactions::class)->checkout(
+                app(OrderTransactions::class)->checkout(
                     $scope, null, 'd03-website-retry-'.$tag, $input);
                 $this->fail('Archived outlet accepted a Website checkout.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             } finally {
                 DB::setDefaultConnection($default);
@@ -961,11 +1085,20 @@ final class OutletArchiveRowLockTest extends TestCase
             $this->assertSame(0, DB::table('idempotency_requests')->where('actor_scope', $scope)->count());
         } finally {
             DB::setDefaultConnection($default);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
-            if ($writer) { $writer->disconnect(); DB::purge('d03_website_writer'); }
-            if ($product) { DB::table('products')->where('id', $product->id)->delete(); }
-            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
-                ->where('name', 'D03 website race '.$tag)->delete(); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
+            if ($writer) {
+                $writer->disconnect();
+                DB::purge('d03_website_writer');
+            }
+            if ($product) {
+                DB::table('products')->where('id', $product->id)->delete();
+            }
+            if ($outlet) {
+                DB::table('outlets')->where('id', $outlet->id)
+                    ->where('name', 'D03 website race '.$tag)->delete();
+            }
         }
     }
 
@@ -975,7 +1108,9 @@ final class OutletArchiveRowLockTest extends TestCase
             && (int) config('database.connections.mysql.port') === 13306, 403);
         $tag = (string) Str::uuid();
         $default = DB::getDefaultConnection();
-        $outlet = null; $orderId = null; $writer = null;
+        $outlet = null;
+        $orderId = null;
+        $writer = null;
         try {
             $outlet = new Outlet;
             $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '085',
@@ -1001,13 +1136,22 @@ final class OutletArchiveRowLockTest extends TestCase
                 'order_reference' => 'D03-GW-'.$tag, 'amount' => '100.00', 'currency' => 'PKR', 'status' => 'paid',
                 'payload_hash' => hash('sha256', $tag)];
             config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'd03-merchant', 'mode' => 'test']);
-            $providers = new \App\Commerce\PaymentProviders;
-            $providers->register('jazzcash', new class($event) implements \App\Commerce\PaymentProvider {
+            $providers = new PaymentProviders;
+            $providers->register('jazzcash', new class($event) implements PaymentProvider
+            {
                 public function __construct(private array $event) {}
-                public function initiate(array $intent): array { return []; }
-                public function verify(array $payload): array { return $this->event; }
+
+                public function initiate(array $intent): array
+                {
+                    return [];
+                }
+
+                public function verify(array $payload): array
+                {
+                    return $this->event;
+                }
             });
-            $this->app->instance(\App\Commerce\PaymentProviders::class, $providers);
+            $this->app->instance(PaymentProviders::class, $providers);
             config(['database.connections.d03_callback_writer' => config('database.connections.mysql')]);
             $writer = DB::connection('d03_callback_writer');
             $writer->statement('SET SESSION innodb_lock_wait_timeout = 1');
@@ -1017,7 +1161,7 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->table('outlets')->where('id', $outlet->id)->update(['archived_at' => now(), 'version' => 2]);
                 DB::setDefaultConnection('d03_callback_writer');
                 try {
-                    app(\App\Commerce\OrderTransactions::class)->callback('jazzcash', ['synthetic' => true]);
+                    app(OrderTransactions::class)->callback('jazzcash', ['synthetic' => true]);
                     $this->fail('Provider callback bypassed the independent archive lock.');
                 } catch (QueryException $exception) {
                     $this->assertSame(1205, (int) ($exception->errorInfo[1] ?? 0));
@@ -1027,10 +1171,12 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->commit();
             } finally {
                 DB::setDefaultConnection($default);
-                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+                if (DB::connection('mysql')->transactionLevel() > 0) {
+                    DB::connection('mysql')->rollBack();
+                }
             }
             DB::setDefaultConnection('d03_callback_writer');
-            $result = app(\App\Commerce\OrderTransactions::class)->callback('jazzcash', ['synthetic' => true]);
+            $result = app(OrderTransactions::class)->callback('jazzcash', ['synthetic' => true]);
             DB::setDefaultConnection($default);
             $this->assertSame('paid_reconciliation', $result['payment_status']);
             $this->assertTrue($result['reconciliation_required']);
@@ -1038,16 +1184,23 @@ final class OutletArchiveRowLockTest extends TestCase
             $this->assertSame(0, DB::table('invoices')->where('order_id', $orderId)->count());
         } finally {
             DB::setDefaultConnection($default);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
-            if ($writer) { $writer->disconnect(); DB::purge('d03_callback_writer'); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
+            if ($writer) {
+                $writer->disconnect();
+                DB::purge('d03_callback_writer');
+            }
             if ($orderId) {
                 DB::table('payment_receipts')->whereIn('payment_id', DB::table('payments')->where('order_id', $orderId)->pluck('id'))->delete();
                 DB::table('reservations')->where('order_id', $orderId)->delete();
                 DB::table('payments')->where('order_id', $orderId)->delete();
                 DB::table('orders')->where('id', $orderId)->delete();
             }
-            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
-                ->where('name', 'D03 callback race '.$tag)->delete(); }
+            if ($outlet) {
+                DB::table('outlets')->where('id', $outlet->id)
+                    ->where('name', 'D03 callback race '.$tag)->delete();
+            }
         }
     }
 
@@ -1057,12 +1210,16 @@ final class OutletArchiveRowLockTest extends TestCase
             && (int) config('database.connections.mysql.port') === 13306, 403);
         $tag = (string) Str::uuid();
         $default = DB::getDefaultConnection();
-        $outlet = null; $actor = null; $orderId = null; $returnId = null; $writer = null;
+        $outlet = null;
+        $actor = null;
+        $orderId = null;
+        $returnId = null;
+        $writer = null;
         try {
             $outlet = new Outlet;
             $outlet->forceFill(['public_id' => (string) Str::uuid(), 'outlet_code' => '086',
                 'name' => 'D03 COD refund race '.$tag, 'status' => false, 'version' => 1])->save();
-            $actor = new \App\Models\Admin;
+            $actor = new Admin;
             $actor->forceFill(['name' => 'D03 COD refund actor', 'email' => 'd03-cod-refund-'.$tag.'@example.invalid',
                 'password' => 'not-a-live-password', 'permissions' => ['shops.enter', 'shop.sales']])->save();
             $actor->shops()->attach($outlet);
@@ -1087,7 +1244,7 @@ final class OutletArchiveRowLockTest extends TestCase
                 'public_id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now()]);
             $returnPublic = (string) Str::uuid();
             $returnId = DB::table('returns')->insertGetId(['invoice_id' => $invoiceId, 'order_id' => $orderId,
-                'actor_type' => \App\Models\Admin::class, 'actor_id' => $actor->id, 'reason' => 'Synthetic return',
+                'actor_type' => Admin::class, 'actor_id' => $actor->id, 'reason' => 'Synthetic return',
                 'status' => 'accepted', 'idempotency_key' => 'd03-return-'.$tag, 'public_id' => $returnPublic,
                 'created_at' => now(), 'updated_at' => now()]);
             config(['database.connections.d03_money_writer' => config('database.connections.mysql')]);
@@ -1098,15 +1255,15 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->table('outlets')->where('id', $outlet->id)->lockForUpdate()->firstOrFail();
                 DB::connection('mysql')->table('outlets')->where('id', $outlet->id)->update(['archived_at' => now(), 'version' => 2]);
                 DB::setDefaultConnection('d03_money_writer');
-                $writerActor = \App\Models\Admin::on('d03_money_writer')->findOrFail($actor->id);
+                $writerActor = Admin::on('d03_money_writer')->findOrFail($actor->id);
                 $writerOutlet = Outlet::on('d03_money_writer')->findOrFail($outlet->id);
                 foreach (['cod', 'refund'] as $kind) {
                     try {
                         if ($kind === 'cod') {
-                            app(\App\Commerce\OrderTransactions::class)->collectCod($writerActor, $writerOutlet,
+                            app(OrderTransactions::class)->collectCod($writerActor, $writerOutlet,
                                 $orderPublic, 'd03-cod-wait-'.$tag, '100.00', 'D03-COD-'.$tag);
                         } else {
-                            app(\App\Commerce\OrderTransactions::class)->manualRefund($writerActor, $returnPublic,
+                            app(OrderTransactions::class)->manualRefund($writerActor, $returnPublic,
                                 $paymentPublic, 'd03-refund-wait-'.$tag, '1.00', str_repeat('c', 64));
                         }
                         $this->fail($kind.' bypassed the independent archive lock.');
@@ -1118,20 +1275,22 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::connection('mysql')->commit();
             } finally {
                 DB::setDefaultConnection($default);
-                if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
+                if (DB::connection('mysql')->transactionLevel() > 0) {
+                    DB::connection('mysql')->rollBack();
+                }
             }
             DB::setDefaultConnection('d03_money_writer');
             foreach (['cod', 'refund'] as $kind) {
                 try {
                     if ($kind === 'cod') {
-                        app(\App\Commerce\OrderTransactions::class)->collectCod($writerActor, $writerOutlet,
+                        app(OrderTransactions::class)->collectCod($writerActor, $writerOutlet,
                             $orderPublic, 'd03-cod-retry-'.$tag, '100.00', 'D03-COD-2-'.$tag);
                     } else {
-                        app(\App\Commerce\OrderTransactions::class)->manualRefund($writerActor, $returnPublic,
+                        app(OrderTransactions::class)->manualRefund($writerActor, $returnPublic,
                             $paymentPublic, 'd03-refund-retry-'.$tag, '1.00', str_repeat('d', 64));
                     }
                     $this->fail('Archived outlet accepted '.$kind.'.');
-                } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                } catch (HttpException $exception) {
                     $this->assertSame(403, $exception->getStatusCode());
                 }
             }
@@ -1140,9 +1299,16 @@ final class OutletArchiveRowLockTest extends TestCase
             $this->assertSame(0, DB::table('refunds')->where('payment_id', $paymentId)->count());
         } finally {
             DB::setDefaultConnection($default);
-            if (DB::connection('mysql')->transactionLevel() > 0) { DB::connection('mysql')->rollBack(); }
-            if ($writer) { $writer->disconnect(); DB::purge('d03_money_writer'); }
-            if ($returnId) { DB::table('returns')->where('id', $returnId)->delete(); }
+            if (DB::connection('mysql')->transactionLevel() > 0) {
+                DB::connection('mysql')->rollBack();
+            }
+            if ($writer) {
+                $writer->disconnect();
+                DB::purge('d03_money_writer');
+            }
+            if ($returnId) {
+                DB::table('returns')->where('id', $returnId)->delete();
+            }
             if ($orderId) {
                 DB::table('reservations')->where('order_id', $orderId)->delete();
                 DB::table('invoices')->where('order_id', $orderId)->delete();
@@ -1153,9 +1319,10 @@ final class OutletArchiveRowLockTest extends TestCase
                 DB::table('outlet_admins')->where('admin_id', $actor->id)->delete();
                 DB::table('admins')->where('id', $actor->id)->delete();
             }
-            if ($outlet) { DB::table('outlets')->where('id', $outlet->id)
-                ->where('name', 'D03 COD refund race '.$tag)->delete(); }
+            if ($outlet) {
+                DB::table('outlets')->where('id', $outlet->id)
+                    ->where('name', 'D03 COD refund race '.$tag)->delete();
+            }
         }
     }
-
 }

@@ -2,7 +2,6 @@
 
 namespace App\Pos;
 
-use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +14,7 @@ final class PosInventoryListing
         'purchase_price' => ['purchase_price'], 'sale_price' => ['sale_price'],
         'warranty' => ['warranty_type'],
     ];
+
     private const UNIT_FIELDS = [
         'color' => 'color', 'condition' => 'condition', 'pta_status' => 'pta_status',
         'carrier_lock' => 'carrier_lock_status', 'mdm_status' => 'mdm_status',
@@ -38,11 +38,17 @@ final class PosInventoryListing
             $match = '%'.addcslashes($search, '%_\\').'%';
             $query->where(function (Builder $filters) use ($category, $match) {
                 foreach (self::PRODUCT_FIELDS as $key => $fields) {
-                    if ($category !== 'all' && $category !== $key) continue;
-                    foreach ($fields as $column) $filters->orWhere('products.'.$column, 'like', $match);
+                    if ($category !== 'all' && $category !== $key) {
+                        continue;
+                    }
+                    foreach ($fields as $column) {
+                        $filters->orWhere('products.'.$column, 'like', $match);
+                    }
                 }
                 foreach (self::UNIT_FIELDS as $key => $column) {
-                    if ($category !== 'all' && $category !== $key) continue;
+                    if ($category !== 'all' && $category !== $key) {
+                        continue;
+                    }
                     $filters->orWhereExists(fn ($sub) => $sub->selectRaw('1')->from('stock_units as su')
                         ->whereColumn('su.product_id', 'products.id')->where('su.'.$column, 'like', $match));
                 }
@@ -64,6 +70,7 @@ final class PosInventoryListing
         }
         $size = (int) $prefs['inventory_page_length'];
         $page = $query->orderBy('name')->orderBy('id')->paginate($size, ['products.*'], 'page', (int) ($input['page'] ?? 1));
+
         return ['rows' => $page->items(), 'paging' => [
             'page' => $page->currentPage(), 'pages' => $page->lastPage(), 'total' => $page->total(),
             'per_page' => $size, 'q' => $search, 'category' => $category, 'options' => $options,

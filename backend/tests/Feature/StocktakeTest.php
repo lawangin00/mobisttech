@@ -12,6 +12,7 @@ use App\Sales\SalesOperations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
 
@@ -47,7 +48,7 @@ class StocktakeTest extends TestCase
             try {
                 $service->start($this->actor, $this->outlet, $key, $input);
                 $this->fail('Archived outlet accepted a stocktake start or completed-key replay.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }
@@ -56,7 +57,7 @@ class StocktakeTest extends TestCase
                 $service->countLine($this->actor, $this->outlet, $created['stocktake_id'],
                     $line['line_id'], $key, $countInput);
                 $this->fail('Archived outlet accepted a stocktake count or completed-key replay.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }
@@ -64,7 +65,7 @@ class StocktakeTest extends TestCase
             $service->approve($this->actor, $this->outlet, $created['stocktake_id'],
                 'd03-stocktake-approve', ['session_version' => $count['session_version']]);
             $this->fail('Archived outlet accepted stocktake approval.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());
         }
         $this->assertEquals($beforeSession, DB::table('stocktake_sessions')->where('id', $beforeSession->id)->firstOrFail());

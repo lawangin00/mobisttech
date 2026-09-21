@@ -2,11 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Identity\OutletLifecycleAdministration;
+use App\Models\Admin;
+use App\Models\Outlet;
+use App\Models\Role;
 use App\Models\StockUnit;
 use App\Sales\SalesOperations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
 
@@ -31,21 +36,21 @@ class SalesOperationsTest extends TestCase
         $sale = app(SalesOperations::class)->sell($this->actor, $this->outlet, $key, $input);
         $originalInvoice = DB::table('invoices')->where('public_id', $sale['invoice_id'])->firstOrFail();
         $originalLine = DB::table('sales')->where('public_id', $sale['sale_ids'][0])->firstOrFail();
-        $fallback = new \App\Models\Outlet;
+        $fallback = new Outlet;
         $fallback->forceFill(['public_id' => (string) Str::uuid(),
             'name' => 'D03 historical sales fallback', 'outlet_code' => '065'])->save();
-        $owner = new \App\Models\Admin;
+        $owner = new Admin;
         $owner->forceFill(['name' => 'D03 sales archive owner',
             'email' => 'd03-sales-'.Str::uuid().'@example.invalid', 'password' => 'SyntheticPass123!',
             'permissions' => ['shops.enter', 'team-members.full-access.assign', 'admin.business-profile.manage']])->save();
-        $owner->roles()->attach(\App\Models\Role::where('name', 'Full Access')->firstOrFail()->id,
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id,
             ['assigned_at' => now()]);
         $owner->shops()->attach($fallback);
         try {
-            app(\App\Identity\OutletLifecycleAdministration::class)
+            app(OutletLifecycleAdministration::class)
                 ->archive($owner, $this->outlet->public_id, (int) $this->outlet->version);
             $this->fail('An outlet with an invoice and stock history was archived without review.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(409, $exception->getStatusCode());
         }
         $this->assertNull($this->outlet->fresh()->archived_at);
@@ -55,16 +60,16 @@ class SalesOperationsTest extends TestCase
         $this->assertSame(0, DB::table('identity_audit_events')->where('outlet_id', $this->outlet->id)
             ->where('action', 'outlet_archived')->count());
         // Independently prove invoice-only history blocks archive without a product/sale shortcut.
-        $invoiceOnly = new \App\Models\Outlet;
+        $invoiceOnly = new Outlet;
         $invoiceOnly->forceFill(['public_id' => (string) Str::uuid(),
             'name' => 'D03 invoice-only synthetic outlet', 'outlet_code' => '066'])->save();
         $invoiceOnlyId = DB::table('invoices')->insertGetId(['outlet_id' => $invoiceOnly->id,
             'public_id' => (string) Str::uuid(), 'total_bill' => '100.00', 'final_bill' => '100.00']);
         try {
-            app(\App\Identity\OutletLifecycleAdministration::class)
+            app(OutletLifecycleAdministration::class)
                 ->archive($owner, $invoiceOnly->public_id, 1);
             $this->fail('An outlet with invoice-only history was archived without review.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(409, $exception->getStatusCode());
         }
         $this->assertNull($invoiceOnly->fresh()->archived_at);
@@ -76,7 +81,7 @@ class SalesOperationsTest extends TestCase
             try {
                 app(SalesOperations::class)->sell($this->actor, $this->outlet, $attempt, $input);
                 $this->fail('Archived outlet accepted a sale or a completed-key replay.');
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
         }

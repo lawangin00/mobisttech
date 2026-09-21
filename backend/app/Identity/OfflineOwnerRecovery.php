@@ -17,6 +17,7 @@ final class OfflineOwnerRecovery
     public function rotate(Admin $actor, string $currentPassword): array
     {
         $this->enabled();
+
         return DB::transaction(function () use ($actor, $currentPassword) {
             $owner = Admin::whereKey($actor->id)->lockForUpdate()->firstOrFail();
             abort_unless($this->isBoundOwner($owner), 403, 'Bound protected owner required.');
@@ -35,6 +36,7 @@ final class OfflineOwnerRecovery
                 $codes[] = $code;
             }
             IdentityAudit::record('admin', $owner->id, 'owner_offline_codes_rotated', 'batch:'.$batch);
+
             return ['codes' => $codes, 'count' => self::CODE_COUNT,
                 'instruction' => 'Store these one-time codes offline; they cannot be viewed again.'];
         }, 3);
@@ -83,6 +85,7 @@ final class OfflineOwnerRecovery
     private function isBoundOwner(Admin $actor): bool
     {
         $id = config('identity.offline_owner_recovery.owner_admin_public_id');
+
         return is_string($id) && Str::isUuid($id) && $actor->public_id === $id
             && $actor->usable() && $actor->hasPermission('team-members.full-access.assign')
             && $actor->hasPermission('admin.business-profile.manage')

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Identity\OutletLifecycleAdministration;
 use App\Identity\OutletProfileAdministration;
-use App\Models\Outlet;
 use App\Models\Admin;
+use App\Models\Outlet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -16,12 +16,14 @@ final class OutletManagementController extends Controller
     {
         $actor = Auth::guard('admin')->user();
         abort_unless($actor instanceof Admin, 401);
+
         return $actor;
     }
 
     public function page(OutletLifecycleAdministration $service)
     {
         abort_unless($service->canManage($this->actor()), 403);
+
         return Inertia::render('outlet-management');
     }
 
@@ -33,6 +35,7 @@ final class OutletManagementController extends Controller
     public function profile(string $outlet, OutletProfileAdministration $profiles)
     {
         $target = Outlet::where('public_id', $outlet)->firstOrFail();
+
         return response()->json(['data' => $profiles->show($this->actor(), $target, true)]);
     }
 
@@ -41,6 +44,7 @@ final class OutletManagementController extends Controller
         $confirmedAt = (int) $request->session()->get('identity_explicit_password_confirmed_at', 0);
         abort_unless($confirmedAt > 0 && now()->timestamp - $confirmedAt < (int) config('identity.sessions.admin.recent_auth_minutes') * 60, 403, 'Confirm your current password first.');
         $target = Outlet::where('public_id', $outlet)->firstOrFail();
+
         return response()->json(['data' => $profiles->update($this->actor(), $target, $request->all(), true)]);
     }
 
@@ -54,6 +58,7 @@ final class OutletManagementController extends Controller
             $this->actor(), $outlet, $invoice, $data['password'], $data['purpose'])]);
         $response->headers->set('Cache-Control', 'private, no-store, max-age=0');
         $response->headers->set('Pragma', 'no-cache');
+
         return $response;
     }
 
@@ -67,6 +72,7 @@ final class OutletManagementController extends Controller
             $this->actor(), $outlet, $invoice, $data['password'], $data['purpose'])]);
         $response->headers->set('Cache-Control', 'private, no-store, max-age=0');
         $response->headers->set('Pragma', 'no-cache');
+
         return $response;
     }
 
@@ -80,6 +86,7 @@ final class OutletManagementController extends Controller
             $this->actor(), $outlet, $claim, $data['password'], $data['purpose'])]);
         $response->headers->set('Cache-Control', 'private, no-store, max-age=0');
         $response->headers->set('Pragma', 'no-cache');
+
         return $response;
     }
 
@@ -97,6 +104,7 @@ final class OutletManagementController extends Controller
     {
         $data = $request->validate(['version' => ['required', 'integer', 'min:1']]);
         abort_unless(count($request->all()) === 1, 422, 'Unexpected archive fields.');
+
         return response()->json(['data' => $service->archive($this->actor(), $outlet, (int) $data['version'])]);
     }
 }

@@ -65,6 +65,7 @@ final class PosHistoryListing
             ->paginate($perPage, $area === 'invoices' ? ['i.*'] : ['c.*', 'i.public_id as invoice_id',
                 'i.invoice_number', 'i.customer_name', 'i.customer_phone', 'p.name as product_name'],
                 'page', (int) ($input['page'] ?? 1));
+
         return ['rows' => $page->items(), 'pagination' => [
             'page' => $page->currentPage(), 'pages' => $page->lastPage(),
             'total' => $page->total(), 'per_page' => $perPage,

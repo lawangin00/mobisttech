@@ -25,7 +25,9 @@ final class PosInventoryWarrantyE2eSeeder extends Seeder
                     'sale_price' => '1.00', 'purchase_price' => '1.00', 'category' => 'accessory',
                     'warranty_type' => 'shop_warranty', 'qty' => 1,
                 ]);
-                if ($n === 1) $product = $id;
+                if ($n === 1) {
+                    $product = $id;
+                }
             }
             for ($n = 1; $n <= 22; $n++) {
                 $invoice = DB::table('invoices')->insertGetId([

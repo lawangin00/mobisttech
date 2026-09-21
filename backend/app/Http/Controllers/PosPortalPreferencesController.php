@@ -15,6 +15,7 @@ final class PosPortalPreferencesController extends Controller
         $data = $preferences->catalogue($this->actor());
         $response = Inertia::render('pos-portal-preferences', $data)->toResponse($request);
         $response->headers->set('Cache-Control', 'private, no-store');
+
         return $response;
     }
 
@@ -28,6 +29,7 @@ final class PosPortalPreferencesController extends Controller
     {
         $actor = Auth::guard('admin')->user();
         abort_unless($actor instanceof Admin, 401);
+
         return $actor;
     }
 }
