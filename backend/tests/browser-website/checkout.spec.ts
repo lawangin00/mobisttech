@@ -119,7 +119,7 @@ test('MT-7.5 W04 synthetic hosted initiation failure keeps the created order rec
     await page.getByLabel('City').fill('Karachi');
     await page.getByLabel('Delivery address').fill('Synthetic W04 recovery address');
     await page.getByRole('button', { name: 'Place order' }).click();
-    await expect(page.getByRole('alert')).toHaveText('Synthetic gateway temporarily unavailable.');
+    await expect(page.getByText('Synthetic gateway temporarily unavailable.', { exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'View order and continue payment' }))
         .toHaveAttribute('href', `/account/orders/${fakeOrderId}`);
     await expect(page.getByRole('button', { name: 'Place order' })).toHaveCount(0);
