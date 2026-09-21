@@ -68,14 +68,28 @@ final class PosInventoryListing
                 }
             });
         }
+        match ($prefs['inventory_filter']) {
+            'in_stock' => $query->where('qty', '>', 0),
+            'out_of_stock' => $query->where('qty', 0),
+            'imei_tracked' => $query->where('track_imei', true),
+            default => null,
+        };
         $size = (int) $prefs['inventory_page_length'];
-        $page = $query->orderBy('name')->orderBy('id')->paginate($size, ['products.*'], 'page', (int) ($input['page'] ?? 1));
+        match ($prefs['inventory_sort']) {
+            'stock_low' => $query->orderBy('qty')->orderBy('name'),
+            'stock_high' => $query->orderByDesc('qty')->orderBy('name'),
+            'sale_high' => $query->orderByDesc('sale_price')->orderBy('name'),
+            'sale_low' => $query->orderBy('sale_price')->orderBy('name'),
+            default => $query->orderBy('name'),
+        };
+        $page = $query->orderBy('id')->paginate($size, ['products.*'], 'page', (int) ($input['page'] ?? 1));
 
         return ['rows' => $page->items(), 'paging' => [
             'page' => $page->currentPage(), 'pages' => $page->lastPage(), 'total' => $page->total(),
             'per_page' => $size, 'q' => $search, 'category' => $category, 'options' => $options,
             'auto_focus_search' => $prefs['auto_focus_search'], 'remember_search' => $prefs['remember_search'],
             'density' => $prefs['inventory_density'],
+            'sort' => $prefs['inventory_sort'], 'filter' => $prefs['inventory_filter'],
         ]];
     }
 }

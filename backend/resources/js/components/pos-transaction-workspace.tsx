@@ -7,7 +7,7 @@ type Unit = { id: string; code: string; status: string; version: number; imeis: 
 type Product = { website_listing?:{slug:string;description:string;is_online:boolean;version:number}|null; category_master_data_id?:number|null;subcategory_master_data_id?:number|null;brand_master_data_id?:number|null;ram_master_data_id?:number|null;storage_master_data_id?:number|null;sim_master_data_id?:number|null;warranty_type?:string|null;warranty_unit?:number|null;warranty_duration?:number|null; id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[]; acquisitions?:Array<{source_type:string;quantity:number;unit_purchase_price:string;acquired_at:string}>; movements?:Array<{type:string;quantity_change:number;stock_before:number;stock_after:number;created_at:string}>; subcategory_display?: string | null; ram_display?: string | null; storage_display?: string | null; sim_display?: string | null };
 type Destination = { public_id: string; method: string; display_name: string };
 type Master = { id: number; list_key: string; code: string; label: string; metadata: Record<string, unknown> };
-type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean;density:'comfortable'|'compact' };
+type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean;density:'comfortable'|'compact';sort:string;filter:string };
 type Catalogue = { products: Product[]; page: number; has_more: boolean; pagination: InventoryPaging | null; payment_destinations: Destination[]; master_data: Master[]; can_send_documents: boolean };
 type Payment = { method: string; destination_id: string; amount: string; transaction_reference?: string; cash_tendered?: string };
 type Quote = { payable: string; payments_total: string; remaining: string; cash_change: string };
@@ -79,7 +79,7 @@ export default function PosTransactionWorkspace({ area, memoryScope }: { area: '
             {message && <p role="alert" className="mt-3 text-sm">{message}</p>}
             <div className="mt-3 flex items-center justify-end gap-2 text-xs">
                 <button disabled={busy || page <= 1} onClick={() => void run(() => load(query, page - 1, category))} className="rounded border px-2 py-1 disabled:opacity-40">Previous</button>
-<span data-testid="inventory-page">Page {page}{catalogue?.pagination ? `/${catalogue.pagination.pages} · ${catalogue.pagination.total} products · ${catalogue.pagination.per_page} per page` : ""}</span>
+<span data-testid="inventory-page">Page {page}{catalogue?.pagination ? `/${catalogue.pagination.pages} · ${catalogue.pagination.total} products · ${catalogue.pagination.per_page} per page · ${catalogue.pagination.sort.replaceAll('_',' ')} · ${catalogue.pagination.filter.replaceAll('_',' ')}` : ""}</span>
                 <button disabled={busy || !catalogue?.has_more} onClick={() => void run(() => load(query, page + 1, category))} className="rounded border px-2 py-1 disabled:opacity-40">Next</button>
             </div>
         </section>

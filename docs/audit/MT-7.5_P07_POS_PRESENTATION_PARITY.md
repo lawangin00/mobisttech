@@ -57,3 +57,9 @@ After the recorded formatting-only correction, joined isolated MySQL HTTP verifi
 The already registered business-wide `inventory_density` preference now propagates through the outlet-scoped inventory listing projection and is consumed by the real React Inventory workspace as `comfortable` or `compact` responsive spacing. Sales catalogue requests continue to omit inventory pagination/presentation state. Search, pagination, outlet authorization, stock values, product fields and direct actions remain server-owned and unchanged.
 
 Focused isolated MySQL verification passed **1/1 (32 assertions)** after the recorded line-ending-only formatting correction. Scoped Pint and diff checks passed; production TypeScript/Vite build passed **588 modules**. Safe sort, filter and column presentation plus dashboard/report presentation remain pending. **P07 remains OPEN; 12/27 DONE, 15 OPEN.**
+
+## 21-Sep-2026: Safe inventory sort and filter presentation (bounded PARTIAL)
+
+Read-only source review confirmed allowlisted Inventory presentation modes for operational/product order, stock and sale-price order, and all/in-stock/out-of-stock/IMEI-tracked filters. The target now validates those exact business-wide choices through Portal Preferences and applies them server-side to the already outlet-scoped Inventory query. Clients receive only the resolved safe mode labels; they cannot submit SQL columns, directions or patterns. Stable ID ordering remains the final tie-break, and Sales catalogue behavior remains independent.
+
+Joined isolated MySQL verification passed **2/2 (115 assertions)**, including high-stock-first ordering, in-stock filtering, registered-preference validation and persistence. Scoped Pint and diff checks passed; production TypeScript/Vite build passed **588 modules**. Column visibility/order, invoice/claim sort/filter, dashboard/report presentation and final route/file disposition remain pending. **P07 remains OPEN; 12/27 DONE, 15 OPEN.**
