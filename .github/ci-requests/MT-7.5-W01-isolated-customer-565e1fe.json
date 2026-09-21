@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "565e1feaf2aa6213ba29ed05edc760c8904e2b2b",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "W01-customer",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T12:14:30Z",
+  "description": "Run only the existing W01 signed historical-order and Customer profile/photo browser test on an exact-source clean disposable MySQL schema with isolated Customer fixture, without starting the failing shared POS/Admin browser suite. Preserve all unrelated W01 gates as pending."
+}
