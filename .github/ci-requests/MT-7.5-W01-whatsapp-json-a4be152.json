@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "execution_surface": "NORMAL_CHAT",
+  "source_commit": "a4be152370b1c3c1cf9b2ceabcfdd620816ef917",
+  "reason": "stage",
+  "gate": "full",
+  "stage_id": "MT-7.5-W01-PDF-JSON-REGRESSION-CORRECTION",
+  "requested_at_utc": "2026-09-21T11:11:11Z",
+  "description": "Reverify W01 exact-source hosted full acceptance after correcting the prior POS WhatsApp attachment binary PDF JSON UTF-8 failure. W01 remains open pending actual Customer browser and cross-realm terminal results."
+}
