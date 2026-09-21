@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "c1effc24b7e028530cefac950159aa2c7768b3b1",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T23:24:32Z",
+  "description": "Diagnose distinct final schema residue failure in W04: log table names and counts after every Website fixture teardown on disposable CI MySQL only, compare final residue with prior POS diagnostics; no production payment behavior or cleanup guard changes."
+}
