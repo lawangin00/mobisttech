@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "1a93c8218d5fe66b48529a997474d308917f2b99",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "W01-identity",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T15:27:01Z",
+  "description": "Run the materially corrected final W01 protected-owner and two-way Admin/Customer realm browser join. Attempt 1 already proved the 403 boundary and failed only on the redacted UI message assertion; preserve unrelated suites."
+}
