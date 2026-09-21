@@ -8,6 +8,13 @@ if (!Number.isFinite(webServerTimeout) || webServerTimeout < 1000 || webServerTi
 const websiteServerCommand = process.env.PLAYWRIGHT_WEBSITE_SERVER_COMMAND
     ?? 'npm --prefix ../website run build && npm --prefix ../website run start';
 
+// The CI-only test runner must pass the same explicit, disposable first-outlet
+// fixture opt-in to nested sitemap seed/cleanup processes as to global setup.
+// Seeders separately enforce APP_ENV=testing and the isolated MySQL test DB.
+if (process.env.CI === 'true') {
+    process.env.MT75_FIRST_OUTLET_E2E_ENABLED = '1';
+}
+
 export default defineConfig({
     testDir: './tests/browser',
     fullyParallel: false,
