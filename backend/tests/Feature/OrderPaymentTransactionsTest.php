@@ -182,6 +182,39 @@ class OrderPaymentTransactionsTest extends TestCase
             DB::table('reservation_allocations')->count(), DB::table('idempotency_requests')->count()]);
     }
 
+    public function test_website_four_channel_matrix_and_synthetic_provider_replay_security(): void
+    {
+        $registry = new PaymentProviders;
+        $this->assertSame(['cod', 'jazzcash', 'easypaisa', 'card'],
+            array_column($registry->checkoutChannels(), 'code'));
+        $this->assertSame([true, false, false, false],
+            array_column($registry->checkoutChannels(), 'available'));
+        $product = $this->product();
+        $this->acquire($product, 3);
+        $fake = new FakePaymentProvider;
+        foreach (['jazzcash', 'easypaisa', 'card'] as $gateway) {
+            config()->set('commerce.providers.'.$gateway, ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+            $registry->register($gateway, $fake);
+        }
+        $this->app->instance(PaymentProviders::class, $registry);
+        $this->assertSame([true, true, true, true], array_column($registry->checkoutChannels(), 'available'));
+        foreach (['jazzcash', 'easypaisa', 'card'] as $gateway) {
+            $order = $this->service()->checkout($this->scope(), $this->customer,
+                $this->key('w04-'.$gateway), $this->checkoutInput($product->public_id, $gateway));
+            $this->assertSame('pending', $order['payment_status']);
+            $intent = $this->service()->initiate($order['payment_id']);
+            $this->assertSame($intent, $this->service()->initiate($order['payment_id']));
+            $this->reject(fn () => $this->service()->callback($gateway,
+                $fake->paid('W04-INVALID-'.$gateway, $intent['reference'], '200.03')));
+            $event = $fake->paid('W04-PAID-'.$gateway, $intent['reference'], '200.02');
+            $this->reject(fn () => $this->service()->callback($gateway, [...$event, 'amount' => '200.03']));
+            $this->assertSame('paid', $this->service()->callback($gateway, $event)['payment_status']);
+            $this->assertSame('paid', $this->service()->callback($gateway, $event)['payment_status']);
+        }
+        $this->assertSame(3, DB::table('payment_receipts')->count());
+        $this->assertSame(3, DB::table('sales')->count());
+        $this->assertSame(0, $product->fresh()->qty);
+    }
     public function test_disabled_provider_fails_before_order_and_verified_callback_is_replay_safe_across_mode_switch(): void
     {
         $product = $this->product();
