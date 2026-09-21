@@ -73,6 +73,7 @@ test('MT-4.3 customer warranty reporting document flow is explicit role scoped a
     };
     const areaData = (area: string) => ({
         area, outlet: { id: 'e2e-outlet', name: 'E2E Sales Outlet' }, can_send_documents: true,
+        invoice_default_format: area === 'invoices' ? 'thermal80' : null,
         invoices: area === 'invoices' ? [invoice] : [],
         customers: area === 'invoices' ? [{ id: 'customer-mt43', name: invoice.customer_name, email: invoice.customer_email, mobile: invoice.customer_phone, version: 1, invoices: [invoice] }] : [],
         claims: ['warranty', 'claims'].includes(area) ? [{ ...claimRow, status: claimStatus, version: claimStatus === 'received' ? 1 : 2 }] : [],
@@ -86,7 +87,7 @@ test('MT-4.3 customer warranty reporting document flow is explicit role scoped a
     const docRender = (type: string, format: string, action: string) => ({
         document_type: type, format, document_version: 1,
         filename: (type === 'invoice' ? invoice.number : claimRow.number) + '-' + format + '.pdf',
-        document_sha256: 'a'.repeat(64), html: '<article data-contract="canonical-document.v1"><div>' + (type === 'invoice' ? invoice.number : claimRow.number) + '</div><div>' + format + '</div></article>',
+        document_sha256: 'a'.repeat(64), html: '<article data-contract="canonical-document.v1"><img data-branding-role="' + type + '_logo" src="/storage/dynamic-media/branding/e2e-' + type + '.png" alt="E2E ' + type + ' logo"><div>' + (type === 'invoice' ? invoice.number : claimRow.number) + '</div><div>' + format + '</div></article>',
         action,
     });
 
@@ -263,6 +264,9 @@ test('MT-4.3 customer warranty reporting document flow is explicit role scoped a
     await invoiceHistory.locator('select').first().selectOption('customer-mt43');
     await expect(invoiceHistory).toContainText('mt43@example.invalid');
     const invoiceDocs = page.getByRole('heading', { name: 'Document Actions' }).locator('xpath=ancestor::section[1]');
+    await expect(invoiceDocs.locator('select')).toHaveValue('thermal80');
+    await invoiceDocs.getByRole('button', { name: 'Preview', exact: true }).click();
+    await expect(invoiceDocs.locator('[data-branding-role="invoice_logo"]')).toHaveAttribute('alt', 'E2E invoice logo');
     await invoiceDocs.getByRole('button', { name: 'Delivery history' }).click();
     await expect(invoiceDocs).toContainText('email · sent');
     await expect(invoiceDocs).toContainText('whatsapp · prepared');
@@ -274,6 +278,7 @@ test('MT-4.3 customer warranty reporting document flow is explicit role scoped a
     await expect(warrantyDocs.locator('select')).toHaveCount(0);
     await warrantyDocs.getByRole('button', { name: 'Preview', exact: true }).click();
     await expect(warrantyDocs.locator('[data-contract="canonical-document.v1"]')).toContainText(claimRow.number);
+    await expect(warrantyDocs.locator('[data-branding-role="warranty_logo"]')).toHaveAttribute('alt', 'E2E warranty logo');
     expect(lastPreviewFormat).toBe('a4');
 
     await page.getByRole('link', { name: 'Claims', exact: true }).click();

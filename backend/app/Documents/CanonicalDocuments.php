@@ -8,6 +8,7 @@ use App\Identity\OutletLifecycleAdministration;
 use App\Integrations\GmailApi;
 use App\Models\Admin;
 use App\Models\Outlet;
+use App\Pos\PosConfiguration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -76,8 +77,9 @@ final class CanonicalDocuments
                 409, 'Historical invoice item snapshot is missing or uses an unsupported contract.');
         }
         $payload = $this->invoice($outlet, $documentId);
+        $settings = app(PosConfiguration::class)->documentPresentation('invoice')['settings'];
         $lines = ['RECONSTRUCTED COPY - NOT THE ORIGINAL ISSUED PDF',
-            'Historical review only; source records may be transliterated.', ...$this->lines($payload)];
+            'Historical review only; source records may be transliterated.', ...$this->lines($payload, $settings)];
         abort_unless(count($lines) <= 55, 409, 'Historical PDF exceeds the safe single-page reconstruction limit.');
         $pdf = $this->pdf($lines, 'a4');
 
@@ -222,12 +224,13 @@ final class CanonicalDocuments
             throw ValidationException::withMessages(['document' => 'Unsupported document type or format.']);
         }
         $payload = $type === 'invoice' ? $this->invoice($outlet, $documentId) : $this->warranty($outlet, $documentId);
-        $lines = $this->lines($payload);
+        $presentation = app(PosConfiguration::class)->documentPresentation($type);
+        $lines = $this->lines($payload, $presentation['settings']);
         $pdf = $this->pdf($lines, $format);
         $identifier = $type === 'invoice' ? $payload['invoice_number'] : $payload['claim_number'];
 
         return ['type' => $type, 'format' => $format, 'version' => self::VERSION, 'payload' => $payload,
-            'html' => $this->html($payload, $lines, $format), 'pdf' => $pdf, 'sha256' => hash('sha256', $pdf),
+            'html' => $this->html($payload, $lines, $format, $presentation), 'pdf' => $pdf, 'sha256' => hash('sha256', $pdf),
             'filename' => preg_replace('/[^A-Za-z0-9._-]+/', '-', $identifier).'-'.$format.'.pdf'];
     }
 
@@ -280,22 +283,48 @@ final class CanonicalDocuments
             'issue_description' => $claim->issue_description, 'received_condition' => $claim->received_condition,
             'accessories_received' => $claim->accessories_received, 'received_status' => $eventSnapshot['status'] ?? 'received',
             'handled_by_name' => $eventSnapshot['actor']['name'] ?? $claim->handled_by_name,
+            'expected_completion_at' => $claim->expected_completion_at,
             'warranty' => $warranty, 'total_amount' => null, 'lines' => [],
         ];
     }
 
-    private function lines(array $payload): array
+    private function lines(array $payload, array $settings): array
     {
         $business = $payload['business'];
         $lines = [(string) ($business['business_name'] ?? 'mobiST Technologies'), (string) $payload['outlet_name']];
+        if (($settings['show_business_legal_name'] ?? false) && filled($business['business_legal_name'] ?? null)) {
+            $lines[] = 'Legal name: '.$business['business_legal_name'];
+        }
+        if (($settings['show_business_address'] ?? false) && filled($business['business_address'] ?? null)) {
+            $lines[] = 'Address: '.$business['business_address'];
+        }
+        if (($settings['show_business_contacts'] ?? false)) {
+            foreach (['business_phone' => 'Phone', 'business_whatsapp' => 'WhatsApp', 'business_email' => 'Email'] as $key => $label) {
+                if (filled($business[$key] ?? null)) {
+                    $lines[] = $label.': '.$business[$key];
+                }
+            }
+        }
+        if (($settings['show_business_hours'] ?? false) && filled($business['business_hours'] ?? null)) {
+            $lines[] = 'Hours: '.$business['business_hours'];
+        }
+        if (($settings['show_business_identifiers'] ?? false)) {
+            foreach ($this->textValues($business['business_identifiers'] ?? []) as $identifier) {
+                $lines[] = 'Business ID: '.$identifier;
+            }
+        }
         if ($payload['document_type'] === 'invoice') {
             $lines[] = 'Sales Invoice '.$payload['invoice_number'];
             $lines[] = 'Date: '.$payload['document_date'];
             $lines[] = 'Customer: '.($payload['customer_name'] ?: 'Walk-in customer');
             $lines[] = 'Mobile: '.($payload['customer_phone'] ?: '-');
             $lines[] = 'Email: '.($payload['customer_email'] ?: '-');
-            $lines[] = 'CNIC: '.($payload['customer_cnic'] ?: '-');
-            $lines[] = 'Salesperson: '.($payload['salesperson_name'] ?: '-');
+            if ($settings['show_customer_cnic'] ?? false) {
+                $lines[] = 'CNIC: '.($payload['customer_cnic'] ?: '-');
+            }
+            if ($settings['show_salesperson'] ?? false) {
+                $lines[] = 'Salesperson: '.($payload['salesperson_name'] ?: '-');
+            }
             $lines[] = 'Items:';
             foreach ($payload['lines'] as $line) {
                 $lines[] = sprintf('%s x%d @ %s = %s', $line['name'], $line['quantity'], $line['unit_price'], $line['net']);
@@ -303,8 +332,13 @@ final class CanonicalDocuments
             $lines[] = 'Gross: PKR '.$payload['total_bill'];
             $lines[] = 'Discount: PKR '.$payload['discount'];
             $lines[] = 'Total: PKR '.$payload['total_amount'];
-            foreach ($this->textValues($payload['warranty_terms']) as $term) {
-                $lines[] = 'Warranty: '.$term;
+            if ($settings['show_warranty_terms'] ?? false) {
+                foreach ($this->textValues($payload['warranty_terms']) as $term) {
+                    $lines[] = 'Warranty: '.$term;
+                }
+            }
+            if (($settings['show_thank_you'] ?? false) && filled($settings['thank_you_text'] ?? null)) {
+                $lines[] = (string) $settings['thank_you_text'];
             }
         } else {
             $lines[] = 'Warranty Claim Receipt '.$payload['claim_number'];
@@ -313,13 +347,22 @@ final class CanonicalDocuments
             $lines[] = 'Customer: '.($payload['customer_name'] ?: '-');
             $lines[] = 'Mobile: '.($payload['customer_phone'] ?: '-');
             $lines[] = 'Email: '.($payload['customer_email'] ?: '-');
-            $lines[] = 'CNIC: '.($payload['customer_cnic'] ?: '-');
+            if ($settings['show_customer_cnic'] ?? false) {
+                $lines[] = 'CNIC: '.($payload['customer_cnic'] ?: '-');
+            }
             $lines[] = 'Product: '.$payload['product_name'].' x'.$payload['quantity'];
             $lines[] = 'Issue: '.$payload['issue_description'];
             $lines[] = 'Received condition: '.($payload['received_condition'] ?: '-');
             $lines[] = 'Accessories: '.($payload['accessories_received'] ?: '-');
-            $lines[] = 'Handled by: '.($payload['handled_by_name'] ?: '-');
-            $lines[] = 'Status at intake: '.$payload['received_status'];
+            if ($settings['show_assigned_to'] ?? false) {
+                $lines[] = 'Handled by: '.($payload['handled_by_name'] ?: '-');
+            }
+            if ($settings['show_expected_completion'] ?? false) {
+                $lines[] = 'Expected completion: '.($payload['expected_completion_at'] ?: '-');
+            }
+            if ($settings['show_status'] ?? false) {
+                $lines[] = 'Status at intake: '.$payload['received_status'];
+            }
             if ($payload['warranty']) {
                 $lines[] = 'Warranty type: '.($payload['warranty']['type'] ?? '-');
                 $lines[] = 'Warranty expires: '.($payload['warranty']['expires_at'] ?? '-');
@@ -332,12 +375,15 @@ final class CanonicalDocuments
         return array_map(fn ($line) => mb_substr(trim((string) $line), 0, 180), $lines);
     }
 
-    private function html(array $payload, array $lines, string $format): string
+    private function html(array $payload, array $lines, string $format, array $presentation): string
     {
         $width = $format === 'thermal80' ? '80mm' : '210mm';
         $body = implode('', array_map(fn ($line) => '<div>'.e($line).'</div>', $lines));
+        $showLogo = $payload['document_type'] === 'warranty' || ($presentation['settings']['show_logo'] ?? false);
+        $logo = $showLogo ? '<img data-branding-role="'.e($payload['document_type']).'_logo" src="'.e($presentation['logo']['url']).'" alt="'.e($presentation['logo']['alt']).'" style="display:block;max-height:64px;max-width:240px;margin-bottom:16px">' : '';
+        $alignment = $payload['document_type'] === 'invoice' ? ($presentation['settings']['footer_alignment'] ?? 'center') : 'left';
 
-        return '<article data-contract="canonical-document.v1" data-type="'.e($payload['document_type']).'" style="max-width:'.$width.'">'.$body.'</article>';
+        return '<article data-contract="canonical-document.v1" data-type="'.e($payload['document_type']).'" style="max-width:'.$width.';color:#111827">'.$logo.'<div>'.$body.'</div><footer data-alignment="'.e($alignment).'" style="text-align:'.e($alignment).'"></footer></article>';
     }
 
     private function pdf(array $lines, string $format): string

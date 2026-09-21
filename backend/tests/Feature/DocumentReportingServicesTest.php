@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\Outlet;
 use App\Models\StockUnit;
 use App\Payments\PosPaymentOperations;
+use App\Pos\PosConfiguration;
 use App\Reporting\OperationalReports;
 use App\Reporting\RetailLabels;
 use App\Warranty\ClaimOperations;
@@ -15,6 +16,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\Support\InventoryFixture;
 use Tests\TestCase;
@@ -59,6 +61,73 @@ class DocumentReportingServicesTest extends TestCase
         $this->assertSame('warranty', $warranty['document_type']);
         $this->assertArrayNotHasKey('pdf', $warranty);
         $this->reject(fn () => $documents->preview($this->actor, $this->outlet, 'warranty', $claim['claim_id'], 'thermal80'));
+    }
+
+    public function test_published_document_presentation_controls_content_format_and_role_specific_logos(): void
+    {
+        Storage::fake('public');
+        [$sale, $product] = $this->saleWithPayments('presentation@example.invalid');
+        $configuration = app(PosConfiguration::class);
+        $path = 'dynamic-media/branding/document-logo.png';
+        Storage::disk('public')->put($path, 'synthetic-document-logo');
+        $mediaId = DB::table('pos_media_assets')->insertGetId([
+            'disk' => 'public', 'path' => $path, 'original_name' => 'document-logo.png',
+            'mime_type' => 'image/png', 'extension' => 'png', 'byte_size' => 23,
+            'width' => 900, 'height' => 300, 'aspect_ratio' => 3,
+            'sha256' => hash('sha256', 'synthetic-document-logo'), 'alt_text' => 'Published document logo',
+            'status' => 'active', 'uploaded_by_type' => Admin::class, 'uploaded_by_id' => $this->actor->id,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $documentsDraft = $configuration->draft($this->actor, 'documents', [
+            'invoice.show_customer_cnic' => false,
+            'invoice.show_salesperson' => true,
+            'invoice.thank_you_text' => 'Configured presentation footer',
+            'invoice.default_output_format' => 'a4',
+            'invoice.footer_alignment' => 'right',
+            'warranty.show_customer_cnic' => false,
+            'warranty.show_assigned_to' => false,
+            'warranty.show_status' => false,
+        ]);
+        $brandingDraft = $configuration->draft($this->actor, 'branding', [
+            'branding.invoice_logo_media_id' => $mediaId,
+            'branding.warranty_logo_media_id' => $mediaId,
+        ]);
+        $documents = app(CanonicalDocuments::class);
+        $before = $documents->preview($this->actor, $this->outlet, 'invoice', $sale['invoice_id']);
+        $this->assertStringContainsString('data-branding-role="invoice_logo"', $before['html']);
+        $this->assertStringContainsString('/brand/mobist-wordmark.svg', $before['html']);
+        $this->assertStringContainsString('CNIC:', $before['html']);
+        $this->assertStringNotContainsString('Configured presentation footer', $before['html']);
+
+        $configuration->publish($this->actor, $documentsDraft['id']);
+        $configuration->publish($this->actor, $brandingDraft['id']);
+        $invoice = $documents->preview($this->actor, $this->outlet, 'invoice', $sale['invoice_id']);
+        $this->assertStringContainsString('data-branding-role="invoice_logo"', $invoice['html']);
+        $this->assertStringContainsString('Published document logo', $invoice['html']);
+        $this->assertStringContainsString('/storage/dynamic-media/branding/document-logo.png', $invoice['html']);
+        $this->assertStringNotContainsString('CNIC:', $invoice['html']);
+        $this->assertStringContainsString('Salesperson: Synthetic inventory operator', $invoice['html']);
+        $this->assertStringContainsString('Configured presentation footer', $invoice['html']);
+        $this->assertStringContainsString('data-alignment="right"', $invoice['html']);
+        $pdf = $documents->savePdf($this->actor, $this->outlet, 'invoice', $sale['invoice_id']);
+        $this->assertStringContainsString('Configured presentation footer', $pdf['pdf']);
+        $this->assertStringNotContainsString('CNIC:', $pdf['pdf']);
+
+        DB::table('products')->where('id', $product->id)->update(['warranty_type' => 'shop_warranty', 'warranty_unit' => 0, 'warranty_duration' => 30]);
+        DB::table('sales')->where('public_id', $sale['sale_ids'][0])->update([
+            'invoice_detail_snapshot' => json_encode(['contract' => 'sale-line.v1', 'product_id' => $product->public_id,
+                'product_code' => $product->product_code, 'name' => 'Presentation product', 'warranty_type' => 'shop_warranty',
+                'warranty_unit' => 0, 'warranty_duration' => 30], JSON_THROW_ON_ERROR),
+        ]);
+        $claim = app(ClaimOperations::class)->open($this->actor, $this->outlet, (string) Str::uuid(), [
+            'sale_id' => $sale['sale_ids'][0], 'quantity' => 1, 'issue_description' => 'Presentation warranty issue',
+        ]);
+        $warranty = $documents->preview($this->actor, $this->outlet, 'warranty', $claim['claim_id']);
+        $this->assertStringContainsString('data-branding-role="warranty_logo"', $warranty['html']);
+        $this->assertStringContainsString('Published document logo', $warranty['html']);
+        $this->assertStringNotContainsString('CNIC:', $warranty['html']);
+        $this->assertStringNotContainsString('Handled by:', $warranty['html']);
+        $this->assertStringNotContainsString('Status at intake:', $warranty['html']);
     }
 
     public function test_email_delivery_is_fakeable_idempotent_and_whatsapp_is_truthful(): void

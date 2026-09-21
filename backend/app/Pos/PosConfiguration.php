@@ -118,6 +118,20 @@ final class PosConfiguration
         ];
     }
 
+    public function documentPresentation(string $type): array
+    {
+        abort_unless(in_array($type, ['invoice', 'warranty'], true), 404);
+        $settings = collect($this->current('documents'))->filter(
+            fn ($value, $key) => str_starts_with($key, $type.'.'),
+        )->mapWithKeys(fn ($value, $key) => [Str::after($key, $type.'.') => $value])->all();
+        $branding = $this->runtimePresentation()['branding'];
+
+        return [
+            'settings' => $settings,
+            'logo' => $branding[$type.'_logo'],
+        ];
+    }
+
     public function preview(Admin $actor, string $domain, array $changes): array
     {
         $this->authorize($actor, $domain);

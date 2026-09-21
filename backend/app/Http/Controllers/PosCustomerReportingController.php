@@ -8,6 +8,7 @@ use App\Models\Admin;
 use App\Models\Outlet;
 use App\Pos\DashboardReportPreferences;
 use App\Pos\PortalPreferences;
+use App\Pos\PosConfiguration;
 use App\Pos\PosHistoryListing;
 use App\Pos\PosWarrantyIntakeSearch;
 use App\Reporting\OperationalReports;
@@ -105,6 +106,9 @@ final class PosCustomerReportingController extends Controller
         return response()->json(['data' => [
             'area' => $area, 'outlet' => ['id' => $outlet->public_id, 'name' => $outlet->name],
             'can_send_documents' => app(Access::class)->allows($actor, 'shop.documents.send', $outlet),
+            'invoice_default_format' => $area === 'invoices'
+                ? (app(PosConfiguration::class)->documentPresentation('invoice')['settings']['default_output_format'] === 'thermal' ? 'thermal80' : 'a4')
+                : null,
             'invoices' => $invoices, 'customers' => $customers, 'claims' => $claims,
             'sale_candidates' => $saleCandidates, 'report' => $report, 'pagination' => $pagination,
             'report_presentation' => $area === 'reports' ? ['sections' => app(DashboardReportPreferences::class)->current()] : null,
