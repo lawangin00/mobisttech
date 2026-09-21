@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "stage_id": "rdc-milestone-explicit-dispatch-acceptance",
+  "reason": "milestone",
+  "gate": "all",
+  "source_commit": "891cd5fc678d540ca2f39c7b7eb8b40de45df006",
+  "requested_at_utc": "2026-09-21T01:36:35Z"
+}
