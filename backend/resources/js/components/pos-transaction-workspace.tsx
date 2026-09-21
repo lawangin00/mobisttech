@@ -7,7 +7,7 @@ type Unit = { id: string; code: string; status: string; version: number; imeis: 
 type Product = { website_listing?:{slug:string;description:string;is_online:boolean;version:number}|null; category_master_data_id?:number|null;subcategory_master_data_id?:number|null;brand_master_data_id?:number|null;ram_master_data_id?:number|null;storage_master_data_id?:number|null;sim_master_data_id?:number|null;warranty_type?:string|null;warranty_unit?:number|null;warranty_duration?:number|null; id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[]; acquisitions?:Array<{source_type:string;quantity:number;unit_purchase_price:string;acquired_at:string}>; movements?:Array<{type:string;quantity_change:number;stock_before:number;stock_after:number;created_at:string}>; subcategory_display?: string | null; ram_display?: string | null; storage_display?: string | null; sim_display?: string | null };
 type Destination = { public_id: string; method: string; display_name: string };
 type Master = { id: number; list_key: string; code: string; label: string; metadata: Record<string, unknown> };
-type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean };
+type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean;density:'comfortable'|'compact' };
 type Catalogue = { products: Product[]; page: number; has_more: boolean; pagination: InventoryPaging | null; payment_destinations: Destination[]; master_data: Master[]; can_send_documents: boolean };
 type Payment = { method: string; destination_id: string; amount: string; transaction_reference?: string; cash_tendered?: string };
 type Quote = { payable: string; payments_total: string; remaining: string; cash_change: string };
@@ -64,7 +64,8 @@ export default function PosTransactionWorkspace({ area, memoryScope }: { area: '
         setCatalogue((old) => old ? { ...old, products: [found.product], pagination: null, has_more: false } : old);
         setMessage(found.unit ? 'Matched unit ' + found.unit.code : 'Matched product ' + found.product.code);
     });
-    return <div className="mt-6 grid min-w-0 gap-5">
+    const density=catalogue?.pagination?.density??'comfortable';
+    return <div data-testid={'mt43-'+area} data-density={density} className={'mt-6 grid min-w-0 '+(density==='compact'?'gap-3':'gap-5')}>
         <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
                 <input data-testid="pos-lookup" ref={inventorySearchRef} value={query} onChange={(e) => setQuery(e.target.value)}

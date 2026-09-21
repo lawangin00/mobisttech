@@ -225,12 +225,13 @@ class PosTransactionInterfaceTest extends TestCase
         $this->send($client, 'GET', $url.'?mode=inventory&page=0')->assertUnprocessable();
         $this->send($client, 'GET', $url)->assertOk()->assertJsonCount(20, 'data.products')
             ->assertJsonPath('data.pagination', null);
-        foreach (['inventory_page_length' => '25', 'inventory_search_category' => 'sku'] as $key => $value) {
+        foreach (['inventory_page_length' => '25', 'inventory_search_category' => 'sku', 'inventory_density' => 'compact'] as $key => $value) {
             DB::table('pos_settings')->insert(['key' => 'portal.'.$key, 'value' => $value,
                 'group' => 'portal', 'label' => $key, 'input_type' => 'select', 'sort_order' => 200]);
         }
         $this->send($client, 'GET', $url.'?mode=inventory')->assertOk()
             ->assertJsonPath('data.pagination.per_page', 25)->assertJsonPath('data.pagination.category', 'sku')
+            ->assertJsonPath('data.pagination.density', 'compact')
             ->assertJsonPath('data.pagination.pages', 5)->assertJsonCount(25, 'data.products');
     }
 

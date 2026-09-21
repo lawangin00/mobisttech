@@ -75,6 +75,7 @@ final class PosInventoryListing
             'page' => $page->currentPage(), 'pages' => $page->lastPage(), 'total' => $page->total(),
             'per_page' => $size, 'q' => $search, 'category' => $category, 'options' => $options,
             'auto_focus_search' => $prefs['auto_focus_search'], 'remember_search' => $prefs['remember_search'],
+            'density' => $prefs['inventory_density'],
         ]];
     }
 }

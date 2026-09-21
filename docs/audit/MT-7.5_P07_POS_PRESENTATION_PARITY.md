@@ -51,3 +51,9 @@ Read-only source review confirmed that `PosPortalTablePresentation` treats table
 The inventory density preference is also registered and manageable, but runtime stock-control consumption remains pending. Safe sort, filter and column controls plus inventory, dashboard and report presentation remain separate acceptance work.
 
 After the recorded formatting-only correction, joined isolated MySQL HTTP verification passed **2/2 (134 assertions)** and scoped Pint passed. Production TypeScript/Vite build passed **588 modules**. **P07 remains OPEN; 12/27 DONE, 15 OPEN.**
+
+## 21-Sep-2026: Responsive inventory-density propagation (bounded PARTIAL)
+
+The already registered business-wide `inventory_density` preference now propagates through the outlet-scoped inventory listing projection and is consumed by the real React Inventory workspace as `comfortable` or `compact` responsive spacing. Sales catalogue requests continue to omit inventory pagination/presentation state. Search, pagination, outlet authorization, stock values, product fields and direct actions remain server-owned and unchanged.
+
+Focused isolated MySQL verification passed **1/1 (32 assertions)** after the recorded line-ending-only formatting correction. Scoped Pint and diff checks passed; production TypeScript/Vite build passed **588 modules**. Safe sort, filter and column presentation plus dashboard/report presentation remain pending. **P07 remains OPEN; 12/27 DONE, 15 OPEN.**
