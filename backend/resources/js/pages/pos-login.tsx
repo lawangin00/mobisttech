@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { FormEvent, useEffect, useState } from 'react';
+import { CSSProperties, FormEvent, useEffect, useState } from 'react';
 import {clearPosTabSearch} from '../components/pos-tab-search-memory';
 
 type ErrorBody = {
@@ -9,7 +9,12 @@ type ErrorBody = {
     };
 };
 
-export default function PosLogin() {
+type Presentation = {
+    theme: Record<'primary' | 'primary_hover' | 'secondary' | 'accent' | 'background' | 'surface' | 'text' | 'muted_text' | 'border', string>;
+    branding: Record<'full_wordmark' | 'app_icon' | 'header_logo' | 'login_logo' | 'invoice_logo' | 'warranty_logo' | 'favicon' | 'desktop_app_icon', { url: string; alt: string; custom: boolean }>;
+};
+
+export default function PosLogin({ presentation }: { presentation: Presentation }) {
     useEffect(() => { clearPosTabSearch(); }, []);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -53,7 +58,9 @@ export default function PosLogin() {
         }
     }
 
-    return <><Head title="Team Member sign in" /><main className="min-h-screen bg-slate-950 px-5 py-8 sm:px-8">
+    const themeStyle = Object.fromEntries(Object.entries(presentation.theme).map(([key, value]) => [`--pos-${key.replace('_', '-')}`, value])) as CSSProperties;
+
+    return <><Head title="Team Member sign in"><link rel="icon" href={presentation.branding.favicon.url} /></Head><main data-pos-theme style={themeStyle} className="min-h-screen bg-[var(--pos-secondary)] px-5 py-8 sm:px-8">
         <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl overflow-hidden rounded-3xl bg-white shadow-2xl lg:grid-cols-[1.1fr_0.9fr]">
             <section className="relative hidden overflow-hidden bg-slate-900 p-12 text-white lg:flex lg:flex-col lg:justify-between">
                 <img aria-hidden="true" src="/brand/mobist-mark-watermark.png" className="pointer-events-none absolute -bottom-16 -right-12 w-72 opacity-10" />
@@ -65,7 +72,7 @@ export default function PosLogin() {
             </section>
             <section className="flex items-center p-7 sm:p-12">
                 <div className="w-full max-w-md mx-auto">
-                    <img src="/brand/mobist-wordmark.svg" alt="mobiST Technologies" className="h-11 w-auto max-w-[184px]" />
+                    <img src={presentation.branding.login_logo.url} alt={presentation.branding.login_logo.alt} className="h-11 w-auto max-w-[184px]" />
                     <p className="mt-4 text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">mobiST POS</p>
                     <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">Team Member sign in</h2>
                     <p className="mt-3 text-sm leading-6 text-slate-600">Use your individual work credential. Shared employee logins are not supported.</p>

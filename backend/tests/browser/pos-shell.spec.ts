@@ -16,6 +16,9 @@ test('desktop salesperson sees only authorized POS navigation and direct routes 
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page, 'e2e-sales@example.invalid');
 
+    await expect(page.locator('aside img')).toHaveAttribute('src', '/brand/mobist-wordmark.svg');
+    await expect(page.locator('[data-pos-theme]')).toHaveCSS('background-color', 'rgb(247, 248, 251)');
+    expect(await page.locator('[data-pos-theme]').evaluate((node) => getComputedStyle(node).getPropertyValue('--pos-primary').trim())).toBe('#008080');
     await expect(page.getByTestId('member-name')).toHaveText('E2E Salesperson');
     await expect(page.getByText('E2E Salesperson', { exact: true }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: 'Sales', exact: true })).toBeVisible();
@@ -40,6 +43,8 @@ test('mobile inventory manager selects outlet and receives responsive permission
     await page.setViewportSize({ width: 390, height: 844 });
     await login(page, 'e2e-inventory@example.invalid');
 
+    await expect(page.locator('header img')).toHaveAttribute('src', '/brand/mobist-wordmark.svg');
+    await expect(page.locator('[data-pos-theme]')).toHaveCSS('background-color', 'rgb(247, 248, 251)');
     await expect(page.getByTestId('outlet-required')).toBeVisible();
     await expect(page.getByTestId('outlet-select')).toBeVisible();
     const selected = page.waitForResponse((response) =>

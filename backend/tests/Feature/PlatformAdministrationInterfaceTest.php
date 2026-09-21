@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Admin;
 use App\Models\Outlet;
 use App\Payments\PosPaymentOperations;
+use App\Pos\PosConfiguration;
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
@@ -150,6 +151,62 @@ class PlatformAdministrationInterfaceTest extends TestCase
         $this->send($client, 'POST', '/internal/admin/platform/pos-config/documents/preview', [
             'settings' => ['invented.setting' => 'x'],
         ])->assertUnprocessable();
+    }
+
+    public function test_published_theme_and_branding_propagate_to_pos_runtime_with_safe_fallbacks(): void
+    {
+        Storage::fake('public');
+        [$admin, $outlet] = $this->admin('runtime-presentation@example.invalid', $this->platformPermissions());
+        $service = app(PosConfiguration::class);
+        $defaultTheme = $service->draft($admin, 'theme', []);
+        $service->publish($admin, $defaultTheme['id']);
+        $defaultBranding = $service->draft($admin, 'branding', []);
+        $service->publish($admin, $defaultBranding['id']);
+
+        $path = 'dynamic-media/branding/runtime-header.png';
+        Storage::disk('public')->put($path, 'synthetic-runtime-branding');
+        $mediaId = DB::table('pos_media_assets')->insertGetId([
+            'disk' => 'public', 'path' => $path, 'original_name' => 'runtime-header.png',
+            'mime_type' => 'image/png', 'extension' => 'png', 'byte_size' => 26,
+            'width' => 600, 'height' => 200, 'aspect_ratio' => 3,
+            'sha256' => hash('sha256', 'synthetic-runtime-branding'), 'alt_text' => 'Published runtime header',
+            'status' => 'active', 'uploaded_by_type' => Admin::class, 'uploaded_by_id' => $admin->id,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $themeDraft = $service->draft($admin, 'theme', ['theme.primary' => '#123456']);
+        $brandingDraft = $service->draft($admin, 'branding', ['branding.header_logo_media_id' => $mediaId]);
+
+        $this->get('/internal/admin/pos/login')->assertOk()->assertInertia(fn ($page) => $page
+            ->component('pos-login')
+            ->where('presentation.theme.primary', '#008080')
+            ->where('presentation.branding.header_logo.custom', false)
+            ->where('presentation.branding.header_logo.url', '/brand/mobist-wordmark.svg'));
+
+        $service->publish($admin, $themeDraft['id']);
+        $service->publish($admin, $brandingDraft['id']);
+        $this->get('/internal/admin/pos/login')->assertOk()->assertInertia(fn ($page) => $page
+            ->where('presentation.theme.primary', '#123456')
+            ->where('presentation.branding.header_logo.custom', true)
+            ->where('presentation.branding.header_logo.alt', 'Published runtime header'));
+
+        $client = $this->client();
+        $this->login($client, $admin->email)->assertOk();
+        $this->selectOutlet($client, $outlet);
+        $this->send($client, 'GET', '/internal/admin/pos')->assertOk()->assertInertia(fn ($page) => $page
+            ->component('pos-shell')
+            ->where('presentation.theme.primary', '#123456')
+            ->where('presentation.branding.header_logo.custom', true));
+
+        Storage::disk('public')->delete($path);
+        $this->get('/internal/admin/pos/login')->assertOk()->assertInertia(fn ($page) => $page
+            ->where('presentation.branding.header_logo.custom', false)
+            ->where('presentation.branding.header_logo.url', '/brand/mobist-wordmark.svg'));
+
+        $service->rollback($admin, $defaultTheme['id']);
+        $service->rollback($admin, $defaultBranding['id']);
+        $this->get('/internal/admin/pos/login')->assertOk()->assertInertia(fn ($page) => $page
+            ->where('presentation.theme.primary', '#008080')
+            ->where('presentation.branding.header_logo.custom', false));
     }
 
     public function test_branding_media_role_constraints_and_business_profile_recent_auth_are_enforced(): void

@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { CSSProperties, useMemo, useState } from 'react';
 import PosTransactionWorkspace from '../components/pos-transaction-workspace';
 import PosOperationsWorkspace from '../components/pos-operations-workspace';
 import PosCustomerReportingWorkspace from '../components/pos-customer-reporting-workspace';
@@ -38,6 +38,11 @@ type View =
     | { kind: 'home' }
     | { kind: 'workspace'; workspace: NavigationItem & { permission?: string; permissions_any?: string[] } };
 
+type Presentation = {
+    theme: Record<'primary' | 'primary_hover' | 'secondary' | 'accent' | 'background' | 'surface' | 'text' | 'muted_text' | 'border', string>;
+    branding: Record<'full_wordmark' | 'app_icon' | 'header_logo' | 'login_logo' | 'invoice_logo' | 'warranty_logo' | 'favicon' | 'desktop_app_icon', { url: string; alt: string; custom: boolean }>;
+};
+
 async function csrfToken(): Promise<string> {
     const response = await fetch('/internal/admin/auth/csrf-cookie', {
         credentials: 'same-origin',
@@ -50,7 +55,7 @@ async function csrfToken(): Promise<string> {
     return token;
 }
 
-export default function PosShell({ shell, view }: { shell: ShellContract; view: View }) {
+export default function PosShell({ shell, view, presentation }: { shell: ShellContract; view: View; presentation: Presentation }) {
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const roleText = useMemo(
@@ -58,6 +63,7 @@ export default function PosShell({ shell, view }: { shell: ShellContract; view: 
         [shell.identity.roles],
     );
     const needsOutlet = shell.outlets.length > 1 && !shell.active_outlet;
+    const themeStyle = Object.fromEntries(Object.entries(presentation.theme).map(([key, value]) => [`--pos-${key.replace('_', '-')}`, value])) as CSSProperties;
 
     async function selectOutlet(outletId: string) {
         if (!outletId) return;
@@ -112,22 +118,23 @@ export default function PosShell({ shell, view }: { shell: ShellContract; view: 
     const Navigation = ({ mobile = false }: { mobile?: boolean }) => (
         <nav aria-label="POS navigation" className={mobile ? 'grid gap-1 pt-3' : 'mt-8 grid gap-1'}>
             <Link href="/internal/admin/pos" data-testid="nav-home"
-                className={'rounded-xl px-3 py-2.5 text-sm font-medium ' + (!shell.current_area ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100')}>
+                className={'rounded-xl px-3 py-2.5 text-sm font-medium ' + (!shell.current_area ? 'pos-nav-active text-white' : 'text-slate-700 hover:bg-slate-100')}>
                 Home
             </Link>
             {shell.navigation.map((item) => <Link key={item.key} href={item.href}
                 data-testid={'nav-' + item.key}
-                className={'rounded-xl px-3 py-2.5 text-sm font-medium ' + (shell.current_area === item.key ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100')}>
+                className={'rounded-xl px-3 py-2.5 text-sm font-medium ' + (shell.current_area === item.key ? 'pos-nav-active text-white' : 'text-slate-700 hover:bg-slate-100')}>
                 {item.label}
             </Link>)}
         </nav>
     );
 
-    return <><Head title={view.kind === 'home' ? 'POS home' : view.workspace.label} />
-        <div className="min-h-screen bg-slate-100 text-slate-950">
+    return <><Head title={view.kind === 'home' ? 'POS home' : view.workspace.label}><link rel="icon" href={presentation.branding.favicon.url} /></Head>
+        <style>{`[data-pos-theme] .pos-nav-active{background:var(--pos-primary)}[data-pos-theme] .pos-nav-active:hover{background:var(--pos-primary-hover)}[data-pos-theme] :focus-visible{outline-color:var(--pos-accent)}`}</style>
+        <div data-pos-theme style={themeStyle} className="min-h-screen bg-[var(--pos-background)] text-[var(--pos-text)]">
             <header className="border-b border-slate-200 bg-white lg:hidden">
                 <div className="flex items-center justify-between px-4 py-3">
-                    <Link href="/internal/admin/pos" className="inline-flex items-center" aria-label="mobiST POS"><img src="/brand/mobist-wordmark.svg" alt="mobiST Technologies" className="h-8 w-auto max-w-[150px]" /></Link>
+                    <Link href="/internal/admin/pos" className="inline-flex items-center" aria-label="mobiST POS"><img src={presentation.branding.header_logo.url} alt={presentation.branding.header_logo.alt} className="h-8 w-auto max-w-[150px]" /></Link>
                     <details className="relative">
                         <summary className="cursor-pointer list-none rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium">Menu</summary>
                         <div className="absolute right-0 z-40 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl">
@@ -138,7 +145,7 @@ export default function PosShell({ shell, view }: { shell: ShellContract; view: 
             </header>
             <div className="mx-auto grid min-h-screen max-w-[1600px] lg:grid-cols-[260px_minmax(0,1fr)]">
                 <aside className="hidden border-r border-slate-200 bg-white p-5 lg:block">
-                    <Link href="/internal/admin/pos" className="inline-flex items-center" aria-label="mobiST POS"><img src="/brand/mobist-wordmark.svg" alt="mobiST Technologies" className="h-10 w-auto max-w-[184px]" /></Link>
+                    <Link href="/internal/admin/pos" className="inline-flex items-center" aria-label="mobiST POS"><img src={presentation.branding.header_logo.url} alt={presentation.branding.header_logo.alt} className="h-10 w-auto max-w-[184px]" /></Link>
                     <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">Team workspace</p>
                     <Navigation />
                     <div className="mt-8 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">

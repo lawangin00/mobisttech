@@ -7,6 +7,7 @@ use App\Identity\OutletLifecycleAdministration;
 use App\Identity\OutletProfileAdministration;
 use App\Models\Admin;
 use App\Models\Outlet;
+use App\Pos\PosConfiguration;
 use App\Pos\PosShell;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,14 +16,14 @@ use Inertia\Inertia;
 
 final class PosShellController extends Controller
 {
-    public function login()
+    public function login(PosConfiguration $configuration)
     {
         $user = Auth::guard('admin')->user();
         if ($user instanceof Admin && $user->usable()) {
             return redirect()->route('admin.pos.home');
         }
 
-        return Inertia::render('pos-login');
+        return Inertia::render('pos-login', ['presentation' => $configuration->runtimePresentation()]);
     }
 
     public function profilePhoto(AdminProfilePhoto $photos)
@@ -100,7 +101,7 @@ final class PosShellController extends Controller
         return Outlet::whereKey($id)->firstOrFail();
     }
 
-    public function home(Request $request, PosShell $shell)
+    public function home(Request $request, PosShell $shell, PosConfiguration $configuration)
     {
         $actor = Auth::guard('admin')->user();
         abort_unless($actor instanceof Admin, 401);
@@ -108,10 +109,11 @@ final class PosShellController extends Controller
         return Inertia::render('pos-shell', [
             'shell' => $shell->contract($request, $actor),
             'view' => ['kind' => 'home'],
+            'presentation' => $configuration->runtimePresentation(),
         ]);
     }
 
-    public function workspace(Request $request, string $area, PosShell $shell)
+    public function workspace(Request $request, string $area, PosShell $shell, PosConfiguration $configuration)
     {
         $actor = Auth::guard('admin')->user();
         abort_unless($actor instanceof Admin, 401);
@@ -120,6 +122,7 @@ final class PosShellController extends Controller
         return Inertia::render('pos-shell', [
             'shell' => $shell->contract($request, $actor, $area),
             'view' => ['kind' => 'workspace', 'workspace' => $workspace],
+            'presentation' => $configuration->runtimePresentation(),
         ]);
     }
 }

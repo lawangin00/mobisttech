@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 final class PosConfiguration
 {
@@ -90,6 +91,30 @@ final class PosConfiguration
         return [
             'domains' => $domains,
             'branding_media' => $this->can($actor, 'branding') ? $this->media() : [],
+        ];
+    }
+
+    public function runtimePresentation(): array
+    {
+        $theme = collect($this->current('theme'))->mapWithKeys(
+            fn ($value, $key) => [Str::after($key, 'theme.') => $value],
+        )->all();
+        $branding = $this->current('branding');
+        $wordmark = $this->runtimeBrandingAsset((int) $branding['branding.full_wordmark_media_id'], '/brand/mobist-wordmark.svg', 'mobiST Technologies');
+        $mark = $this->runtimeBrandingAsset((int) $branding['branding.app_icon_media_id'], '/brand/mobist-mark-watermark.png', 'mobiST');
+
+        return [
+            'theme' => $theme,
+            'branding' => [
+                'full_wordmark' => $wordmark,
+                'app_icon' => $mark,
+                'header_logo' => $this->runtimeBrandingAsset((int) $branding['branding.header_logo_media_id'], $wordmark['url'], $wordmark['alt']),
+                'login_logo' => $this->runtimeBrandingAsset((int) $branding['branding.login_logo_media_id'], $wordmark['url'], $wordmark['alt']),
+                'invoice_logo' => $this->runtimeBrandingAsset((int) $branding['branding.invoice_logo_media_id'], $wordmark['url'], $wordmark['alt']),
+                'warranty_logo' => $this->runtimeBrandingAsset((int) $branding['branding.warranty_logo_media_id'], $wordmark['url'], $wordmark['alt']),
+                'favicon' => $this->runtimeBrandingAsset((int) $branding['branding.favicon_media_id'], $mark['url'], $mark['alt']),
+                'desktop_app_icon' => $this->runtimeBrandingAsset((int) $branding['branding.desktop_app_icon_media_id'], $mark['url'], $mark['alt']),
+            ],
         ];
     }
 
@@ -311,6 +336,27 @@ final class PosConfiguration
             'byte_size' => (int) $row->byte_size, 'width' => (int) $row->width, 'height' => (int) $row->height,
             'aspect_ratio' => (string) $row->aspect_ratio, 'sha256' => $row->sha256, 'alt_text' => $row->alt_text,
             'status' => $row->status, 'created_at' => $row->created_at];
+    }
+
+    private function runtimeBrandingAsset(int $id, string $fallbackUrl, string $fallbackAlt): array
+    {
+        if ($id < 1) {
+            return ['url' => $fallbackUrl, 'alt' => $fallbackAlt, 'custom' => false];
+        }
+
+        $asset = DB::table('pos_media_assets')->where('id', $id)->where('status', 'active')->first();
+        $path = $asset ? str_replace('\\', '/', (string) $asset->path) : '';
+        if (! $asset || $asset->disk !== 'public' || ! str_starts_with($path, 'dynamic-media/branding/')
+            || ! in_array($asset->mime_type, ['image/png', 'image/webp'], true)
+            || ! Storage::disk('public')->exists($path)) {
+            return ['url' => $fallbackUrl, 'alt' => $fallbackAlt, 'custom' => false];
+        }
+
+        return [
+            'url' => Storage::disk('public')->url($path),
+            'alt' => trim((string) $asset->alt_text) !== '' ? trim((string) $asset->alt_text) : $fallbackAlt,
+            'custom' => true,
+        ];
     }
 
     private function normalize(string $domain, array $changes): array
