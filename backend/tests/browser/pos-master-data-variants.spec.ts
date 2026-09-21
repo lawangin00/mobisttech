@@ -3,7 +3,7 @@ import {expect,test} from '@playwright/test';
 
 test('P02 category-scoped subcategory and managed device choices persist in inventory',async({page})=>{
     test.setTimeout(45000);
-    execFileSync('php',['artisan','db:seed','--class=Database\\Seeders\\PosMasterDataVariantE2eSeeder','--env=testing','--force'],{cwd:process.cwd(),stdio:'inherit'});
+    execFileSync('php',['artisan','db:seed','--class=Database\\Seeders\\PosMasterDataVariantE2eEnsureSeeder','--env=testing','--force'],{cwd:process.cwd(),stdio:'inherit'});
     await page.goto('/internal/admin/pos/login');
     await page.getByTestId('login-email').fill('e2e-protected-owner@example.invalid');
     await page.getByTestId('login-password').fill('SyntheticPass123!');
