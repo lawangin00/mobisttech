@@ -146,12 +146,15 @@ class PosShellE2eCleanupSeeder extends Seeder
                     ->where('aggregate_id', (string) $p02Option->id)->delete();
                 DB::table('pos_master_data_options')->where('id', $p02Option->id)->delete();
             }
-            $syntheticAccessory = DB::table('pos_master_data_options')->where('list_key', 'product_category')
-                ->where('code', 'accessory')->where('label', 'Accessories')->first();
-            if ($linkedOption && $syntheticAccessory) {
-                abort_unless(! DB::table('pos_master_data_usages')->where('master_data_option_id', $syntheticAccessory->id)->exists()
-                    && ! DB::table('products')->where('category_master_data_id', $syntheticAccessory->id)->exists(), 409);
-                DB::table('pos_master_data_options')->where('id', $syntheticAccessory->id)->delete();
+            // This category belongs to canonical fresh-owner bootstrap, not the linked-history fixture.
+            // Keep it intact for remaining synthetic tests and the final guarded fresh-owner cleanup.
+            if ($linkedOption) {
+                $accessories = DB::table('pos_master_data_options')->where('list_key', 'product_category')
+                    ->where('code', 'accessory')->get();
+                abort_unless($accessories->count() === 1 && $accessories[0]->label === 'Accessories'
+                    && (bool) $accessories[0]->is_active && $accessories[0]->archived_at === null
+                    && json_decode($accessories[0]->metadata ?? '[]', true, flags: JSON_THROW_ON_ERROR) === [], 409,
+                    'Canonical accessory category must be retained by linked-history cleanup.');
             }
             DB::table('pos_audit_logs')->whereIn('outlet_id', $outletIds)->whereIn('action', ['MT75 E2E North Audit', 'MT75 E2E South Audit'])->where('actor_email', 'e2e-protected-owner@example.invalid')->delete();
             if ($adminIds) {

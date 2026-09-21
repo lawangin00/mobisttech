@@ -12,8 +12,14 @@ final class PosMasterDataLinkedE2eSeeder extends Seeder
     {
         abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test', 403);
         DB::transaction(function () {
-            abort_unless(! DB::table('pos_master_data_options')->where('list_key', 'product_category')
-                ->where('code', 'accessory')->exists(), 409, 'Scoped test expects an empty accessory category baseline.');
+            // The fresh-owner bootstrap installs this protected category before shared browser tests.
+            // Fail closed on any altered baseline; never insert a duplicate or delete the canonical row.
+            $accessories = DB::table('pos_master_data_options')->where('list_key', 'product_category')
+                ->where('code', 'accessory')->get();
+            abort_unless($accessories->count() === 1 && $accessories[0]->label === 'Accessories'
+                && (bool) $accessories[0]->is_active && $accessories[0]->archived_at === null
+                && json_decode($accessories[0]->metadata ?? '[]', true, flags: JSON_THROW_ON_ERROR) === [], 409,
+                'Scoped test requires the exact canonical accessory category baseline.');
             abort_unless(! DB::table('outlets')->where('outlet_code', '909')->exists(), 409);
             $ownerId = DB::table('admins')->where('email', 'e2e-protected-owner@example.invalid')->value('id');
             abort_unless($ownerId, 409);
@@ -22,10 +28,6 @@ final class PosMasterDataLinkedE2eSeeder extends Seeder
                 'outlet_code' => '909', 'status' => false, 'created_at' => now(), 'updated_at' => now(),
             ]);
             DB::table('outlet_admins')->insert(['outlet_id' => $outletId, 'admin_id' => $ownerId]);
-            DB::table('pos_master_data_options')->insert([
-                'list_key' => 'product_category', 'code' => 'accessory', 'label' => 'Accessories',
-                'sort_order' => 30, 'is_active' => true, 'metadata' => '{}', 'created_at' => now(), 'updated_at' => now(),
-            ]);
         });
     }
 }
