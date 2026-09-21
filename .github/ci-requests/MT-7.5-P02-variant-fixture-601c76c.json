@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "601c76c3885635d9fc3f5f19aa9581fd632f8333",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "P02-variants",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T13:48:25Z",
+  "description": "Run only the two serial P02 variant/imported-product browser specifications against an independently fresh disposable MySQL schema and confirm exact existing synthetic fixture reuse without relaxing original seeder collision guards. Preserve remaining browser groups and W01 closure as pending."
+}
