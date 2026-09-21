@@ -27,7 +27,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Auth::provider('identity', fn ($app, $config) => new IdentityUserProvider($app['hash'], $config['model']));
-        RateLimiter::for('api-public', fn (Request $request) => Limit::perMinute(120)->by('api-public|'.$request->ip()));
+        RateLimiter::for('api-public', function (Request $request) {
+            // The single-worker browser suite generates many synthetic loopback SSR requests.
+            // Keep the real 120/minute policy unchanged outside this explicitly scoped test server.
+            $browserFixture = app()->environment('testing')
+                && env('MT75_BROWSER_E2E') === '1'
+                && $request->ip() === '127.0.0.1';
+
+            return Limit::perMinute($browserFixture ? 1200 : 120)->by('api-public|'.$request->ip());
+        });
         RateLimiter::for('api-write', fn (Request $request) => Limit::perMinute(10)->by('api-write|'.$request->path().'|'.$request->ip()));
         RateLimiter::for('api-callback', fn (Request $request) => Limit::perMinute(120)->by('api-callback|'.$request->ip()));
         RateLimiter::for('api-customer', function (Request $request) {
