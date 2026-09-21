@@ -27,8 +27,20 @@ export default async function globalTeardown() {
             env: { ...process.env, MT75_FIRST_OUTLET_E2E_ENABLED: '1' },
         });
     }
-    // Names and counts only; CI diagnosis never reads or prints business row values.
+    // A successful fixture teardown can leave only the synthetic catalogue
+    // cache-version marker. Remove it in CI after explicit empty-catalogue guards.
     if (process.env.CI === 'true') {
+        execFileSync('php', [
+            'artisan',
+            'db:seed',
+            '--class=Database\\Seeders\\CataloguePublicationE2eCleanupSeeder',
+            '--env=testing',
+            '--force',
+        ], {
+            cwd: process.cwd(),
+            stdio: 'inherit',
+        });
+        // Names and counts only; CI diagnosis never reads or prints business row values.
         execFileSync('php', ['tests/browser/fixture-residue-diagnostic.php'], {
             cwd: process.cwd(),
             stdio: 'inherit',
