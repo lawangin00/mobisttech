@@ -147,3 +147,48 @@ test('MT-5.2 inactive commerce prunes cart but preserves authenticated historica
         state('hybrid');
     }
 });
+
+test('MT-7.5 W01 customer owns expiring historical access and private profile media', async ({ page }) => {
+    test.setTimeout(90_000);
+    await login(page);
+
+    await page.getByRole('link', { name: 'MT52-E2E-ORDER', exact: true }).click();
+    const [signedPage] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.getByRole('link', { name: 'Open 30-minute read-only link' }).click(),
+    ]);
+    await signedPage.waitForLoadState('domcontentloaded');
+    expect(signedPage.url()).toContain('/api/v1/orders/');
+    expect(signedPage.url()).toContain('signature=');
+    await expect(signedPage.locator('body')).toContainText('MT52-E2E-ORDER');
+    await signedPage.close();
+
+    await page.getByRole('link', { name: 'Back to account' }).click();
+    const name = page.getByLabel('Profile name');
+    const mobile = page.getByLabel('Profile mobile');
+    const originalMobile = await mobile.inputValue();
+    await name.fill('MT52 Customer Updated');
+    await mobile.fill('03009998888');
+    const profileSaved = page.waitForResponse((response) => response.url().endsWith('/api/customer/account/profile') && response.status() === 200);
+    await page.getByRole('button', { name: 'Save profile' }).click();
+    await profileSaved;
+    await expect(page.getByRole('heading', { name: 'MT52 Customer Updated' })).toBeVisible();
+
+    await page.getByLabel('Profile photo').setInputFiles({
+        name: 'profile.png', mimeType: 'image/png',
+        buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'),
+    });
+    const photoSaved = page.waitForResponse((response) => response.url().endsWith('/api/customer/account/photo') && response.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Upload photo' }).click();
+    expect((await photoSaved).status()).toBe(200);
+    await expect(page.getByRole('img', { name: 'Customer profile' })).toBeVisible();
+    const photoRemoved = page.waitForResponse((response) => response.url().endsWith('/api/customer/account/photo') && response.request().method() === 'DELETE');
+    await page.getByRole('button', { name: 'Remove photo' }).click();
+    expect((await photoRemoved).status()).toBe(200);
+    await expect(page.getByRole('img', { name: 'Customer profile' })).toHaveCount(0);
+
+    await name.fill('MT52 Customer');
+    await mobile.fill(originalMobile);
+    await page.getByRole('button', { name: 'Save profile' }).click();
+    await expect(page.getByRole('heading', { name: 'MT52 Customer' })).toBeVisible();
+});

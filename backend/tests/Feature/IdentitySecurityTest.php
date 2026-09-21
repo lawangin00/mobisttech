@@ -3,15 +3,19 @@
 namespace Tests\Feature;
 
 use App\Identity\Access;
+use App\Identity\CustomerProfile;
 use App\Models\Admin;
 use App\Models\CustomerAccount;
 use App\Models\Outlet;
 use App\Models\User;
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -147,6 +151,38 @@ class IdentitySecurityTest extends TestCase
         $this->login($otherClient, 'customer', $other->email)->assertOk();
         $this->send($otherClient, 'GET', '/api/v1/orders/'.$uuid)->assertNotFound();
         $this->postJson(parse_url($signed, PHP_URL_PATH).'?'.parse_url($signed, PHP_URL_QUERY), [])->assertMethodNotAllowed();
+    }
+
+    public function test_customer_profile_and_photo_are_private_self_scoped_validated_and_audited(): void
+    {
+        Storage::fake('local');
+        $customer = $this->account(CustomerAccount::class, 'profile-owner@example.invalid', ['mobile' => '03000000011']);
+        DB::table('customers')->insert(['website_user_id' => $customer->id, 'display_name' => 'Synthetic', 'mobile' => '03000000011', 'public_id' => (string) Str::uuid()]);
+        $client = $this->client();
+        $this->login($client, 'customer', $customer->email)->assertOk();
+        $this->send($client, 'PATCH', '/api/v1/account/profile', ['name' => 'Updated Customer', 'mobile' => '03000000012'])
+            ->assertOk()->assertJsonPath('data.name', 'Updated Customer')->assertJsonMissingPath('data.email');
+        $this->send($client, 'PATCH', '/api/v1/account/profile', ['name' => 'Injected', 'mobile' => '03000000013', 'email' => 'admin@example.invalid'])
+            ->assertUnprocessable();
+
+        $profiles = app(CustomerProfile::class);
+        $request = Request::create('/api/v1/account/photo', 'POST', [], [], [
+            'profile_photo' => UploadedFile::fake()->createWithContent('profile.png', base64_decode(
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', true
+            )),
+        ]);
+        $profiles->upload($customer->fresh(), $request);
+        $path = $customer->fresh()->profile_photo_path;
+        $this->assertNotNull($path);
+        Storage::disk('local')->assertExists($path);
+        $response = $profiles->show($customer->fresh());
+        $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
+        $profiles->remove($customer->fresh());
+        Storage::disk('local')->assertMissing($path);
+        $this->assertNull($customer->fresh()->profile_photo_path);
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $customer->id)->where('action', 'customer_profile_updated')->count());
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $customer->id)->where('action', 'customer_profile_photo_updated')->count());
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $customer->id)->where('action', 'customer_profile_photo_removed')->count());
     }
 
     private function account(string $model, string $email, array $extra = [])

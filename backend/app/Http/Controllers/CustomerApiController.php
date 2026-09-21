@@ -10,6 +10,7 @@ use App\Commerce\ProductReviews;
 use App\Digital\ClientProjectServices;
 use App\Engagement\CustomerEngagement;
 use App\Identity\CustomerIdentity;
+use App\Identity\CustomerProfile;
 use App\Models\CustomerAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +23,26 @@ final class CustomerApiController extends Controller
     public function cartQuote(Request $request, WebsiteApi $api)
     {
         return $this->responses->private($api->cartQuote($request->all()), 'cart-quote.v1');
+    }
+
+    public function updateProfile(Request $request, CustomerProfile $profiles)
+    {
+        return $this->responses->private($profiles->update($this->customer(), $request->all()), 'customer-profile.v1');
+    }
+
+    public function profilePhoto(CustomerProfile $profiles)
+    {
+        return $profiles->show($this->customer());
+    }
+
+    public function uploadProfilePhoto(Request $request, CustomerProfile $profiles)
+    {
+        return $this->responses->private($profiles->upload($this->customer(), $request), 'customer-profile-photo.v1');
+    }
+
+    public function removeProfilePhoto(CustomerProfile $profiles)
+    {
+        return $this->responses->private($profiles->remove($this->customer()), 'customer-profile-photo.v1');
     }
 
     public function checkoutChannels(WebsiteApi $api, PaymentProviders $providers)

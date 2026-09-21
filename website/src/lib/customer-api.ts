@@ -3,6 +3,8 @@ export type CustomerAccount = {
   name: string;
   email: string;
   mobile: string;
+  has_photo: boolean;
+  photo_url: string;
   session_policy: {
     inactivity_minutes?: number;
     remember_enabled?: boolean;
@@ -59,7 +61,7 @@ export async function customerRequest<T>(
   headers.set("Accept", "application/json");
   if (!["GET", "HEAD"].includes(method)) {
     headers.set("X-CSRF-TOKEN", await ensureCustomerCsrf());
-    if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   }
   if (init.idempotencyKey) headers.set("Idempotency-Key", init.idempotencyKey);
   const response = await fetch(`/api/customer/${path.replace(/^\/+/, "")}`, {

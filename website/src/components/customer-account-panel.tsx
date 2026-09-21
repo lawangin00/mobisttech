@@ -107,6 +107,37 @@ export function CustomerAccountPanel() {
     }
   }
 
+  async function updateProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setMessage("");
+    try {
+      await customerRequest("account/profile", { method: "PATCH", body: JSON.stringify({ name: form.get("name"), mobile: form.get("mobile") }) });
+      await refresh();
+      setMessage("Profile updated.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to update profile."); }
+  }
+
+  async function uploadPhoto(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setMessage("");
+    try {
+      await customerRequest("account/photo", { method: "POST", body: form });
+      await refresh();
+      setMessage("Profile photo updated.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to update profile photo."); }
+  }
+
+  async function removePhoto() {
+    setMessage("");
+    try {
+      await customerRequest("account/photo", { method: "DELETE", body: JSON.stringify({}) });
+      await refresh();
+      setMessage("Profile photo removed.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to remove profile photo."); }
+  }
+
   async function logout() {
     await customerRequest<{ message: string }>("auth/logout", { method: "POST", body: JSON.stringify({}) });
     clearCustomerCsrf();
@@ -143,9 +174,10 @@ export function CustomerAccountPanel() {
 
   return <div className="space-y-6">
     <section className="rounded-2xl border bg-white p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{account.name}</h2><p className="text-sm text-slate-600">{account.email} · {account.mobile}</p></div><button onClick={logout} className="rounded-xl border px-4 py-2">Sign out</button></div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div className="flex items-center gap-3">{account.has_photo && <img src="/api/customer/account/photo" alt="Customer profile" className="h-14 w-14 rounded-full object-cover" />}<div><h2 className="text-xl font-bold">{account.name}</h2><p className="text-sm text-slate-600">{account.email} · {account.mobile}</p></div></div><button onClick={logout} className="rounded-xl border px-4 py-2">Sign out</button></div>
       <p className="mt-3 text-sm text-slate-500">Customer session inactivity: {account.session_policy.inactivity_minutes ?? 120} minutes.</p>
     </section>
+    <section><h2 className="text-xl font-bold">Profile</h2><form onSubmit={updateProfile} className="mt-3 grid gap-3 rounded-2xl border bg-white p-4 sm:grid-cols-2"><input name="name" required defaultValue={account.name} aria-label="Profile name" className="rounded-xl border p-3" /><input name="mobile" required pattern="03[0-9]{9}" defaultValue={account.mobile} aria-label="Profile mobile" className="rounded-xl border p-3" /><button className="rounded-xl bg-slate-950 px-4 py-2 text-white sm:col-span-2 sm:w-fit">Save profile</button></form><form onSubmit={uploadPhoto} className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-4"><input name="profile_photo" type="file" required accept="image/jpeg,image/png,image/webp" aria-label="Profile photo" className="max-w-full text-sm" /><button className="rounded-xl border px-4 py-2">Upload photo</button>{account.has_photo && <button type="button" onClick={() => void removePhoto()} className="rounded-xl border border-red-300 px-4 py-2 text-red-700">Remove photo</button>}</form></section>
     <section><h2 className="text-xl font-bold">Orders</h2><div className="mt-3 space-y-3">{!snapshotReady ? <p className="text-slate-600">Loading orders…</p> : orders.length === 0 ? <p className="text-slate-600">No orders yet.</p> : orders.map((order) => <article key={order.id} className="rounded-2xl border bg-white p-4"><Link href={"/account/orders/" + order.id} className="font-semibold underline-offset-2 hover:underline">{order.number}</Link><p className="text-sm text-slate-600">{order.status} · {order.payment_status} · {order.currency} {order.total}</p></article>)}</div></section>
     <section><h2 className="text-xl font-bold">Projects</h2><div className="mt-3 space-y-3">{!snapshotReady ? <p className="text-slate-600">Loading projects…</p> : projects.length === 0 ? <p className="text-slate-600">No client projects yet.</p> : projects.map((project) => <article key={project.public_id} className="rounded-2xl border bg-white p-4"><Link href={"/account/projects/" + project.public_id} className="font-semibold underline-offset-2 hover:underline">{project.title}</Link><p className="text-sm text-slate-600">{project.reference} · {project.status.replaceAll("_", " ")}</p>{project.service.name && <p className="mt-1 text-xs text-slate-500">{project.service.name}</p>}</article>)}</div></section>
     <section className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border bg-white p-4"><strong>Saved items</strong><p className="mt-1 text-2xl font-bold">{snapshotReady ? wishlistCount : "…"}</p></div><div className="rounded-2xl border bg-white p-4"><strong>Your reviews</strong><p className="mt-1 text-2xl font-bold">{snapshotReady ? reviewCount : "…"}</p></div></section>

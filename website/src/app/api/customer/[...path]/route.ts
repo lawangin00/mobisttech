@@ -7,7 +7,7 @@ if (ORIGIN !== "http://127.0.0.1:18080") {
 
 const ALLOWED = [
   /^auth\/(?:csrf-cookie|register|login|logout|forgot-password|reset-password|password|activity|confirm-password)$/,
-  /^account$/,
+  /^account(?:\/(?:profile|photo))?$/,
   /^cart\/quote$/,
   /^checkout\/channels$/,
   /^payments\/[0-9a-f-]+\/initiate$/,

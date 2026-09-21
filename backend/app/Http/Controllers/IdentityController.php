@@ -136,6 +136,9 @@ class IdentityController extends Controller
         $data = ['id' => $user->public_id, 'name' => $user->name, 'email' => $user->email, 'mobile' => $user->mobile,
             'session_policy' => $policy->publicContract($realm),
             'session_state' => $policy->publicState($request, $realm, $user)];
+        if ($user instanceof CustomerAccount) {
+            $data += ['has_photo' => (bool) $user->profile_photo_path, 'photo_url' => '/api/v1/account/photo'];
+        }
         if ($user instanceof Admin) {
             $data += ['job_title' => $user->job_title, 'roles' => $user->roleNames(), 'permissions' => $user->effectivePermissions()];
         }

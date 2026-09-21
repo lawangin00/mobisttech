@@ -61,6 +61,10 @@ Route::get('/internal/admin/pos/login', [PosShellController::class, 'login'])
 Route::get('/internal/admin/forgot-password', [PosShellController::class, 'recoveryRequest'])->defaults('identity_realm', 'admin')->middleware('identity')->name('admin.recovery.request');
 Route::get('/internal/admin/reset-password', [PosShellController::class, 'recoveryReset'])->defaults('identity_realm', 'admin')->middleware('identity')->name('admin.recovery.reset');
 Route::prefix('/api/v1')->middleware(['identity', 'identity.auth', 'throttle:api-customer'])->group(function () {
+    Route::patch('/account/profile', [CustomerApiController::class, 'updateProfile'])->defaults('identity_realm', 'customer')->name('api.customer.profile.update');
+    Route::get('/account/photo', [CustomerApiController::class, 'profilePhoto'])->defaults('identity_realm', 'customer')->name('api.customer.photo.show');
+    Route::post('/account/photo', [CustomerApiController::class, 'uploadProfilePhoto'])->defaults('identity_realm', 'customer')->name('api.customer.photo.upload');
+    Route::delete('/account/photo', [CustomerApiController::class, 'removeProfilePhoto'])->defaults('identity_realm', 'customer')->name('api.customer.photo.delete');
     Route::post('/cart/quote', [CustomerApiController::class, 'cartQuote'])->defaults('identity_realm', 'customer')->name('api.customer.cart.quote');
     Route::get('/checkout/channels', [CustomerApiController::class, 'checkoutChannels'])->defaults('identity_realm', 'customer')->name('api.customer.checkout.channels');
     Route::post('/orders', [CustomerApiController::class, 'checkout'])->defaults('identity_realm', 'customer')->name('api.customer.orders.store');
