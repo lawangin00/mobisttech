@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "977755d61cae412f7c4f6936e76b439a22a32e0c",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "W03-commerce",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T15:50:19Z",
+  "description": "Run the exact W03 protected Admin Website commerce browser journey for fulfillment advancement, generated CSV download, and purchase-qualified review moderation on guarded synthetic fixtures."
+}
