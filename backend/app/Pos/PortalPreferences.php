@@ -24,6 +24,10 @@ final class PortalPreferences
         'claims_density' => ['comfortable', 'compact'],
         'inventory_sort' => ['source', 'product', 'stock_low', 'stock_high', 'sale_high', 'sale_low'],
         'inventory_filter' => ['all', 'in_stock', 'out_of_stock', 'imei_tracked'],
+        'invoice_sort' => ['source', 'newest', 'oldest', 'total_high', 'total_low'],
+        'invoice_filter' => ['all', 'discounted'],
+        'claims_sort' => ['source', 'updated', 'received', 'claim'],
+        'claims_filter' => ['all', 'active', 'completed'],
     ];
 
     private const DEFAULTS = [
@@ -32,6 +36,7 @@ final class PortalPreferences
         'warranty_search_category' => 'all', 'claims_search_category' => 'all',
         'invoice_density' => 'comfortable', 'inventory_density' => 'comfortable', 'claims_density' => 'comfortable',
         'inventory_sort' => 'source', 'inventory_filter' => 'all',
+        'invoice_sort' => 'source', 'invoice_filter' => 'all', 'claims_sort' => 'source', 'claims_filter' => 'all',
         'auto_focus_search' => true, 'remember_search' => false, 'navigation' => [],
     ];
 

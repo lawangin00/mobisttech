@@ -1585,6 +1585,7 @@ class PosShellTest extends TestCase
         $values['invoice_search_category'] = 'customer_name';
         $values['invoice_density'] = 'compact';
         $values['inventory_sort'] = 'stock_high';
+        $values['invoice_sort'] = 'total_high';
         $values['remember_search'] = true;
         $values['navigation'] = ['invoices' => ['label' => 'Customer documents', 'visible' => false, 'order' => 140]];
         $this->send($client, 'PUT', $url, [...$values, 'outlet_id' => 'unauthorized'])->assertUnprocessable();
@@ -1598,6 +1599,7 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.invoice_page_length', '50')->assertJsonPath('data.remember_search', true)
             ->assertJsonPath('data.invoice_density', 'compact')
             ->assertJsonPath('data.inventory_sort', 'stock_high')
+            ->assertJsonPath('data.invoice_sort', 'total_high')
             ->assertJsonPath('data.navigation.invoices.label', 'Customer documents')
             ->assertJsonPath('data.navigation.invoices.visible', false);
         $this->send($client, 'GET', $url)->assertOk()->assertInertia(fn (Assert $page) => $page
@@ -1608,7 +1610,7 @@ class PosShellTest extends TestCase
         $this->send($client, 'POST', '/internal/admin/outlets/select', ['outlet_id' => $outlet->public_id])->assertOk();
         $this->send($client, 'GET', '/internal/admin/pos/workspace/invoices')->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('view.workspace.key', 'invoices'));
-        $this->assertSame(15, DB::table('pos_settings')->where('group', 'portal')->count());
+        $this->assertSame(19, DB::table('pos_settings')->where('group', 'portal')->count());
         $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
             ->where('action', 'pos_portal_preferences_updated')->count());
     }

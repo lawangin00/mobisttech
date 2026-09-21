@@ -60,7 +60,33 @@ final class PosHistoryListing
                 }
             });
         }
+        if ($area === 'invoices' && $preferences['invoice_filter'] === 'discounted') {
+            $query->where('i.discount', '>', 0);
+        }
+        if ($area !== 'invoices') {
+            match ($preferences['claims_filter']) {
+                'active' => $query->whereNotIn('c.status', ['rejected', 'delivered', 'closed']),
+                'completed' => $query->whereIn('c.status', ['delivered', 'closed']),
+                default => null,
+            };
+        }
         $perPage = (int) $preferences[$area === 'invoices' ? 'invoice_page_length' : 'claims_page_length'];
+        $sort = $preferences[$area === 'invoices' ? 'invoice_sort' : 'claims_sort'];
+        if ($area === 'invoices') {
+            match ($sort) {
+                'oldest' => $query->orderBy('i.invoice_number'),
+                'total_high' => $query->orderByDesc('i.final_bill'),
+                'total_low' => $query->orderBy('i.final_bill'),
+                default => $query->orderByDesc('i.invoice_number'),
+            };
+        } else {
+            match ($sort) {
+                'updated' => $query->orderByDesc('c.updated_at'),
+                'received' => $query->orderByDesc('c.received_at'),
+                'claim' => $query->orderByDesc('c.claim_number'),
+                default => $query->orderByDesc('c.id'),
+            };
+        }
         $page = $query->orderByDesc($area === 'invoices' ? 'i.id' : 'c.id')
             ->paginate($perPage, $area === 'invoices' ? ['i.*'] : ['c.*', 'i.public_id as invoice_id',
                 'i.invoice_number', 'i.customer_name', 'i.customer_phone', 'p.name as product_name'],
@@ -73,6 +99,8 @@ final class PosHistoryListing
             'options' => array_values($options), 'auto_focus_search' => $preferences['auto_focus_search'],
             'remember_search' => $preferences['remember_search'],
             'density' => $preferences[$area === 'invoices' ? 'invoice_density' : 'claims_density'],
+            'sort' => $sort,
+            'filter' => $preferences[$area === 'invoices' ? 'invoice_filter' : 'claims_filter'],
         ]];
     }
 }

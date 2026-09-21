@@ -189,6 +189,8 @@ class PosCustomerReportingInterfaceTest extends TestCase
                 'claim_number' => sprintf('MT75-CLAIM-%03d', $n), 'status' => 'received', 'assigned_to' => 'Test bench'];
         }
         DB::table('claims')->insert($claims);
+        DB::table('invoices')->where('invoice_number', 'MT75-HISTORY-120')->update(['discount' => '1.00']);
+        DB::table('claims')->where('claim_number', 'MT75-CLAIM-120')->update(['status' => 'delivered']);
         $other = new Outlet;
         $other->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Other synthetic outlet', 'outlet_code' => '089'])->save();
         DB::table('invoices')->insert([...$base, 'outlet_id' => $other->id,
@@ -223,6 +225,7 @@ class PosCustomerReportingInterfaceTest extends TestCase
         $this->send($client, 'GET', $baseUrl.'claims?q=MT75-CLAIM-120&category=all')->assertOk()
             ->assertJsonPath('data.pagination.total', 1);
         foreach (['invoice_page_length' => '50', 'claims_page_length' => '25', 'invoice_density' => 'compact', 'claims_density' => 'compact',
+            'invoice_sort' => 'oldest', 'invoice_filter' => 'all', 'claims_sort' => 'claim', 'claims_filter' => 'all',
             'invoice_search_category' => 'customer_name', 'claims_search_category' => 'claim',
             'warranty_search_category' => 'customer_name'] as $key => $value) {
             DB::table('pos_settings')->insert(['key' => 'portal.'.$key, 'value' => $value,
@@ -231,6 +234,7 @@ class PosCustomerReportingInterfaceTest extends TestCase
         $this->send($client, 'GET', $baseUrl.'invoices')->assertOk()
             ->assertJsonPath('data.pagination.per_page', 50)->assertJsonPath('data.pagination.category', 'customer_name')
             ->assertJsonPath('data.pagination.density', 'compact')
+            ->assertJsonPath('data.pagination.sort', 'oldest')->assertJsonPath('data.pagination.filter', 'all')
             ->assertJsonPath('data.pagination.pages', 3)->assertJsonCount(50, 'data.invoices');
         $this->send($client, 'GET', $baseUrl.'warranty')->assertOk()
             ->assertJsonPath('data.pagination.per_page', 25)->assertJsonPath('data.pagination.category', 'customer_name')
@@ -243,7 +247,16 @@ class PosCustomerReportingInterfaceTest extends TestCase
         $this->send($client, 'GET', $baseUrl.'claims')->assertOk()
             ->assertJsonPath('data.pagination.per_page', 25)->assertJsonPath('data.pagination.category', 'claim')
             ->assertJsonPath('data.pagination.density', 'compact')
+            ->assertJsonPath('data.pagination.sort', 'claim')->assertJsonPath('data.pagination.filter', 'all')
             ->assertJsonPath('data.pagination.pages', 5)->assertJsonCount(25, 'data.claims');
+        DB::table('pos_settings')->where('key', 'portal.invoice_filter')->update(['value' => 'discounted']);
+        DB::table('pos_settings')->where('key', 'portal.claims_filter')->update(['value' => 'completed']);
+        $this->send($client, 'GET', $baseUrl.'invoices')->assertOk()
+            ->assertJsonPath('data.pagination.filter', 'discounted')->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.invoices.0.number', 'MT75-HISTORY-120');
+        $this->send($client, 'GET', $baseUrl.'claims')->assertOk()
+            ->assertJsonPath('data.pagination.filter', 'completed')->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.claims.0.number', 'MT75-CLAIM-120');
     }
 
     public function test_warranty_intake_search_finds_old_sale_without_cross_outlet_or_role_leakage(): void
