@@ -16,9 +16,20 @@ final class PosWarrantyIntakeE2eSeeder extends Seeder
             abort_unless($outlet && DB::table('admins')->where('email', 'e2e-intake@example.invalid')->exists(), 409);
             abort_unless(! DB::table('invoices')->where('invoice_number', 'like', 'MT75-INTAKE-%')->exists(), 409);
             abort_unless(! DB::table('products')->where('name', 'MT75 Intake Product')->exists(), 409);
-            abort_unless(! DB::table('pos_settings')->where('key', 'portal.warranty_search_category')->exists(), 409);
-            DB::table('pos_settings')->insert(['key' => 'portal.warranty_search_category', 'value' => 'invoice_id',
-                'group' => 'portal', 'label' => 'warranty_search_category', 'input_type' => 'select', 'sort_order' => 206]);
+            $preference = DB::table('pos_settings')->where('key', 'portal.warranty_search_category')->first();
+            $prefOwnerId = DB::table('admins')->where('email', 'e2e-pref-owner@example.invalid')->value('id');
+            $prefOwnerSaved = $prefOwnerId && DB::table('identity_audit_events')->where('realm', 'admin')
+                ->where('account_id', $prefOwnerId)->where('action', 'pos_portal_preferences_updated')->exists();
+            if ($preference) {
+                // The earlier real UI preferences test saved the canonical 'all' baseline.
+                abort_unless($prefOwnerSaved && $preference->value === 'all'
+                    && $preference->group === 'portal' && $preference->input_type === 'select', 409);
+                DB::table('pos_settings')->where('id', $preference->id)->update(['value' => 'invoice_id']);
+            } else {
+                abort_unless(! $prefOwnerSaved, 409);
+                DB::table('pos_settings')->insert(['key' => 'portal.warranty_search_category', 'value' => 'invoice_id',
+                    'group' => 'portal', 'label' => 'warranty_search_category', 'input_type' => 'select', 'sort_order' => 206]);
+            }
             $product = DB::table('products')->insertGetId([
                 'public_id' => (string) Str::uuid(), 'outlet_id' => $outlet,
                 'name' => 'MT75 Intake Product', 'category' => 'accessory',

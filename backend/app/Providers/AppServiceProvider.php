@@ -50,10 +50,15 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('identity', function (Request $request) {
             $realm = $request->attributes->get('identity_realm');
             $identity = strtolower(trim((string) $request->input('email')));
+            // One disposable single-worker browser suite exercises many synthetic accounts
+            // behind one loopback IP. Production and ordinary testing keep both strict limits.
+            $browserFixture = app()->environment('testing')
+                && env('MT75_BROWSER_E2E') === '1'
+                && $request->ip() === '127.0.0.1';
 
             return [
-                Limit::perMinute(5)->by($realm.'|'.$request->path().'|'.hash('sha256', $identity.'|'.$request->ip())),
-                Limit::perMinute(30)->by($realm.'|'.$request->ip()),
+                Limit::perMinute($browserFixture ? 1200 : 5)->by($realm.'|'.$request->path().'|'.hash('sha256', $identity.'|'.$request->ip())),
+                Limit::perMinute($browserFixture ? 1200 : 30)->by($realm.'|'.$request->ip()),
             ];
         });
         if ($this->app->environment(['local', 'testing'])) {

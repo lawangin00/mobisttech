@@ -34,17 +34,21 @@ class PosShellE2eCleanupSeeder extends Seeder
                 ->where('name', 'MT75 P02 Linked Outlet')->pluck('id')->all()]));
             $outletIds = array_values(array_unique([...$outletIds, ...DB::table('identity_audit_events')->where('realm', 'admin')->whereIn('account_id', $adminIds)->where('action', 'outlet_created')->whereNotNull('outlet_id')->pluck('outlet_id')->all()]));
 
+            $intakeInvoices = DB::table('invoices')->whereIn('outlet_id', $outletIds)->where('invoice_number', 'like', 'MT75-INTAKE-%')->where('customer_name', 'like', 'MT75 Intake Customer %')->pluck('id')->all();
             $prefOwnerId = DB::table('admins')->where('email', 'e2e-pref-owner@example.invalid')->value('id');
-            if ($prefOwnerId && DB::table('identity_audit_events')->where('realm', 'admin')
-                ->where('account_id', $prefOwnerId)->where('action', 'pos_portal_preferences_updated')->exists()) {
+            $prefOwnerSaved = $prefOwnerId && DB::table('identity_audit_events')->where('realm', 'admin')
+                ->where('account_id', $prefOwnerId)->where('action', 'pos_portal_preferences_updated')->exists();
+            if ($intakeInvoices) {
+                // Check the intake override before the full preference fixture is removed.
+                abort_unless(DB::table('pos_settings')->where('key', 'portal.warranty_search_category')
+                    ->where('value', 'invoice_id')->where('group', 'portal')->count() === 1, 409);
+            }
+            if ($prefOwnerSaved) {
                 $keys = array_map(fn ($key) => 'portal.'.$key, array_keys(app(PortalPreferences::class)->current()));
                 abort_unless(DB::table('pos_settings')->where('group', 'portal')->count() === count($keys), 409);
                 DB::table('pos_settings')->whereIn('key', $keys)->where('group', 'portal')->delete();
-            }
-            $intakeInvoices = DB::table('invoices')->whereIn('outlet_id', $outletIds)->where('invoice_number', 'like', 'MT75-INTAKE-%')->where('customer_name', 'like', 'MT75 Intake Customer %')->pluck('id')->all();
-            if ($intakeInvoices) {
-                abort_unless(DB::table('pos_settings')->where('key', 'portal.warranty_search_category')
-                    ->where('value', 'invoice_id')->where('group', 'portal')->exists(), 409);
+            } elseif ($intakeInvoices) {
+                // Standalone warranty intake inserted this sole synthetic preference.
                 DB::table('pos_settings')->where('key', 'portal.warranty_search_category')
                     ->where('value', 'invoice_id')->where('group', 'portal')->delete();
             }
