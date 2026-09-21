@@ -31,13 +31,16 @@ return static function ($schema, string $database): void {
     }
 
     $indexes = $schema->getIndexes($table);
-    $byName = array_column($indexes, null, 'name');
-    foreach (['PRIMARY', 'owner_offline_recovery_codes_code_digest_unique', 'owner_recovery_admin_used'] as $required) {
+    $byName = [];
+    foreach ($indexes as $index) {
+        $byName[strtolower($index['name'])] = $index;
+    }
+    foreach (['primary', 'owner_offline_recovery_codes_code_digest_unique', 'owner_recovery_admin_used'] as $required) {
         if (! isset($byName[$required])) {
             throw new RuntimeException('Missing owner recovery index: '.$required);
         }
     }
-    if ($byName['PRIMARY']['columns'] !== ['id'] || ! $byName['PRIMARY']['unique']
+    if ($byName['primary']['columns'] !== ['id'] || ! $byName['primary']['unique']
         || $byName['owner_offline_recovery_codes_code_digest_unique']['columns'] !== ['code_digest']
         || ! $byName['owner_offline_recovery_codes_code_digest_unique']['unique']
         || $byName['owner_recovery_admin_used']['columns'] !== ['admin_id', 'used_at']) {
