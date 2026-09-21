@@ -132,12 +132,12 @@ jobs:
           npm --prefix backend run build
 
       - name: Full backend regression
-        if: needs.mode.outputs.run_scope != 'W01-customer'
+        if: needs.mode.outputs.run_scope == 'full'
         working-directory: backend
         run: php artisan test
 
       - name: Explicit MySQL race and reset gates
-        if: needs.mode.outputs.run_scope != 'W01-customer'
+        if: needs.mode.outputs.run_scope == 'full'
         working-directory: backend
         run: php artisan test tests/Feature/InventoryConcurrencyTest.php tests/Feature/GuardedResetServiceTest.php
 
@@ -172,28 +172,33 @@ jobs:
         working-directory: backend
         run: npx playwright test tests/browser-website/customer.spec.ts --config=playwright.website.config.ts --grep 'MT-7.5 W01 customer owns expiring historical access and private profile media'
 
+      - name: MT-7.5 P02 isolated shared-fixture browser pair
+        if: needs.mode.outputs.run_scope == 'P02-variants'
+        working-directory: backend
+        run: npx playwright test tests/browser/pos-master-data-imported.spec.ts tests/browser/pos-master-data-variants.spec.ts --config=playwright.config.ts
+
       - name: POS and Admin Playwright
-        if: needs.mode.outputs.run_scope != 'W01-customer'
+        if: needs.mode.outputs.run_scope == 'full'
         working-directory: backend
         run: npx playwright test --config=playwright.config.ts
 
       - name: Website checkout Playwright
-        if: needs.mode.outputs.run_scope != 'W01-customer'
+        if: needs.mode.outputs.run_scope == 'full'
         working-directory: backend
         run: npx playwright test tests/browser-website/checkout.spec.ts --config=playwright.website.config.ts
 
       - name: Website customer and project Playwright
-        if: needs.mode.outputs.run_scope != 'W01-customer'
+        if: needs.mode.outputs.run_scope == 'full'
         working-directory: backend
         run: npx playwright test tests/browser-website/client-project.spec.ts tests/browser-website/customer.spec.ts --config=playwright.website.config.ts
 
       - name: Website public content Playwright
-        if: needs.mode.outputs.run_scope != 'W01-customer'
+        if: needs.mode.outputs.run_scope == 'full'
         working-directory: backend
         run: npx playwright test tests/browser-website/brand-assets.spec.ts tests/browser-website/dynamic-content.spec.ts tests/browser-website/storefront.spec.ts --config=playwright.website.config.ts
 
       - name: Website performance and request budgets
-        if: needs.mode.outputs.run_scope != 'W01-customer'
+        if: needs.mode.outputs.run_scope == 'full'
         working-directory: backend
         run: npx playwright test tests/browser-website/zz-ci-performance.spec.ts --config=playwright.website.config.ts
 
