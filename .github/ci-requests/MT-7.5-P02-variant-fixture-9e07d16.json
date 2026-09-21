@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "9e07d164bc1a976698204447cfc506bad1c4f39e",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "P02-variants",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T13:57:50Z",
+  "description": "Verify the materially reconciled exact P02 variant fixture with the two serial targeted browser specs on a fresh disposable MySQL schema. Retain strict mismatched-option refusal; do not claim W01 or full gate closure."
+}
