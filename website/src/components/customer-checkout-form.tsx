@@ -17,6 +17,7 @@ export function CustomerCheckoutForm() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [gateway, setGateway] = useState<Channel["code"]>("cod");
   const [message, setMessage] = useState("");
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const keyRef = useRef<string | null>(null);
 
@@ -38,7 +39,7 @@ export function CustomerCheckoutForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!account || lines.length === 0 || submitting) return;
+    if (!account || lines.length === 0 || submitting || createdOrderId) return;
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     setSubmitting(true);
@@ -63,6 +64,7 @@ export function CustomerCheckoutForm() {
           lines: lines.map(({ product_id, quantity }) => ({ product_id, quantity })),
         }),
       });
+      setCreatedOrderId(created.order_id);
       clearCart();
       keyRef.current = null;
       if (gateway !== "cod") {
@@ -84,6 +86,11 @@ export function CustomerCheckoutForm() {
 
   if (account === undefined) return <div className="min-h-[1050px] rounded-2xl bg-slate-50 p-5 text-slate-600">Loading checkout…</div>;
   if (account === null) return <div className="rounded-2xl border bg-white p-5"><p>Sign in before checkout.</p><Link href="/account" className="mt-3 inline-block rounded-xl bg-slate-950 px-4 py-2 text-white">Customer account</Link></div>;
+  if (createdOrderId) return <div className="rounded-2xl border bg-white p-5">
+    <p>Your order has been created. You can continue any pending payment from your order details.</p>
+    {message && <p role="alert" className="mt-3 text-sm text-red-700">{message}</p>}
+    <Link href={"/account/orders/" + createdOrderId} className="mt-3 inline-block rounded-xl bg-slate-950 px-4 py-2 text-white">View order and continue payment</Link>
+  </div>;
   if (lines.length === 0) return <div className="rounded-2xl border bg-white p-5"><p>Your cart is empty.</p><Link href="/products" className="mt-3 inline-block underline">Browse products</Link></div>;
 
   return <form onSubmit={submit} onChange={() => { keyRef.current = null; }} className="min-h-[1050px] space-y-6">
