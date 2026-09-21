@@ -41,3 +41,8 @@ Isolate the **already observed** stale fresh-product quantity locator and fixtur
 - Exact run `35656823823` passed **33/34** POS/Admin browser tests with one intentional skip; no browser test failed. Global teardown then stopped because the catalogue publication marker still had a `catalogue.changed` dependant, so Website/final gates did not run and W04 remains open.
 - Static trace to the accepted fresh serialized-product journey found the concrete residue: stock acquisition and unit edits emit `stock_unit` catalogue events, but `FirstOutletE2eCleanupSeeder` deleted the units without deleting their exact public-ID events and its orphan sweep covered only product/master-data aggregates.
 - Material correction captures the owned stock-unit public IDs before deletion, removes only their matching events, and extends the guarded orphan sweep to `stock_unit` and `product_listing` aggregate types. It does not weaken the catalogue cleanup guard or delete live-referenced events.
+
+## Browser fixture attempt 8 — 22-Sep-2026
+
+- Exact run `35660464986` at `116d6a7da553e0768462bd4e230774621f0395c8` proved the catalogue cleanup correction and passed all gates through POS/Admin Chromium. Website checkout failed at the new synthetic initiation-recovery assertion because `getByRole('alert')` also matched Next.js `__next-route-announcer__`; the intended `Synthetic gateway temporarily unavailable.` alert was present.
+- Material correction is limited to an exact visible payment-error locator followed by focused checkout verification and one corrected hosted run. Production payment behavior and security contracts remain unchanged.
