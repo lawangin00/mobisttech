@@ -4,9 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'website/**'
-      - 'tools/ci-mode-gate.py'
-      - '.github/workflows/github-only-website.yml'
+      - '.github/ci-requests/**'
   workflow_dispatch:
 
 permissions:
@@ -18,7 +16,7 @@ concurrency:
 
 jobs:
   mode:
-    name: Resolve execution mode (no product build)
+    name: Validate explicit stage or milestone CI request
     runs-on: ubuntu-latest
     timeout-minutes: 2
     outputs:
@@ -27,7 +25,8 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Self-test and read canonical mode
+          fetch-depth: 2
+      - name: Self-test and validate request against canonical mode
         id: check
         run: |
           python3 tools/ci-mode-gate.py --self-test
