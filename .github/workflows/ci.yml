@@ -184,6 +184,11 @@ jobs:
         working-directory: backend
         run: npx playwright test tests/browser/pos-master-data-imported.spec.ts tests/browser/pos-master-data-variants.spec.ts --config=playwright.config.ts
 
+      - name: MT-7.5 W03 isolated Website commerce administration browser
+        if: needs.mode.outputs.run_scope == 'W03-commerce'
+        working-directory: backend
+        run: npx playwright test tests/browser/website-commerce-administration.spec.ts --config=playwright.config.ts
+
       - name: POS and Admin Playwright
         if: needs.mode.outputs.run_scope == 'full'
         working-directory: backend

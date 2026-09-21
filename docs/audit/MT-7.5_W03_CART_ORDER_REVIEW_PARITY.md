@@ -36,3 +36,9 @@ Authentic payment/provider delivery, old customer import and production orders r
 - The existing Platform Administration shell now exposes a permission-filtered Website commerce entry and a focused React/Inertia workspace for bounded order search/status filtering, the next allowed fulfillment transition, formula-safe CSV download, review-state filtering and one-way approve/reject moderation with an optional reply.
 - The page reuses the unified Admin realm and the five accepted Laravel JSON routes; it introduces no second identity realm or business backend. TypeScript typecheck, production Vite build (589 modules), focused W03 backend verification (1/1, 16 assertions), scoped Pint and diff whitespace checks passed.
 - W03 remains IN PROGRESS because a dedicated synthetic browser fixture and real hosted Chromium acceptance must still join status advancement, CSV download and review moderation. Finite count remains **14/27 DONE, 13 OPEN (51.85%)**.
+
+## Hosted browser candidate — 21-Sep-2026
+
+- Added a guarded `mobisttech_test`-only W03 fixture/cleanup pair and one real Admin browser journey using the protected Full Access owner. The candidate advances `MT75-W03-ORDER` from pending to processing, downloads the generated CSV and approves its purchase-qualified pending review with an Admin reply.
+- Fixture setup/cleanup completed against the canonical POS browser baseline; Playwright discovery found exactly 1 test, production build passed (589 modules), scoped Pint, TypeScript and the focused-CI allowlist self-test passed. The conventional local browser runner remains under its recorded orchestration LOOP_GUARD and was not rerun.
+- W03 remains IN PROGRESS pending the exact hosted Chromium result and final route/source disposition. Counts remain **14/27 DONE, 13 OPEN (51.85%)**.
