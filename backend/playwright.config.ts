@@ -5,6 +5,8 @@ const webServerTimeout = Number(process.env.PLAYWRIGHT_WEBSERVER_TIMEOUT_MS ?? '
 if (!Number.isFinite(webServerTimeout) || webServerTimeout < 1000 || webServerTimeout > 180000) {
     throw new Error('PLAYWRIGHT_WEBSERVER_TIMEOUT_MS is invalid.');
 }
+const websiteServerCommand = process.env.PLAYWRIGHT_WEBSITE_SERVER_COMMAND
+    ?? 'npm --prefix ../website run build && npm --prefix ../website run start';
 
 export default defineConfig({
     testDir: './tests/browser',
@@ -21,10 +23,19 @@ export default defineConfig({
     },
     globalSetup: './tests/browser/global-setup.ts',
     globalTeardown: './tests/browser/global-teardown.ts',
-    webServer: {
-        command: 'php artisan serve --env=testing --host=127.0.0.1 --port=18080',
-        url: 'http://127.0.0.1:18080/internal/admin/pos/login',
-        reuseExistingServer: false,
-        timeout: webServerTimeout,
-    },
+    webServer: [
+        {
+            command: 'php artisan serve --env=testing --host=127.0.0.1 --port=18080',
+            url: 'http://127.0.0.1:18080/internal/admin/pos/login',
+            reuseExistingServer: false,
+            timeout: webServerTimeout,
+        },
+        {
+            command: websiteServerCommand,
+            url: 'http://127.0.0.1:13000/',
+            env: { ...process.env, WEBSITE_API_TIMEOUT_MS: '12000' },
+            reuseExistingServer: false,
+            timeout: webServerTimeout,
+        },
+    ],
 });
