@@ -1,6 +1,6 @@
 # Mobisttech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r18
+**Registry version:** MT-1.1-r19
 **Applied universal implementation epochs:** `U-CI-2026-09-19-1`
 **Universal baseline (review provenance):** Registry 1.36 / System 7.12
 **Bootstrap baseline (review provenance):** 1.14
@@ -19,6 +19,7 @@
 **Roadmap:** `docs/PROJECT_IMPLEMENTATION_ROADMAP.md`
 **Word mirror:** `docs/PROJECT_IMPLEMENTATION_ROADMAP.docx`
 **Ledger:** `docs/PROJECT_IMPLEMENTATION_STATUS.md`
+**Owner-approved response layout:** `docs/PROJECT_RESPONSE_FORMAT.md`
 
 ## Purpose
 
@@ -44,6 +45,20 @@ This is a **delta-only** project registry. At runtime it inherits the current ca
 - Detailed evidence belongs in Git-tracked documentation; normal user-facing completion/status output remains concise.
 - Roman Urdu is default only for assistant chat/UI; Git-tracked project docs/technical artifacts use standard English unless explicitly overridden.
 
+## Owner-approved project output override (binding)
+
+The canonical ordinary Mobisttech execution, checkpoint, continuation and progress output is `docs/PROJECT_RESPONSE_FORMAT.md`. It supersedes all prior chat examples, cached layouts and inherited default ordinary-project completion/incomplete presentation protocols for **this project's output layout only**. Render exactly five consecutive single-spaced lines, with one hard newline after each field and no blank lines, heading, bullets, code fence, preamble, afterword or additional status fields:
+
+```text
+Completed: <last verified completed work/checkpoint>
+Current: <exact current stage/point and status> (<verified DONE count>/<verified total> DONE)
+Next: <first pending action>
+Proceed? Y/N
+<h:mm AM/PM, d-MMM-yy; fresh user-local time>
+```
+
+Keep `Completed`, `Current`, `Next` and `Proceed? Y/N` labels verbatim. The actual field values must reflect verified current state. Never mark an incomplete W01 or other active point complete; the first field names only actually completed work. For layout, reproduce the approved screenshot's adjacent lines with no extra blank spacing; preserve literal line breaks in the chat renderer if needed. The time line is always the final line and must be fresh after the last state-changing or result-retrieval operation. Do not use older project-chat or memory examples as an alternative template. Do not rewrite historical Git evidence or delete previous conversations as a side effect. The format override must not defeat a specialized command's factual semantics, global-only command scope, read-only barrier, safety checks or the user's explicit request for a different type of answer. A format-only change does not reopen/advance an implementation point or authorize starting the next point.
+
 ## Project performance specialization
 
 - Use the current canonical universal first-bind/session-cache fast path. After successful binding, later aliases reuse the loaded current universal + this project delta; do not reread control registries on each alias except where the universal Refresh/new-session contract requires it.
@@ -59,7 +74,7 @@ This is a **delta-only** project registry. At runtime it inherits the current ca
 
 ## Universal inheritance and governance
 
-All universal aliases, collision rules, execution-intent isolation, read-only mutation barriers, completion/output protocols, evidence budgets, manual-handoff rules, identity/session-lock semantics, Loop-Guard and final-audit defaults not explicitly specialized above are inherited from the **current canonical Universal Registry** at runtime. The review-provenance fields at the top are informational only and never pin execution to an older universal release.
+All universal aliases, collision rules, execution-intent isolation, read-only mutation barriers, evidence budgets, manual-handoff rules, identity/session-lock semantics, Loop-Guard and final-audit defaults not explicitly specialized above are inherited from the **current canonical Universal Registry** at runtime. The owner-approved project-specific ordinary reply format above overrides only the conflicting inherited presentation examples and default ordinary-project output layout. The review-provenance fields at the top are informational only and never pin execution to an older universal release.
 
 `COMPATIBILITY_HOLD: none`.
 
