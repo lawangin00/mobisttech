@@ -172,6 +172,13 @@ jobs:
         working-directory: backend
         run: npx playwright test tests/browser-website/customer.spec.ts --config=playwright.website.config.ts --grep 'MT-7.5 W01 customer owns expiring historical access and private profile media'
 
+      - name: MT-7.5 W01 isolated identity browser join
+        if: needs.mode.outputs.run_scope == 'W01-identity'
+        working-directory: backend
+        run: |
+          npx playwright test tests/browser/pos-shell.spec.ts --config=playwright.config.ts --grep 'MT-7.5 W01 protected owner cannot change own authority and Admin cannot enter Customer realm'
+          npx playwright test tests/browser-website/customer.spec.ts --config=playwright.website.config.ts --grep 'MT-7.5 W01 customer owns expiring historical access and private profile media'
+
       - name: MT-7.5 P02 isolated shared-fixture browser pair
         if: needs.mode.outputs.run_scope == 'P02-variants'
         working-directory: backend

@@ -12,6 +12,26 @@ async function login(page: Page, email: string) {
     await page.waitForURL('**/internal/admin/pos');
 }
 
+test('MT-7.5 W01 protected owner cannot change own authority and Admin cannot enter Customer realm', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await login(page, 'e2e-protected-owner@example.invalid');
+
+    expect((await page.goto('/internal/admin/platform'))?.status()).toBe(200);
+    await page.getByRole('button', { name: 'Team & integrations' }).click();
+    const team = page.getByRole('heading', { name: 'Team Member administration' }).locator('..');
+    await team.locator('select').selectOption({ label: 'E2E Protected Owner · active' });
+    const rejected = page.waitForResponse((response) => response.url().includes('/internal/admin/team-members/')
+        && response.request().method() === 'PATCH');
+    await team.getByRole('button', { name: 'Save Team Member' }).click();
+    expect((await rejected).status()).toBe(403);
+    await expect(page.getByRole('alert')).toContainText('cannot change their own authority');
+
+    const customerRealmStatus = await page.evaluate(async () => (await fetch('/api/v1/account', {
+        headers: { Accept: 'application/json' },
+    })).status);
+    expect(customerRealmStatus).toBe(401);
+});
+
 test('desktop salesperson sees only authorized POS navigation and direct routes stay protected', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page, 'e2e-sales@example.invalid');

@@ -70,6 +70,23 @@ class TeamMemberSessionSecurityTest extends TestCase
         $this->expectForbidden(fn () => $service->createRole($manager, ['name' => 'Escalated', 'permissions' => ['team-members.full-access.assign']]));
     }
 
+    public function test_last_full_access_owner_cannot_disable_or_demote_self(): void
+    {
+        [$owner, $outlet] = $this->actor('Full Access', 'sole-owner@example.invalid');
+        $sales = Role::where('name', 'Sales Associate')->firstOrFail();
+        $service = app(TeamMemberAdministration::class);
+
+        $this->expectForbidden(fn () => $service->updateMember($owner, $owner, [
+            'active' => false,
+            'role_ids' => [$sales->public_id],
+            'outlet_ids' => [$outlet->public_id],
+        ]));
+
+        $fresh = $owner->fresh();
+        $this->assertTrue($fresh->usable());
+        $this->assertTrue($fresh->roles()->where('roles.is_protected', true)->exists());
+    }
+
     public function test_custom_roles_are_validated_audited_and_cannot_orphan_assigned_members(): void
     {
         [$manager, $outlet] = $this->actor('Manager', 'role-manager@example.invalid');

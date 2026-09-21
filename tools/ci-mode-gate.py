@@ -18,8 +18,9 @@ STATE_API = 'https://api.github.com/repos/lawangin00/references/contents/UNIVERS
 STATE_RAW = 'https://raw.githubusercontent.com/lawangin00/references/refs/heads/main/UNIVERSAL_EXECUTION_MODE.json'
 REQUEST_ROOT = '.github/ci-requests/'
 W01_FOCUS = 'W01-customer'
+W01_IDENTITY_FOCUS = 'W01-identity'
 P02_FOCUS = 'P02-variants'
-FOCUSED_SCOPES = (W01_FOCUS, P02_FOCUS)
+FOCUSED_SCOPES = (W01_FOCUS, W01_IDENTITY_FOCUS, P02_FOCUS)
 
 
 def allowed(state, event, request=None):
@@ -52,6 +53,7 @@ def self_test():
     assert allowed({**local, 'exceptions': {PROJECT_ID: 'GITHUB'}}, 'push', request)
     focused = {**request, 'gate': 'verify', 'stage_id': 'MT-7.5', 'focus': W01_FOCUS}
     assert allowed(gh, 'push', focused)
+    assert allowed(gh, 'push', {**focused, 'focus': W01_IDENTITY_FOCUS})
     assert allowed(gh, 'push', {**focused, 'focus': P02_FOCUS})
     for invalid in ({**focused, 'focus': 'other'}, {**focused, 'stage_id': 'MT-7.6'}, {**request, 'gate': 'verify'}):
         try:

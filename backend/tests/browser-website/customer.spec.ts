@@ -152,6 +152,11 @@ test('MT-7.5 W01 customer owns expiring historical access and private profile me
     test.setTimeout(90_000);
     await login(page);
 
+    const adminRealm = await page.context().request.get('http://127.0.0.1:18080/internal/admin/account', {
+        headers: { Accept: 'application/json' },
+    });
+    expect(adminRealm.status()).toBe(401);
+
     await page.getByRole('link', { name: 'MT52-E2E-ORDER', exact: true }).click();
     const [signedPage] = await Promise.all([
         page.waitForEvent('popup'),
