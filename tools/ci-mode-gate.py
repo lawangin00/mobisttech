@@ -10,10 +10,12 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import urllib.error
 import urllib.request
 
 PROJECT_ID = '282dba2f-a2d9-47e8-aa8d-e499fbe1706c'
 STATE_API = 'https://api.github.com/repos/lawangin00/references/contents/UNIVERSAL_EXECUTION_MODE.json?ref=main'
+STATE_RAW = 'https://raw.githubusercontent.com/lawangin00/references/refs/heads/main/UNIVERSAL_EXECUTION_MODE.json'
 REQUEST_ROOT = '.github/ci-requests/'
 
 
@@ -72,6 +74,29 @@ def read_request():
     return request
 
 
+def canonical_mode():
+    headers = {'User-Agent': 'mobisttech-explicit-ci-gate', 'Accept': 'application/vnd.github+json', 'Cache-Control': 'no-cache'}
+    api_request = urllib.request.Request(STATE_API, headers=headers)
+    try:
+        with urllib.request.urlopen(api_request, timeout=15) as response:
+            payload = json.load(response)
+        state = json.loads(base64.b64decode(payload['content']).decode('utf-8'))
+        print('CI_MODE_STATE_SOURCE=canonical-api')
+        return state
+    except urllib.error.HTTPError as error:
+        if error.code != 403:
+            raise
+        # Public canonical state, same exact main branch; a unique query avoids
+        # accepting a stale shared CDN response after an API rate-limit denial.
+        raw_url = STATE_RAW + '?request=' + os.environ['GITHUB_SHA']
+        raw_request = urllib.request.Request(raw_url, headers={'User-Agent': headers['User-Agent'], 'Cache-Control': 'no-cache'})
+        with urllib.request.urlopen(raw_request, timeout=15) as response:
+            assert response.status == 200, 'Canonical raw state was not available'
+            state = json.load(response)
+        print('CI_MODE_STATE_SOURCE=canonical-raw-after-api-403')
+        return state
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--self-test', action='store_true')
@@ -85,11 +110,7 @@ def main():
     else:
         assert event == 'push', 'Unexpected CI event'
         request = read_request()
-        api_request = urllib.request.Request(STATE_API, headers={'User-Agent': 'mobisttech-explicit-ci-gate', 'Accept': 'application/vnd.github+json', 'Cache-Control': 'no-cache'})
-        with urllib.request.urlopen(api_request, timeout=15) as response:
-            payload = json.load(response)
-        state = json.loads(base64.b64decode(payload['content']).decode('utf-8'))
-        selected = allowed(state, event, request)
+        selected = allowed(canonical_mode(), event, request)
     result = 'true' if selected else 'false'
     with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
         output.write('run_tests=' + result + '\n')
