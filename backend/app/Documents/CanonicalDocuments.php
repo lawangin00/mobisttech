@@ -9,6 +9,7 @@ use App\Integrations\GmailApi;
 use App\Models\Admin;
 use App\Models\Outlet;
 use App\Pos\PosConfiguration;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -81,7 +82,7 @@ final class CanonicalDocuments
         $lines = ['RECONSTRUCTED COPY - NOT THE ORIGINAL ISSUED PDF',
             'Historical review only; source records may be transliterated.', ...$this->lines($payload, $settings)];
         abort_unless(count($lines) <= 55, 409, 'Historical PDF exceeds the safe single-page reconstruction limit.');
-        $pdf = $this->pdf($lines, 'a4');
+        $pdf = $this->pdf($lines, 'a4', ($settings['show_logo'] ?? false) ? app(PosConfiguration::class)->documentPdfLogo('invoice') : '');
 
         return ['filename' => 'reconstructed-'.preg_replace('/[^A-Za-z0-9._-]+/', '-',
             (string) ($invoice->invoice_number ?: $invoice->public_id)).'-a4.pdf',
@@ -226,7 +227,8 @@ final class CanonicalDocuments
         $payload = $type === 'invoice' ? $this->invoice($outlet, $documentId) : $this->warranty($outlet, $documentId);
         $presentation = app(PosConfiguration::class)->documentPresentation($type);
         $lines = $this->lines($payload, $presentation['settings']);
-        $pdf = $this->pdf($lines, $format);
+        $showLogo = $type === 'warranty' || ($presentation['settings']['show_logo'] ?? false);
+        $pdf = $this->pdf($lines, $format, $showLogo ? app(PosConfiguration::class)->documentPdfLogo($type) : '');
         $identifier = $type === 'invoice' ? $payload['invoice_number'] : $payload['claim_number'];
 
         return ['type' => $type, 'format' => $format, 'version' => self::VERSION, 'payload' => $payload,
@@ -386,10 +388,19 @@ final class CanonicalDocuments
         return '<article data-contract="canonical-document.v1" data-type="'.e($payload['document_type']).'" style="max-width:'.$width.';color:#111827">'.$logo.'<div>'.$body.'</div><footer data-alignment="'.e($alignment).'" style="text-align:'.e($alignment).'"></footer></article>';
     }
 
-    private function pdf(array $lines, string $format): string
+    private function pdf(array $lines, string $format, string $logoBytes): string
     {
         [$width, $height, $x, $y, $size] = $format === 'thermal80' ? [226, 800, 12, 780, 8] : [595, 842, 40, 810, 10];
-        $stream = "BT\n/F1 {$size} Tf\n{$x} {$y} Td\n12 TL\n";
+        $logo = $logoBytes === '' ? null : Cache::remember(
+            'mobist.document.pdf-logo.v1.'.hash('sha256', $logoBytes),
+            now()->addDay(),
+            fn () => $this->pngForPdf($logoBytes),
+        );
+        $logoHeight = $format === 'thermal80' ? 30 : 48;
+        $logoWidth = $logo ? min($format === 'thermal80' ? 150 : 220, $logoHeight * $logo['width'] / $logo['height']) : 0;
+        $contentY = $logo ? $y - $logoHeight - 12 : $y;
+        $stream = $logo ? "q\n{$logoWidth} 0 0 {$logoHeight} {$x} ".($y - $logoHeight)." cm\n/Logo Do\nQ\n" : '';
+        $stream .= "BT\n/F1 {$size} Tf\n{$x} {$contentY} Td\n12 TL\n";
         foreach ($lines as $line) {
             $stream .= '('.$this->pdfText($line).") Tj\nT*\n";
         }
@@ -397,10 +408,15 @@ final class CanonicalDocuments
         $objects = [
             '<< /Type /Catalog /Pages 2 0 R >>',
             '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-            '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '.$width.' '.$height.'] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+            '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '.$width.' '.$height.'] /Resources << /Font << /F1 5 0 R >>'.($logo ? ' /XObject << /Logo 6 0 R >>' : '').' >> /Contents 4 0 R >>',
             '<< /Length '.strlen($stream)." >>\nstream\n".$stream.'endstream',
             '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
         ];
+        if ($logo) {
+            $objects[] = '<< /Type /XObject /Subtype /Image /Width '.$logo['width'].' /Height '.$logo['height']
+                .' /ColorSpace /'.$logo['color_space'].' /BitsPerComponent 8 /Filter /FlateDecode /Length '.strlen($logo['data'])." >>\nstream\n"
+                .$logo['data']."\nendstream";
+        }
         $pdf = "%PDF-1.4\n";
         $offsets = [0];
         foreach ($objects as $index => $object) {
@@ -415,6 +431,88 @@ final class CanonicalDocuments
         $pdf .= 'trailer << /Size '.(count($objects) + 1)." /Root 1 0 R >>\nstartxref\n{$xref}\n%%EOF\n";
 
         return $pdf;
+    }
+
+    private function pngForPdf(string $bytes): ?array
+    {
+        if (! str_starts_with($bytes, "\x89PNG\r\n\x1a\n")) {
+            return null;
+        }
+        $offset = 8;
+        $idat = '';
+        $header = null;
+        while ($offset + 12 <= strlen($bytes)) {
+            $length = unpack('N', substr($bytes, $offset, 4))[1];
+            $type = substr($bytes, $offset + 4, 4);
+            $data = substr($bytes, $offset + 8, $length);
+            $offset += 12 + $length;
+            if ($type === 'IHDR') {
+                $header = unpack('Nwidth/Nheight/Cdepth/Ccolor/Ccompression/Cfilter/Cinterlace', $data);
+            } elseif ($type === 'IDAT') {
+                $idat .= $data;
+            } elseif ($type === 'IEND') {
+                break;
+            }
+        }
+        if (! $header || $header['width'] < 1 || $header['height'] < 1 || $header['width'] > 4096 || $header['height'] > 4096
+            || $header['width'] * $header['height'] > 8_000_000 || $header['depth'] !== 8 || $header['compression'] !== 0 || $header['filter'] !== 0
+            || $header['interlace'] !== 0 || ! in_array($header['color'], [0, 2, 4, 6], true)) {
+            return null;
+        }
+        $channels = [0 => 1, 2 => 3, 4 => 2, 6 => 4][$header['color']];
+        $raw = zlib_decode($idat);
+        $stride = $header['width'] * $channels;
+        if ($raw === false || strlen($raw) !== ($stride + 1) * $header['height']) {
+            return null;
+        }
+        $previous = str_repeat("\0", $stride);
+        $cursor = 0;
+        $rgb = '';
+        for ($row = 0; $row < $header['height']; $row++) {
+            $filter = ord($raw[$cursor++]);
+            $scan = substr($raw, $cursor, $stride);
+            $cursor += $stride;
+            if ($filter > 4) {
+                return null;
+            }
+            for ($i = 0; $i < $stride; $i++) {
+                $left = $i >= $channels ? ord($scan[$i - $channels]) : 0;
+                $up = ord($previous[$i]);
+                $upperLeft = $i >= $channels ? ord($previous[$i - $channels]) : 0;
+                $scan[$i] = chr((ord($scan[$i]) + match ($filter) {
+                    0 => 0, 1 => $left, 2 => $up, 3 => intdiv($left + $up, 2), 4 => $this->paeth($left, $up, $upperLeft),
+                    default => 0,
+                }) & 255);
+            }
+            for ($i = 0; $i < $stride; $i += $channels) {
+                if ($header['color'] === 0) {
+                    $rgb .= $scan[$i];
+                } elseif ($header['color'] === 2) {
+                    $rgb .= $scan[$i].$scan[$i + 1].$scan[$i + 2];
+                } else {
+                    $alpha = ord($scan[$i + $channels - 1]);
+                    $components = $header['color'] === 4 ? [ord($scan[$i])] : [ord($scan[$i]), ord($scan[$i + 1]), ord($scan[$i + 2])];
+                    foreach ($components as $component) {
+                        $rgb .= chr((int) round(($component * $alpha + 255 * (255 - $alpha)) / 255));
+                    }
+                }
+            }
+            $previous = $scan;
+        }
+
+        return ['width' => $header['width'], 'height' => $header['height'],
+            'color_space' => in_array($header['color'], [0, 4], true) ? 'DeviceGray' : 'DeviceRGB', 'data' => gzcompress($rgb)];
+    }
+
+    private function paeth(int $left, int $up, int $upperLeft): int
+    {
+        $estimate = $left + $up - $upperLeft;
+        $leftDistance = abs($estimate - $left);
+        $upDistance = abs($estimate - $up);
+        $upperLeftDistance = abs($estimate - $upperLeft);
+
+        return $leftDistance <= $upDistance && $leftDistance <= $upperLeftDistance ? $left
+            : ($upDistance <= $upperLeftDistance ? $up : $upperLeft);
     }
 
     private function pdfText(string $value): string

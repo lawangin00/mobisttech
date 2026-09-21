@@ -132,6 +132,23 @@ final class PosConfiguration
         ];
     }
 
+    public function documentPdfLogo(string $type): string
+    {
+        abort_unless(in_array($type, ['invoice', 'warranty'], true), 404);
+        $branding = $this->current('branding');
+        $id = (int) $branding['branding.'.$type.'_logo_media_id'];
+        if ($id > 0) {
+            $asset = DB::table('pos_media_assets')->where('id', $id)->where('status', 'active')->first();
+            $path = $asset ? str_replace('\\', '/', (string) $asset->path) : '';
+            if ($asset && $asset->disk === 'public' && $asset->mime_type === 'image/png'
+                && str_starts_with($path, 'dynamic-media/branding/') && Storage::disk('public')->exists($path)) {
+                return Storage::disk('public')->get($path);
+            }
+        }
+
+        return (string) file_get_contents(public_path('brand/mobist-wordmark-print.png'));
+    }
+
     public function preview(Admin $actor, string $domain, array $changes): array
     {
         $this->authorize($actor, $domain);
@@ -429,6 +446,14 @@ final class PosConfiguration
             }
             if (! in_array($asset->mime_type, ['image/png', 'image/webp'], true)) {
                 throw ValidationException::withMessages([$key => 'POS branding assignments require validated PNG or WebP images.']);
+            }
+            if (in_array($key, ['branding.invoice_logo_media_id', 'branding.warranty_logo_media_id'], true)
+                && $asset->mime_type !== 'image/png') {
+                throw ValidationException::withMessages([$key => 'Document logo assignments require PNG for deterministic PDF rendering.']);
+            }
+            if (in_array($key, ['branding.invoice_logo_media_id', 'branding.warranty_logo_media_id'], true)
+                && ((int) $asset->width > 4096 || (int) $asset->height > 4096 || (int) $asset->width * (int) $asset->height > 8_000_000)) {
+                throw ValidationException::withMessages([$key => 'Document logo dimensions exceed deterministic PDF rendering limits.']);
             }
             if (! Storage::disk($asset->disk)->exists($asset->path)) {
                 throw ValidationException::withMessages([$key => 'The selected POS branding file is missing from storage.']);

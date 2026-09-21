@@ -69,12 +69,13 @@ class DocumentReportingServicesTest extends TestCase
         [$sale, $product] = $this->saleWithPayments('presentation@example.invalid');
         $configuration = app(PosConfiguration::class);
         $path = 'dynamic-media/branding/document-logo.png';
-        Storage::disk('public')->put($path, 'synthetic-document-logo');
+        $logoBytes = file_get_contents(public_path('brand/mobist-wordmark-print.png'));
+        Storage::disk('public')->put($path, $logoBytes);
         $mediaId = DB::table('pos_media_assets')->insertGetId([
             'disk' => 'public', 'path' => $path, 'original_name' => 'document-logo.png',
-            'mime_type' => 'image/png', 'extension' => 'png', 'byte_size' => 23,
+            'mime_type' => 'image/png', 'extension' => 'png', 'byte_size' => strlen($logoBytes),
             'width' => 900, 'height' => 300, 'aspect_ratio' => 3,
-            'sha256' => hash('sha256', 'synthetic-document-logo'), 'alt_text' => 'Published document logo',
+            'sha256' => hash('sha256', $logoBytes), 'alt_text' => 'Published document logo',
             'status' => 'active', 'uploaded_by_type' => Admin::class, 'uploaded_by_id' => $this->actor->id,
             'created_at' => now(), 'updated_at' => now(),
         ]);
@@ -112,6 +113,8 @@ class DocumentReportingServicesTest extends TestCase
         $pdf = $documents->savePdf($this->actor, $this->outlet, 'invoice', $sale['invoice_id']);
         $this->assertStringContainsString('Configured presentation footer', $pdf['pdf']);
         $this->assertStringNotContainsString('CNIC:', $pdf['pdf']);
+        $this->assertStringContainsString('/Subtype /Image', $pdf['pdf']);
+        $this->assertStringContainsString('/Logo Do', $pdf['pdf']);
 
         DB::table('products')->where('id', $product->id)->update(['warranty_type' => 'shop_warranty', 'warranty_unit' => 0, 'warranty_duration' => 30]);
         DB::table('sales')->where('public_id', $sale['sale_ids'][0])->update([
