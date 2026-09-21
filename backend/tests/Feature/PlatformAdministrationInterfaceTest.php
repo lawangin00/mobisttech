@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -154,6 +155,7 @@ class PlatformAdministrationInterfaceTest extends TestCase
     public function test_branding_media_role_constraints_and_business_profile_recent_auth_are_enforced(): void
     {
         Carbon::setTestNow('2026-09-18 13:00:00');
+        Storage::fake('public');
         [$admin, $outlet] = $this->admin('branding-admin@example.invalid', $this->platformPermissions());
         $client = $this->client();
         $this->login($client, $admin->email)->assertOk();
@@ -172,6 +174,23 @@ class PlatformAdministrationInterfaceTest extends TestCase
         $this->send($client, 'POST', '/internal/admin/platform/pos-config/branding/preview', [
             'settings' => ['branding.app_icon_media_id' => $mediaId],
         ])->assertUnprocessable();
+
+        $mediaPath = DB::table('pos_media_assets')->where('id', $mediaId)->value('path');
+        Storage::disk('public')->assertExists($mediaPath);
+        DB::table('pos_configuration_revisions')->insert([
+            'domain' => 'branding', 'version' => 1, 'state' => 'draft',
+            'snapshot' => json_encode(['branding.app_icon_media_id' => $mediaId], JSON_THROW_ON_ERROR),
+            'created_by_type' => Admin::class, 'created_by_id' => $admin->id,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->send($client, 'DELETE', '/internal/admin/platform/pos-config/branding/media/'.$mediaId)
+            ->assertConflict();
+        $this->assertDatabaseHas('pos_media_assets', ['id' => $mediaId]);
+        DB::table('pos_configuration_revisions')->where('domain', 'branding')->delete();
+        $this->send($client, 'DELETE', '/internal/admin/platform/pos-config/branding/media/'.$mediaId)
+            ->assertOk()->assertJsonPath('data.deleted', true);
+        $this->assertDatabaseMissing('pos_media_assets', ['id' => $mediaId]);
+        Storage::disk('public')->assertMissing($mediaPath);
 
         $this->send($client, 'POST', '/internal/admin/platform/pos-config/branding/media', [
             'base64' => 'not-base64',

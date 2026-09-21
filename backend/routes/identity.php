@@ -190,6 +190,7 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::post('/platform/pos-config/revisions/{revision}/publish', [PlatformAdministrationController::class, 'posConfigurationPublish'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.publish');
     Route::post('/platform/pos-config/revisions/{revision}/rollback', [PlatformAdministrationController::class, 'posConfigurationRollback'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.rollback');
     Route::post('/platform/pos-config/branding/media', [PlatformAdministrationController::class, 'posBrandingMedia'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.branding.media');
+    Route::delete('/platform/pos-config/branding/media/{media}', [PlatformAdministrationController::class, 'posBrandingMediaDelete'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.branding.media.delete');
     Route::patch('/platform/business-profile', [PlatformAdministrationController::class, 'businessProfile'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.platform.business-profile');
     Route::post('/platform/website-mode/draft', [PlatformAdministrationController::class, 'modeDraft'])->defaults('identity_realm', 'admin')->name('admin.platform.mode.draft');
     Route::get('/platform/website-mode/{revision}/preview', [PlatformAdministrationController::class, 'modePreview'])->defaults('identity_realm', 'admin')->name('admin.platform.mode.preview');

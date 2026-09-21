@@ -228,6 +228,32 @@ final class PosConfiguration
         return $this->mediaRow(DB::table('pos_media_assets')->where('id', $id)->firstOrFail());
     }
 
+    public function deleteBrandingMedia(Admin $actor, int $mediaId): array
+    {
+        $this->authorize($actor, 'branding');
+
+        return DB::transaction(function () use ($actor, $mediaId) {
+            $asset = DB::table('pos_media_assets')->where('id', $mediaId)->lockForUpdate()->firstOrFail();
+            abort_unless($asset->status === 'active', 409, 'Only active POS branding media can be deleted.');
+            abort_unless($asset->disk === 'public' && str_starts_with(str_replace('\\', '/', $asset->path), 'dynamic-media/branding/'), 409, 'POS branding media path is not safe to delete.');
+            abort_if(DB::table('pos_media_usages')->where('media_asset_id', $mediaId)->exists(), 409, 'POS branding media is currently published and cannot be deleted.');
+
+            $referencedByRevision = DB::table('pos_configuration_revisions')->where('domain', 'branding')
+                ->get(['snapshot'])->contains(function ($revision) use ($mediaId) {
+                    $snapshot = json_decode($revision->snapshot, true, flags: JSON_THROW_ON_ERROR);
+
+                    return in_array($mediaId, array_map('intval', array_values($snapshot)), true);
+                });
+            abort_if($referencedByRevision, 409, 'POS branding media is retained by configuration history and cannot be deleted.');
+
+            DB::table('pos_media_assets')->where('id', $mediaId)->delete();
+            DB::afterCommit(fn () => Storage::disk($asset->disk)->delete($asset->path));
+            IdentityAudit::record('admin', $actor->id, 'pos_branding_media_deleted', "pos-media:{$mediaId}");
+
+            return ['id' => $mediaId, 'deleted' => true];
+        });
+    }
+
     private function definitions(string $domain): array
     {
         $this->domain($domain);

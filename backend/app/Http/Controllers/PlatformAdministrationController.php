@@ -226,6 +226,11 @@ final class PlatformAdministrationController extends Controller
         )]);
     }
 
+    public function posBrandingMediaDelete(int $media, PosConfiguration $service)
+    {
+        return response()->json(['data' => $service->deleteBrandingMedia($this->actor(), $media)]);
+    }
+
     public function businessProfile(Request $request, BusinessProfile $service)
     {
         return response()->json(['data' => $service->update($this->actor(), $request->all())]);
