@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "053706f1212d24d0a4c2110486bda7326990a6b6",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "P02-variants",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T14:12:38Z",
+  "description": "Reverify exact P02 serial browser fixture pair and final schema gate on a fresh isolated MySQL schema after wiring the already guarded FirstOutletE2eCleanupSeeder after PosShellE2eCleanupSeeder in the browser global teardown; no business or production database reset."
+}
