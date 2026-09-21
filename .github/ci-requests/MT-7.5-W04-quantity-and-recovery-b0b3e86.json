@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "b0b3e865124dde0d5f387cf42ce980e35c738bea",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T17:43:00Z",
+  "description": "Verify exact-source scoped Website hosted-payment failure recovery UI and five stale product-card quantity assertions without changing previously accepted W03; inspect full browser terminal result and preserve external-provider HOLD."
+}
