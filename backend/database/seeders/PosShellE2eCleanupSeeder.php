@@ -119,7 +119,14 @@ class PosShellE2eCleanupSeeder extends Seeder
                     'product_brand' => ['mt75_p02_variant_brand', 'MT75 P02 Variant Brand'], 'device_ram_gb' => ['ram_8gb', '8 GB'],
                     'device_storage_gb' => ['storage_128gb', '128 GB'], 'device_sim_configuration' => ['mt75_p02_dual_sim', 'MT75 P02 Dual SIM']] as $list => [$code, $label]) {
                     $option = DB::table('pos_master_data_options')->where('list_key', $list)->where('code', $code)->where('label', $label)->first();
-                    abort_unless($option && ! DB::table('pos_master_data_usages')->where('master_data_option_id', $option->id)->exists(), 409);
+                    abort_unless($option, 409, 'Expected P02 master-data fixture option is missing: '.$list.'/'.$code);
+                    // First-owner bootstrap owns these canonical shared options; its guarded
+                    // teardown removes them after every synthetic product and usage is gone.
+                    if (in_array($list, ['product_category', 'device_ram_gb', 'device_storage_gb'], true)) {
+                        continue;
+                    }
+                    abort_unless(! DB::table('pos_master_data_usages')->where('master_data_option_id', $option->id)->exists(), 409,
+                        'P02-only master-data option retains a usage: '.$list.'/'.$code);
                     DB::table('pos_master_data_options')->where('id', $option->id)->delete();
                 }
             }

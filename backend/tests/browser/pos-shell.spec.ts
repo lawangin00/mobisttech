@@ -121,6 +121,13 @@ test('assigned Admin edits outlet profile through protected POS workspace withou
     await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Verified Profile');
     await page.reload();
     await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Verified Profile');
+    // Restore the shared synthetic outlet after verifying profile persistence.
+    await page.getByTestId('outlet-profile-name').fill('E2E Sales Outlet');
+    const restored=page.waitForResponse(r=>r.url().endsWith('/internal/admin/pos/outlet-profile')&&r.request().method()==='PATCH');
+    await page.getByTestId('outlet-profile-save').click();
+    expect((await restored).status()).toBe(200);
+    await page.reload();
+    await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Sales Outlet');
 });
 
 test('Full Access edits an unassigned outlet only after explicit password confirmation without membership transfer', async ({page}) => {
@@ -145,6 +152,15 @@ test('Full Access edits an unassigned outlet only after explicit password confir
     await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Unassigned Profile Reviewed');
     const assigned=await page.evaluate(async()=>{const r=await fetch('/internal/admin/outlets',{headers:{Accept:'application/json'}});return r.ok?(await r.json()).data:[];}) as Array<{name:string}>;
     expect(assigned.some(outlet=>outlet.name==='E2E Unassigned Profile Reviewed')).toBe(false);
+    // Do not leave the shared inventory-outlet option renamed for later browser tests.
+    await page.getByTestId('outlet-profile-name').fill('E2E Inventory Outlet');
+    await page.getByTestId('outlet-managed-password').fill(password);
+    const restored=page.waitForResponse(r=>r.url().includes('/internal/admin/outlet-management/')&&r.url().endsWith('/profile')&&r.request().method()==='PATCH');
+    await page.getByTestId('outlet-profile-save').click();
+    expect((await restored).status()).toBe(200);
+    await page.reload();
+    await page.getByTestId('outlet-manage-profile-E42').click();
+    await expect(page.getByTestId('outlet-profile-name')).toHaveValue('E2E Inventory Outlet');
 });
 
 test('protected Admin creates and archives an unused outlet and reads its history', async ({page}) => {
