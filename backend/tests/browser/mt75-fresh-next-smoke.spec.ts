@@ -60,7 +60,7 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await page.getByRole('spinbutton', { name: 'Warranty duration' }).fill('30');
     await page.getByTestId('product-save').click();
     const product = page.getByRole('button', { name: /MT75 Fresh Accessory/ });
-    await expect(product).toContainText('Qty 0');
+    await expect(product.locator('..')).toContainText('Qty 0');
 
     const receive = page.getByRole('heading', { name: 'Receive stock' }).locator('xpath=ancestor::section[1]');
     await receive.locator('select').nth(0).selectOption({ label: 'MT75 Fresh Accessory' });
@@ -71,7 +71,7 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await receive.getByPlaceholder('03XXXXXXXXX').fill('03000000000');
     await receive.getByPlaceholder('Address').fill('Target-only supplier address');
     await page.getByTestId('acquire-submit').click();
-    await expect(page.getByRole('button', { name: /MT75 Fresh Accessory/ })).toContainText('Qty 3');
+    await expect(page.getByRole('button', { name: /MT75 Fresh Accessory/ }).locator('..')).toContainText('Qty 3');
     await page.goto('/internal/admin/platform');
     const modeSection = page.getByRole('heading', { name: 'Website operating mode' }).locator('xpath=ancestor::section[1]');
     await modeSection.getByRole('button', { name: 'Save mode draft' }).click();
@@ -110,7 +110,7 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await page.getByLabel('Track IMEI').check();
     await page.getByTestId('product-save').click();
     const tracked=page.getByRole('button',{name:/MT75 Fresh Tracked Phone/});
-    await expect(tracked).toContainText('Qty 0');
+    await expect(tracked.locator('..')).toContainText('Qty 0');
     const trackedReceive=page.getByRole('heading',{name:'Receive stock'}).locator('xpath=ancestor::section[1]');
     await trackedReceive.locator('select').nth(0).selectOption({label:'MT75 Fresh Tracked Phone'});
     await trackedReceive.getByPlaceholder('Qty').fill('1');
@@ -120,7 +120,7 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await trackedReceive.getByPlaceholder('03XXXXXXXXX').fill('03000000000');
     await trackedReceive.getByPlaceholder('Address').fill('Target-only synthetic address');
     await page.getByTestId('acquire-submit').click();
-    await expect(tracked).toContainText('Qty 1');
+    await expect(tracked.locator('..')).toContainText('Qty 1');
     const unit=page.getByRole('heading',{name:'Unit / IMEI'}).locator('xpath=ancestor::section[1]');
     await unit.locator('select').nth(0).selectOption({index:1});
     await unit.getByPlaceholder('IMEI 1').fill('MT75-PRIVATE-TRACKED-IMEI');
@@ -267,7 +267,7 @@ test('MT75 fresh publication reaches real Next.js product and guest cart', async
     await page.getByPlaceholder('Sale price').fill('90.00');
     await page.getByTestId('product-save').click();
     const second=page.getByRole('button',{name:/MT75 Fresh Budget Accessory/});
-    await expect(second).toContainText('Qty 0');
+    await expect(second.locator('..')).toContainText('Qty 0');
     await second.locator('..').getByRole('button',{name:'Website listing'}).click();
     await expect(page.getByTestId('website-listing-editor')).toContainText('MT75 Fresh Budget Accessory');
     await page.getByTestId('website-listing-publish').click();
