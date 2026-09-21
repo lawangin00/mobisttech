@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "3652b19d51b5995106971906cbd32c295db0cfdb",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T20:15:08Z",
+  "description": "Verify P02 linked master-data fixture exact canonical category guard, lifecycle outlet selection and synthetic browser logout without changing production authorization; recheck shared browser, teardown and downstream Website acceptance on disposable CI schema."
+}
