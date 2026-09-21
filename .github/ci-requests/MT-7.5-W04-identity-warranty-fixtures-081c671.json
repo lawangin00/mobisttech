@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "081c6710f257df95ccadf0db147621bdeefccfd5",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T20:44:28Z",
+  "description": "Verify synthetic loopback-only browser identity limiter, guarded warranty intake preference fixture and teardown ordering against isolated first-owner, shared POS/Admin and downstream Website browser gates. Preserve production identity limits, authentication and payment provider defaults."
+}
