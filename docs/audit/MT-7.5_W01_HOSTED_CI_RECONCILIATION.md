@@ -1,0 +1,9 @@
+# MT-7.5 W01 hosted CI reconciliation
+
+Status: IN PROGRESS. W01 remains open (13/27 complete, 14 open); P07 remains complete.
+
+- Source candidate: `27520b504026792d57eb823c937f6d2fabb3f08c`; exact-source request commit: `a5e3022ddbbfd81ae3e54916aa261d29bbd1fd0d`.
+- Hosted full CI run `35591937159`, acceptance job `106308096867`, terminal FAILURE: full backend regression 337 passed / 1 failed (10,000 assertions). Later browser gates, including W01 Customer browser, were skipped, not passed.
+- Exact failure: `PosCustomerReportingInterfaceTest::test_invoice_customer_documents_delivery_retry_and_report_export_http_contract`, line 106. WhatsApp invoice document HTTP returned 500 instead of 200 because `PosCustomerReportingController::whatsapp` passed raw binary PDF in the JSON response; Laravel rejected malformed UTF-8. The binary PDF arose from existing `CanonicalDocuments::prepareWhatsapp` attachment data. This is a POS document JSON-transport regression exposed by independent W01 hosted verification, not proof of W01 Customer failure.
+- Material fix at `7c7719b17dc42d8dbd32ff60c97e62bbf2e24a34`: normalize only the WhatsApp HTTP attachment's `pdf` bytes to JSON-safe `pdf_base64` and remove the raw binary key, mirroring the existing document PDF endpoint. Underlying PDF bytes/hash, durable delivery attempt, send permission, customer/outlet scope and WhatsApp URI logic are unchanged. The existing positive WhatsApp HTTP test catches the previously terminal HTTP 500.
+- Next: submit a new exact-source hosted acceptance request after this evidence commit; inspect terminal full backend and browser gates. Do not label W01 complete from a request commit, passing static build or an unrelated test. If an equivalent failure repeats, activate Loop Guard and audit before any further equivalent retry.
