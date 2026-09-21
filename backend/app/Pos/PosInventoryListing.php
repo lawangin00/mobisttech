@@ -90,6 +90,7 @@ final class PosInventoryListing
             'auto_focus_search' => $prefs['auto_focus_search'], 'remember_search' => $prefs['remember_search'],
             'density' => $prefs['inventory_density'],
             'sort' => $prefs['inventory_sort'], 'filter' => $prefs['inventory_filter'],
+            'columns' => app(PortalPreferences::class)->columnsFor('inventory'),
         ]];
     }
 }

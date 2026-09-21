@@ -101,6 +101,7 @@ final class PosHistoryListing
             'density' => $preferences[$area === 'invoices' ? 'invoice_density' : 'claims_density'],
             'sort' => $sort,
             'filter' => $preferences[$area === 'invoices' ? 'invoice_filter' : 'claims_filter'],
+            'columns' => app(PortalPreferences::class)->columnsFor($area === 'invoices' ? 'invoices' : 'claims'),
         ]];
     }
 }

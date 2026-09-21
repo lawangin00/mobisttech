@@ -211,6 +211,7 @@ class PosTransactionInterfaceTest extends TestCase
         $first = $this->send($client, 'GET', $url.'?mode=inventory')->assertOk();
         $first->assertJsonPath('data.pagination.total', 112)->assertJsonPath('data.pagination.per_page', 10)
             ->assertJsonPath('data.pagination.pages', 12)->assertJsonPath('data.pagination.category', 'all')
+            ->assertJsonPath('data.pagination.columns.0.id', 'product')->assertJsonPath('data.pagination.columns.8.id', 'actions')
             ->assertJsonCount(10, 'data.products');
         $this->send($client, 'GET', $url.'?mode=inventory&page=12')->assertOk()
             ->assertJsonPath('data.pagination.page', 12)->assertJsonCount(2, 'data.products');

@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia as Assert;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
@@ -1579,7 +1580,9 @@ class PosShellTest extends TestCase
             ->component('pos-portal-preferences')->where('values.invoice_page_length', '15')
             ->where('values.inventory_page_length', '10')->where('values.auto_focus_search', true)
             ->where('values.remember_search', false)->where('values.navigation', [])
-            ->has('options.invoice_search_category', 8)->has('navigation', 9));
+            ->has('options.invoice_search_category', 8)->has('navigation', 9)
+            ->has('column_catalogue.invoices', 7)->has('column_catalogue.claims', 7)
+            ->has('column_catalogue.inventory', 9));
         $values = app(PortalPreferences::class)->current();
         $values['invoice_page_length'] = '50';
         $values['inventory_page_length'] = '100';
@@ -1587,12 +1590,22 @@ class PosShellTest extends TestCase
         $values['invoice_density'] = 'compact';
         $values['inventory_sort'] = 'stock_high';
         $values['invoice_sort'] = 'total_high';
+        $values['columns']['invoices']['total'] = ['visible' => false, 'order' => 80];
+        $values['columns']['inventory']['sale_price'] = ['visible' => false, 'order' => 70];
         $values['remember_search'] = true;
         $values['navigation'] = ['invoices' => ['label' => 'Customer documents', 'visible' => false, 'order' => 140]];
         $this->send($client, 'PUT', $url, [...$values, 'outlet_id' => 'unauthorized'])->assertUnprocessable();
         $this->send($client, 'PUT', $url, [...$values, 'navigation' => [
             'sales' => ['label' => 'Sales', 'visible' => false, 'order' => 100],
         ]])->assertUnprocessable();
+        try {
+            app(PortalPreferences::class)->update($owner, [...$values, 'columns' => [...$values['columns'], 'invoices' => [
+                ...$values['columns']['invoices'], 'invoice_number' => ['visible' => false, 'order' => 10],
+            ]]]);
+            $this->fail('A protected column was hidden.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('columns.invoices.invoice_number', $exception->errors());
+        }
         // Identity limiter is 5/min by path+IP; keep guest, denied, invalid and successful writes below cap.
         $this->assertFalse(in_array('500', app(PortalPreferences::class)->catalogue($owner)['options']['invoice_page_length'], true));
         $this->assertSame(0, DB::table('pos_settings')->where('group', 'portal')->count());
@@ -1601,6 +1614,8 @@ class PosShellTest extends TestCase
             ->assertJsonPath('data.invoice_density', 'compact')
             ->assertJsonPath('data.inventory_sort', 'stock_high')
             ->assertJsonPath('data.invoice_sort', 'total_high')
+            ->assertJsonPath('data.columns.invoices.total.visible', false)
+            ->assertJsonPath('data.columns.invoices.total.order', 80)
             ->assertJsonPath('data.navigation.invoices.label', 'Customer documents')
             ->assertJsonPath('data.navigation.invoices.visible', false);
         $this->send($client, 'GET', $url)->assertOk()->assertInertia(fn (Assert $page) => $page
@@ -1611,7 +1626,10 @@ class PosShellTest extends TestCase
         $this->send($client, 'POST', '/internal/admin/outlets/select', ['outlet_id' => $outlet->public_id])->assertOk();
         $this->send($client, 'GET', '/internal/admin/pos/workspace/invoices')->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('view.workspace.key', 'invoices'));
-        $this->assertSame(19, DB::table('pos_settings')->where('group', 'portal')->count());
+        $this->send($client, 'GET', '/internal/admin/pos/customer-reporting/invoices')->assertOk()
+            ->assertJsonPath('data.pagination.columns.5.id', 'total')
+            ->assertJsonPath('data.pagination.columns.5.visible', false);
+        $this->assertSame(20, DB::table('pos_settings')->where('group', 'portal')->count());
         $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
             ->where('action', 'pos_portal_preferences_updated')->count());
     }

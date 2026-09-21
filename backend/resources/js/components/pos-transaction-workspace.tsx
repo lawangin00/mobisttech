@@ -7,7 +7,7 @@ type Unit = { id: string; code: string; status: string; version: number; imeis: 
 type Product = { website_listing?:{slug:string;description:string;is_online:boolean;version:number}|null; category_master_data_id?:number|null;subcategory_master_data_id?:number|null;brand_master_data_id?:number|null;ram_master_data_id?:number|null;storage_master_data_id?:number|null;sim_master_data_id?:number|null;warranty_type?:string|null;warranty_unit?:number|null;warranty_duration?:number|null; id: string; code: string; name: string; category?: string; model?: string | null; brand_snapshot?: string | null; brand_display?: string | null; purchase_price: string; sale_price: string; qty: number; track_imei: boolean; version?: number; units: Unit[]; acquisitions?:Array<{source_type:string;quantity:number;unit_purchase_price:string;acquired_at:string}>; movements?:Array<{type:string;quantity_change:number;stock_before:number;stock_after:number;created_at:string}>; subcategory_display?: string | null; ram_display?: string | null; storage_display?: string | null; sim_display?: string | null };
 type Destination = { public_id: string; method: string; display_name: string };
 type Master = { id: number; list_key: string; code: string; label: string; metadata: Record<string, unknown> };
-type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean;density:'comfortable'|'compact';sort:string;filter:string };
+type InventoryPaging = { page:number;pages:number;total:number;per_page:number;q:string;category:string;options:string[];auto_focus_search:boolean;remember_search:boolean;density:'comfortable'|'compact';sort:string;filter:string;columns:Array<{id:string;label:string;visible:boolean;order:number}> };
 type Catalogue = { products: Product[]; page: number; has_more: boolean; pagination: InventoryPaging | null; payment_destinations: Destination[]; master_data: Master[]; can_send_documents: boolean };
 type Payment = { method: string; destination_id: string; amount: string; transaction_reference?: string; cash_tendered?: string };
 type Quote = { payable: string; payments_total: string; remaining: string; cash_change: string };
@@ -90,6 +90,7 @@ export default function PosTransactionWorkspace({ area, memoryScope }: { area: '
 }
 
 function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | null; busy: boolean; run: (task: () => Promise<void>) => Promise<void>; reload: () => Promise<void> }) {
+    const column=(id:string)=>catalogue?.pagination?.columns.find(item=>item.id===id)??{id,label:id,visible:true,order:999};
     const [productId, setProductId] = useState('');
     const [quantity, setQuantity] = useState('1');
     const [cost, setCost] = useState('');
@@ -158,15 +159,15 @@ function Inventory({ catalogue, busy, run, reload }: { catalogue: Catalogue | nu
     };
     return <div className="grid min-w-0 gap-5 xl:grid-cols-2">
         <section className="min-w-0 rounded-2xl border bg-white p-5"><h3 className="font-semibold">Inventory</h3>
-            <div className="mt-3 grid gap-2">{catalogue?.products.map((p) => <div key={p.id} className="rounded-xl border p-3">
-                <button className="w-full text-left" onClick={() => { setProductId(p.id); setCost(p.purchase_price); setUnitId(p.units[0]?.id ?? ''); }}><strong>{p.name}</strong><span className="block text-xs text-slate-500">{p.code} · Qty {p.qty} · PKR {p.sale_price}</span></button>
+            <div className="mt-3 grid gap-2">{catalogue?.products.map((p) => <div key={p.id} className="flex flex-col rounded-xl border p-3">
+                <button style={{order:column('product').order}} className="w-full text-left" onClick={() => { setProductId(p.id); setCost(p.purchase_price); setUnitId(p.units[0]?.id ?? ''); }}><strong>{p.name}</strong><span className="block text-xs text-slate-500">{p.code}</span></button><p hidden={!column('purchase_cost').visible} style={{order:column('purchase_cost').order}} className="mt-1 text-xs text-slate-600">Purchase PKR {p.purchase_price}</p><p hidden={!column('sale_price').visible} style={{order:column('sale_price').order}} className="mt-1 text-xs text-slate-600">Sale PKR {p.sale_price}</p><p hidden={!column('in_stock').visible} style={{order:column('in_stock').order}} className="mt-1 text-xs text-slate-600">Qty {p.qty}</p><p hidden={!column('imei_tracking').visible} style={{order:column('imei_tracking').order}} className="mt-1 text-xs text-slate-600">IMEI tracking {p.track_imei?'enabled':'disabled'}</p>
                 {p.brand_snapshot && <p data-testid={'inventory-brand-history-'+p.id} className="mt-1 text-xs text-slate-600">Original brand: {p.brand_snapshot} · Current brand: {p.brand_display}</p>}
-                {(p.subcategory_display || p.ram_display || p.storage_display || p.sim_display) && <p data-testid={'inventory-variant-'+p.id} className="mt-1 text-xs text-slate-600">{[p.subcategory_display, p.ram_display, p.storage_display, p.sim_display].filter(Boolean).join(' · ')}</p>}
-                <button data-testid={'product-edit-'+p.id} onClick={()=>void run(async()=>{editDefinition(p);})} className="mt-2 mr-2 rounded border px-2 py-1 text-xs">Edit definition</button>
+                {(p.subcategory_display || p.ram_display || p.storage_display || p.sim_display) && <p data-testid={'inventory-variant-'+p.id} hidden={!column('variant').visible} style={{order:column('variant').order}} className="mt-1 text-xs text-slate-600">{[p.subcategory_display, p.ram_display, p.storage_display, p.sim_display].filter(Boolean).join(' · ')}</p>}
+                <div style={{order:column('actions').order}}><button data-testid={'product-edit-'+p.id} onClick={()=>void run(async()=>{editDefinition(p);})} className="mt-2 mr-2 rounded border px-2 py-1 text-xs">Edit definition</button>
                 <button data-testid={'product-website-'+p.id} onClick={()=>openWebsiteEditor(p)} className="mt-2 mr-2 rounded border px-2 py-1 text-xs">Website listing</button>
-                <button onClick={() => void run(() => printLabel('product', p.id))} className="mt-2 rounded border px-2 py-1 text-xs">Print product label</button>
-                {p.units.length > 0 && <p className="mt-2 text-xs text-slate-500">{p.units.map((u) => u.code + (u.imeis.length ? ' (' + u.imeis.join(', ') + ')' : '')).join(' · ')}</p>}
-                <div data-testid={'inventory-history-'+p.id} className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
+                <button onClick={() => void run(() => printLabel('product', p.id))} className="mt-2 rounded border px-2 py-1 text-xs">Print product label</button></div>
+                {p.units.length > 0 && <p hidden={!column('unit_details').visible} style={{order:column('unit_details').order}} className="mt-2 text-xs text-slate-500">{p.units.map((u) => u.code + (u.imeis.length ? ' (' + u.imeis.join(', ') + ')' : '')).join(' · ')}</p>}
+                <div data-testid={'inventory-history-'+p.id} hidden={!column('history').visible} style={{order:column('history').order}} className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
                     <div><strong className="text-slate-800">Acquisition history</strong>{p.acquisitions?.length
                         ? <ul className="mt-1 space-y-1">{p.acquisitions.map((row,index)=><li key={index}>{row.source_type} · {row.quantity} @ PKR {row.unit_purchase_price}</li>)}</ul>
                         : <p className="mt-1">No acquisition recorded.</p>}</div>
