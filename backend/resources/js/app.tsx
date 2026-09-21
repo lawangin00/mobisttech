@@ -14,7 +14,6 @@ import AdminRecovery from './pages/admin-recovery';
 import PosAuditViewer from './pages/pos-audit-viewer';
 import PosPortalPreferences from './pages/pos-portal-preferences';
 import PosDashboardReportPreferences from './pages/pos-dashboard-report-preferences';
-import WebsiteCommerceAdministration from './pages/website-commerce-administration';
 import AdminSessionBoundary from './components/admin-session-boundary';
 
 void createInertiaApp({
@@ -33,7 +32,7 @@ void createInertiaApp({
         if (name === 'pos-audit-viewer') return PosAuditViewer;
         if (name === 'pos-portal-preferences') return PosPortalPreferences;
         if (name === 'pos-dashboard-report-preferences') return PosDashboardReportPreferences;
-        if (name === 'website-commerce-administration') return WebsiteCommerceAdministration;
+        if (name === 'website-commerce-administration') return import('./pages/website-commerce-administration').then((page) => page.default);
         throw new Error('Unknown application page');
     },
     setup({ el, App, props }) {
