@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "211b93003ed761258884e62bb110e17fbee087ce",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "W03-commerce",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T16:00:56Z",
+  "description": "Run W03 browser acceptance after the materially distinct dynamic Inertia page registration passed the unchanged 614400-byte backend bundle budget at 609908 bytes."
+}
