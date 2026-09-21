@@ -74,6 +74,7 @@ final class PosShell
             'outlets' => $outlets->map(fn ($outlet) => ['id' => $outlet->public_id, 'name' => $outlet->name])->values()->all(),
             'active_outlet' => $active ? ['id' => $active->public_id, 'name' => $active->name] : null,
             'can_manage_outlets' => app(OutletLifecycleAdministration::class)->canManage($actor),
+            'can_manage_dashboard_reports' => app(DashboardReportPreferences::class)->canManage($actor),
             'navigation' => $navigation,
             'session_policy' => app(RealmSessionPolicy::class)->publicContract('admin'),
             'session_state' => app(RealmSessionPolicy::class)->publicState($request, 'admin', $actor),

@@ -6,6 +6,7 @@ use App\Documents\CanonicalDocuments;
 use App\Identity\Access;
 use App\Models\Admin;
 use App\Models\Outlet;
+use App\Pos\DashboardReportPreferences;
 use App\Pos\PortalPreferences;
 use App\Pos\PosHistoryListing;
 use App\Pos\PosWarrantyIntakeSearch;
@@ -106,6 +107,7 @@ final class PosCustomerReportingController extends Controller
             'can_send_documents' => app(Access::class)->allows($actor, 'shop.documents.send', $outlet),
             'invoices' => $invoices, 'customers' => $customers, 'claims' => $claims,
             'sale_candidates' => $saleCandidates, 'report' => $report, 'pagination' => $pagination,
+            'report_presentation' => $area === 'reports' ? ['sections' => app(DashboardReportPreferences::class)->current()] : null,
             'warranty_intake_category' => $area === 'claims' ? app(PortalPreferences::class)->current()['warranty_search_category'] : null,
         ]]);
     }

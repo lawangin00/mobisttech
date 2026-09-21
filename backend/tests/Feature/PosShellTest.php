@@ -10,6 +10,7 @@ use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\StockUnit;
+use App\Pos\DashboardReportPreferences;
 use App\Pos\PortalPreferences;
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -1613,6 +1614,45 @@ class PosShellTest extends TestCase
         $this->assertSame(19, DB::table('pos_settings')->where('group', 'portal')->count());
         $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
             ->where('action', 'pos_portal_preferences_updated')->count());
+    }
+
+    public function test_dashboard_report_presentation_is_separately_authorized_and_runtime_projected(): void
+    {
+        $owner = $this->member('report-layout-owner@example.invalid', ['shops.enter', 'reports.view',
+            'config.dashboard-reports.manage', 'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
+        $outlet = $this->outlet('Report presentation outlet', '088');
+        $owner->shops()->attach($outlet);
+        $limited = $this->member('report-layout-limited@example.invalid', ['config.dashboard-reports.manage']);
+        $url = '/internal/admin/pos/dashboard-report-preferences';
+        $guest = $this->client();
+        $this->send($guest, 'GET', $url)->assertUnauthorized();
+        $denied = $this->client();
+        $this->login($denied, $limited->email)->assertOk();
+        $this->send($denied, 'GET', $url)->assertForbidden();
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
+        $this->send($client, 'GET', $url)->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('pos-dashboard-report-preferences')->has('sections', 4)
+            ->where('sections.0.key', 'sales')->where('sections.0.visible', true));
+        $sections = app(DashboardReportPreferences::class)->current();
+        $sections[0]['visible'] = false;
+        $sections[0]['order'] = 40;
+        $sections[1]['order'] = 10;
+        $submission = array_map(fn (array $section) => ['key' => $section['key'],
+            'visible' => $section['visible'], 'order' => $section['order']], $sections);
+        $this->send($client, 'PUT', $url, ['sections' => [...$sections, ['key' => 'unsafe', 'visible' => true, 'order' => 50]]])
+            ->assertUnprocessable();
+        $this->send($client, 'PUT', $url, ['sections' => $submission])->assertOk()
+            ->assertJsonPath('data.sections.0.key', 'payments')->assertJsonPath('data.sections.1.key', 'categories')
+            ->assertJsonPath('data.sections.3.key', 'sales')->assertJsonPath('data.sections.3.visible', false);
+        $this->send($client, 'GET', '/internal/admin/pos')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('shell.can_manage_dashboard_reports', true));
+        $this->send($client, 'GET', '/internal/admin/pos/customer-reporting/reports')->assertOk()
+            ->assertJsonPath('data.report_presentation.sections.0.key', 'payments')
+            ->assertJsonPath('data.report_presentation.sections.3.visible', false);
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
+            ->where('action', 'pos_dashboard_report_preferences_updated')->count());
     }
 
     public function test_master_data_admin_ui_and_mutations_respect_role_protected_category_and_history(): void

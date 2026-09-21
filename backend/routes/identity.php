@@ -9,6 +9,7 @@ use App\Http\Controllers\OutletManagementController;
 use App\Http\Controllers\PlatformAdministrationController;
 use App\Http\Controllers\PosAuditController;
 use App\Http\Controllers\PosCustomerReportingController;
+use App\Http\Controllers\PosDashboardReportPreferencesController;
 use App\Http\Controllers\PosMasterDataController;
 use App\Http\Controllers\PosOperationsController;
 use App\Http\Controllers\PosPortalPreferencesController;
@@ -222,6 +223,8 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::get('/pos/audit', [PosAuditController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.pos.audit');
     Route::get('/pos/portal-preferences', [PosPortalPreferencesController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.pos.preferences');
     Route::put('/pos/portal-preferences', [PosPortalPreferencesController::class, 'update'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.pos.preferences.update');
+    Route::get('/pos/dashboard-report-preferences', [PosDashboardReportPreferencesController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.pos.dashboard-report-preferences');
+    Route::put('/pos/dashboard-report-preferences', [PosDashboardReportPreferencesController::class, 'update'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.pos.dashboard-report-preferences.update');
     Route::get('/outlet-management', [OutletManagementController::class, 'page'])->defaults('identity_realm', 'admin')->name('admin.outlets.page');
     Route::get('/outlet-management/data', [OutletManagementController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.outlets.index');
     Route::get('/outlet-management/{outlet}/profile', [OutletManagementController::class, 'profile'])->whereUuid('outlet')->defaults('identity_realm', 'admin')->name('admin.outlets.profile.show');

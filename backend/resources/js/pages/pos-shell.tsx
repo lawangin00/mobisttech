@@ -28,6 +28,7 @@ type ShellContract = {
     outlets: Outlet[];
     active_outlet: Outlet | null;
     can_manage_outlets: boolean;
+    can_manage_dashboard_reports: boolean;
     navigation: NavigationItem[];
     current_area: string | null;
     workspace: (NavigationItem & { permission?: string; permissions_any?: string[] }) | null;
@@ -165,6 +166,7 @@ export default function PosShell({ shell, view }: { shell: ShellContract; view: 
                                 </label>}
                                 <Link href="/internal/admin/manage-account" data-testid="my-account-link" className="rounded-lg border border-slate-300 px-3 py-2 text-sm">My account</Link>
                                 {shell.can_manage_outlets && <Link href="/internal/admin/pos/portal-preferences" data-testid="portal-preferences-link" className="rounded-lg border border-slate-300 px-3 py-2 text-sm">Portal preferences</Link>}
+                                {shell.can_manage_dashboard_reports && <Link href="/internal/admin/pos/dashboard-report-preferences" data-testid="dashboard-report-preferences-link" className="rounded-lg border border-slate-300 px-3 py-2 text-sm">Dashboard/report presentation</Link>}
                                 {shell.can_manage_outlets && <Link href="/internal/admin/pos/audit" data-testid="audit-viewer-link" className="rounded-lg border border-slate-300 px-3 py-2 text-sm">POS audit</Link>}
                                 {shell.can_manage_outlets && <Link href="/internal/admin/outlet-management" data-testid="manage-outlets-link" className="rounded-lg border border-slate-300 px-3 py-2 text-sm">Manage outlets</Link>}
                                 <button data-testid="logout" disabled={busy} onClick={() => void logout()}
