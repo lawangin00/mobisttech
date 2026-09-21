@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "2b28f62e87cd4286f6109eb35b1cf4ad6d79baae",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "P02-variants",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T14:30:56Z",
+  "description": "Verify guarded catalogue publication marker cleanup after fresh disposable P02 variant browser pair and scoped owner/POS teardown; require final schema gate and clean worktree to pass, do not claim W01 or full-suite completion."
+}
