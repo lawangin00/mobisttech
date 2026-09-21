@@ -35,3 +35,9 @@ This is a **target-side partial crosswalk only**, not a disposition of the immut
 ## First genuinely pending W04 parity substep
 
 Isolate the **already observed** stale fresh-product quantity locator and fixture/login baseline in bounded browser diagnostics; do not broadly rewrite tested payment behavior or blindly rerun the 35-test monolithic suite. Independently disposition the historical 52 source files and 16 routes individually or in an explicitly exhaustive, count-reconciled table against current payment behavior, identifying missing target security/UI flows. Verify negative owner/reference/cross-provider/replay/refund and operating-mode cases through scoped API/browser acceptance, including external initiation failure-to-owned-order recovery. Preserve default-OFF external providers and authentic provider HOLD. Do not reopen completed W03 or mark W04 closed based on synthetic tests.
+
+## Browser fixture attempt 7 — 22-Sep-2026
+
+- Exact run `35656823823` passed **33/34** POS/Admin browser tests with one intentional skip; no browser test failed. Global teardown then stopped because the catalogue publication marker still had a `catalogue.changed` dependant, so Website/final gates did not run and W04 remains open.
+- Static trace to the accepted fresh serialized-product journey found the concrete residue: stock acquisition and unit edits emit `stock_unit` catalogue events, but `FirstOutletE2eCleanupSeeder` deleted the units without deleting their exact public-ID events and its orphan sweep covered only product/master-data aggregates.
+- Material correction captures the owned stock-unit public IDs before deletion, removes only their matching events, and extends the guarded orphan sweep to `stock_unit` and `product_listing` aggregate types. It does not weaken the catalogue cleanup guard or delete live-referenced events.

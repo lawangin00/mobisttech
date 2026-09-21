@@ -57,6 +57,7 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
                 $productPublicIds = $products->pluck('public_id')->all();
                 $acquisitionIds = DB::table('stock_acquisitions')->whereIn('product_id', $productIds)->pluck('id')->all();
                 $unitIds = DB::table('stock_units')->whereIn('product_id', $productIds)->pluck('id')->all();
+                $unitPublicIds = DB::table('stock_units')->whereIn('id', $unitIds)->pluck('public_id')->all();
                 DB::table('acquisition_source_references')->whereIn('acquisition_id', $acquisitionIds)->delete();
                 DB::table('stock_unit_lineage')->whereIn('source_unit_id', $unitIds)
                     ->orWhereIn('successor_unit_id', $unitIds)->delete();
@@ -65,6 +66,8 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
                 DB::table('active_imeis')->whereIn('stock_unit_id', $unitIds)->delete();
                 DB::table('pos_master_data_usages')->where('usage_type', 'stock_unit')
                     ->whereIn('usage_id', array_map('strval', $unitIds))->delete();
+                DB::table('domain_events')->where('aggregate_type', 'stock_unit')
+                    ->whereIn('aggregate_id', $unitPublicIds)->delete();
                 DB::table('stock_units')->whereIn('product_id', $productIds)->delete();
                 DB::table('stock_movements')->whereIn('product_id', $productIds)->delete();
                 DB::table('pos_master_data_usages')->where('usage_type', 'stock_acquisition')
@@ -142,6 +145,8 @@ final class FirstOutletE2eCleanupSeeder extends Seeder
     private function purgeOrphanedFixtureResidue(): void
     {
         foreach (['product' => DB::table('products')->pluck('public_id')->map(fn ($id) => (string) $id)->all(),
+            'product_listing' => DB::table('product_listings')->pluck('public_id')->map(fn ($id) => (string) $id)->all(),
+            'stock_unit' => DB::table('stock_units')->pluck('public_id')->map(fn ($id) => (string) $id)->all(),
             'master_data' => DB::table('pos_master_data_options')->pluck('id')->map(fn ($id) => (string) $id)->all()] as $type => $liveIds) {
             $query = DB::table('domain_events')->where('aggregate_type', $type);
             $liveIds ? $query->whereNotIn('aggregate_id', $liveIds)->delete() : $query->delete();
