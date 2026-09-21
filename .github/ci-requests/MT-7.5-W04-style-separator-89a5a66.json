@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "89a5a66d3e2516bd0152009c00788657d3b71a10",
+  "reason": "necessary",
+  "gate": "website",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T16:51:50Z",
+  "description": "Verify the single missing blank separator correction in W04 OrderPaymentTransactionsTest against clean hosted Pint; preserve all assertions and fail closed on any remaining style discrepancy. No W04 closure claim."
+}
