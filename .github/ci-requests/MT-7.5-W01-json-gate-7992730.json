@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "execution_surface": "NORMAL_CHAT",
+  "source_commit": "79927300e5902d6f67c72e410c54fb326dcfe204",
+  "reason": "stage",
+  "gate": "full",
+  "stage_id": "MT-7.5-W01-CORRECTED-JSON-AND-STATE-GATE",
+  "requested_at_utc": "2026-09-21T11:13:36Z",
+  "description": "Materially corrected PDF binary HTTP JSON and canonical state fetch rate-limit gate. Verify exact source full backend and W01 Customer browser acceptance, retain OPEN status until terminal evidence."
+}
