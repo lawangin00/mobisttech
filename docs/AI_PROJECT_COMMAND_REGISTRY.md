@@ -51,7 +51,7 @@ The canonical ordinary Mobisttech execution, checkpoint, continuation and progre
 
 ```text
 Completed: <last verified completed work/checkpoint>
-Current: <exact current stage/point and status> (<verified DONE count>/<verified total> DONE)
+Current: <exact current stage/point and status; add compact DONE count only when relevant and verified>
 Next: <first pending action>
 Proceed? Y/N
 <h:mm AM/PM, d-MMM-yy; fresh user-local time>
