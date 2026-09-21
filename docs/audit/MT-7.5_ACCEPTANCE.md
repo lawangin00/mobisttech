@@ -4,7 +4,7 @@ Status: In Progress. No final parity, policy approval, production provider or pr
 
 ## Scope and evidence boundary
 
-- Canonical project: mobiST Tech (`282dba2f-a2d9-47e8-aa8d-e499fbe1706c`), private `lawangin00/mobisttech/main` only. Protected POS and Website sources remain read-only.
+- Canonical project: Mobisttech (`282dba2f-a2d9-47e8-aa8d-e499fbe1706c`), private `lawangin00/mobisttech/main` only. Protected POS and Website sources remain read-only.
 - This point must reconcile `docs/migration/FEATURE_PARITY_REGISTER.md`, addendum v1.1, consolidated requirements and software publishing requirements against actual target backend/UI/public/API tests, security, recovery, CI and operational journeys. Existing individually complete roadmap points are not reopened solely to restate their status.
 - Platform foundation/CI and MT-7.4 Linux rehearsal are prerequisite evidence, not proof that every source-to-target feature has full parity. Current register has many still-Pending feature families; they must be accepted individually on fresh evidence, never mass-marked complete based on roadmap point status.
 

@@ -27,6 +27,6 @@ The Laravel backend is the only rclone caller. Frontends receive safe status/ope
 
 ## Backup behavior
 
-`Backup Now` creates an encrypted logical business backup through Laravel, queues the same backend job used by the scheduler, uploads only to `mobisttech-drive:mobiST Tech/Backups/<environment>/<date>/`, records checksum/size/outcome, and removes the local temporary archive. Admin-selected daily/weekly scheduling and retention use the same service. Retention deletes only expired new mobiST Tech remote objects recorded by this repository. Disconnect removes app authorization/configuration but never deletes archives.
+`Backup Now` creates an encrypted logical business backup through Laravel, queues the same backend job used by the scheduler, uploads only to `mobisttech-drive:Mobisttech/Backups/<environment>/<date>/`, records checksum/size/outcome, and removes the local temporary archive. Admin-selected daily/weekly scheduling and retention use the same service. Retention deletes only expired new Mobisttech remote objects recorded by this repository. Disconnect removes app authorization/configuration but never deletes archives.
 
 Previous-project `mobist-drive:` and its archives are excluded. No historical backup migration is part of this remediation.

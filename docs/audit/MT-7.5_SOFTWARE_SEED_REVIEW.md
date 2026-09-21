@@ -1,6 +1,6 @@
 # MT-7.5 - mobiST POS Software Product reference review
 
-**State:** Unapproved reference reconciliation only. No real Product was inserted, published, licensed or represented as released by the mobiST Tech Website. The reusable Software Product workflow is proven with isolated synthetic fixtures; those fixtures are not production legal content. Product-specific assertions must be validated against the independently shipped Windows mobiST POS release and owner-approved documents, never inferred from the browser POS built into mobiST Tech.
+**State:** Unapproved reference reconciliation only. No real Product was inserted, published, licensed or represented as released by the Mobisttech Website. The reusable Software Product workflow is proven with isolated synthetic fixtures; those fixtures are not production legal content. Product-specific assertions must be validated against the independently shipped Windows mobiST POS release and owner-approved documents, never inferred from the browser POS built into Mobisttech.
 
 | Reference input | Proposed reusable Software field | Verification needed before approving/publishing |
 |---|---|---|

@@ -1,4 +1,4 @@
-# mobiST Tech project instructions
+# Mobisttech project instructions
 
 On the first project-control invocation in every new/unbound session, fresh-read the canonical `lawangin00/references/UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md` and current Universal Registry when accessible, then resolve `docs/PROJECT_IDENTITY.json` and bind the Session Project Lock to `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`. Only then read `docs/PROJECT_IMPLEMENTATION_STATUS.md`, its active Source of Truth/roadmap and Git/code, and load `docs/AI_PROJECT_COMMAND_REGISTRY.md` once for the session. Reuse the Project ID lock and loaded bootstrap/registry semantics for later aliases; Refresh fresh-reads the bootstrap plus applicable registries without switching projects, and only Switch Project / VP:SWITCH-PROJECT may intentionally rebind.
 

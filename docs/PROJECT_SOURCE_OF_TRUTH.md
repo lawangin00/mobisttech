@@ -1,4 +1,4 @@
-# mobiST Tech - Project Source of Truth
+# Mobisttech - Project Source of Truth
 
 Version: 1.11 | Date: 2026-09-21
 
@@ -139,7 +139,7 @@ MT-2.19 adds relational role and permission assignments without creating another
 
 The protected POS source provides reusable Invoice/Warranty preview, Thermal/A4/print and assisted WhatsApp concepts, but browser chat opening is not proof of attachment or delivery. The protected Website source provides fixed provider and generic legal managed-page foundations. Target implementation must adapt these behaviors into the shared Laravel authority, preserve historical snapshots and reject duplicate/scattered renderers, misleading send states or mutable public copy that rewrites financial/warranty history.
 
-The repository currently has no root application license. Backend Composer `license: MIT` is inherited package metadata and must not be treated as a license grant for the complete private mobiST Tech product. MT-7.2 must inventory distributed/runtime dependency and asset obligations, surface the owner decision for project-level proprietary/open-source terms, and produce appropriate LICENSE/NOTICE artifacts only after that decision. No legal approval is fabricated by this structural reconciliation.
+The repository currently has no root application license. Backend Composer `license: MIT` is inherited package metadata and must not be treated as a license grant for the complete private Mobisttech product. MT-7.2 must inventory distributed/runtime dependency and asset obligations, surface the owner decision for project-level proprietary/open-source terms, and produce appropriate LICENSE/NOTICE artifacts only after that decision. No legal approval is fabricated by this structural reconciliation.
 
 ## Deferred/HOLD and acceptance boundary
 

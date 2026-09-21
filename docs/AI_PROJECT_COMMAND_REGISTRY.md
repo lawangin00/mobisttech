@@ -1,4 +1,4 @@
-# mobiST Tech - AI Project Command Registry
+# Mobisttech - AI Project Command Registry
 
 **Registry version:** MT-1.1-r18
 **Applied universal implementation epochs:** `U-CI-2026-09-19-1`
@@ -22,11 +22,11 @@
 
 ## Purpose
 
-This is a **delta-only** project registry. At runtime it inherits the current canonical Universal Registry; the version/commit fields above record only the last compatibility review and do not freeze older universal semantics. It contains only mobiST Tech-specific rules and must not embed a copied Universal Registry snapshot.
+This is a **delta-only** project registry. At runtime it inherits the current canonical Universal Registry; the version/commit fields above record only the last compatibility review and do not freeze older universal semantics. It contains only Mobisttech-specific rules and must not embed a copied Universal Registry snapshot.
 
 ## Project-specific rules
 
-- This is the new independent mobiST Tech project. Do not resume or advance old DP-* task position.
+- This is the new independent Mobisttech project. Do not resume or advance old DP-* task position.
 - `C:\mobisttech` is this project's exact local hard boundary when local execution is explicitly selected. Canonical remote is only `lawangin00/mobisttech`.
 - Protected legacy sources are `C:\mobiST\mobiST-POS` and `C:\mobiST\mobiST-Website`. Their files, Git metadata, remotes, databases and services are read-only evidence for this project; source tests/builds may run only in isolated exported copies.
 - Current user instruction has highest authority. Project Goal defines required functionality; approved Preferences and requirements addendum define implementation boundaries. Legacy source documents are technical evidence only; old architecture/command semantics do not carry into this project.
@@ -63,7 +63,7 @@ All universal aliases, collision rules, execution-intent isolation, read-only mu
 
 `COMPATIBILITY_HOLD: none`.
 
-Future universal control fixes auto-apply on canonical first-load/Refresh/new session. This does not advance/reopen mobiST Tech roadmap implementation, alter application data, or replace this project's genuine delta rules.
+Future universal control fixes auto-apply on canonical first-load/Refresh/new session. This does not advance/reopen Mobisttech roadmap implementation, alter application data, or replace this project's genuine delta rules.
 
 ## GitHub-only execution status (21-Sep-2026)
 

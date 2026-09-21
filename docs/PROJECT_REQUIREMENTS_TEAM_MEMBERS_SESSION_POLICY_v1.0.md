@@ -2,7 +2,7 @@ NEW APPROVED REQUIREMENT — TEAM MEMBER ROLE MODEL, DELEGATED ACCESS,
 AND REALM-SPECIFIC SESSION SECURITY
 
 This instruction is being provided directly inside the already-active
-mobiST Tech whole-step implementation project.
+Mobisttech whole-step implementation project.
 
 This instruction authorizes:
 - structural reconciliation of this approved requirement; and

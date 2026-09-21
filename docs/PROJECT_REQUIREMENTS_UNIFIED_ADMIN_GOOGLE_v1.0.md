@@ -3,7 +3,7 @@ IDENTITY, DYNAMIC GMAIL EMAIL INTEGRATION, AND DYNAMIC GOOGLE DRIVE
 BACKUP INTEGRATION
 
 This instruction is being provided directly inside the already-active
-mobiST Tech whole-step implementation project.
+Mobisttech whole-step implementation project.
 
 Do NOT require a separate RESUME / VERIFY command before processing this
 instruction.
@@ -148,7 +148,7 @@ email/domain values for provenance.
 Do not rewrite protected source history merely to replace historical
 contact information.
 
-After remediation, no active mobiST Tech runtime should use the previous
+After remediation, no active Mobisttech runtime should use the previous
 business Gmail/domain as its current business identity.
 
 ======================================================================
@@ -229,7 +229,7 @@ The integration is for sending approved application messages such as:
 - account/security notifications
 - order notifications where approved
 - warranty/service notifications where approved
-- other explicit mobiST Tech transactional messages
+- other explicit Mobisttech transactional messages
 
 Do not build mailbox-reading functionality unless separately approved.
 
@@ -392,7 +392,7 @@ Reconnect must allow OAuth authorization to be recreated/refreshed safely.
 
 Disconnect must:
 
-- stop mobiST Tech from using the Gmail integration
+- stop Mobisttech from using the Gmail integration
 - revoke/delete application-side authorization state as appropriate
 - leave the integration as Not Connected
 - not reveal credentials
@@ -457,12 +457,12 @@ Do NOT:
 - import previous-project backup history merely to reproduce old backups
 
 Those archives belong to the previous deployable project and are not
-required by mobiST Tech.
+required by Mobisttech.
 
 Leave previous-project backup files and old remote untouched unless a later
 explicit instruction authorizes otherwise.
 
-Only NEW mobiST Tech backups belong to the new approved backup integration.
+Only NEW Mobisttech backups belong to the new approved backup integration.
 
 ======================================================================
 N. DYNAMIC GOOGLE DRIVE CONNECTION
@@ -649,9 +649,9 @@ Backup Now must invoke a backend-controlled action/job.
 
 Scheduled backups use the same server-side integration.
 
-Use a dedicated mobiST Tech backup namespace/folder, for example:
+Use a dedicated Mobisttech backup namespace/folder, for example:
 
-mobiST Tech/
+Mobisttech/
 └── Backups/
 
 The implementation may refine environment/date/scope hierarchy if required,
@@ -670,7 +670,7 @@ Reconnect must:
 
 Disconnect must:
 
-- disable the integration in mobiST Tech
+- disable the integration in Mobisttech
 - leave state clearly Not Connected
 - not expose credentials
 - not automatically delete Google Drive backup archives
@@ -806,7 +806,7 @@ V. RECOMMENDED IMPLEMENTATION ORDER
 24. Support fresh-server Google Drive connection.
 25. Implement Drive Test Connection.
 26. Implement Backup Now through backend service/job.
-27. Point NEW mobiST Tech backups to approved integration.
+27. Point NEW Mobisttech backups to approved integration.
 28. Do not migrate historical backup archives.
 29. Verify Windows-development / Linux-production portability.
 30. Run full regression/security/integration tests.

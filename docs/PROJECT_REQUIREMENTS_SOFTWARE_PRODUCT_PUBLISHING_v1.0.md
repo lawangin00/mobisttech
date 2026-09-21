@@ -1,10 +1,10 @@
-# mobiST Tech - Software Product Publishing Requirement
+# Mobisttech - Software Product Publishing Requirement
 
 Version: 1.0 | Approved: 2026-09-06
 
 ## Purpose and authority
 
-This requirement adds a reusable first-party software publishing model to the existing mobiST Tech CMS and Website plan. It does not create a separate application, database, CMS or roadmap stage.
+This requirement adds a reusable first-party software publishing model to the existing Mobisttech CMS and Website plan. It does not create a separate application, database, CMS or roadmap stage.
 
 The requirement applies to mobiST-owned software products such as mobiST POS and to future software products launched through the same Website and Admin platform.
 

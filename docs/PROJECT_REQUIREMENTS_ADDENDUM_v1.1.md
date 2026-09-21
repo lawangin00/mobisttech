@@ -1,13 +1,13 @@
-# mobiST Tech - Approved Requirements Addendum
+# Mobisttech - Approved Requirements Addendum
 
 **Version:** 1.1  
 **Date:** 2026-09-01  
-**Project:** mobiST Tech  
+**Project:** Mobisttech  
 **Repository:** `C:\mobisttech`  
 
 ## 1. Authority and purpose
 
-This document is an approved scope expansion for the existing mobiST Tech project. It supplements the canonical `docs/PROJECT_GOAL.md` and `docs/PROJECT_PREFERENCES.md`; it does not replace, rewrite, translate, or invalidate either original file.
+This document is an approved scope expansion for the existing Mobisttech project. It supplements the canonical `docs/PROJECT_GOAL.md` and `docs/PROJECT_PREFERENCES.md`; it does not replace, rewrite, translate, or invalidate either original file.
 
 The project is already initialized. This addendum must therefore be reconciled into the existing Source of Truth, structural roadmap, implementation ledger, project registry pointers, and requirement traceability without running project initialization again.
 
@@ -304,4 +304,4 @@ When this addendum is applied to the existing project:
 
 ## 10. Approval state
 
-The requirements in this addendum are approved for incorporation into the mobiST Tech project plan. Implementation remains subject to the project's existing one-point-at-a-time verified execution process, HOLD boundaries, permissions, security controls, and evidence requirements.
+The requirements in this addendum are approved for incorporation into the Mobisttech project plan. Implementation remains subject to the project's existing one-point-at-a-time verified execution process, HOLD boundaries, permissions, security controls, and evidence requirements.

@@ -1,4 +1,4 @@
-# mobiST Tech - Project Implementation Roadmap
+# Mobisttech - Project Implementation Roadmap
 
 Version: 1.11 | Date: 2026-09-20
 
@@ -522,7 +522,7 @@ Acceptance: End-to-end fresh-outlet Admin/POS/Website journeys and Pest/PHPUnit,
 
 Dependencies: MT-7.5
 
-Scope: Create the complete role-aware mobiST Tech operational user manual from the final verified product, including current safe UI screenshots and coverage of POS, payments/reconciliation, documents/Email/WhatsApp, inventory/procurement, warranty, cash closing, Website CMS/legal content/Digital Services, Software Product creation/version/publication workflows, integrations, backup/reset safety, mobiST Control and the customer Website. Produce canonical `docs/user-manual/USER_MANUAL.md`, verified same-content DOCX and PDF mirrors, and controlled screenshot assets.
+Scope: Create the complete role-aware Mobisttech operational user manual from the final verified product, including current safe UI screenshots and coverage of POS, payments/reconciliation, documents/Email/WhatsApp, inventory/procurement, warranty, cash closing, Website CMS/legal content/Digital Services, Software Product creation/version/publication workflows, integrations, backup/reset safety, mobiST Control and the customer Website. Produce canonical `docs/user-manual/USER_MANUAL.md`, verified same-content DOCX and PDF mirrors, and controlled screenshot assets.
 
 Acceptance: Every applicable final user-facing feature maps to its real navigation, permission and procedure; instructions are executed against the final product and no legacy/placeholder UI is presented as final. Screenshots use safe demo data and remain readable. Markdown/DOCX/PDF content parity, TOC/references, render and every-page visual QA pass. Security/destructive warnings and the documented release/Git checkpoint are accurate; no material supported workflow is undocumented.
 

@@ -4,7 +4,7 @@ LEGAL/POLICY DOCUMENTATION, LICENSING REVIEW
 AND COMPLETE PRODUCT USER MANUAL
 
 This instruction is being provided directly inside the active
-mobiST Tech project execution chat.
+Mobisttech project execution chat.
 
 ======================================================================
 EXECUTION AUTHORIZATION
@@ -1282,14 +1282,14 @@ concerns.
 
 Review the new monorepo's project-level licensing/ownership status.
 
-Do NOT infer that the complete mobiST Tech product is MIT-licensed merely
+Do NOT infer that the complete Mobisttech product is MIT-licensed merely
 because:
 
 - Laravel is MIT;
 - framework skeleton metadata says MIT;
 - individual npm/Composer dependencies use open-source licenses.
 
-If the intended mobiST Tech application is private/proprietary business
+If the intended Mobisttech application is private/proprietary business
 software, create an appropriate project-level ownership/license notice that
 makes that clear.
 
@@ -1334,7 +1334,7 @@ Technical README files, migration evidence, implementation ledgers,
 Source-of-Truth documents and deployment runbooks do NOT substitute for a
 user manual.
 
-The completed mobiST Tech product must include a complete operational
+The completed Mobisttech product must include a complete operational
 user-facing manual.
 
 Recommended canonical source:
@@ -1499,7 +1499,7 @@ Instructions must match the final product.
 AO. USER MANUAL SCREENSHOTS
 ======================================================================
 
-Use screenshots from the FINAL implemented mobiST Tech application.
+Use screenshots from the FINAL implemented Mobisttech application.
 
 Do not use legacy screenshots as final-product screenshots.
 
@@ -1935,7 +1935,7 @@ Dependencies:
 
 Scope:
 
-Create the complete role-aware mobiST Tech operational user manual from the
+Create the complete role-aware Mobisttech operational user manual from the
 final verified product, including final UI screenshots and coverage of POS,
 payments/reconciliation, documents/email/WhatsApp, inventory/procurement,
 warranty, cash closing, Website CMS, legal content, Digital Services,
@@ -2107,7 +2107,7 @@ with:
 
 29. Documentation-specific validation/source-protection checks are allowed.
 
-30. Commit/push only the intended mobiST Tech documentation reconciliation.
+30. Commit/push only the intended Mobisttech documentation reconciliation.
 
 31. Verify clean local main == upstream/origin main after checkpoint.
 
