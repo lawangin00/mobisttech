@@ -72,6 +72,7 @@ final class PosHistoryListing
             'q' => $search, 'category' => $category,
             'options' => array_values($options), 'auto_focus_search' => $preferences['auto_focus_search'],
             'remember_search' => $preferences['remember_search'],
+            'density' => $preferences[$area === 'invoices' ? 'invoice_density' : 'claims_density'],
         ]];
     }
 }

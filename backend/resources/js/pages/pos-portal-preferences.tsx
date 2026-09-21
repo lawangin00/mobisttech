@@ -4,7 +4,7 @@ type NavigationOverride={label?:string;visible?:boolean;order?:number};
 type NavigationItem={key:string;default_label:string;customizable:boolean};
 type Values=Record<string,unknown>&{navigation:Record<string,NavigationOverride>};
 type Props={values:Values;options:Record<string,string[]>;navigation:NavigationItem[]};
-const labels:Record<string,string>={invoice_page_length:'Invoices per page',inventory_page_length:'Inventory rows per page',claims_page_length:'Warranty jobs per page',invoice_search_category:'Default invoice search category',inventory_search_category:'Default inventory search category',warranty_search_category:'Default warranty search category',claims_search_category:'Default warranty jobs search category',auto_focus_search:'Focus search automatically',remember_search:'Allow per-operator opt-in search category memory (current tab only; never search text)'};
+const labels:Record<string,string>={invoice_page_length:'Invoices per page',inventory_page_length:'Inventory rows per page',claims_page_length:'Warranty jobs per page',invoice_search_category:'Default invoice search category',inventory_search_category:'Default inventory search category',warranty_search_category:'Default warranty search category',claims_search_category:'Default warranty jobs search category',invoice_density:'Invoice history density',inventory_density:'Inventory density',claims_density:'Warranty and claims density',auto_focus_search:'Focus search automatically',remember_search:'Allow per-operator opt-in search category memory (current tab only; never search text)'};
 export default function PosPortalPreferences({values,options,navigation}:Props){
     const [form,setForm]=useState<Values>(values);
     const [busy,setBusy]=useState(false);

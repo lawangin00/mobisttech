@@ -222,7 +222,7 @@ class PosCustomerReportingInterfaceTest extends TestCase
             ->assertJsonPath('data.pagination.total', 1)->assertJsonPath('data.claims.0.number', 'MT75-CLAIM-120');
         $this->send($client, 'GET', $baseUrl.'claims?q=MT75-CLAIM-120&category=all')->assertOk()
             ->assertJsonPath('data.pagination.total', 1);
-        foreach (['invoice_page_length' => '50', 'claims_page_length' => '25',
+        foreach (['invoice_page_length' => '50', 'claims_page_length' => '25', 'invoice_density' => 'compact', 'claims_density' => 'compact',
             'invoice_search_category' => 'customer_name', 'claims_search_category' => 'claim',
             'warranty_search_category' => 'customer_name'] as $key => $value) {
             DB::table('pos_settings')->insert(['key' => 'portal.'.$key, 'value' => $value,
@@ -230,6 +230,7 @@ class PosCustomerReportingInterfaceTest extends TestCase
         }
         $this->send($client, 'GET', $baseUrl.'invoices')->assertOk()
             ->assertJsonPath('data.pagination.per_page', 50)->assertJsonPath('data.pagination.category', 'customer_name')
+            ->assertJsonPath('data.pagination.density', 'compact')
             ->assertJsonPath('data.pagination.pages', 3)->assertJsonCount(50, 'data.invoices');
         $this->send($client, 'GET', $baseUrl.'warranty')->assertOk()
             ->assertJsonPath('data.pagination.per_page', 25)->assertJsonPath('data.pagination.category', 'customer_name')
@@ -241,6 +242,7 @@ class PosCustomerReportingInterfaceTest extends TestCase
         $this->send($client, 'GET', $baseUrl.'warranty?category=bad')->assertUnprocessable();
         $this->send($client, 'GET', $baseUrl.'claims')->assertOk()
             ->assertJsonPath('data.pagination.per_page', 25)->assertJsonPath('data.pagination.category', 'claim')
+            ->assertJsonPath('data.pagination.density', 'compact')
             ->assertJsonPath('data.pagination.pages', 5)->assertJsonCount(25, 'data.claims');
     }
 

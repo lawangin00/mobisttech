@@ -19,12 +19,16 @@ final class PortalPreferences
         'inventory_search_category' => ['all', 'product_name', 'sku', 'category', 'brand', 'model', 'variant', 'color', 'condition', 'pta_status', 'carrier_lock', 'mdm_status', 'purchase_price', 'sale_price', 'in_stock', 'sold', 'imei', 'warranty'],
         'warranty_search_category' => ['all', 'invoice_id', 'customer_name', 'customer_cnic', 'contact_number', 'product', 'imei'],
         'claims_search_category' => ['all', 'claim', 'invoice', 'customer', 'contact', 'product', 'imei', 'status', 'assigned'],
+        'invoice_density' => ['comfortable', 'compact'],
+        'inventory_density' => ['comfortable', 'compact'],
+        'claims_density' => ['comfortable', 'compact'],
     ];
 
     private const DEFAULTS = [
         'invoice_page_length' => '15', 'inventory_page_length' => '10', 'claims_page_length' => '15',
         'invoice_search_category' => 'all', 'inventory_search_category' => 'all',
         'warranty_search_category' => 'all', 'claims_search_category' => 'all',
+        'invoice_density' => 'comfortable', 'inventory_density' => 'comfortable', 'claims_density' => 'comfortable',
         'auto_focus_search' => true, 'remember_search' => false, 'navigation' => [],
     ];
 

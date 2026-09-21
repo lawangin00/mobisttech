@@ -43,3 +43,11 @@ The target business-wide Portal Preferences screen now manages the equivalent Re
 Focused HTTP acceptance passed **1/1 (74 assertions)**, including protected-core rejection, optional-item persistence, hidden-navigation rendering and direct authorized route access. The complete current `PosShellTest` passed **22/22 (1,050 assertions)**. Production TypeScript/Vite build passed (588 modules); PHP syntax and scoped Pint passed after the recorded formatting-only correction.
 
 **P07 remains OPEN** for table/dashboard/report presentation, complete runtime theme/branding propagation and final 32-route/148-file disposition. Finite count remains **12/27 DONE, 15 OPEN**.
+
+## 21-Sep-2026: Responsive history-density presentation (bounded PARTIAL)
+
+Read-only source review confirmed that `PosPortalTablePresentation` treats table density as a safe presentation preference. The target uses responsive card/history surfaces rather than copying the legacy table implementation, so the equivalent business-wide preference is now registered as `comfortable` or `compact` for invoice history and warranty/claim history. The authoritative history projection includes the resolved density, and the React reporting workspace applies it to its root spacing while exposing a stable `data-density` value for rendered verification. Authorization, outlet scoping, search, pagination and record contents remain application-owned and unchanged.
+
+The inventory density preference is also registered and manageable, but runtime stock-control consumption remains pending. Safe sort, filter and column controls plus inventory, dashboard and report presentation remain separate acceptance work.
+
+After the recorded formatting-only correction, joined isolated MySQL HTTP verification passed **2/2 (134 assertions)** and scoped Pint passed. Production TypeScript/Vite build passed **588 modules**. **P07 remains OPEN; 12/27 DONE, 15 OPEN.**
