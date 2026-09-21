@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "eb61980af776e5398fac90e7d5fda310a5d7cd49",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "EXECUTION-MODE-BROWSER-FIXTURE-REGRESSION",
+  "requested_at_utc": "2026-09-21T02:21:00Z",
+  "description": "Reverify exact-source full hosted application acceptance after guarded fresh-owner fixture setup and production Next.js server startup in POS/Admin Playwright. Preserve ongoing product checkpoint; do not mark PASS until terminal full CI succeeds."
+}
