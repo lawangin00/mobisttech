@@ -1561,7 +1561,8 @@ class PosShellTest extends TestCase
         $owner = $this->member('pref-owner@example.invalid', ['config.portal-presentation.manage',
             'team-members.full-access.assign', 'admin.business-profile.manage']);
         $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
-        $owner->shops()->attach($this->outlet('Preferences Owner Outlet', '059'));
+        $outlet = $this->outlet('Preferences Owner Outlet', '059');
+        $owner->shops()->attach($outlet);
         $limited = $this->member('pref-limited@example.invalid', ['config.portal-presentation.manage']);
         $url = '/internal/admin/pos/portal-preferences';
         $guest = $this->client();
@@ -1576,21 +1577,34 @@ class PosShellTest extends TestCase
         $this->send($client, 'GET', $url)->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('pos-portal-preferences')->where('values.invoice_page_length', '15')
             ->where('values.inventory_page_length', '10')->where('values.auto_focus_search', true)
-            ->where('values.remember_search', false)->has('options.invoice_search_category', 8));
+            ->where('values.remember_search', false)->where('values.navigation', [])
+            ->has('options.invoice_search_category', 8)->has('navigation', 9));
         $values = app(PortalPreferences::class)->current();
         $values['invoice_page_length'] = '50';
         $values['inventory_page_length'] = '100';
         $values['invoice_search_category'] = 'customer_name';
         $values['remember_search'] = true;
+        $values['navigation'] = ['invoices' => ['label' => 'Customer documents', 'visible' => false, 'order' => 140]];
         $this->send($client, 'PUT', $url, [...$values, 'outlet_id' => 'unauthorized'])->assertUnprocessable();
+        $this->send($client, 'PUT', $url, [...$values, 'navigation' => [
+            'sales' => ['label' => 'Sales', 'visible' => false, 'order' => 100],
+        ]])->assertUnprocessable();
         // Identity limiter is 5/min by path+IP; keep guest, denied, invalid and successful writes below cap.
         $this->assertFalse(in_array('500', app(PortalPreferences::class)->catalogue($owner)['options']['invoice_page_length'], true));
         $this->assertSame(0, DB::table('pos_settings')->where('group', 'portal')->count());
         $this->send($client, 'PUT', $url, $values)->assertOk()
-            ->assertJsonPath('data.invoice_page_length', '50')->assertJsonPath('data.remember_search', true);
+            ->assertJsonPath('data.invoice_page_length', '50')->assertJsonPath('data.remember_search', true)
+            ->assertJsonPath('data.navigation.invoices.label', 'Customer documents')
+            ->assertJsonPath('data.navigation.invoices.visible', false);
         $this->send($client, 'GET', $url)->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->where('values.invoice_page_length', '50')->where('values.remember_search', true));
-        $this->assertSame(9, DB::table('pos_settings')->where('group', 'portal')->count());
+            ->where('values.invoice_page_length', '50')->where('values.remember_search', true)
+            ->where('values.navigation.invoices.visible', false));
+        $this->send($client, 'GET', '/internal/admin/pos')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('shell.navigation', fn ($navigation) => collect($navigation)->where('key', 'invoices')->isEmpty()));
+        $this->send($client, 'POST', '/internal/admin/outlets/select', ['outlet_id' => $outlet->public_id])->assertOk();
+        $this->send($client, 'GET', '/internal/admin/pos/workspace/invoices')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('view.workspace.key', 'invoices'));
+        $this->assertSame(10, DB::table('pos_settings')->where('group', 'portal')->count());
         $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
             ->where('action', 'pos_portal_preferences_updated')->count());
     }

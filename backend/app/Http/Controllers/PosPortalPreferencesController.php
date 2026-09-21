@@ -13,6 +13,7 @@ final class PosPortalPreferencesController extends Controller
     public function index(Request $request, PortalPreferences $preferences)
     {
         $data = $preferences->catalogue($this->actor());
+        $data['navigation'] = $preferences->navigationCatalogue();
         $response = Inertia::render('pos-portal-preferences', $data)->toResponse($request);
         $response->headers->set('Cache-Control', 'private, no-store');
 

@@ -24,6 +24,11 @@ final class PosShell
             'permissions_any' => ['shop.cash', 'shop.cash.approve', 'shop.trade-in', 'shop.repairs', 'shop.payments.reconcile']],
     ];
 
+    public static function areaDefinitions(): array
+    {
+        return self::AREAS;
+    }
+
     public function contract(Request $request, Admin $actor, ?string $area = null): array
     {
         $outlets = $actor->shops()->where('outlets.status', false)->whereNull('outlets.archived_at')
@@ -31,16 +36,30 @@ final class PosShell
         $active = $this->activeOutlet($request, $actor, $outlets->all());
         $navigation = [];
         if ($actor->hasPermission('shops.enter') && $outlets->isNotEmpty()) {
+            $overrides = app(PortalPreferences::class)->current()['navigation'];
+            $defaultOrder = 0;
             foreach (self::AREAS as $key => $definition) {
+                $defaultOrder += 10;
                 if ($this->navigationAllowed($actor, $definition)) {
+                    $override = is_array($overrides[$key] ?? null) ? $overrides[$key] : [];
+                    if (($override['visible'] ?? true) !== true) {
+                        continue;
+                    }
                     $navigation[] = [
                         'key' => $key,
-                        'label' => $definition['label'],
+                        'label' => $override['label'] ?? $definition['label'],
                         'description' => $definition['description'],
                         'href' => '/internal/admin/pos/workspace/'.$key,
+                        'order' => (int) ($override['order'] ?? $defaultOrder),
                     ];
                 }
             }
+            usort($navigation, fn (array $a, array $b) => [$a['order'], $a['key']] <=> [$b['order'], $b['key']]);
+            $navigation = array_map(function (array $item) {
+                unset($item['order']);
+
+                return $item;
+            }, $navigation);
         }
 
         return [

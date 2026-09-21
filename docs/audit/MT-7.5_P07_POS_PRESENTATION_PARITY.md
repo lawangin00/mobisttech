@@ -33,3 +33,13 @@ The protected POS configuration service and React Admin now expose **Delete unus
 Focused HTTP verification passed **1/1 (19 assertions)**; the complete current `PlatformAdministrationInterfaceTest` passed **4/4 (134 assertions)**. It proves a revision-retained asset returns HTTP 409 and remains stored, then an unreferenced asset is removed from both database and controlled storage. Production TypeScript/Vite build passed (588 modules); scoped PHP syntax and Pint passed after normalizing one changed controller line ending. The first concurrently launched focused test had no retrievable terminal result and remains recorded as `ORCHESTRATION_FAIL`; the separately rerun focused and full-class gates are the accepted results.
 
 **P07 remains OPEN** for the 32-route/148-file disposition and runtime navigation/table/dashboard/report presentation plus theme/branding propagation across the rendered POS surfaces. Finite count remains **12/27 DONE, 15 OPEN**.
+
+## 21-Sep-2026: Safe POS navigation presentation (bounded PARTIAL)
+
+Read-only source review of `PosPortalNavigation` and its acceptance tests confirmed the intended boundary: selected optional modules may change label, visibility and presentation order, while route destinations, permissions and protected core modules remain application-owned. Hiding navigation never revokes or grants backend authorization.
+
+The target business-wide Portal Preferences screen now manages the equivalent React POS navigation contract. Invoices, Warranty, Claims, Master data, Outlet profile, Reports and Operations accept a plain 1–40 character label, boolean visibility and bounded order 100–999. Sales and Inventory remain visible with fixed labels; unknown modules, route/permission metadata, markup/control characters and invalid order/visibility fail closed. `PosShell` applies the stored presentation only after effective permission filtering and continues to authorize direct workspace routes independently.
+
+Focused HTTP acceptance passed **1/1 (74 assertions)**, including protected-core rejection, optional-item persistence, hidden-navigation rendering and direct authorized route access. The complete current `PosShellTest` passed **22/22 (1,050 assertions)**. Production TypeScript/Vite build passed (588 modules); PHP syntax and scoped Pint passed after the recorded formatting-only correction.
+
+**P07 remains OPEN** for table/dashboard/report presentation, complete runtime theme/branding propagation and final 32-route/148-file disposition. Finite count remains **12/27 DONE, 15 OPEN**.
