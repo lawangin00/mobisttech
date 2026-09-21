@@ -189,10 +189,20 @@ jobs:
         working-directory: backend
         run: npx playwright test tests/browser/website-commerce-administration.spec.ts --config=playwright.config.ts
 
+      - name: MT-7.5 isolated fresh-owner first-outlet browser
+        if: needs.mode.outputs.run_scope == 'full'
+        working-directory: backend
+        run: npx playwright test tests/browser/pos-first-outlet-fresh-owner.spec.ts --config=playwright.config.ts
+
+      - name: Reset disposable browser schema after first-outlet acceptance
+        if: needs.mode.outputs.run_scope == 'full'
+        working-directory: backend
+        run: php artisan migrate:fresh --env=testing --force
+
       - name: POS and Admin Playwright
         if: needs.mode.outputs.run_scope == 'full'
         working-directory: backend
-        run: npx playwright test --config=playwright.config.ts
+        run: npx playwright test --config=playwright.config.ts --grep-invert 'fresh protected owner creates, configures and explicitly enters the first outlet'
 
       - name: Website checkout Playwright
         if: needs.mode.outputs.run_scope == 'full'
