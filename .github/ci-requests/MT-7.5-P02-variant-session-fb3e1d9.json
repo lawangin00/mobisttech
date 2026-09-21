@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "fb3e1d9107716da98d5b9646795c965f36a4c8c5",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "P02-variants",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T14:05:21Z",
+  "description": "Verify exact P02 shared fixture pair after first browser spec explicitly logs out the synthetic owner before second desktop login; retain original admin device-session limit, reject mismatched fixture options, run on fresh disposable MySQL only."
+}
