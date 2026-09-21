@@ -107,6 +107,12 @@ Current closure state after W01 acceptance: **14/27 Complete, 13/27 OPEN (51.85%
 - The concrete target gap is protected Admin Website order management: `website.orders.manage` exists but has no consuming route/service/UI; pending review moderation and Website-order status/CSV workflows are also absent.
 - `docs/audit/MT-7.5_W03_CART_ORDER_REVIEW_PARITY.md` records the bounded implementation and acceptance order. Counts remain **14/27 DONE, 13 OPEN (51.85%)**.
 
+### W03 protected Admin commerce backend checkpoint
+
+- One Laravel-owned service and five unified Admin routes now provide permissioned bounded Website-order listing, safe forward-only fulfillment transitions, formula-safe CSV and immutable review moderation with identity audit.
+- Focused administration plus neighboring order transaction verification passed **16/16 (113 assertions)**; scoped syntax/Pint and exact route registration passed. The first HTTP harness attempt lacked the custom account-session record and returned 401 before the controller; service behavior passed after switching to the established focused boundary, while real session/UI acceptance remains pending.
+- W03 stays IN PROGRESS at **14/27 DONE, 13 OPEN**. Next: focused React Admin order/review surface and joined browser acceptance.
+
 ## 06/P01 bounded warranty-intake substep (20-Sep-2026; LOCALLY ACCEPTED; P01 OPEN)
 
 - **Implementation candidate:** protected claims-only GET `/internal/admin/pos/customer-reporting/claims/sale-search` accepts required source category/query and optional product category; selected current outlet and related invoice/product outlet are enforced server-side, with exact 20-result cap and sale-time warranty candidate projection. It searches all historical sales rather than only the old latest-100 first-load selector. Claims UI now offers explicit find/filter/select while preserving the existing latest-100 quick choices and ClaimOperations' authoritative claim eligibility/locking. This is not a completed P01-family gate.

@@ -18,6 +18,7 @@ use App\Http\Controllers\PosStockControlController;
 use App\Http\Controllers\PosTransactionController;
 use App\Http\Controllers\ResetAdministrationController;
 use App\Http\Controllers\TeamMemberController;
+use App\Http\Controllers\WebsiteCommerceAdministrationController;
 use Illuminate\Support\Facades\Route;
 
 foreach (['customer', 'admin'] as $realm) {
@@ -192,6 +193,11 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::post('/reset-administration/operations/{operation}/execute', [ResetAdministrationController::class, 'execute'])->defaults('identity_realm', 'admin')->name('admin.reset.execute');
     Route::get('/platform', [PlatformAdministrationController::class, 'page'])->defaults('identity_realm', 'admin')->name('admin.platform.page');
     Route::get('/platform/data', [PlatformAdministrationController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.platform.data');
+    Route::get('/website-commerce/orders', [WebsiteCommerceAdministrationController::class, 'orders'])->defaults('identity_realm', 'admin')->name('admin.website-commerce.orders');
+    Route::get('/website-commerce/orders.csv', [WebsiteCommerceAdministrationController::class, 'ordersCsv'])->defaults('identity_realm', 'admin')->name('admin.website-commerce.orders.csv');
+    Route::patch('/website-commerce/orders/{order}', [WebsiteCommerceAdministrationController::class, 'updateOrder'])->whereUuid('order')->defaults('identity_realm', 'admin')->name('admin.website-commerce.orders.update');
+    Route::get('/website-commerce/reviews', [WebsiteCommerceAdministrationController::class, 'reviews'])->defaults('identity_realm', 'admin')->name('admin.website-commerce.reviews');
+    Route::patch('/website-commerce/reviews/{review}', [WebsiteCommerceAdministrationController::class, 'moderateReview'])->whereNumber('review')->defaults('identity_realm', 'admin')->name('admin.website-commerce.reviews.update');
     Route::post('/platform/pos-config/{domain}/preview', [PlatformAdministrationController::class, 'posConfigurationPreview'])->whereIn('domain', ['documents', 'theme', 'branding'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.preview');
     Route::post('/platform/pos-config/{domain}/draft', [PlatformAdministrationController::class, 'posConfigurationDraft'])->whereIn('domain', ['documents', 'theme', 'branding'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.draft');
     Route::post('/platform/pos-config/revisions/{revision}/publish', [PlatformAdministrationController::class, 'posConfigurationPublish'])->defaults('identity_realm', 'admin')->name('admin.platform.pos-config.publish');
