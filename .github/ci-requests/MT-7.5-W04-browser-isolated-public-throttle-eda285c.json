@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "eda285c645021e4df1f004bfd57a09cd2b2b7ff8",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T18:28:00Z",
+  "description": "Verify MT-7.5 W04: production API-public policy remains 120/min; isolated loopback Playwright test server has bounded synthetic traffic capacity. Recheck the earlier 429/500 browser cascade and independent fixture/auth failures before any W04 acceptance."
+}
