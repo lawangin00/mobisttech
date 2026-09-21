@@ -50,6 +50,11 @@ final class CustomerApiController extends Controller
         return $this->responses->private($api->order($this->customer(), $order), 'customer-order.v1');
     }
 
+    public function signedOrder(WebsiteApi $api, string $order)
+    {
+        return $this->responses->private($api->signedOrder($order), 'customer-order-signed.v1');
+    }
+
     public function cancel(Request $request, OrderTransactions $orders, string $order)
     {
         $customer = $this->customer();

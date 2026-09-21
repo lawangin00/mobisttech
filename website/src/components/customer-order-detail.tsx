@@ -6,7 +6,7 @@ import { customerRequest } from "@/lib/customer-api";
 
 type Payment = { public_id: string; gateway: string; status: string; amount: string; currency: string; initiated_at?: string; paid_at?: string };
 type Item = { title: string; quantity: number; unit_price: string; line_total: string };
-type Order = { id: string; number: string; type: string; status: string; fulfillment_status: string; payment_status: string; subtotal: string; total: string; currency: string; items: Item[]; payments: Payment[] };
+type Order = { id: string; number: string; type: string; status: string; fulfillment_status: string; payment_status: string; subtotal: string; total: string; currency: string; items: Item[]; payments: Payment[]; signed_access_url: string };
 type Channel = { code: "cod" | "jazzcash" | "easypaisa" | "card"; label: string; available: boolean };
 type Retry = { payment_id: string };
 
@@ -78,6 +78,7 @@ export function CustomerOrderDetail({ orderId }: { orderId: string }) {
       {latest && latest.gateway !== "cod" && latest.status === "pending" && <button disabled={busy} onClick={() => void initiate(latest.public_id).catch((error) => setMessage(error instanceof Error ? error.message : "Unable to continue payment."))} className="rounded-xl bg-slate-950 px-4 py-2 text-white">Continue payment</button>}
       {order.payment_status === "failed" && retryChannels.map((channel) => <button key={channel.code} disabled={busy} onClick={() => void retry(channel.code as "jazzcash" | "easypaisa" | "card")} className="rounded-xl border px-4 py-2">Retry with {channel.label}</button>)}
       {canCancel && <button disabled={busy} onClick={() => void cancel()} className="rounded-xl border border-red-300 px-4 py-2 text-red-700">Cancel order</button>}
+      <a href={order.signed_access_url} target="_blank" rel="noreferrer" className="rounded-xl border px-4 py-2">Open 30-minute read-only link</a>
       <Link href="/account" className="rounded-xl border px-4 py-2">Back to account</Link>
     </div>
     {message && <p className="text-sm text-red-700">{message}</p>}

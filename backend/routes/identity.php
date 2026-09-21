@@ -53,6 +53,8 @@ foreach (['customer', 'admin'] as $realm) {
 }
 Route::post('/internal/admin/auth/offline-owner-recovery/rotate', [IdentityController::class, 'rotateOfflineOwnerCodes'])->defaults('identity_realm', 'admin')->middleware(['identity', 'identity.auth', 'identity.recent', 'throttle:identity'])->name('admin.offline-owner-recovery.rotate');
 Route::post('/internal/admin/auth/offline-owner-recovery/redeem', [IdentityController::class, 'redeemOfflineOwnerCode'])->defaults('identity_realm', 'admin')->middleware(['identity', 'throttle:identity'])->name('admin.offline-owner-recovery.redeem');
+Route::get('/api/v1/orders/{order}/signed', [CustomerApiController::class, 'signedOrder'])
+    ->middleware(['signed', 'throttle:api-customer'])->name('api.customer.orders.signed');
 Route::get('/internal/admin/pos/login', [PosShellController::class, 'login'])
     ->defaults('identity_realm', 'admin')->middleware('identity')->name('admin.pos.login');
 

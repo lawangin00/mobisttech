@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\StockUnit;
 use App\Support\ProductVariantKey;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -414,7 +415,16 @@ final class WebsiteApi
             ->get(['public_id', 'gateway', 'status', 'amount', 'currency', 'initiated_at', 'paid_at'])
             ->map(fn ($row) => (array) $row)->all();
 
-        return $this->orderSummary($order) + ['items' => $items, 'payments' => $payments];
+        return $this->orderSummary($order) + ['items' => $items, 'payments' => $payments,
+            'signed_access_url' => URL::temporarySignedRoute('api.customer.orders.signed', now()->addMinutes(30), ['order' => $order->public_id])];
+    }
+
+    public function signedOrder(string $publicId): array
+    {
+        $this->capabilities->assertHistoricalAllowed('order.status');
+        $order = DB::table('orders')->where('public_id', $publicId)->firstOrFail();
+
+        return $this->orderSummary($order);
     }
 
     public function assertOwnedPayment(CustomerAccount $customer, string $paymentPublicId): void

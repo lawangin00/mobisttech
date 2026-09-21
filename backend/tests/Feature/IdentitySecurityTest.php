@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
@@ -121,6 +122,31 @@ class IdentitySecurityTest extends TestCase
         $this->assertSame($a->id, app(Access::class)->ownOrder($a, $uuid)->user_id);
         $this->expectException(HttpException::class);
         app(Access::class)->ownOrder($b, $uuid);
+    }
+
+    public function test_historical_order_capability_is_owner_issued_signed_bounded_and_read_only(): void
+    {
+        $customer = $this->account(CustomerAccount::class, 'signed-owner@example.invalid');
+        $other = $this->account(CustomerAccount::class, 'signed-other@example.invalid');
+        $uuid = (string) Str::uuid();
+        DB::table('orders')->insert(['public_id' => $uuid, 'order_number' => 'MT-W01-SIGNED', 'order_type' => 'mobile',
+            'customer_name' => 'Signed Owner', 'customer_mobile' => '03000000001', 'customer_email' => $customer->email,
+            'user_id' => $customer->id, 'status' => 'completed']);
+
+        $ownerClient = $this->client();
+        $this->login($ownerClient, 'customer', $customer->email)->assertOk();
+        $signed = $this->send($ownerClient, 'GET', '/api/v1/orders/'.$uuid)->assertOk()->json('data.signed_access_url');
+        $this->assertIsString($signed);
+        $signedResponse = $this->getJson($signed)->assertOk()->assertJsonPath('data.number', 'MT-W01-SIGNED');
+        $this->assertStringContainsString('no-store', (string) $signedResponse->headers->get('Cache-Control'));
+        $this->getJson($signed.'&signature=invalid')->assertForbidden();
+
+        $expired = URL::temporarySignedRoute('api.customer.orders.signed', now()->subMinute(), ['order' => $uuid]);
+        $this->getJson($expired)->assertForbidden();
+        $otherClient = $this->client();
+        $this->login($otherClient, 'customer', $other->email)->assertOk();
+        $this->send($otherClient, 'GET', '/api/v1/orders/'.$uuid)->assertNotFound();
+        $this->postJson(parse_url($signed, PHP_URL_PATH).'?'.parse_url($signed, PHP_URL_QUERY), [])->assertMethodNotAllowed();
     }
 
     private function account(string $model, string $email, array $extra = [])
