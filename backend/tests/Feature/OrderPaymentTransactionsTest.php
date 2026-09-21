@@ -215,6 +215,7 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(3, DB::table('sales')->count());
         $this->assertSame(0, $product->fresh()->qty);
     }
+
     public function test_disabled_provider_fails_before_order_and_verified_callback_is_replay_safe_across_mode_switch(): void
     {
         $product = $this->product();
