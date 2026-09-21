@@ -9,7 +9,7 @@
   "canonical_repositories": [
     {
       "remote": "lawangin00/mobisttech",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "main",
       "known_local_roots": [
         "C:\\mobisttech"
