@@ -3,7 +3,7 @@ import {expect,test} from '@playwright/test';
 
 test('P02 source-qualified synthetic imported product remains editable, historically safe and outlet-scoped',async({page})=>{
     test.setTimeout(60000);
-    for(const seeder of ['PosMasterDataVariantE2eSeeder','PosMasterDataImportedE2eSeeder']){
+    for(const seeder of ['PosMasterDataVariantE2eEnsureSeeder','PosMasterDataImportedE2eSeeder']){
         execFileSync('php',['artisan','db:seed','--class=Database\\Seeders\\'+seeder,'--env=testing','--force'],{cwd:process.cwd(),stdio:'inherit'});
     }
     await page.goto('/internal/admin/pos/login');
