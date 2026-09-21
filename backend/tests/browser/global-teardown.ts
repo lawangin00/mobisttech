@@ -27,6 +27,13 @@ export default async function globalTeardown() {
             env: { ...process.env, MT75_FIRST_OUTLET_E2E_ENABLED: '1' },
         });
     }
+    // Names and counts only; CI diagnosis never reads or prints business row values.
+    if (process.env.CI === 'true') {
+        execFileSync('php', ['tests/browser/fixture-residue-diagnostic.php'], {
+            cwd: process.cwd(),
+            stdio: 'inherit',
+        });
+    }
     execFileSync('php', ['artisan', 'cache:clear', '--env=testing'], {
         cwd: process.cwd(),
         stdio: 'inherit',
