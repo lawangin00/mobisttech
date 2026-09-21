@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "1ffe59f2036382ef22c1b7573eff19ac8fb91f3d",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T19:18:54Z",
+  "description": "Verify the exact two-line first-outlet product-card quantity assertion correction using isolated fresh-owner browser acceptance, disposable schema reset, remaining POS/Admin and Website browser gates, and final cleanup; retain external provider default-OFF and W04 HOLD."
+}
