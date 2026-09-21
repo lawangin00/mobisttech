@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "6d552d56b0a291b4c0178e231ae9a7e5e153bf15",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "W01-identity",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T15:10:13Z",
+  "description": "Run only the final W01 protected-owner self-authority and two-way Admin/Customer realm browser join on a fresh disposable MySQL schema. Preserve unrelated browser groups and full-suite LOOP_GUARD state."
+}
