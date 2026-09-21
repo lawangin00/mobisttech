@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "execution_surface": "NORMAL_CHAT",
+  "source_commit": "27520b504026792d57eb823c937f6d2fabb3f08c",
+  "reason": "stage",
+  "gate": "full",
+  "stage_id": "MT-7.5-W01-PROFILE-AND-CUSTOMER-BROWSER",
+  "requested_at_utc": "2026-09-21T11:02:30Z",
+  "description": "GitHub-mode hosted acceptance of the exact committed W01 signed historical-order and customer profile/photo changes, including browser customer journey, identity/security regression and full CI. Preserve W01 In Progress unless actual required terminal gates pass."
+}
