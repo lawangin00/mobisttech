@@ -19,7 +19,7 @@ For each row below, compare the *original source behavior* with current approved
 | P07 | Complete | All 148 source files and 32 routes disposed; settings/media permissions, draft/publish/rollback, safe paths, responsive presentation, runtime theme/branding and invoice/warranty document logos accepted in backend and actual Edge. |
 | P08 | Complete | Preserve MT-3.3/MT-7.1/MT-7.4 target-only verified recovery evidence. Live destructive restore/provider work remains a separate authorization HOLD; do not reopen this completed family without regression evidence. |
 | X01 | Complete | All 11 source routes disposed; current payment regression and independent-connection confirmation/release race verify replay/hash conflict, atomic retry, expiry and joined order-stock-payment reconciliation. |
-| W01 | Pending | Reconcile original customer/Admin identity and signed historical order access, password/profile/avatar/session, last-owner and direct cross-realm denial with customer and Admin browsers. |
+| W01 | Complete | Reconciled original customer/Admin identity and signed historical order access, password/profile/avatar/session, last-owner and direct cross-realm denial with customer and Admin browsers. Authentic recovery delivery remains separately external-unverified. |
 | W02 | Pending | Check source category/filter/price/variant/redirect and zero-stock outputs against live shared POS→Laravel API→Next.js propagation; deny private fields. |
 | W03 | Pending | Join guest-cart to customer recovery, reprice/duplicate checkout, signed owned invoice/order, purchase-qualified review moderation and Admin CSV/status UI. |
 | W04 | Pending | Test four **Website-only** COD/JazzCash/Easypaisa/hosted-card modes, negative owner/reference/replay, disabled provider and refund states. Genuine gateway sandbox/refund remains HOLD, not a tested fake. |
@@ -49,6 +49,12 @@ Inventory invariant: five previously Complete (`P08,W08,B01,C01,F01`), sixteen P
 
 - Owner-authenticated order detail now issues a 30-minute signed, read-only historical-order summary capability and exposes it in the Customer order UI. The endpoint is private/no-store; tampered, expired and mutating requests fail, and another Customer cannot mint a link for an unowned order. Focused **1/1 PASS (13 assertions)**; joined identity/session/mode **19/19 PASS (177 assertions)**; Website typecheck PASS.
 - This closes the missing signed-capability implementation slice only. W01 remains Pending until actual Customer browser link/expiry coverage, Customer profile/avatar parity and joined last-owner/direct cross-realm browser acceptance pass. Authentic recovery delivery remains an external HOLD and old identity cutover is excluded.
+
+## W01 family closure (21-Sep-2026)
+
+- Hosted exact-source run `35619045788` passed the final clean-checkout identity browser join. Chromium Admin **1/1 PASS (9.7s)** covered protected-owner self-authority denial plus direct Customer-realm denial; Chromium Customer **1/1 PASS (11.7s)** covered signed history/profile/photo plus direct Admin-realm denial.
+- Existing current evidence covers independent Admin/Customer guards, password/session revocation, profile/photo privacy, protected Full Access/last-owner behavior and local/mock recovery behavior. Final schema, cleanup and tracked-artifact gates passed.
+- W01 is Complete. Authentic provider delivery and old identity import/cutover remain separately external-unverified or excluded and do not reopen the accepted target capability family.
 - Customer-owned name/mobile profile and private self-scoped photo CRUD are now implemented with strict validation, atomic linked-customer projection, UUID private paths, safe media replacement/removal and audit. Focused **1/1 PASS (14 assertions)**; joined identity/session **17/17 PASS (140 assertions)**; Website typecheck/build PASS. Direct Edge accepted signed historical access and profile edit/persistence/restore; the separately recorded isolated hosted Customer browser passed signed order/profile/photo **1/1 (12.1s)**. Final last-owner/cross-realm browser join remains Pending; the hosted workflow's independent stale schema-count failure is not an overall CI PASS.
 
 ## First evidence-backed discrepancy: P01 contract supersession, not permission to revert identity

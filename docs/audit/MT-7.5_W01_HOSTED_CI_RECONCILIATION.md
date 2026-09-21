@@ -1,6 +1,6 @@
 # MT-7.5 W01 hosted CI reconciliation
 
-Status: IN PROGRESS. W01 remains open (13/27 complete, 14 open); P07 remains complete. Hosted W01 full-gate retry is under LOOP_GUARD after three unsuccessful/incomplete attempts; no terminal full-gate PASS exists.
+Status: COMPLETE. W01 is closed (14/27 complete, 13 open); P07 remains complete. The unrelated hosted full-gate retry remains under LOOP_GUARD after three unsuccessful/incomplete attempts and is not represented as a terminal full-gate PASS.
 
 - Source candidate: `27520b504026792d57eb823c937f6d2fabb3f08c`; exact-source request commit: `a5e3022ddbbfd81ae3e54916aa261d29bbd1fd0d`.
 - Hosted attempt 1, full CI run `35591937159`, acceptance job `106308096867`, terminal FAILURE: full backend regression 337 passed / 1 failed (10,000 assertions). Later browser gates, including W01 Customer browser, were skipped, not passed. Exact failure: `PosCustomerReportingInterfaceTest::test_invoice_customer_documents_delivery_retry_and_report_export_http_contract`, line 106. WhatsApp invoice document HTTP returned 500 instead of 200 because `PosCustomerReportingController::whatsapp` passed raw binary PDF in the JSON response; Laravel rejected malformed UTF-8. This is a POS document JSON-transport regression exposed by independent W01 hosted verification, not proof of W01 Customer failure. Material fix at `7c7719b17dc42d8dbd32ff60c97e62bbf2e24a34`: normalize only the WhatsApp HTTP attachment's `pdf` bytes to JSON-safe `pdf_base64` and remove the raw binary key, mirroring the existing document PDF endpoint. Underlying PDF bytes/hash, durable delivery attempt, send permission, customer/outlet scope and WhatsApp URI logic are unchanged. The existing positive WhatsApp HTTP test catches the previously terminal HTTP 500.
@@ -16,3 +16,10 @@ Status: IN PROGRESS. W01 remains open (13/27 complete, 14 open); P07 remains com
 - Local `TeamMemberSessionSecurityTest` is 10/10 PASS (69 assertions), including a sole Full Access owner's failed self-disable/demotion with authority retained.
 - Attempt count: 1. Failure signature: browser message-text mismatch after successful 403. Material change: assert the approved generic UI message while retaining the exact HTTP status and two-way realm-denial checks.
 - State remains OPEN until the corrected hosted identity browser join returns terminal PASS.
+
+## Final identity browser join closure — 21-Sep-2026
+
+- Materially corrected exact-source run `35619045788` at request commit `0f04c48a9ec322004e56e31dc73b5f1738715c42` completed successfully; canonical request validation and the clean-checkout acceptance job both passed.
+- Real Chromium Admin browser **1/1 PASS (9.7s)** proved a protected Full Access owner cannot change their own authority and that the authenticated Admin realm receives HTTP 401 from the Customer account endpoint.
+- Real Chromium Customer browser **1/1 PASS (11.7s)** re-proved the signed historical-order and private profile/photo journey and received HTTP 401 from the Admin account endpoint.
+- Final schema verification, tracked-runtime-artifact check, disposable fixture cleanup and container shutdown passed. This closes W01 while preserving the full-suite LOOP_GUARD and authentic recovery delivery as separately external-unverified.
