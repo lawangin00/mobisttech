@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "e74f111884e7bef2c93af175066eff05414a6b45",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "W01-customer",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T13:39:30Z",
+  "description": "Run isolated W01 Customer browser and final API schema gate against the material index-name casing fix on a fresh disposable MySQL schema; preserve other W01 gates pending and do not run full POS/Admin suite."
+}
