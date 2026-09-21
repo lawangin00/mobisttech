@@ -1,0 +1,9 @@
+{
+    "project_id":  "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+    "source_commit":  "7cdd51a4aac78c358bbed211afb26c28fb4591d2",
+    "reason":  "necessary",
+    "gate":  "full",
+    "stage_id":  "MT-7.5",
+    "requested_at_utc":  "2026-09-21T21:22:47Z",
+    "description":  "Verify restored synthetic E41/E42 outlet names, P02 scoped cleanup retaining first-owner canonical options, full browser and downstream Website acceptance on disposable CI schema."
+}
