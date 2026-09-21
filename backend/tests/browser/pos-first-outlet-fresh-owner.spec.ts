@@ -59,7 +59,7 @@ test('fresh protected owner creates, configures and explicitly enters the first 
     await page.getByRole('spinbutton', { name: 'Warranty duration' }).fill('30');
     await page.getByTestId('product-save').click();
     const product = page.getByRole('button', { name: /MT75 Fresh Accessory/ });
-    await expect(product).toContainText('Qty 0');
+    await expect(product.locator('..')).toContainText('Qty 0');
 
     const receive = page.getByRole('heading', { name: 'Receive stock' }).locator('xpath=ancestor::section[1]');
     await receive.locator('select').nth(0).selectOption({ label: 'MT75 Fresh Accessory' });
@@ -70,7 +70,7 @@ test('fresh protected owner creates, configures and explicitly enters the first 
     await receive.getByPlaceholder('03XXXXXXXXX').fill('03000000000');
     await receive.getByPlaceholder('Address').fill('Target-only supplier address');
     await page.getByTestId('acquire-submit').click();
-    await expect(page.getByRole('button', { name: /MT75 Fresh Accessory/ })).toContainText('Qty 3');
+    await expect(product.locator('..')).toContainText('Qty 3');
     const initialHistory = page.locator('[data-testid^="inventory-history-"]').first();
     await expect(initialHistory).toContainText('supplier · 3 @ PKR 100.00');
     await expect(initialHistory).toContainText('restock · +3 · 0 → 3');
