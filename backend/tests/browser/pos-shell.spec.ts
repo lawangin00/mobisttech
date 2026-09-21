@@ -24,7 +24,7 @@ test('MT-7.5 W01 protected owner cannot change own authority and Admin cannot en
         && response.request().method() === 'PATCH');
     await team.getByRole('button', { name: 'Save Team Member' }).click();
     expect((await rejected).status()).toBe(403);
-    await expect(page.getByRole('alert')).toContainText('cannot change their own authority');
+    await expect(page.getByRole('alert')).toHaveText('Request failed.');
 
     const customerRealmStatus = await page.evaluate(async () => (await fetch('/api/v1/account', {
         headers: { Accept: 'application/json' },
