@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "b58b3ed1b59209e7055881ca83071f437b98bd01",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "W03-commerce",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T15:56:16Z",
+  "description": "Run the materially corrected W03 browser acceptance after registering the new page in the canonical Inertia resolver; preserve the already passing prerequisite and fixture gates."
+}
