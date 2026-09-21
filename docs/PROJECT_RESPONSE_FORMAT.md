@@ -1,29 +1,27 @@
-# Mobisttech — Owner-approved project response format
+# Mobisttech — binding owner-approved response format
 
-Approved example (the exact five-line layout selected by the owner; example values are historical, not a current status report):
+## Exact ordinary project-status output
 
-```text
-Completed: W01 backend regression and website build verification
-Current: MT-7.5 W01 — In Progress (13/27 DONE)
-Next: Verify terminal CI result and continue W01 Customer browser acceptance
-Proceed? Y/N
-4:30 PM, 21-Sep-26
-```
-
-## Binding output contract
-
-For ordinary Mobisttech project execution, checkpoint, continuation and progress replies, render exactly five adjacent text lines, in this order, with a single hard line break between them and no blank lines, heading, preamble, commentary, code fence, bullets or trailing text:
+Render exactly **five visible, adjacent lines**, one field per line and no blank lines or other visible content:
 
 ```text
-Completed: <last actually verified completed checkpoint or work>
-Current: <exact active stage/point ID and title or short family> — <verified state> (<verified DONE count>/<verified total> DONE)
-Next: <first genuinely pending recovery/continuation action>
+Completed: <short title of actually completed work>
+Current: <short title of active work and verified status>
+Next: <short title of the first pending action>
 Proceed? Y/N
-<h:mm AM/PM, d-MMM-yy in the user's local time>
+<h:mm AM/PM, d-MMM-yy in Asia/Karachi>
 ```
 
-The example shows the precise visual layout; replace example values with fresh, truthful evidence each turn. Never label an incomplete point complete or invent a completed action to fill the first line. A current in-progress point may be shown on the Current line while Completed names only its last verified sub-checkpoint. Obtain a fresh local timestamp as the final evidence operation; the timestamp is the final line. The four labels and their order, spaces, punctuation, single-line-per-field layout and compact single line spacing are fixed. If a field would wrap on screen because of window width, do not introduce manual paragraph breaks or empty lines. When the platform collapses plain-text newlines, use presentation that preserves line breaks without adding blank line spacing. No alternative inherited, earlier-chat or cached formatting template governs these ordinary project replies; this owner-approved project-specific layout supersedes such presentation examples, without changing the actual work, safety, project identity, state or authorization gates.
+The example above is a template, NOT current project state. Keep the labels, order, casing and `Proceed? Y/N` literal. Each of the first three values must be a **single concise title**, not a summary: no test counts/results, failure explanations, evidence narratives, commit lists, commentary, headings, bold/italic styling, bullets or added fields. A compact verified stage-progress count may appear in `Current` when relevant, but never expand it into a paragraph. `Completed` must describe only work actually completed; `Current` must never present an open point as complete; `Next` names only the immediate pending action. Do not advance the roadmap or change ledger counts for a formatting-only task. Obtain a fresh Asia/Karachi local timestamp after the last project-state action.
 
-Explicitly different command families (for example global execution-mode commands, read-only handoffs or user-requested detailed reports) must preserve their factual command semantics; do not misrepresent a global command or a read-only operation as an executable point completion merely to populate the five fields. This document is a presentation rule only. It does not purge previous messages, saved account memory, external copies or Git history.
+## Rendering gate — five VISUAL lines, not just five source lines
 
-Scope: only the Mobisttech project (`282dba2f-a2d9-47e8-aa8d-e499fbe1706c`, `lawangin00/mobisttech`). It does not modify the separate POS-IMS project or the universal references repository. No project implementation or active W01 acceptance is advanced by this documentation-only control update.
+Before sending a status response, ensure the chat renderer preserves all four intervening line breaks. On a renderer supporting a whitespace-preserving text element, render all five lines within **one** `text` element with `preserveWhitespace={true}`; the element itself must not introduce a visible heading, border, code styling or extra line. Otherwise use a verified hard-line-break mechanism that displays five adjacent lines (never rely on ordinary Markdown soft newlines or on concatenating separate partial messages). There must be exactly one displayed line for each field, no merged fields, and no blank line between fields. Shorten long field values to prevent visual wrapping on a narrow screen. Do not send half a template before the project task finishes; construct and check the complete five-line response as one output.
+
+Pre-send checklist: (1) exactly five visible lines, (2) labels in fixed order, (3) first three entries are short titles only, (4) no formatting or extra text, (5) fresh local timestamp last. If any check fails, reformat BEFORE sending, without asking the owner to correct it. This project-specific layout takes precedence over conflicting historical or inherited ordinary project-status examples. It does not override explicit requests for a different type of response, specialized control-command semantics or safety/project identity gates.
+
+## Enforcement boundary
+
+This Git-tracked contract is a durable instruction for agents working on this repository, NOT an API hook capable of intercepting every ChatGPT message. Repository CI, a local linter or another script cannot guarantee what the ChatGPT conversation renderer will display unless that actual response is routed through the validator. Never claim that changing this file alone creates a software-enforced 100% lock. The observable check is the actual five-line message shown to the owner.
+
+Scope: Mobisttech project `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`, `lawangin00/mobisttech` only. This formatting-only control update must not reopen/advance MT-7.5 W01, mutate application/business data, modify separate projects or rewrite prior chats.
