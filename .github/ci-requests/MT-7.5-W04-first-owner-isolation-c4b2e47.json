@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "c4b2e47f6d8bded49b83116178b302086ec219f2",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T18:49:40Z",
+  "description": "Verify dedicated fresh-owner first-outlet browser against clean synthetic schema, guarded cleanup and reset before remaining POS/Admin and Website acceptance; do not alter production authorization or provider defaults."
+}
