@@ -1,6 +1,6 @@
 # MT-7.5 P07 — POS Dynamic Platform presentation (PARTIAL)
 
-Status: **OPEN**. This file records bounded target acceptance, not P07 family closure. The authoritative source feature register's **148 tracked files and 32 resolved routes** now have explicit dispositions in `MT-7.5_P07_SOURCE_CROSSWALK.md`; remaining rendered column/dashboard/report and theme/branding runtime acceptance is still open.
+Status: **COMPLETE**. The authoritative source feature register's **148 tracked files and 32 resolved routes** have explicit dispositions in `MT-7.5_P07_SOURCE_CROSSWALK.md`, and the target presentation/runtime/browser gates are accepted below.
 
 ## 21-Sep-2026: Per-section POS configuration controls and branding revisions
 
@@ -111,3 +111,9 @@ Focused document propagation passed **1/1 (18 assertions)**. Joined document/pla
 Canonical A4 and Thermal PDF generation now embeds the published invoice/warranty PNG as a real PDF image XObject and reserves proportional header space before text. The built-in print wordmark is the safe fallback. Invoice `show_logo=false` suppresses both HTML and PDF logo output. Document-role publication accepts PNG only and enforces bounded dimensions because the dependency-free PDF path cannot safely or deterministically decode arbitrary WebP; other screen branding roles retain PNG/WebP support. PNG alpha is composited onto white, standard PNG row filters are decoded, and the bounded PDF-ready raster is cached by content hash for one day.
 
 The first array-based decoder attempt exceeded the PHP process memory limit and is not accepted. The materially different bounded string-row decoder passed focused propagation twice at **1/1 (20 assertions)**, then complete document/platform regression **11/11 (270 assertions)**, scoped Pint/diff and production TypeScript/Vite build (589 modules). Final mobile outlet-selection browser continuation remains open under the existing Playwright `LOOP_GUARD`; **P07 remains OPEN; 12/27 DONE, 15 OPEN.**
+
+## 21-Sep-2026: P07 final rendered acceptance and family closure
+
+Direct computer-use Edge at **390x844** completed the exact multi-outlet Inventory Team Member flow on the committed candidate: the outlet-required panel rendered before selection; selecting `E2E Inventory Outlet` removed that panel, retained the selected outlet after navigation, exposed Inventory, kept Sales absent and produced no horizontal overflow. This materially different browser path clears the conventional Playwright orchestration `LOOP_GUARD` without reclassifying either stalled runner attempt as PASS.
+
+Together with the 148/148 file and 32/32 route crosswalk, protected per-section management/publish permissions, revision preview/draft/publish/rollback, safe media lifecycle, navigation/table/filter/column/dashboard/report presentation, published shell theme/branding, role-specific HTML/PDF document logos, backend regressions and desktop/mobile actual Edge evidence, **P07 is COMPLETE**. Synthetic browser fixtures were cleaned, application cache cleared and owned backend/MySQL stopped. Checklist advances to **13/27 DONE, 14 OPEN (48.15%)**.
