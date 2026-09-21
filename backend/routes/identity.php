@@ -193,6 +193,7 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::post('/reset-administration/operations/{operation}/execute', [ResetAdministrationController::class, 'execute'])->defaults('identity_realm', 'admin')->name('admin.reset.execute');
     Route::get('/platform', [PlatformAdministrationController::class, 'page'])->defaults('identity_realm', 'admin')->name('admin.platform.page');
     Route::get('/platform/data', [PlatformAdministrationController::class, 'index'])->defaults('identity_realm', 'admin')->name('admin.platform.data');
+    Route::get('/website-commerce', [WebsiteCommerceAdministrationController::class, 'page'])->defaults('identity_realm', 'admin')->name('admin.website-commerce.page');
     Route::get('/website-commerce/orders', [WebsiteCommerceAdministrationController::class, 'orders'])->defaults('identity_realm', 'admin')->name('admin.website-commerce.orders');
     Route::get('/website-commerce/orders.csv', [WebsiteCommerceAdministrationController::class, 'ordersCsv'])->defaults('identity_realm', 'admin')->name('admin.website-commerce.orders.csv');
     Route::patch('/website-commerce/orders/{order}', [WebsiteCommerceAdministrationController::class, 'updateOrder'])->whereUuid('order')->defaults('identity_realm', 'admin')->name('admin.website-commerce.orders.update');

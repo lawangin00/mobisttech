@@ -112,6 +112,7 @@ Current closure state after W01 acceptance: **14/27 Complete, 13/27 OPEN (51.85%
 - One Laravel-owned service and five unified Admin routes now provide permissioned bounded Website-order listing, safe forward-only fulfillment transitions, formula-safe CSV and immutable review moderation with identity audit.
 - Focused administration plus neighboring order transaction verification passed **16/16 (113 assertions)**; scoped syntax/Pint and exact route registration passed. The first HTTP harness attempt lacked the custom account-session record and returned 401 before the controller; service behavior passed after switching to the established focused boundary, while real session/UI acceptance remains pending.
 - W03 stays IN PROGRESS at **14/27 DONE, 13 OPEN**. Next: focused React Admin order/review surface and joined browser acceptance.
+- The focused React/Inertia Website commerce administration surface is now implemented in the existing Platform Administration shell and passed TypeScript typecheck, production build (589 modules), focused backend verification, scoped Pint and diff checks. W03 remains IN PROGRESS pending its dedicated synthetic fixture and hosted Chromium acceptance for fulfillment advancement, CSV and review moderation.
 
 ## 06/P01 bounded warranty-intake substep (20-Sep-2026; LOCALLY ACCEPTED; P01 OPEN)
 

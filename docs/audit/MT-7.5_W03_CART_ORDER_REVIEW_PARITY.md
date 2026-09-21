@@ -30,3 +30,9 @@ Authentic payment/provider delivery, old customer import and production orders r
 - Focused service/route-registry verification plus the neighboring complete order transaction suite passed **16/16 (113 assertions)**; scoped PHP syntax/Pint and route registration passed.
 - Attempt 1 added ordinary `actingAs` HTTP assertions, but the project's custom account-session middleware correctly returned 401 because no canonical `account_sessions` record existed. No service assertion failed. Materially corrected verification uses direct permissioned service behavior plus exact registered route inspection; full browser/API session evidence remains for the React acceptance slice.
 - W03 remains IN PROGRESS for the Admin React surface and joined Customer-to-Admin browser workflow; finite count remains **14/27 DONE, 13 OPEN (51.85%)**.
+
+## Protected Admin commerce UI checkpoint — 21-Sep-2026
+
+- The existing Platform Administration shell now exposes a permission-filtered Website commerce entry and a focused React/Inertia workspace for bounded order search/status filtering, the next allowed fulfillment transition, formula-safe CSV download, review-state filtering and one-way approve/reject moderation with an optional reply.
+- The page reuses the unified Admin realm and the five accepted Laravel JSON routes; it introduces no second identity realm or business backend. TypeScript typecheck, production Vite build (589 modules), focused W03 backend verification (1/1, 16 assertions), scoped Pint and diff whitespace checks passed.
+- W03 remains IN PROGRESS because a dedicated synthetic browser fixture and real hosted Chromium acceptance must still join status advancement, CSV download and review moderation. Finite count remains **14/27 DONE, 13 OPEN (51.85%)**.
