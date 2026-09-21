@@ -1,10 +1,10 @@
-# mobiST Tech
+# Mobisttech
 
 A new, independent mobiST Technologies monorepo. This is a controlled architecture migration of the completed mobiST POS and Website applications, not a clean-slate rebuild.
 
 ## Project control
 
-- [Project identity](docs/PROJECT_IDENTITY.json) - immutable Project ID, canonical private remote and local project boundary.
+- [Project identity](docs/PROJECT_IDENTITY.json) - immutable Project ID, canonical remote and local project boundary.
 - [Canonical project Goal](docs/PROJECT_GOAL.md) - the user's original file, preserved byte-for-byte.
 - [Binding project Preferences](docs/PROJECT_PREFERENCES.md) - approved implementation preferences, preserved byte-for-byte and applied alongside the Goal.
 - [Approved requirements addendum v1.1](docs/PROJECT_REQUIREMENTS_ADDENDUM_v1.1.md) / [clause traceability](docs/REQUIREMENTS_ADDENDUM_v1.1_RECONCILIATION.md) - supplemental scope; original Goal/Preferences stay unchanged.
@@ -34,10 +34,10 @@ docs/                   Goal, roadmap, registry and verified evidence
 .github/                Monorepo CI
 ```
 
-The backend and MySQL are the authoritative owners of shared business data. The Website consumes REST APIs. Redis and S3-compatible storage are used only for appropriate, justified roles. Local development runs on Windows; the production target is Linux, Nginx and TLS.
+The backend and MySQL are the authoritative owners of shared business data. The Website consumes REST APIs. Redis and S3-compatible storage are used only for appropriate, justified roles. Local development runs on Windows when RDC mode is selected; the production target is Linux, Nginx and TLS.
 
 Use the Windows foundation runbook for pinned dependencies, isolated local services and verification commands. The implementation ledger is the only live progress/next-point authority. Foundation availability does not imply migrated business functionality, and historical source tests do not represent target acceptance.
 
 The original `C:\mobiST\mobiST-POS` and `C:\mobiST\mobiST-Website` repositories and their GitHub remotes are protected read-only references. No edits, installs, builds, migrations, commits, pushes or remote changes are allowed there.
 
-New remote: `https://github.com/lawangin00/mobisttech` (private). Verify repository status and synchronization from the status ledger and actual Git state.
+Canonical remote: `https://github.com/lawangin00/mobisttech` (public). Verify repository status and synchronization from the status ledger and actual Git state.
