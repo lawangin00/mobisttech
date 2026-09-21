@@ -42,6 +42,10 @@ if (in_array($mode, ['identity', 'addendum', 'sales', 'warranty', 'admin-google'
 if (in_array($mode, ['addendum', 'sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents', 'cms', 'digital-services', 'projects', 'engagement', 'operations', 'reset', 'api'], true)) {
     $expected = array_merge($expected, ['website_operating_profiles', 'stock_unit_lineage', 'inventory_custody_holds', 'acquisition_source_references', 'monetary_adjustments', 'project_milestone_identities', 'order_item_milestones']);
 }
+if ($mode === 'api') {
+    $expected[] = 'owner_offline_recovery_codes';
+    (require __DIR__.'/verify_owner_recovery_table.php')($schema, $db->db);
+}
 if (in_array($mode, ['sales', 'warranty', 'admin-google', 'orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents', 'cms', 'digital-services', 'projects', 'engagement', 'operations', 'reset', 'api'], true)) {
     foreach (['public_id', 'version', 'returned_quantity'] as $column) {
         if (! $schema->hasColumn('sales', $column)) {
@@ -370,7 +374,7 @@ if (in_array($mode, ['digital-services', 'projects', 'engagement', 'operations',
         'service_request_files' => ['id', 'service_request_id', 'object_key', 'original_name', 'mime_type', 'byte_size', 'sha256', 'uploaded_at'],
     ];
     foreach ($digitalColumns as $table => $columns) {
-        foreach ($columns as $column) {
+        foreach ($digitalColumns as $table => $columns) {
             if (! $schema->hasColumn($table, $column)) {
                 throw new RuntimeException('Missing MT-3.5 digital-service column: '.$table.'.'.$column);
             }
