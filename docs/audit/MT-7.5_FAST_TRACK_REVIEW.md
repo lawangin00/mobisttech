@@ -9,7 +9,7 @@ Status: REVIEW ONLY / MT-7.5 IN PROGRESS. Baseline: project `282dba2f-a2d9-47e8-
 - Gap classes: **I** = implementation/functionality confirmed absent or materially incomplete; **E** = target test/integration/source-equivalence evidence not yet sufficient (do not assert a defect); **H** = owner/legal/external authorization, authentic credentials/data or policy decision HOLD. Multiple classes may apply. Existing PASS evidence is **reused**, not rerun unless impacted by an actual change or at the consolidated Q01 milestone.
 - Inputs: `docs/migration/FEATURE_PARITY_REGISTER.md` (all 22, immutable source inventory), `docs/audit/MT-7.5_TRACEABILITY.md`, `docs/audit/MT-7.5_CLOSURE_GATES.md` (latest appended checkpoints override its historical earlier pending descriptions), `docs/audit/MT-7.5_ACCEPTANCE.md`, `docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md`, approved addendum/consolidated/software requirements, `docs/audit/MT-7.2_*` and the current source-of-truth/roadmap. Existing evidence pointers below are **not claims of a fresh whole-suite run**.
 
-Current closure state after W01 acceptance: **14/27 Complete, 13/27 OPEN (51.85%)**.
+Current closure state after W03 acceptance: **15/27 Complete, 12/27 OPEN (55.56%)**.
 
 ## All 22 feature families: reused evidence, exact remaining closure and classification
 
@@ -69,7 +69,7 @@ Current closure state after W01 acceptance: **14/27 Complete, 13/27 OPEN (51.85%
 | 13/P07 | DONE: 148/148 files and 32/32 routes disposed; protected settings/media revisions, responsive presentation, published theme/branding and document logos accepted in backend and actual Edge. | DONE |
 | 14/W01 | Join Admin/customer identity, signed historical access, profile/session and role denial; local/mock recovery acceptance; actual external delivery separately unverified; no old identity cutover. | DONE |
 | 15/W02 | DONE: source public-route disposition, category/device/availability filters, sort/pagination, zero-stock, four-product same-category comparison, public minimization, POS freshness, three modes, legacy redirects and W02 canonical/social/sitemap evidence reconciled in `MT-7.5_W02_ROUTE_PARITY.md`; editable SEO/media controls remain W06. | DONE |
-| 16/W03 | Join full cart/order/review and Admin ownership/moderation/status/export journeys. | IN PROGRESS [I,E] |
+| 16/W03 | DONE: 29 source files and 16 routes disposed; authoritative quote/idempotent checkout and Customer history/review evidence joined to protected Admin status/CSV/moderation backend and real hosted Chromium. | DONE |
 | 17/W04 | Verify fixed four Website payment modes, off/replay/refund security; sandbox/provider HOLD separate. | OPEN [E,H] |
 | 18/W05 | Join service-to-proposal/milestone/project lifecycle and private files across Customer/Admin UI. | OPEN [E] |
 | 19/W06 | Close reusable Software `New Software`, full public routes, CMS media/SEO/caches and two-product browser journey. | OPEN [E,H] |
@@ -114,6 +114,12 @@ Current closure state after W01 acceptance: **14/27 Complete, 13/27 OPEN (51.85%
 - W03 stays IN PROGRESS at **14/27 DONE, 13 OPEN**. Next: focused React Admin order/review surface and joined browser acceptance.
 - The focused React/Inertia Website commerce administration surface is now implemented in the existing Platform Administration shell and passed TypeScript typecheck, production build (589 modules), focused backend verification, scoped Pint and diff checks. W03 remains IN PROGRESS pending its dedicated synthetic fixture and hosted Chromium acceptance for fulfillment advancement, CSV and review moderation.
 - The hosted W03 browser candidate now includes a guarded synthetic order/review fixture, exact cleanup and one real protected-owner Chromium journey for pending-to-processing advancement, CSV download and purchase-qualified review approval. Fixture lifecycle, one-test Playwright discovery, production build, scoped formatting and focused-CI gate self-test passed; hosted execution is pending.
+
+### W03 family closure
+
+- All **29 source files and 16 routes** are dispositioned in `MT-7.5_W03_CART_ORDER_REVIEW_PARITY.md`; shared presentation/payment/security items retain their independent family gates.
+- Exact-source hosted run `35622831675` passed real Chromium **1/1**, builds, unchanged public budgets, secret scan, final schema, disposable cleanup and tracked-artifact checks. The accepted journey advanced fulfillment, downloaded CSV and approved a purchase-qualified review with an Admin reply.
+- **16/W03 DONE; checklist 15/27 DONE, 12 OPEN (55.56%).** Next independent ready family is **17/W04 Website payments**.
 
 ## 06/P01 bounded warranty-intake substep (20-Sep-2026; LOCALLY ACCEPTED; P01 OPEN)
 
