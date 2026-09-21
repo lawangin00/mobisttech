@@ -45,19 +45,9 @@ This is a **delta-only** project registry. At runtime it inherits the current ca
 - Detailed evidence belongs in Git-tracked documentation; normal user-facing completion/status output remains concise.
 - Roman Urdu is default only for assistant chat/UI; Git-tracked project docs/technical artifacts use standard English unless explicitly overridden.
 
-## Owner-approved project output override (binding)
+## Inherited universal ordinary response format (binding)
 
-The canonical ordinary Mobisttech execution, checkpoint, continuation and progress output is `docs/PROJECT_RESPONSE_FORMAT.md`. It supersedes all prior chat examples, cached layouts and inherited default ordinary-project completion/incomplete presentation protocols for **this project's output layout only**. Render exactly five consecutive single-spaced lines, with one hard newline after each field and no blank lines, heading, bullets, code fence, preamble, afterword or additional status fields:
-
-```text
-Completed: <last verified completed work/checkpoint>
-Current: <exact current stage/point and status; add compact DONE count only when relevant and verified>
-Next: <first pending action>
-Proceed? Y/N
-<h:mm AM/PM, d-MMM-yy; fresh user-local time>
-```
-
-Keep `Completed`, `Current`, `Next` and `Proceed? Y/N` labels verbatim. The actual field values must reflect verified current state. Never mark an incomplete W01 or other active point complete; the first field names only actually completed work. For layout, reproduce the approved screenshot's adjacent lines with no extra blank spacing; preserve literal line breaks in the chat renderer if needed. The time line is always the final line and must be fresh after the last state-changing or result-retrieval operation. Do not use older project-chat or memory examples as an alternative template. Do not rewrite historical Git evidence or delete previous conversations as a side effect. The format override must not defeat a specialized command's factual semantics, global-only command scope, read-only barrier, safety checks or the user's explicit request for a different type of answer. A format-only change does not reopen/advance an implementation point or authorize starting the next point.
+All ordinary Mobisttech execution, continuation, completion, incomplete-point, checkpoint, status and progress replies follow the current owner-approved shared five-line contract in `lawangin00/references/UNIVERSAL_PROJECT_RESPONSE_FORMAT.md`, as incorporated into the current Universal Registry. `docs/PROJECT_RESPONSE_FORMAT.md` preserves the owner's local precedent and renderer guidance; it is not an independent override of the shared layout. Include a compact DONE count on `Current` only when relevant and verified. Current stage/point status, actually completed work and first pending action must reflect the live ledger without advancing MT-7.5 or inventing a completion. The current universal format supersedes conflicting older chat/project presentation examples; specialized commands, explicit different-answer requests and all safety/identity gates retain their semantics.
 
 ## Project performance specialization
 
@@ -74,7 +64,7 @@ Keep `Completed`, `Current`, `Next` and `Proceed? Y/N` labels verbatim. The actu
 
 ## Universal inheritance and governance
 
-All universal aliases, collision rules, execution-intent isolation, read-only mutation barriers, evidence budgets, manual-handoff rules, identity/session-lock semantics, Loop-Guard and final-audit defaults not explicitly specialized above are inherited from the **current canonical Universal Registry** at runtime. The owner-approved project-specific ordinary reply format above overrides only the conflicting inherited presentation examples and default ordinary-project output layout. The review-provenance fields at the top are informational only and never pin execution to an older universal release.
+All universal aliases, collision rules, execution-intent isolation, read-only mutation barriers, evidence budgets, manual-handoff rules, identity/session-lock semantics, Loop-Guard and final-audit defaults not explicitly specialized above are inherited from the **current canonical Universal Registry** at runtime. The shared owner-approved universal ordinary response format is inherited without a project-specific layout override; project-specific facts and verified progress values remain local. The review-provenance fields at the top are informational only and never pin execution to an older universal release.
 
 `COMPATIBILITY_HOLD: none`.
 
