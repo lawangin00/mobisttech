@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "e21fbe90ad8d6f006a593bf617b2ab938d95d390",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T17:52:10Z",
+  "description": "Verify source-preserving Qty 0/1/3 product-card assertion correction and synthetic hosted-payment initiation failure recovery without real provider activation; require real browser result before W04 closure."
+}
