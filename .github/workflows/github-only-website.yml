@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'website/**'
+      - 'tools/ci-mode-gate.py'
       - '.github/workflows/github-only-website.yml'
   workflow_dispatch:
 
@@ -16,8 +17,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  mode:
+    name: Resolve execution mode (no product build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      run_tests: ${{ steps.check.outputs.run_tests }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Self-test and read canonical mode
+        id: check
+        run: |
+          python3 tools/ci-mode-gate.py --self-test
+          python3 tools/ci-mode-gate.py
+
   website:
     name: Website clean-checkout build and static gates
+    needs: mode
+    if: needs.mode.outputs.run_tests == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
