@@ -1,6 +1,6 @@
 # MT-7.5 P07 — POS Dynamic Platform presentation (PARTIAL)
 
-Status: **OPEN**. This file records bounded target acceptance, not P07 family closure. The authoritative source feature register lists **148 tracked files and 32 resolved routes** under P07; those source-to-target dispositions and the remaining media/theme/navigation behavior have not yet received an exhaustive independent acceptance.
+Status: **OPEN**. This file records bounded target acceptance, not P07 family closure. The authoritative source feature register's **148 tracked files and 32 resolved routes** now have explicit dispositions in `MT-7.5_P07_SOURCE_CROSSWALK.md`; remaining rendered column/dashboard/report and theme/branding runtime acceptance is still open.
 
 ## 21-Sep-2026: Per-section POS configuration controls and branding revisions
 
@@ -69,3 +69,9 @@ Joined isolated MySQL verification passed **2/2 (115 assertions)**, including hi
 The source allowlists operational/newest/oldest/total invoice order with an optional discounted-only view, and operational/updated/received/claim order with active/completed warranty-job views. Target Portal Preferences now validates those business-wide choices and applies them only as server-owned query branches. Clients receive resolved mode labels but cannot submit columns, directions, SQL patterns or status lists. Outlet and role scope, search, page bounds and record fields remain unchanged.
 
 After two recorded patch-context orchestration failures, the reconciled exact-literal strategy succeeded. Joined isolated MySQL verification passed **2/2 (148 assertions)**, including one discounted invoice and one completed claim filter result plus preference registration/persistence. Scoped Pint and diff checks passed; production TypeScript/Vite build passed **588 modules**. Column visibility/order, dashboard/report presentation and final route/file disposition remain pending. **P07 remains OPEN; 12/27 DONE, 15 OPEN.**
+
+## 21-Sep-2026: Complete source file and route disposition crosswalk
+
+`MT-7.5_P07_SOURCE_CROSSWALK.md` now disposes every P07 item from the pinned MT-1.1 inventory: **148/148 files and 32/32 resolved routes**. It records unified-Admin adaptations, shared-schema reuse, React replacements, overlap ownership under P01-P06/P08 and retired legacy Blade/Ajax/desktop transport without treating transport duplication as required behavior. The reproducible `tools/docs/build_p07_crosswalk.ps1` generator pins the inventory SHA-256 and hard-fails unless both written counts match the source counts.
+
+Generation attempts and the corrected row-count method are recorded in the ledger. Final generator verification passed with inventory SHA-256 `c5368e4121eaaac727efe72b87064ae8367ed1231419b6159642115d2bcbb17e`; diff check passed. This closes the source inventory/route-disposition gate only. Column visibility/order, dashboard/report presentation, full published theme/branding propagation and final rendered role/outlet browser acceptance remain pending. **P07 remains OPEN; 12/27 DONE, 15 OPEN.**
