@@ -1,3 +1,0 @@
-CI runtime acceptance probe, 2026-09-21.
-Purpose: verify a website/** source-area push starts zero Actions when effective mode is RDC and no explicit CI request is created.
-This is a non-runtime test-only text file. It may be removed after evidence is captured.
