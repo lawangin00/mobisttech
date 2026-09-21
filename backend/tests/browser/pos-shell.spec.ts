@@ -1,4 +1,9 @@
 import { expect, Page, test } from '@playwright/test';
+import { releaseSyntheticAdminSession } from './synthetic-admin-session';
+
+test.afterEach(async ({ page }) => {
+    await releaseSyntheticAdminSession(page);
+});
 
 const password = 'SyntheticPass123!';
 

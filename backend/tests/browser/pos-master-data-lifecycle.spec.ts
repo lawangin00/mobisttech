@@ -1,4 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { releaseSyntheticAdminSession } from './synthetic-admin-session';
+
+test.afterEach(async ({ page }) => {
+    await releaseSyntheticAdminSession(page);
+});
 
 const brand = 'MT75 P02 Browser Brand';
 const editedBrand = 'MT75 P02 Browser Brand Edited';
@@ -11,6 +16,11 @@ test('P02 protected master option lifecycle refreshes inventory and keeps protec
     await page.getByTestId('login-password').fill('SyntheticPass123!');
     await page.getByTestId('login-submit').click();
     await page.waitForURL('**/internal/admin/pos');
+    // A new browser context has no selected outlet; choose an assigned fixture outlet explicitly.
+    const selected = page.waitForResponse(r => r.url().endsWith('/internal/admin/outlets/select')
+        && r.request().method() === 'POST');
+    await page.getByTestId('outlet-select').selectOption({ label: 'E2E Sales Outlet' });
+    expect((await selected).status()).toBe(200);
     await page.goto('/internal/admin/pos/workspace/master-data');
     await expect(page.getByTestId('master-data-workspace')).toBeVisible();
     await page.getByTestId('master-list').selectOption('product_category');

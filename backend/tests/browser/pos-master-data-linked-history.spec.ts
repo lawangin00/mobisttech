@@ -1,5 +1,10 @@
 import {execFileSync} from 'node:child_process';
 import {expect,test} from '@playwright/test';
+import { releaseSyntheticAdminSession } from './synthetic-admin-session';
+
+test.afterEach(async ({ page }) => {
+    await releaseSyntheticAdminSession(page);
+});
 const brand='MT75 P02 Linked Brand';
 const edited='MT75 P02 Linked Brand Updated';
 const product='MT75 P02 Linked Product';

@@ -1,5 +1,10 @@
 import {execFileSync} from 'node:child_process';
 import {expect,test} from '@playwright/test';
+import { releaseSyntheticAdminSession } from './synthetic-admin-session';
+
+test.afterEach(async ({ page }) => {
+    await releaseSyntheticAdminSession(page);
+});
 
 test('P02 category-scoped subcategory and managed device choices persist in inventory',async({page})=>{
     test.setTimeout(45000);
