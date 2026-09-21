@@ -21,7 +21,7 @@ if ($db->db !== 'mobisttech_test' || (int) $db->port !== 13306 || ! $app->enviro
 }
 $mode = $argv[1] ?? '';
 if (! in_array($mode, ['cms', 'digital-services', 'projects', 'engagement', 'operations', 'reset', 'api', 'documents', 'repair', 'loyalty', 'promotion', 'trade-in', 'cash', 'payments', 'transfer', 'stocktake', 'procurement', 'team-members', 'orders', 'admin-google', 'warranty', 'sales', 'addendum', 'identity', 'shared', 'runtime'], true)) {
-    throw new RuntimeException('Expected cms, digital-services, projects, engagement, operations, reset, api, documents, repair, loyalty, promotion, trade-in, cash, payments, transfer, stocktake, procurement, team-members, orders, admin-google, warranty, sales, addendum, identity, shared or runtime verification mode.');
+    throw new RuntimeException('Expected cms, digital-services, projects, engagement, operations, reset, api, documents, repair, loyalty, promotion, trade-in, cash, payments, transfer, stocktake, team-members, orders, admin-google, warranty, sales, addendum, identity, shared or runtime verification mode.');
 }
 $paymentPermissions = ['config.payments.manage', 'shop.payments.reconcile', 'shop.payments.refund-override', 'shop.payments.refund-approve'];
 $checkpointPermissions = array_keys(Admin::PERMISSIONS);
@@ -118,7 +118,7 @@ if (in_array($mode, ['team-members', 'procurement', 'stocktake', 'transfer', 'pa
 }
 if (in_array($mode, ['procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents', 'cms', 'digital-services', 'projects', 'engagement', 'operations', 'reset', 'api'], true)) {
     $expected = array_merge($expected, ['suppliers', 'supplier_contacts', 'purchase_orders', 'purchase_order_lines',
-        'purchase_order_receipts', 'purchase_order_receipt_lines', 'purchase_order_events', 'reorder_policies']);
+        'purchase_orders_receipts', 'purchase_order_receipt_lines', 'purchase_order_events', 'reorder_policies']);
     foreach (['ordered_quantity', 'received_quantity', 'ordered_unit_cost', 'planned_landed_unit_cost'] as $column) {
         if (! $schema->hasColumn('purchase_order_lines', $column)) {
             throw new RuntimeException('Missing purchase-order line integrity column: '.$column);
@@ -374,7 +374,7 @@ if (in_array($mode, ['digital-services', 'projects', 'engagement', 'operations',
         'service_request_files' => ['id', 'service_request_id', 'object_key', 'original_name', 'mime_type', 'byte_size', 'sha256', 'uploaded_at'],
     ];
     foreach ($digitalColumns as $table => $columns) {
-        foreach ($digitalColumns as $table => $columns) {
+        foreach ($columns as $column) {
             if (! $schema->hasColumn($table, $column)) {
                 throw new RuntimeException('Missing MT-3.5 digital-service column: '.$table.'.'.$column);
             }
