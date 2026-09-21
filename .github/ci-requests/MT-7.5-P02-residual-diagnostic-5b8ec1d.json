@@ -1,0 +1,10 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "5b8ec1d9f81b23388508a6b14e2b26d789e15a79",
+  "reason": "necessary",
+  "gate": "verify",
+  "focus": "P02-variants",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T14:18:34Z",
+  "description": "Diagnose exact residual disposable database table names and counts after already passing isolated P02 serial browser pair and both guarded fixture teardown seeders; preserve final strict schema gate and do not inspect or print row values."
+}
