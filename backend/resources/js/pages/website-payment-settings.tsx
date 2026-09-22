@@ -22,27 +22,61 @@ type Props = {
     settings: Settings;
 };
 
+// The Admin realm has a separate CSRF cookie. Inertia's default XSRF cookie
+// lookup does not recognize XSRF-TOKEN-admin; obtain the existing realm token
+// from the authenticated endpoint instead of weakening server CSRF protection.
+async function adminCsrfToken(): Promise<string> {
+    const response = await fetch('/internal/admin/auth/csrf-cookie', {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+    });
+    const body = await response.json() as { data?: { csrf_token?: string } };
+    if (!response.ok || !body.data?.csrf_token) {
+        throw new Error('Secure Admin request token is unavailable.');
+    }
+    return body.data.csrf_token;
+}
+
 export default function WebsitePaymentSettings({ identity, channels, settings }: Props) {
     const [codEnabled, setCodEnabled] = useState(settings.draft?.cod_enabled ?? settings.cod_enabled);
     const [busy, setBusy] = useState(false);
+    const [error, setError] = useState('');
 
-    function saveDraft(event: FormEvent<HTMLFormElement>) {
+    async function saveDraft(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (busy) return;
         setBusy(true);
-        router.post('/internal/admin/website/payment-settings/drafts', { cod_enabled: codEnabled }, {
-            preserveScroll: true,
-            onFinish: () => setBusy(false),
-        });
+        setError('');
+        try {
+            const token = await adminCsrfToken();
+            router.post('/internal/admin/website/payment-settings/drafts', { cod_enabled: codEnabled }, {
+                preserveScroll: true,
+                headers: { 'X-CSRF-TOKEN': token },
+                onError: () => setError('COD draft could not be saved.'),
+                onFinish: () => setBusy(false),
+            });
+        } catch (cause) {
+            setError(cause instanceof Error ? cause.message : 'Secure Admin request failed.');
+            setBusy(false);
+        }
     }
 
-    function publishDraft() {
+    async function publishDraft() {
         if (busy || !settings.can_publish || !settings.draft) return;
         setBusy(true);
-        router.post(`/internal/admin/website/payment-settings/drafts/${settings.draft.id}/publish`, {}, {
-            preserveScroll: true,
-            onFinish: () => setBusy(false),
-        });
+        setError('');
+        try {
+            const token = await adminCsrfToken();
+            router.post(`/internal/admin/website/payment-settings/drafts/${settings.draft.id}/publish`, {}, {
+                preserveScroll: true,
+                headers: { 'X-CSRF-TOKEN': token },
+                onError: () => setError('COD draft could not be published.'),
+                onFinish: () => setBusy(false),
+            });
+        } catch (cause) {
+            setError(cause instanceof Error ? cause.message : 'Secure Admin request failed.');
+            setBusy(false);
+        }
     }
 
     return <>
@@ -60,6 +94,7 @@ export default function WebsitePaymentSettings({ identity, channels, settings }:
                 <section className="rounded-2xl border bg-white p-5">
                     <h2 className="font-semibold">Cash on Delivery policy</h2>
                     <p className="mt-1 text-sm text-slate-600">Current checkout: {settings.cod_enabled ? 'COD enabled' : 'COD disabled'} · published version {settings.published_version}. Only the nonsecret COD availability flag can be changed here. Saving a draft does not change checkout.</p>
+                    {error && <p role="alert" className="mt-3 rounded border border-red-300 p-3 text-sm">{error}</p>}
                     <form onSubmit={saveDraft} className="mt-4 flex flex-wrap items-center gap-3">
                         <label className="flex items-center gap-2 text-sm">
                             <input type="checkbox" checked={codEnabled} onChange={event => setCodEnabled(event.target.checked)} disabled={busy} />
@@ -69,7 +104,7 @@ export default function WebsitePaymentSettings({ identity, channels, settings }:
                     </form>
                     {settings.draft && <div className="mt-4 rounded-xl border bg-slate-50 p-3 text-sm">
                         <p>Latest draft v{settings.draft.version}: COD {settings.draft.cod_enabled ? 'enabled' : 'disabled'} (not yet live).</p>
-                        {settings.can_publish ? <button type="button" onClick={publishDraft} disabled={busy} className="mt-2 rounded border border-slate-950 px-4 py-2 font-semibold disabled:opacity-50">Publish latest COD draft</button>
+                        {settings.can_publish ? <button type="button" onClick={() => void publishDraft()} disabled={busy} className="mt-2 rounded border border-slate-950 px-4 py-2 font-semibold disabled:opacity-50">Publish latest COD draft</button>
                             : <p className="mt-2 text-slate-600">Publishing requires the separate Website publish permission.</p>}
                     </div>}
                     <p className="mt-3 text-xs text-slate-600">Turning COD off may leave checkout without an available channel while external gateways are unconfigured. Existing orders are not cancelled by changing this setting.</p>
