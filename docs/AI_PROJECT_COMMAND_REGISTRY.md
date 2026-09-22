@@ -45,9 +45,9 @@ This is a **delta-only** project registry. At runtime it inherits the current ca
 - Detailed evidence belongs in Git-tracked documentation; normal user-facing completion/status output remains concise.
 - Roman Urdu is default only for assistant chat/UI; Git-tracked project docs/technical artifacts use standard English unless explicitly overridden.
 
-## Inherited universal ordinary response format (binding)
+## Inherited universal command-specific response formats (binding)
 
-All ordinary Mobisttech execution, continuation, completion, incomplete-point, checkpoint, status and progress replies follow the current owner-approved shared five-line contract in `lawangin00/references/UNIVERSAL_PROJECT_RESPONSE_FORMAT.md`, as incorporated into the current Universal Registry. `docs/PROJECT_RESPONSE_FORMAT.md` preserves the owner's local precedent and renderer guidance; it is not an independent override of the shared layout. Include a compact DONE count on `Current` only when relevant and verified. Current stage/point status, actually completed work and first pending action must reflect the live ledger without advancing MT-7.5 or inventing a completion. The current universal format supersedes conflicting older chat/project presentation examples; specialized commands, explicit different-answer requests and all safety/identity gates retain their semantics.
+Mobisttech applies the current canonical command-specific output router (`lawangin00/references/UNIVERSAL_PROJECT_RESPONSE_FORMAT.md`) at every canonical load: five adjacent lines ONLY for authorized project task `Y`/`Proceed`/`Resume`/execution; `Next` is read-only and exactly three lines (`Next`, `Proceed? Y/N`, timestamp); all other aliases retain their own registry output and scope. Do not apply five-line default to Status, Progress, audits, Verify, Sync Check, Checkpoint, handoffs, Refresh or Help. The project ledger supplies verified facts; old chat examples and earlier five-line-for-all wording are superseded. Formatting does not advance MT-7.5 or permit task continuation on a read-only alias.
 
 ## Project performance specialization
 
