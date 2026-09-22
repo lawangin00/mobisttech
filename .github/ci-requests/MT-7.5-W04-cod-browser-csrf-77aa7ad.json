@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "77aa7ade6da31fcd75d6c343d19ed4d05069f26e",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T17:40:30Z",
+  "description": "Materially fix the first real W04 COD Admin Playwright failure: Inertia POST returned HTTP 419 because the Admin realm uses its own CSRF token. UI now obtains the authenticated Admin CSRF token and sends X-CSRF-TOKEN without weakening middleware. Browser fixture now scopes COD policy revision cleanup to the disposable CI MySQL database and exact synthetic owner. Verify full backend, browser and final residue gates; no external provider activation."
+}
