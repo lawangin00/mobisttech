@@ -672,6 +672,16 @@ class ApiContractTest extends TestCase
             DB::table('orders')->where('public_id', $gatewayOrder)->value('payment_status'),
             DB::table('payments')->where('public_id', $retryPayment)->value('status'),
             DB::table('sales')->count(), DB::table('payment_receipts')->count()]);
+        $this->publishMode('digital_only', 2);
+        $this->send($client, 'GET', '/api/v1/orders/'.$gatewayOrder)->assertOk()
+            ->assertJsonPath('data.payment_status', 'paid')->assertJsonPath('data.status', 'confirmed');
+        $this->send($client, 'POST', '/api/v1/orders/'.$gatewayOrder.'/cancel', [], true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'w04-paid-digital-mode-cancel-'.Str::uuid(),
+        ])->assertStatus(409)->assertJsonPath('error.code', 'api_409');
+        $this->assertSame($paidState, [DB::table('orders')->where('public_id', $gatewayOrder)->value('status'),
+            DB::table('orders')->where('public_id', $gatewayOrder)->value('payment_status'),
+            DB::table('payments')->where('public_id', $retryPayment)->value('status'),
+            DB::table('sales')->count(), DB::table('payment_receipts')->count()]);
     }
 
     public function test_mt_5_4_public_content_services_enquiry_and_software_contracts_are_published_and_mode_aware(): void
