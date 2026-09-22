@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "c717bc547e9b7d28b60b10ea67fc64790731d60c",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T16:05:27Z",
+  "description": "W04 hardening of the shared verified-provider event boundary: reject non-string/blank required signed-event fields with a controlled validation error before receipt processing. Verify focused synthetic negative test plus the unchanged full backend, race, POS/Admin and Website acceptance gates. No authentic provider registration, credentials, external payments or production data."
+}
