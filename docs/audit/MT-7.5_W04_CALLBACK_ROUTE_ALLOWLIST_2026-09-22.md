@@ -1,0 +1,8 @@
+# MT-7.5 W04 — public callback route allowlist HTTP negative checkpoint (22-Sep-2026)
+
+**Status: test source committed; its own clean-host acceptance NOT YET RUN. W04 stays In Progress (15/27 DONE, 12 OPEN).**
+
+- Source commit `e4d1c9574336e9a2a8c56f8d31a857a92e81c205` adds only `backend/tests/Feature/W04CallbackRouteAllowlistHttpTest.php`. It checks that POST to COD, bank-transfer, bank_transfer or unknown payment-callback slugs returns HTTP 404; GET/PUT/PATCH/DELETE to each permitted JazzCash/Easypaisa/card callback endpoint must return HTTP 405. These are route and verb negatives, not authenticated provider integration or callback/receipt acceptance.
+- The exact production route is `backend/routes/api.php`: a POST-only, throttled callback route constrained to the three approved external slugs. The test does not alter production routing, enable adapters, write credentials or call providers.
+- Pre-existing exact-source CI run `35751789253` at request `8db0522c583e46c0d2898a7c925ae7ab68f5efb3` was IN PROGRESS when this independent test-only commit was made. The running job is pinned to its earlier source and therefore **does not test this new file**. Do not launch a second `.github/ci-requests/**` push while that full run is active because the workflow cancels earlier in-progress runs on the same branch.
+- First pending gate: read the existing full run to its actual terminal result; resolve any concrete failure first. Only then request exact-parent, current-source focused/full clean-host verification for this newly committed route-negative case; classify and record its own terminal result rather than borrowing the earlier CI PASS. Preserve external provider H-02 HOLD and avoid a redundant monolithic rerun during an active run.
