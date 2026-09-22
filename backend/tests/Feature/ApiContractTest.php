@@ -756,6 +756,44 @@ class ApiContractTest extends TestCase
         ])->assertCreated()->assertJsonPath('data.payment_status', 'pending_collection');
     }
 
+    public function test_w04_external_unrecognized_mode_blocks_authenticated_checkout_and_milestone_http(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $product = $this->listedProduct('w04-reject-external-mode');
+        $this->acquire($product);
+        $customer = $this->customer('w04-invalid-mode@example.invalid', '03001112231');
+        $client = $this->client();
+        $this->login($client, $customer->email)->assertOk();
+        $registry = new PaymentProviders;
+        foreach (['jazzcash', 'easypaisa', 'card'] as $gateway) {
+            $registry->register($gateway, new Mt53ApiPaymentProvider);
+            config()->set('commerce.providers.'.$gateway, [
+                'enabled' => true, 'merchant' => 'synthetic-'.$gateway, 'mode' => 'production',
+            ]);
+        }
+        $this->app->instance(PaymentProviders::class, $registry);
+        $channels = $this->send($client, 'GET', '/api/v1/checkout/channels')->assertOk()->json('data.items');
+        $this->assertSame(['cod', 'jazzcash', 'easypaisa', 'card'], array_column($channels, 'code'));
+        $this->assertSame([true, false, false, false], array_column($channels, 'available'));
+        $projectChannels = $this->send($client, 'GET', '/api/v1/project-payment-channels')->assertOk()->json('data.items');
+        $this->assertSame(['jazzcash', 'easypaisa', 'card'], array_column($projectChannels, 'code'));
+        $this->assertSame([false, false, false], array_column($projectChannels, 'available'));
+        $before = [DB::table('orders')->count(), DB::table('payments')->count(),
+            DB::table('reservations')->count(), DB::table('idempotency_requests')->count()];
+        foreach (['jazzcash', 'easypaisa', 'card'] as $gateway) {
+            $this->send($client, 'POST', '/api/v1/orders', [
+                'customer_name' => $customer->name, 'customer_mobile' => $customer->mobile,
+                'city' => 'Karachi', 'delivery_address' => 'Synthetic invalid mode address',
+                'gateway' => $gateway, 'lines' => [['product_id' => $product->public_id, 'quantity' => 1]],
+            ], true, ['HTTP_IDEMPOTENCY_KEY' => 'w04-invalid-mode-'.Str::uuid()])->assertStatus(409);
+            $this->send($client, 'POST', '/api/v1/project-milestones/pay', [
+                'milestone_id' => '00000000-0000-4000-8000-000000000001', 'gateway' => $gateway,
+            ], true, ['HTTP_IDEMPOTENCY_KEY' => 'w04-invalid-milestone-'.Str::uuid()])->assertStatus(409);
+            $this->assertSame($before, [DB::table('orders')->count(), DB::table('payments')->count(),
+                DB::table('reservations')->count(), DB::table('idempotency_requests')->count()]);
+        }
+    }
+
     public function test_mt_5_4_public_content_services_enquiry_and_software_contracts_are_published_and_mode_aware(): void
     {
         $this->publishMode('hybrid', 1);
