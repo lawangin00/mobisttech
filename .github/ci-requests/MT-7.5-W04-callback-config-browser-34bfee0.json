@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "34bfee0a5dd38b32df342d849877d6ac8c886103",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T16:17:45Z",
+  "description": "Verify current W04 callback route allowlist HTTP negatives, malformed external merchant/environment configuration fail-closed test, prior verified adapter event hardening, and the materially revised P02 real Inventory navigation after the previous unrelated ERR_ABORTED. Use existing isolated full clean-checkout and browser gates; no authentic gateway, owner enrollment or provider activation."
+}
