@@ -1,0 +1,13 @@
+# MT-7.5 W04 — protected Admin COD browser acceptance checkpoint (22-Sep-2026)
+
+**State: In Progress; no browser acceptance claimed before terminal full CI.** MT-7.5 remains 15/27 DONE and 12 OPEN. W04 and H-02 remain open; no real provider activation or merchant verification is authorized.
+
+## Durable work and exact verification
+
+- Implemented real Playwright browser suite `backend/tests/browser/website-cod-policy.spec.ts` at source commit `c547e5684f51358755aef5e47093dbb27994c13c`. Against the genuine synthetic Admin and application, it tests the permissioned COD policy page, draft isolation from checkout, reload persistence, explicit publication to disable COD, compensating opposite-value new-draft rollback, final reload and unchanged unavailable JazzCash status. A separate browser case checks that the seeded Platform Administrator lacking `website.payments.manage` receives 403 on both protected read endpoints. This is a test candidate, not yet verified browser evidence.
+- Explicit necessary full-CI request-only commit `4a15f9e0d864899ef1f8070d64a51b32e9458020` pins exact preceding source `c547e5684f51358755aef5e47093dbb27994c13c`, stage `MT-7.5`, gate `full` and verified project identity. Full [CI run 35760840823](https://github.com/lawangin00/mobisttech/actions/runs/35760840823) passed the exact-request validator and was still in progress at this checkpoint; do not infer a terminal outcome. Independent [Website run 35760840794](https://github.com/lawangin00/mobisttech/actions/runs/35760840794) passed request validation, Website typecheck, lint and production build; it is not the COD browser gate.
+- Existing `WebsitePaymentAdministration` publishes only the nonsecret COD flag through separate permissioned draft/publish endpoints. Compensating rollback means a fresh opposite-value draft and explicit publication, never replaying a superseded revision. Provider credentials and adapters remain unchanged, default OFF; a fake or unregistered provider is not accepted.
+
+## First genuinely pending action
+
+Read the terminal conclusion and step evidence for full run `35760840823`. If its POS/Admin Playwright step fails, inspect the actual failed browser test/log, fix only the evidenced defect within W04, and run the newly justified exact-source gate once subject to loop guard. If it succeeds, record the real-browser result, check any synthetic fixture residue or authorization defect, retain W04 In Progress for still-missing HTTP race/invalid-revision and external-provider contracts, and identify the next finite checklist action from the actual source. This checkpoint does not permit unrelated migration, production data changes or external payment activation.
