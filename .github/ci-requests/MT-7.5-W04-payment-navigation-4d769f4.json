@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "4d769f4b6477ab3b03835518f59463e73819a91b",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T04:08:02Z",
+  "description": "W04 Platform Administration read-only payment-channel navigation: prove authorized status API displays the link, denied permission hides it, and current protected page/API, CI cleanup and existing Website/POS gates remain intact. No merchant credentials or gateway activation."
+}
