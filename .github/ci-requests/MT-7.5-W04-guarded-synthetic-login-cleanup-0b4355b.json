@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "0b4355b3f41a17fdc0639c1650abdab48adffb39",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T00:15:25Z",
+  "description": "Verify guarded disposal of exactly one anonymous admin login_failed audit row caused by the e2e-sales synthetic POS password-change test, bounded by that fixture account's password_replaced and subsequent login_succeeded events. CI-only disposable database, preserve strict final schema verifier and all real audit history."
+}
