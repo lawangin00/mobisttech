@@ -22,9 +22,8 @@ type Props = {
     settings: Settings;
 };
 
-// The Admin realm has a separate CSRF cookie. Inertia's default XSRF cookie
-// lookup does not recognize XSRF-TOKEN-admin; obtain the existing realm token
-// from the authenticated endpoint instead of weakening server CSRF protection.
+// Admin uses a separate CSRF cookie; do not rely on Inertia's generic
+// XSRF-TOKEN lookup or relax server-side CSRF protection.
 async function adminCsrfToken(): Promise<string> {
     const response = await fetch('/internal/admin/auth/csrf-cookie', {
         credentials: 'same-origin',
@@ -37,10 +36,39 @@ async function adminCsrfToken(): Promise<string> {
     return body.data.csrf_token;
 }
 
+// Require an actual JSON success from the authorized policy endpoint before
+// refreshing Inertia props. A 303 redirect alone does not prove a draft was saved.
+async function postCodPolicy(path: string, payload: Record<string, unknown>, expectedStatus: number): Promise<void> {
+    const token = await adminCsrfToken();
+    const response = await fetch(path, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': token,
+        },
+        body: JSON.stringify(payload),
+    });
+    const body = await response.json().catch(() => null) as { data?: unknown; message?: string } | null;
+    if (response.status !== expectedStatus || !body?.data) {
+        throw new Error(body?.message ?? `COD policy request failed (${response.status}).`);
+    }
+}
+
 export default function WebsitePaymentSettings({ identity, channels, settings }: Props) {
     const [codEnabled, setCodEnabled] = useState(settings.draft?.cod_enabled ?? settings.cod_enabled);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
+
+    function reloadPolicy() {
+        router.reload({
+            preserveState: false,
+            preserveScroll: true,
+            onError: () => setError('COD policy could not be refreshed.'),
+            onFinish: () => setBusy(false),
+        });
+    }
 
     async function saveDraft(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -48,13 +76,8 @@ export default function WebsitePaymentSettings({ identity, channels, settings }:
         setBusy(true);
         setError('');
         try {
-            const token = await adminCsrfToken();
-            router.post('/internal/admin/website/payment-settings/drafts', { cod_enabled: codEnabled }, {
-                preserveScroll: true,
-                headers: { 'X-CSRF-TOKEN': token },
-                onError: () => setError('COD draft could not be saved.'),
-                onFinish: () => setBusy(false),
-            });
+            await postCodPolicy('/internal/admin/website/payment-settings/drafts', { cod_enabled: codEnabled }, 201);
+            reloadPolicy();
         } catch (cause) {
             setError(cause instanceof Error ? cause.message : 'Secure Admin request failed.');
             setBusy(false);
@@ -66,13 +89,8 @@ export default function WebsitePaymentSettings({ identity, channels, settings }:
         setBusy(true);
         setError('');
         try {
-            const token = await adminCsrfToken();
-            router.post(`/internal/admin/website/payment-settings/drafts/${settings.draft.id}/publish`, {}, {
-                preserveScroll: true,
-                headers: { 'X-CSRF-TOKEN': token },
-                onError: () => setError('COD draft could not be published.'),
-                onFinish: () => setBusy(false),
-            });
+            await postCodPolicy(`/internal/admin/website/payment-settings/drafts/${settings.draft.id}/publish`, {}, 200);
+            reloadPolicy();
         } catch (cause) {
             setError(cause instanceof Error ? cause.message : 'Secure Admin request failed.');
             setBusy(false);
