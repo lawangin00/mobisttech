@@ -22,7 +22,7 @@ try {
     $result = $action === 'draft'
         ? $service->saveDraft($admin, ['cod_enabled' => false])
         : $service->publish($admin, (int) $draftId);
-    echo json_encode(['status' => 200, 'result' => $result], JSON_THROW_ON_ERROR);
+    echo json_encode(['action' => $action, 'status' => 200, 'result' => $result], JSON_THROW_ON_ERROR);
 } catch (HttpExceptionInterface $exception) {
-    echo json_encode(['status' => $exception->getStatusCode()], JSON_THROW_ON_ERROR);
+    echo json_encode(['action' => $action, 'status' => $exception->getStatusCode()], JSON_THROW_ON_ERROR);
 }

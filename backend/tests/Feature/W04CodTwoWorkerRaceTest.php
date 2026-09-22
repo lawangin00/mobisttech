@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Commerce\WebsitePaymentAdministration;
 use App\Models\Admin;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -37,6 +38,20 @@ final class W04CodTwoWorkerRaceTest extends TestCase
                 ->where('state', 'published')->count());
             $this->assertSame($newest, (int) DB::table('site_configuration_revisions')->where('domain', $domain)
                 ->where('state', 'published')->value('id'));
+            // Race publishing a latest draft against creation of a newer draft.
+            $candidate = app(WebsitePaymentAdministration::class)->saveDraft($admin, ['cod_enabled' => true]);
+            $mixed = $this->race('draft', $admin->id, (int) $candidate['id'], 'publish');
+            $created = array_values(array_filter($mixed, static fn (array $row): bool => $row['action'] === 'draft'));
+            $publication = array_values(array_filter($mixed, static fn (array $row): bool => $row['action'] === 'publish'));
+            $this->assertCount(1, $created);
+            $this->assertCount(1, $publication);
+            $this->assertSame(200, $created[0]['status']);
+            $this->assertContains($publication[0]['status'], [200, 409]);
+            $this->assertSame(4, (int) DB::table('site_configuration_revisions')->where('domain', $domain)->max('version'));
+            $this->assertSame('draft', DB::table('site_configuration_revisions')->where('id', $created[0]['result']['id'])->value('state'));
+            $this->assertSame(1, DB::table('site_configuration_revisions')->where('domain', $domain)->where('state', 'published')->count());
+            $this->assertSame($publication[0]['status'] === 200 ? (int) $candidate['id'] : $newest,
+                (int) DB::table('site_configuration_revisions')->where('domain', $domain)->where('state', 'published')->value('id'));
         } finally {
             DB::table('identity_audit_events')->where('realm', 'admin')->where('account_id', $admin->id)->delete();
             DB::table('site_configuration_revisions')->where('domain', $domain)
@@ -47,7 +62,7 @@ final class W04CodTwoWorkerRaceTest extends TestCase
     }
 
     /** Hold the same named lock until both separate Laravel processes reach the service. */
-    private function race(string $action, int $adminId, int $draftId): array
+    private function race(string $action, int $adminId, int $draftId, ?string $otherAction = null): array
     {
         $lock = 'mobisttech.website.payments.cod.revision';
         $connection = DB::connection();
@@ -59,7 +74,7 @@ final class W04CodTwoWorkerRaceTest extends TestCase
                 $marker = sys_get_temp_dir().'/w04-race-'.Str::uuid().'.ready';
                 $markers[] = $marker;
                 $worker = new Process([PHP_BINARY, base_path('tests/Support/W04CodRaceWorker.php'),
-                    $action, (string) $adminId, (string) $draftId, $marker], base_path(), [
+                    $index === 1 && $otherAction ? $otherAction : $action, (string) $adminId, (string) $draftId, $marker], base_path(), [
                         'APP_ENV' => 'testing', 'DB_CONNECTION' => 'mysql',
                         'DB_DATABASE' => 'mobisttech_test', 'DB_URL' => '',
                     ]);
