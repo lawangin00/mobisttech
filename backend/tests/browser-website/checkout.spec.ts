@@ -14,6 +14,18 @@ function state(mode: 'hybrid' | 'digital_only' | 'commerce_only') {
 
 test.describe.configure({ mode: 'serial' });
 
+// The isolated PHP/Next proxy can finish the session account response after the channel
+// response. Wait for both actual HTTP results before asserting the hydrated radio inputs.
+async function checkoutReady(page: import('@playwright/test').Page) {
+    const account = page.waitForResponse((response) =>
+        response.url().endsWith('/api/customer/account') && response.status() === 200, { timeout: 20_000 });
+    const channels = page.waitForResponse((response) =>
+        response.url().endsWith('/api/customer/checkout/channels') && response.status() === 200, { timeout: 20_000 });
+    await page.goto('/checkout');
+    await Promise.all([account, channels]);
+    await expect(page.getByRole('radio')).toHaveCount(4, { timeout: 15_000 });
+}
+
 async function login(page: import('@playwright/test').Page) {
     await page.goto('/account');
     await page.getByLabel('Email').fill('mt52-customer@example.invalid');
@@ -38,12 +50,7 @@ test('MT-5.3 COD checkout exposes exactly four channels and preserves owned stat
     await expect(page.getByText('Added to cart.', { exact: true })).toBeVisible();
     await login(page);
 
-    const channelsReady = page.waitForResponse((response) =>
-        response.url().endsWith('/api/customer/checkout/channels') && response.status() === 200);
-    await page.goto('/checkout');
-    await channelsReady;
-
-    await expect(page.getByRole('radio')).toHaveCount(4);
+    await checkoutReady(page);
     await expect(page.getByText('Cash on Delivery', { exact: true })).toBeVisible();
     await expect(page.getByText('JazzCash', { exact: true })).toBeVisible();
     await expect(page.getByText('Easypaisa', { exact: true })).toBeVisible();
@@ -113,7 +120,7 @@ test('MT-7.5 W04 synthetic hosted initiation failure keeps the created order rec
         await route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ message: 'Synthetic gateway temporarily unavailable.' }) });
     });
 
-    await page.goto('/checkout');
+    await checkoutReady(page);
     await expect(page.getByRole('radio', { name: /JazzCash/ })).toBeEnabled();
     await page.getByRole('radio', { name: /JazzCash/ }).check();
     await page.getByLabel('City').fill('Karachi');
@@ -162,7 +169,7 @@ test('MT-7.5 W04 insecure hosted redirect is blocked and the created order remai
         } }) });
     });
 
-    await page.goto('/checkout');
+    await checkoutReady(page);
     await expect(page.getByRole('radio', { name: /JazzCash/ })).toBeEnabled();
     await page.getByRole('radio', { name: /JazzCash/ }).check();
     await page.getByLabel('City').fill('Karachi');
@@ -196,7 +203,7 @@ test('MT-7.5 W04 all unavailable checkout channels cannot submit a Website order
             { code: 'card', label: 'Credit / Debit Card', available: false, kind: 'hosted' },
         ] } }) });
     });
-    await page.goto('/checkout');
+    await checkoutReady(page);
     await expect(page.getByRole('radio')).toHaveCount(4);
     for (const channel of ['Cash on Delivery', 'JazzCash', 'Easypaisa', 'Credit / Debit Card']) {
         await expect(page.getByRole('radio', { name: channel })).toBeDisabled();
