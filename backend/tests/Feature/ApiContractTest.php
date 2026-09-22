@@ -674,6 +674,11 @@ class ApiContractTest extends TestCase
             ->assertOk()->assertJsonPath('data.payment_status', 'failed');
         $attemptsBefore = DB::table('payments')->where('order_id',
             DB::table('orders')->where('public_id', $gatewayOrder)->value('id'))->count();
+        $this->send($client, 'POST', '/api/v1/orders/'.$gatewayOrder.'/payments/retry',
+            ['gateway' => 'jazzcash'], false, ['HTTP_IDEMPOTENCY_KEY' => 'w04-csrf-retry-'.Str::uuid()])
+            ->assertStatus(419)->assertJsonPath('error.code', 'api_419');
+        $this->assertSame($attemptsBefore, DB::table('payments')->where('order_id',
+            DB::table('orders')->where('public_id', $gatewayOrder)->value('id'))->count());
         $this->send($foreign, 'POST', '/api/v1/orders/'.$gatewayOrder.'/payments/retry',
             ['gateway' => 'jazzcash'], true, ['HTTP_IDEMPOTENCY_KEY' => 'w04-foreign-retry-'.Str::uuid()])
             ->assertNotFound();
@@ -693,6 +698,13 @@ class ApiContractTest extends TestCase
             DB::table('orders')->where('public_id', $gatewayOrder)->value('payment_status'),
             DB::table('payments')->where('public_id', $retryPayment)->value('status'),
             DB::table('sales')->count(), DB::table('payment_receipts')->count()];
+        $paidPaymentCount = DB::table('payments')->where('order_id',
+            DB::table('orders')->where('public_id', $gatewayOrder)->value('id'))->count();
+        $this->send($client, 'POST', '/api/v1/orders/'.$gatewayOrder.'/payments/retry',
+            ['gateway' => 'jazzcash'], true, ['HTTP_IDEMPOTENCY_KEY' => 'w04-paid-order-retry-'.Str::uuid()])
+            ->assertStatus(409)->assertJsonPath('error.code', 'api_409');
+        $this->assertSame($paidPaymentCount, DB::table('payments')->where('order_id',
+            DB::table('orders')->where('public_id', $gatewayOrder)->value('id'))->count());
         $this->send($client, 'POST', '/api/v1/orders/'.$gatewayOrder.'/cancel', [], true, [
             'HTTP_IDEMPOTENCY_KEY' => 'w04-paid-order-cancel-'.Str::uuid(),
         ])->assertStatus(409)->assertJsonPath('error.code', 'api_409');
