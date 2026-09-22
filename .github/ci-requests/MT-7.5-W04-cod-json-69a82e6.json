@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "69a82e6f056c6166ed2e2d38d62445a34918986d",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T18:30:14Z",
+  "description": "W04 full browser gate on exact source: preceding browser test saw an HTTP 303 after COD draft but no draft in rendered Admin page. Change Admin COD mutation to authenticated explicit CSRF JSON contract requiring HTTP 201/200 plus revision data before refreshing Inertia props; strengthen browser assertions for actual committed revision, publish, compensating rollback and masked external providers. Retain isolated MySQL synthetic cleanup; no real provider activation."
+}
