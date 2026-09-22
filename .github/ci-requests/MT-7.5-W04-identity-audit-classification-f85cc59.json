@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "f85cc59b64028fdf224de59a64b9a969ad89b247",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-21T23:59:53Z",
+  "description": "Find exact identity_audit_events fixture residue class after POS/Admin browser cleanup and final Website teardown in guarded disposable CI test schema; counts and non-sensitive realm/action/account class only, no row identifiers, no production changes and no verifier bypass."
+}
