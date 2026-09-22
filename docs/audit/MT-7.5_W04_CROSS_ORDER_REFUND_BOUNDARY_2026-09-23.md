@@ -1,0 +1,7 @@
+# MT-7.5 W04 — cross-order refund payment identity denial (23-Sep-2026)
+
+Status: bounded target-only synthetic negative acceptance. W04 IN PROGRESS; finite checklist 15/27 DONE, 12 OPEN. No authentic processor refund or bank settlement is claimed.
+
+Added one integrated `OrderPaymentTransactionsTest` method with two separately created COD orders paid by the same authorized synthetic outlet and a valid accepted return against order A. An attempt to refund A's return using the valid but foreign payment from order B is denied by the canonical `(payment.public_id, return.order_id)` lookup, with zero refund rows and unchanged B refund state. Subsequent correct payment A refund completes exactly once and updates only A. No production logic, identity, payment mode, provider credentials or protected legacy repository was changed.
+
+Focused 1/1 PASS (7 assertions); neighboring `OrderPaymentTransactionsTest` 17/17 PASS (128 assertions); joined focused W04 24/24 PASS (402 assertions); scoped PHP Pint and diff whitespace checks PASS. Isolated test-only MySQL was initially stopped and is returned to stopped following tests. This covers synthetic cross-order refund identity only, not independent external gateway refunds, vendor signature, settlement or full W04 HTTP/browser parity. H-02 HOLD remains.

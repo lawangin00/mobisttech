@@ -392,6 +392,37 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(1, DB::table('refunds')->count());
     }
 
+    public function test_w04_refund_cannot_apply_a_different_collected_orders_payment_to_a_valid_return(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 2);
+        $first = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('w04-refund-first'), $this->checkoutInput($product->public_id, 'cod'));
+        $second = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('w04-refund-second'), $this->checkoutInput($product->public_id, 'cod'));
+        $this->service()->collectCod($this->actor, $this->outlet, $first['order_id'],
+            $this->key('w04-refund-first-paid'), '200.02', 'COD-FIRST');
+        $this->service()->collectCod($this->actor, $this->outlet, $second['order_id'],
+            $this->key('w04-refund-second-paid'), '200.02', 'COD-SECOND');
+        $invoice = DB::table('invoices')->join('orders', 'orders.id', '=', 'invoices.order_id')
+            ->where('orders.public_id', $first['order_id'])->select('invoices.*')->firstOrFail();
+        $sale = DB::table('sales')->where('invoice_id', $invoice->id)->firstOrFail();
+        $return = app(SalesOperations::class)->acceptReturn($this->actor, $this->outlet,
+            $this->key('w04-refund-first-return'), ['invoice_id' => $invoice->public_id,
+                'reason' => 'Synthetic cross-payment refund boundary',
+                'lines' => [['sale_id' => $sale->public_id, 'quantity' => 1,
+                    'condition' => 'opened', 'disposition' => 'sellable']]]);
+        $this->reject(fn () => $this->service()->manualRefund($this->actor, $return['return_id'],
+            $second['payment_id'], $this->key('w04-refund-cross-payment'), '200.02', str_repeat('a', 64)));
+        $this->assertSame(0, DB::table('refunds')->count());
+        $this->assertNotSame('partial', DB::table('orders')->where('public_id', $second['order_id'])->value('refund_status'));
+        $this->assertSame('completed', $this->service()->manualRefund($this->actor, $return['return_id'],
+            $first['payment_id'], $this->key('w04-refund-valid-payment'), '200.02', str_repeat('b', 64))['status']);
+        $this->assertSame(1, DB::table('refunds')->count());
+        $this->assertSame('refunded', DB::table('orders')->where('public_id', $first['order_id'])->value('refund_status'));
+        $this->assertNotSame('refunded', DB::table('orders')->where('public_id', $second['order_id'])->value('refund_status'));
+    }
+
     public function test_archived_outlet_blocks_cod_and_refund_completed_replays_and_fresh_mutations(): void
     {
         $product = $this->product();
