@@ -24,7 +24,9 @@ final class W04AdminPaymentHttpTest extends TestCase
     public function test_payment_channel_status_requires_admin_login_and_website_payment_settings_permission(): void
     {
         $path = '/internal/admin/website/payment-channels';
+        $pagePath = '/internal/admin/website/payment-settings';
         $this->getJson($path)->assertUnauthorized();
+        $this->getJson($pagePath)->assertUnauthorized();
 
         [$restricted, $restrictedOutlet] = $this->admin(['shops.enter', 'website.payment-credentials.manage']);
         $restrictedClient = $this->client();
@@ -35,6 +37,7 @@ final class W04AdminPaymentHttpTest extends TestCase
             'outlet_id' => $restrictedOutlet->public_id,
         ])->assertOk();
         $this->send($restrictedClient, 'GET', $path)->assertForbidden();
+        $this->send($restrictedClient, 'GET', $pagePath)->assertForbidden();
 
         [$admin, $outlet] = $this->admin(['shops.enter', 'website.payments.manage']);
         $client = $this->client();
@@ -55,15 +58,20 @@ final class W04AdminPaymentHttpTest extends TestCase
             ->assertJsonPath('data.1.code', 'jazzcash')
             ->assertJsonPath('data.1.enabled', true)
             ->assertJsonPath('data.1.available', false);
-        $this->assertEqualsCanonicalizing(
-            ['private', 'no-store'],
-            array_map('trim', explode(',', (string) $response->headers->get('Cache-Control'))),
-        );
+        $this->assertContains('private', explode(', ', $response->headers->get('Cache-Control')));
+        $this->assertContains('no-store', explode(', ', $response->headers->get('Cache-Control')));
         $this->assertSame(['code', 'label', 'enabled', 'merchant_configured', 'available'],
             array_keys($response->json('data.1')));
         $this->assertStringNotContainsString('w04-private-merchant-marker', $response->getContent());
         $this->assertStringNotContainsString('w04-private-credential-marker', $response->getContent());
         $this->assertStringNotContainsString('credentials', $response->getContent());
+
+        $page = $this->send($client, 'GET', $pagePath)->assertOk()->assertSee('website-payment-settings');
+        $this->assertContains('private', explode(', ', $page->headers->get('Cache-Control')));
+        $this->assertContains('no-store', explode(', ', $page->headers->get('Cache-Control')));
+        $this->assertStringNotContainsString('w04-private-merchant-marker', $page->getContent());
+        $this->assertStringNotContainsString('w04-private-credential-marker', $page->getContent());
+        $this->assertStringNotContainsString('credentials', $page->getContent());
     }
 
     private function admin(array $permissions): array
