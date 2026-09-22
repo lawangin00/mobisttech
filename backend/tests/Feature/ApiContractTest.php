@@ -618,13 +618,30 @@ class ApiContractTest extends TestCase
         ])->assertCreated();
         $gatewayOrder = $gateway->json('data.order_id');
         $payment = $gateway->json('data.payment_id');
+        $foreignCustomer = $this->customer('mt53-foreign-payment@example.invalid', '03001112229');
+        $foreign = $this->client();
+        $this->login($foreign, $foreignCustomer->email)->assertOk();
+        $this->send($foreign, 'POST', '/api/v1/payments/'.$payment.'/initiate', [])->assertNotFound();
+        $this->assertNull(DB::table('payments')->where('public_id', $payment)->value('gateway_order_reference'));
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->send($client, 'POST', '/api/v1/payments/'.$payment.'/initiate', [], false)->assertStatus(419);
+        $this->assertNull(DB::table('payments')->where('public_id', $payment)->value('gateway_order_reference'));
         $init = $this->send($client, 'POST', '/api/v1/payments/'.$payment.'/initiate', [])
             ->assertOk()->assertJsonPath('contract', 'payment-initiation.v1');
         $reference = $init->json('data.reference');
         $this->assertStringStartsWith('https://pay.example.invalid/', $init->json('data.redirect_url'));
+        $this->send($foreign, 'POST', '/api/v1/payments/'.$payment.'/initiate', [])->assertNotFound();
+        $this->assertSame($reference, DB::table('payments')->where('public_id', $payment)->value('gateway_order_reference'));
 
         $this->postJson('/api/v1/payment-callbacks/jazzcash', $fake->event('MT53-FAILED', $reference, $gateway->json('data.amount'), 'failed'))
             ->assertOk()->assertJsonPath('data.payment_status', 'failed');
+        $attemptsBefore = DB::table('payments')->where('order_id',
+            DB::table('orders')->where('public_id', $gatewayOrder)->value('id'))->count();
+        $this->send($foreign, 'POST', '/api/v1/orders/'.$gatewayOrder.'/payments/retry',
+            ['gateway' => 'jazzcash'], true, ['HTTP_IDEMPOTENCY_KEY' => 'w04-foreign-retry-'.Str::uuid()])
+            ->assertNotFound();
+        $this->assertSame($attemptsBefore, DB::table('payments')->where('order_id',
+            DB::table('orders')->where('public_id', $gatewayOrder)->value('id'))->count());
         $retry = $this->send($client, 'POST', '/api/v1/orders/'.$gatewayOrder.'/payments/retry', ['gateway' => 'jazzcash'], true, [
             'HTTP_IDEMPOTENCY_KEY' => 'mt53-retry-'.Str::uuid(),
         ])->assertCreated();

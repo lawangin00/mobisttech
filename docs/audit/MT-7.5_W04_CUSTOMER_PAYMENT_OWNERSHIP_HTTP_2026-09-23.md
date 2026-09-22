@@ -1,0 +1,10 @@
+# MT-7.5 W04 — customer-owned payment initiation and retry HTTP acceptance
+
+**23-Sep-2026 PKT.** Scoped synthetic customer HTTP acceptance only; W04 IN PROGRESS (15/27 DONE, 12 OPEN). H-02 authentic merchant, callback, refunds and settlement HOLD unchanged.
+
+- Expanded existing `backend/tests/Feature/ApiContractTest.php` checkout scenario with two separately logged-in synthetic Customer accounts, genuine HTTP route session/CSRF middleware, one owned JazzCash order, and test-only registered signed provider.
+- Before owner initiation, unrelated Customer's `POST /api/v1/payments/{payment}/initiate` returns 404 without creating a gateway order reference or receipt. Owner's missing-CSRF initiation returns 419 with unchanged reference. Authenticated owner initiation succeeds; subsequent unrelated Customer request against the already initiated payment returns 404 without disclosing the cached provider redirect or altering the stored reference.
+- After a synthetic verified failure, unrelated Customer's `POST /api/v1/orders/{order}/payments/retry` returns 404 and cannot create another payment attempt; the genuine owner can still retry/initiate and finish the normal signed synthetic receipt flow.
+- Focused HTTP contract 1/1 PASS (47 assertions), complete `ApiContractTest` 19/19 PASS (761 assertions), neighboring W04 regression 24/24 PASS (407 assertions); scoped PHP Pint PASS, diff whitespace check PASS. Original unavailable-MySQL preflight was a local test-service startup issue; rerun with owned isolated MySQL succeeded. No production application behavior changed.
+
+**Boundary:** These are in-process authenticated HTTP route tests against disposable MySQL, not live merchant transactions or a complete independent payment family pass. Continue unresolved W04 provider owner/settings UI, browser/mode/refund parity within safety boundary; do not activate external providers.
