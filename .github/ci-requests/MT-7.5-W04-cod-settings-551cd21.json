@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "551cd214a612d04e7bc5f2e0bdc72f4330269a87",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T16:51:53Z",
+  "description": "W04 verify nonsecret COD draft and published checkout-availability policy, separate Admin manage/publish permission and anti-secret allowlist, Inertia form/static build, unchanged read-only channel APIs and default-OFF external providers on an isolated full clean checkout. Synthetic only; no merchant credentials or real provider activation."
+}
