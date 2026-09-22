@@ -25,7 +25,11 @@ final class PaymentProviders
     {
         $configuration = config('commerce.providers.'.$gateway);
         if (! is_array($configuration) || ! ($configuration['enabled'] ?? false)
-            || ($gateway !== 'cod' && (! isset($this->adapters[$gateway]) || trim((string) ($configuration['merchant'] ?? '')) === ''))) {
+            || ($gateway !== 'cod' && (! isset($this->adapters[$gateway])
+                || ! is_string($configuration['merchant'] ?? null)
+                || trim($configuration['merchant']) === ''
+                || ! is_string($configuration['mode'] ?? null)
+                || trim($configuration['mode']) === ''))) {
             throw new LogicException('provider_unavailable');
         }
 
