@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "b6ad42ac907343e33bf8339053c5d4ab029a8f3c",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T04:42:22Z",
+  "description": "W04 fail-closed provider registry: prevent unapproved Website gateway slugs and duplicate verifier replacement; accept only the three declared external channels. Run PHP style, full backend regression, browser gates and final disposable schema cleanup. No merchant secrets or provider activation."
+}
