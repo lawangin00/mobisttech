@@ -55,7 +55,10 @@ final class W04AdminPaymentHttpTest extends TestCase
             ->assertJsonPath('data.1.code', 'jazzcash')
             ->assertJsonPath('data.1.enabled', true)
             ->assertJsonPath('data.1.available', false);
-        $this->assertSame('private, no-store', $response->headers->get('Cache-Control'));
+        $this->assertEqualsCanonicalizing(
+            ['private', 'no-store'],
+            array_map('trim', explode(',', (string) $response->headers->get('Cache-Control'))),
+        );
         $this->assertSame(['code', 'label', 'enabled', 'merchant_configured', 'available'],
             array_keys($response->json('data.1')));
         $this->assertStringNotContainsString('w04-private-merchant-marker', $response->getContent());
