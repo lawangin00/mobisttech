@@ -106,6 +106,36 @@ final class W04CodPolicyAdministrationHttpTest extends TestCase
             ->assertJsonPath('data.0.available', true);
     }
 
+    public function test_distinct_mysql_session_lock_blocks_draft_and_publish_without_partial_revision(): void
+    {
+        [$publisher, $outlet] = $this->admin([
+            'shops.enter', 'website.payments.manage', 'website.publish',
+        ]);
+        $client = $this->client();
+        $this->login($client, $publisher, $outlet);
+        $lockName = 'mobisttech.website.payments.cod.revision';
+        $connectionName = 'w04_cod_lock_holder';
+        config(['database.connections.'.$connectionName => config('database.connections.mysql')]);
+        $holder = DB::connection($connectionName);
+        $draftPath = '/internal/admin/website/payment-settings/drafts';
+        try {
+            $this->assertSame(1, (int) $holder->selectOne('SELECT GET_LOCK(?, 0) AS acquired', [$lockName])->acquired);
+            $this->send($client, 'POST', $draftPath, ['cod_enabled' => false])->assertStatus(409);
+            $this->assertSame(0, DB::table('site_configuration_revisions')->where('domain', 'website.payments.cod')->count());
+            $this->assertSame(1, (int) $holder->selectOne('SELECT RELEASE_LOCK(?) AS released', [$lockName])->released);
+            $draft = $this->send($client, 'POST', $draftPath, ['cod_enabled' => false])->assertCreated()->json('data');
+            $this->assertSame(1, (int) $holder->selectOne('SELECT GET_LOCK(?, 0) AS acquired', [$lockName])->acquired);
+            $this->send($client, 'POST', $draftPath.'/'.$draft['id'].'/publish')->assertStatus(409);
+            $this->assertSame('draft', DB::table('site_configuration_revisions')->where('id', $draft['id'])->value('state'));
+            $this->assertSame(1, (int) $holder->selectOne('SELECT RELEASE_LOCK(?) AS released', [$lockName])->released);
+            $this->send($client, 'POST', $draftPath.'/'.$draft['id'].'/publish')->assertOk();
+            $this->assertSame('published', DB::table('site_configuration_revisions')->where('id', $draft['id'])->value('state'));
+        } finally {
+            $holder->selectOne('SELECT RELEASE_LOCK(?) AS released', [$lockName]);
+            DB::disconnect($connectionName);
+        }
+    }
+
     private function admin(array $permissions): array
     {
         $admin = new Admin;

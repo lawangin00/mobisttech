@@ -14,6 +14,8 @@ final class WebsitePaymentAdministration
 {
     private const COD_DOMAIN = 'website.payments.cod';
 
+    private const COD_LOCK = 'mobisttech.website.payments.cod.revision';
+
     public function __construct(private PaymentProviders $providers) {}
 
     public function overview(IdentityAccount $actor): array
@@ -80,7 +82,7 @@ final class WebsitePaymentAdministration
         abort_unless(array_keys($input) === ['cod_enabled'] && is_bool($input['cod_enabled']), 422,
             'Only the nonsecret COD enabled setting is supported.');
 
-        return DB::transaction(function () use ($admin, $input): array {
+        return $this->serializedRevision(function () use ($admin, $input): array {
             $version = (int) DB::table('site_configuration_revisions')->where('domain', self::COD_DOMAIN)
                 ->lockForUpdate()->max('version') + 1;
             $id = DB::table('site_configuration_revisions')->insertGetId([
@@ -100,7 +102,7 @@ final class WebsitePaymentAdministration
         $admin = $this->authorize($actor);
         abort_unless(app(Access::class)->allows($admin, 'website.publish'), 403);
 
-        return DB::transaction(function () use ($admin, $draftId): array {
+        return $this->serializedRevision(function () use ($admin, $draftId): array {
             $draft = DB::table('site_configuration_revisions')->where('id', $draftId)
                 ->where('domain', self::COD_DOMAIN)->lockForUpdate()->first();
             abort_unless($draft && $draft->state === 'draft', 409, 'COD policy draft not available.');
@@ -122,6 +124,20 @@ final class WebsitePaymentAdministration
             return ['id' => (int) $draft->id, 'version' => (int) $draft->version,
                 'cod_enabled' => $policy['cod_enabled']];
         });
+    }
+
+    /** Serialize both draft allocation and publication even when the COD domain has no row yet. */
+    private function serializedRevision(callable $operation): array
+    {
+        $connection = DB::connection();
+        $acquired = $connection->selectOne('SELECT GET_LOCK(?, 5) AS acquired', [self::COD_LOCK]);
+        abort_unless((int) ($acquired->acquired ?? 0) === 1, 409, 'COD policy revision is busy.');
+
+        try {
+            return $connection->transaction($operation);
+        } finally {
+            $connection->selectOne('SELECT RELEASE_LOCK(?) AS released', [self::COD_LOCK]);
+        }
     }
 
     private function authorize(IdentityAccount $actor): Admin
