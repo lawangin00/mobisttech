@@ -29,7 +29,7 @@ final class PaymentProviders
                 || ! is_string($configuration['merchant'] ?? null)
                 || trim($configuration['merchant']) === ''
                 || ! is_string($configuration['mode'] ?? null)
-                || trim($configuration['mode']) === ''))) {
+                || ! in_array($configuration['mode'], ['sandbox', 'test', 'live'], true)))) {
             throw new LogicException('provider_unavailable');
         }
         // A published Admin COD policy can turn COD off; it never overrides a disabled

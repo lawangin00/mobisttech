@@ -1,0 +1,9 @@
+# MT-7.5 W04 — strict external payment configuration mode boundary (23-Sep-2026)
+
+Status: bounded synthetic backend hardening accepted locally. W04 remains IN PROGRESS; finite checklist 15/27 DONE, 12 OPEN. No merchant/provider onboarding, credentials, real refund, or production activation.
+
+`PaymentProviders::assertAvailable` already required `enabled === true`, registered adapter, and nonempty merchant. It previously accepted any nonempty string as mode. It now accepts only exact `sandbox`, `test` (synthetic adapter compatibility), or `live`; whitespace, uppercase variants, and an unapproved `production` value fail closed before either channel advertisement or adapter initiation. The genuine external providers remain default OFF and unregistered. This change does not authorize switching a gateway to live mode.
+
+Target-only regression extended `W04ProviderConfigurationShapeTest` with three malformed modes for each JazzCash, Easypaisa, and hosted card. Focused test PASS 1/1, 75 assertions; complete focused W04 suite PASS 21/21, 378 assertions; neighboring `OrderPaymentTransactionsTest` PASS 16/16, 121 assertions. Both modified PHP files passed syntax and scoped Pint; diff whitespace check PASS. Isolated `mobisttech_test` MySQL was originally stopped and must be restored to stopped after verification.
+
+Still open: four-channel mode/owner/refund/browser parity and protected nonsecret settings UI; selected payment processor and authorized merchant owner, official sandbox contracts, real callbacks/refunds/settlement remain H-02 EXTERNAL UNVERIFIED. This checkpoint does not close W04 or authorize real-provider configuration.
