@@ -319,6 +319,19 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertTrue($unknown['reconciliation_required']);
         $this->assertSame(1, DB::table('reservation_allocations')->whereNull('released_at')->count());
         $this->assertSame(0, DB::table('sales')->count());
+        $this->reject(fn () => $this->service()->retry($this->scope(), $this->customer,
+            $order['order_id'], $this->key('unknown-no-retry'), 'jazzcash'));
+        $this->assertSame(1, DB::table('payments')->where('public_id', $order['payment_id'])->count());
+        $paid = $this->service()->callback('jazzcash', $fake->paid('EVT-U-PAID', $init['reference'], '200.02'));
+        $this->assertSame('paid', $paid['payment_status']);
+        $this->assertSame('confirmed', $paid['order_status']);
+        $this->assertSame(1, DB::table('sales')->count());
+        $this->assertSame(2, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('reservation_allocations')->whereNull('released_at')->count());
+        $this->assertEquals($paid, $this->service()->callback('jazzcash',
+            $fake->paid('EVT-U-PAID', $init['reference'], '200.02')));
+        $this->assertSame(1, DB::table('sales')->count());
+        $this->assertSame(2, DB::table('payment_receipts')->count());
     }
 
     public function test_expiry_locks_and_rechecks_active_outlet_before_releasing_reservation(): void
