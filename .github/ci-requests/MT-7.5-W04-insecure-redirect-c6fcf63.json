@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "c6fcf6393129f2e32ed282d163a26b412aebd418",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T00:45:49Z",
+  "description": "Verify W04 new browser negative case: unsafe HTTP hosted redirect is rejected, no external navigation or duplicate order submission occurs, and the original owned order recovery link remains available. Retain real-provider default-OFF and full isolated cleanup gate."
+}
