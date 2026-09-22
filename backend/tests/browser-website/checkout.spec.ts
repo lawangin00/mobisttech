@@ -177,6 +177,34 @@ test('MT-7.5 W04 insecure hosted redirect is blocked and the created order remai
     expect(initiationAttempts).toBe(1);
 });
 
+test('MT-7.5 W04 all unavailable checkout channels cannot submit a Website order', async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.goto('/products/mt51-alpha-phone');
+    await page.getByRole('button', { name: 'Add to cart' }).click();
+    await expect(page.getByText('Added to cart.', { exact: true })).toBeVisible();
+    await login(page);
+    let orderSubmits = 0;
+    await page.route('**/api/customer/orders', async (route) => {
+        if (route.request().method() === 'POST') orderSubmits += 1;
+        await route.continue();
+    });
+    await page.route('**/api/customer/checkout/channels', async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [
+            { code: 'cod', label: 'Cash on Delivery', available: false, kind: 'offline' },
+            { code: 'jazzcash', label: 'JazzCash', available: false, kind: 'hosted' },
+            { code: 'easypaisa', label: 'Easypaisa', available: false, kind: 'hosted' },
+            { code: 'card', label: 'Credit / Debit Card', available: false, kind: 'hosted' },
+        ] } }) });
+    });
+    await page.goto('/checkout');
+    await expect(page.getByRole('radio')).toHaveCount(4);
+    for (const channel of ['Cash on Delivery', 'JazzCash', 'Easypaisa', 'Credit / Debit Card']) {
+        await expect(page.getByRole('radio', { name: channel })).toBeDisabled();
+    }
+    await expect(page.getByRole('button', { name: 'Place order' })).toBeDisabled();
+    expect(orderSubmits).toBe(0);
+});
+
 test('MT-5.3 digital-only mode prunes checkout while historical account stays available', async ({ page }) => {
     test.setTimeout(60_000);
     await login(page);
