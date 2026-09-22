@@ -62,9 +62,11 @@ export default function WebsitePaymentSettings({ identity, channels, settings }:
     const [error, setError] = useState('');
 
     function reloadPolicy() {
-        router.reload({
+        router.visit('/internal/admin/website/payment-settings', {
+            method: 'get',
             preserveState: false,
             preserveScroll: true,
+            replace: true,
             onError: () => setError('COD policy could not be refreshed.'),
             onFinish: () => setBusy(false),
         });
