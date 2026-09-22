@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "5b59490b5e5375ba9eddff849862871a14964ee6",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T01:50:00Z",
+  "description": "W04 synthetic signed callback regression: a valid other-provider signature cannot settle a JazzCash payment reference; exact signed replay remains idempotent and changed signed outcome with the same event ID cannot create a second receipt or sale. Keep genuine providers default-OFF and verify clean hosted browser and final schema/cleanup gates."
+}
