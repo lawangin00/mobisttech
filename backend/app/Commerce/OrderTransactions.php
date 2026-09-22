@@ -210,6 +210,12 @@ final class OrderTransactions
         if ($payment->status !== 'pending' || $payment->gateway === 'cod') {
             throw new LogicException('Payment is not externally initiable.');
         }
+        // A cached hosted URL is a payment continuation, not a bypass of the emergency
+        // provider-disable gate or the merchant/environment bound to the original intent.
+        $configured = $this->providers->assertAvailable($payment->gateway);
+        if ($payment->merchant !== $configured['merchant'] || $payment->mode !== $configured['mode']) {
+            throw new LogicException('Payment provider configuration no longer matches the original intent.');
+        }
         if ($payment->gateway_order_reference) {
             return $this->sanitize(json_decode($payment->gateway_response ?? '{}', true, flags: JSON_THROW_ON_ERROR));
         }

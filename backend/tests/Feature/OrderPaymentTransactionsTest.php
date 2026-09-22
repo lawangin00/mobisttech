@@ -241,6 +241,31 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(0, $product->fresh()->qty);
     }
 
+    public function test_w04_cached_redirect_is_not_reissued_after_provider_disable_or_merchant_mode_change(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $this->fakeProvider();
+        $order = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('cached-redirect'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $original = $this->service()->initiate($order['payment_id']);
+        $this->assertSame($original, $this->service()->initiate($order['payment_id']));
+        $row = DB::table('payments')->where('public_id', $order['payment_id'])->firstOrFail();
+        $originalConfig = config('commerce.providers.jazzcash');
+        foreach ([['enabled' => false], ['merchant' => 'different-merchant'], ['mode' => 'sandbox']] as $change) {
+            config()->set('commerce.providers.jazzcash', array_replace($originalConfig, $change));
+            $this->reject(fn () => $this->service()->initiate($order['payment_id']));
+            $current = DB::table('payments')->where('id', $row->id)->firstOrFail();
+            $this->assertSame($row->gateway_order_reference, $current->gateway_order_reference);
+            $this->assertSame($row->gateway_response, $current->gateway_response);
+            $this->assertSame('pending', $current->status);
+        }
+        config()->set('commerce.providers.jazzcash', $originalConfig);
+        $this->assertSame($original, $this->service()->initiate($order['payment_id']));
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+    }
+
     public function test_disabled_provider_fails_before_order_and_verified_callback_is_replay_safe_across_mode_switch(): void
     {
         $product = $this->product();
