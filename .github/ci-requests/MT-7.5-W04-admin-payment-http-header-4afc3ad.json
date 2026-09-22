@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "4afc3adef575e39931ecea366d4cc48521bd0ca4",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T02:53:07Z",
+  "description": "W04 Admin HTTP payment-channel read-only endpoint: compare both private and no-store Cache-Control directives regardless of Symfony serialization order. No production/payment provider activation change. Verify strict full clean-host CI including final schema/cleanup gate."
+}
