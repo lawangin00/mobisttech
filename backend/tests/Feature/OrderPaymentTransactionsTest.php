@@ -405,6 +405,48 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(1, DB::table('sales')->count());
     }
 
+    public function test_w04_inflight_early_unknown_result_denies_redirect_preserves_hold(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $fake = new FakePaymentProvider;
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+        $registry = new PaymentProviders;
+        $registry->register('jazzcash', new class($fake, function () use (&$order, $fake) {
+            // A provider that echoes our public payment ID can call back before it returns its gateway reference.
+            $received = $this->service()->callback('jazzcash', $fake->unknown('W04-EARLY-UNKNOWN', $order['payment_id'], '200.02'));
+            $this->assertSame('unknown', $received['payment_status']);
+        }) implements PaymentProvider {
+
+            public function __construct(private PaymentProvider $delegate, private \Closure $onNetwork) {}
+
+            public function initiate(array $intent): array
+            {
+                ($this->onNetwork)();
+
+                return $this->delegate->initiate($intent);
+            }
+
+            public function verify(array $payload): array
+            {
+                return $this->delegate->verify($payload);
+            }
+        });
+        $this->app->instance(PaymentProviders::class, $registry);
+        $order = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('inflight-early-unknown'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $this->reject(fn () => $this->service()->initiate($order['payment_id']));
+        $payment = DB::table('payments')->where('public_id', $order['payment_id'])->firstOrFail();
+        $this->assertSame('GW-'.$order['payment_id'], $payment->gateway_order_reference);
+        $this->assertSame('unknown', $payment->status);
+        $this->assertSame('pending', DB::table('orders')->where('public_id', $order['order_id'])->value('status'));
+        $this->assertSame(1, DB::table('reservation_allocations')->whereNull('released_at')->count());
+        $this->assertSame(1, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+        $this->reject(fn () => $this->service()->initiate($order['payment_id']));
+        $this->assertSame(0, DB::table('sales')->count());
+    }
+
     public function test_w04_cancelled_external_order_cannot_start_or_resume_hosted_payment(): void
     {
         $product = $this->product();
