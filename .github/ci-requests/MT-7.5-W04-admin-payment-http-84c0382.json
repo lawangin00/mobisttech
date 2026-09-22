@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "84c0382bc3773357d16f6bccec3ccecbfcc7de5d",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T02:46:09Z",
+  "description": "W04 protected read-only Admin payment status API and HTTP-level session/permission/secret-leakage regression; preserve external provider default-OFF, secure guards and strict final disposable-schema cleanup gate."
+}
