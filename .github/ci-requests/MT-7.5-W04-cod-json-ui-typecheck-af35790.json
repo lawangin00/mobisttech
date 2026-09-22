@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "af35790880bf94f56cabe1c697c88a7a4b7e12ee",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T18:37:25Z",
+  "description": "Verify corrected W04 COD protected Admin UI after exact CI 35767738976 identified unsupported preserveState in Inertia ReloadOptions. The source replaced reload with typed router.visit(GET, preserveState false) while preserving authenticated JSON 201/200 mutation response confirmation, synthetic browser COD draft/publish/compensating rollback, permission denials, full backend/browser/cleanup gates and external provider default-OFF HOLD."
+}
