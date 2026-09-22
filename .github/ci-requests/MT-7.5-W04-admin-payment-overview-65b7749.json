@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "65b7749a852f519008c1f50bdf66b3638490442b",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T02:23:51Z",
+  "description": "W04 read-only Admin payment-channel status projection and permission tests: website.payments.manage required, credentials permission alone insufficient, four-channel status masks merchant values and secret markers, unregistered external providers remain unavailable despite synthetic enabled configuration. Verify PHP style, full backend/browser regressions and final disposable schema gate. Does not introduce merchant credential writes, live adapters or provider activation."
+}
