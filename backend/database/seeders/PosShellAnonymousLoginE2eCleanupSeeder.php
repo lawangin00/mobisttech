@@ -36,12 +36,12 @@ class PosShellAnonymousLoginE2eCleanupSeeder extends Seeder
             $changed = DB::table('identity_audit_events')->where('realm', 'admin')
                 ->where('account_id', $sales->id)->where('action', 'password_replaced')
                 ->orderByDesc('created_at')->first(['created_at']);
+            abort_unless($changed !== null, 409, 'Synthetic POS password-change evidence is missing.');
             $succeeded = DB::table('identity_audit_events')->where('realm', 'admin')
                 ->where('account_id', $sales->id)->where('action', 'login_succeeded')
-                ->where('created_at', '>=', $changed?->created_at)
+                ->where('created_at', '>=', $changed->created_at)
                 ->orderByDesc('created_at')->first(['created_at']);
-            abort_unless($changed !== null && $succeeded !== null, 409,
-                'The synthetic POS password-change/login evidence is missing.');
+            abort_unless($succeeded !== null, 409, 'Synthetic POS follow-up login evidence is missing.');
             abort_unless((clone $failed)->whereBetween('created_at', [$changed->created_at, $succeeded->created_at])->count() === 1,
                 409, 'Anonymous login failure does not match the synthetic POS browser scenario.');
             $failed->whereBetween('created_at', [$changed->created_at, $succeeded->created_at])->delete();
