@@ -76,8 +76,15 @@ final class PaymentProviders
         }
         $event = $this->adapters[$gateway]->verify($payload);
         $required = ['event_id', 'transaction_reference', 'order_reference', 'amount', 'currency', 'status', 'payload_hash'];
-        if (array_diff($required, array_keys($event)) || array_diff(array_keys($event), $required)
-            || ! in_array($event['status'], ['paid', 'failed', 'unknown'], true)
+        if (array_diff($required, array_keys($event)) || array_diff(array_keys($event), $required)) {
+            throw new LogicException('Provider adapter returned an invalid verified event.');
+        }
+        foreach ($required as $field) {
+            if (! is_string($event[$field]) || trim($event[$field]) === '') {
+                throw new LogicException('Provider adapter returned an invalid verified event.');
+            }
+        }
+        if (! in_array($event['status'], ['paid', 'failed', 'unknown'], true)
             || $event['currency'] !== 'PKR' || ! preg_match('/\A[0-9a-f]{64}\z/', $event['payload_hash'])) {
             throw new LogicException('Provider adapter returned an invalid verified event.');
         }
