@@ -1,0 +1,69 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Commerce\PaymentProviders;
+use App\Commerce\WebsitePaymentAdministration;
+use App\Models\Admin;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tests\TestCase;
+
+/** W04: Admin status visibility must not leak merchant configuration or grant credential access. */
+final class W04AdminPaymentOverviewTest extends TestCase
+{
+    use DatabaseTransactions;
+
+    public function test_only_payment_settings_permission_can_read_the_bounded_channel_status(): void
+    {
+        $service = new WebsitePaymentAdministration(new PaymentProviders);
+
+        foreach ([[], ['website.payment-credentials.manage'], ['website.orders.manage']] as $permissions) {
+            try {
+                $service->overview($this->admin($permissions));
+                $this->fail('An unrelated permission granted payment settings visibility.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+
+        $this->assertCount(4, $service->overview($this->admin(['website.payments.manage'])));
+    }
+
+    public function test_status_is_ordered_default_off_and_never_returns_merchant_values_or_secrets(): void
+    {
+        config()->set('commerce.providers.jazzcash', [
+            'enabled' => true,
+            'merchant' => 'synthetic-private-merchant-marker',
+            'mode' => 'sandbox',
+            'credentials' => 'synthetic-private-credential-marker',
+        ]);
+        $service = new WebsitePaymentAdministration(new PaymentProviders);
+        $status = $service->overview($this->admin(['website.payments.manage']));
+
+        $this->assertSame(['cod', 'jazzcash', 'easypaisa', 'card'], array_column($status, 'code'));
+        $this->assertSame([true, false, false, false], array_column($status, 'available'));
+        $this->assertTrue($status[1]['enabled']);
+        $this->assertTrue($status[1]['merchant_configured']);
+        $this->assertFalse($status[1]['available']);
+        $serialized = json_encode($status, JSON_THROW_ON_ERROR);
+        $this->assertStringNotContainsString('synthetic-private-merchant-marker', $serialized);
+        $this->assertStringNotContainsString('synthetic-private-credential-marker', $serialized);
+        $this->assertSame(['code', 'label', 'enabled', 'merchant_configured', 'available'], array_keys($status[1]));
+    }
+
+    private function admin(array $permissions): Admin
+    {
+        $admin = new Admin;
+        $admin->forceFill([
+            'name' => 'W04 Synthetic Admin',
+            'email' => Str::uuid().'@example.invalid',
+            'password' => 'SyntheticPass123!',
+            'permissions' => $permissions,
+            'auth_version' => 1,
+        ])->save();
+
+        return $admin;
+    }
+}
