@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { expect, type Page, test } from '@playwright/test';
 import { releaseSyntheticAdminSession } from './synthetic-admin-session';
 
@@ -21,6 +22,15 @@ async function postAndObserve(page: Page, pathname: string, click: () => Promise
 
 test.afterEach(async ({ page }) => {
     await releaseSyntheticAdminSession(page);
+});
+
+test.afterAll(() => {
+    if (process.env.CI === 'true') {
+        execFileSync('php', [
+            'artisan', 'db:seed', '--class=Database\\Seeders\\W04CodPolicyE2eCleanupSeeder',
+            '--env=testing', '--force',
+        ], { cwd: process.cwd(), stdio: 'inherit' });
+    }
 });
 
 test('MT-7.5 W04 protected Admin COD draft publish reload and compensating rollback affect only COD', async ({ page }) => {
