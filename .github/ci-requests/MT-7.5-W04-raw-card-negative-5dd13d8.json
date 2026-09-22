@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "5dd13d8fb10bccfe8d7ac14e55fb9143e2d30f75",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T01:22:37Z",
+  "description": "Verify W04 target-specific crafted raw-card checkout field rejection with no order, payment or idempotency persistence; preserve hosted-card default-OFF and require full regression, browser and final disposable schema cleanup gates."
+}
