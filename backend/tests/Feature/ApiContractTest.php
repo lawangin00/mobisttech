@@ -724,6 +724,38 @@ class ApiContractTest extends TestCase
             DB::table('sales')->count(), DB::table('payment_receipts')->count()]);
     }
 
+    public function test_w04_published_cod_off_blocks_authenticated_http_checkout_without_mutation(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $product = $this->listedProduct('w04-cod-disabled-product');
+        $this->acquire($product);
+        $customer = $this->customer('w04-cod-off@example.invalid', '03001112230');
+        $client = $this->client();
+        $this->login($client, $customer->email)->assertOk();
+        $revision = DB::table('site_configuration_revisions')->insertGetId([
+            'domain' => 'website.payments.cod', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode(['cod_enabled' => false], JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        $this->send($client, 'GET', '/api/v1/checkout/channels')->assertOk()
+            ->assertJsonPath('data.items.0.code', 'cod')->assertJsonPath('data.items.0.available', false);
+        $before = [DB::table('orders')->count(), DB::table('payments')->count(),
+            DB::table('reservations')->count(), DB::table('idempotency_requests')->count()];
+        $input = ['customer_name' => $customer->name, 'customer_mobile' => $customer->mobile,
+            'city' => 'Karachi', 'delivery_address' => 'Synthetic disabled COD address', 'gateway' => 'cod',
+            'lines' => [['product_id' => $product->public_id, 'quantity' => 1]]];
+        $this->send($client, 'POST', '/api/v1/orders', $input, true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'w04-cod-off-'.Str::uuid(),
+        ])->assertStatus(409);
+        $this->assertSame($before, [DB::table('orders')->count(), DB::table('payments')->count(),
+            DB::table('reservations')->count(), DB::table('idempotency_requests')->count()]);
+        DB::table('site_configuration_revisions')->where('id', $revision)->delete();
+        $this->send($client, 'GET', '/api/v1/checkout/channels')->assertOk()
+            ->assertJsonPath('data.items.0.available', true);
+        $this->send($client, 'POST', '/api/v1/orders', $input, true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'w04-cod-on-'.Str::uuid(),
+        ])->assertCreated()->assertJsonPath('data.payment_status', 'pending_collection');
+    }
+
     public function test_mt_5_4_public_content_services_enquiry_and_software_contracts_are_published_and_mode_aware(): void
     {
         $this->publishMode('hybrid', 1);
