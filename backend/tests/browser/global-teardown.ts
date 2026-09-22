@@ -1,6 +1,21 @@
 import { execFileSync } from 'node:child_process';
 
 export default async function globalTeardown() {
+    // The POS password-change browser test intentionally fails one login with
+    // the old password; its anonymous audit record has no account_id. Remove
+    // only the source-verified synthetic event before its account is deleted.
+    if (process.env.CI === 'true') {
+        execFileSync('php', [
+            'artisan',
+            'db:seed',
+            '--class=Database\\Seeders\\PosShellAnonymousLoginE2eCleanupSeeder',
+            '--env=testing',
+            '--force',
+        ], {
+            cwd: process.cwd(),
+            stdio: 'inherit',
+        });
+    }
     execFileSync('php', [
         'artisan',
         'db:seed',
