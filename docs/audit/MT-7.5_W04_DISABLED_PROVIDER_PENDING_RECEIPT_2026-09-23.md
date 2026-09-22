@@ -1,0 +1,6 @@
+# MT-7.5 W04 disabled-provider outstanding-receipt boundary — 23 September 2026
+
+- A durable synthetic JazzCash payment intent exists before channel disable. While the deployment provider is disabled, an otherwise valid signed callback returns HTTP 409, with the payment still pending and no verified receipt; re-enabling the original provider configuration permits the original callback.
+- Focused callback test 1/1 PASS (33 assertions), W04 25/25 PASS (445 assertions), neighboring OrderPaymentTransactions 17/17 PASS (140 assertions), scoped Pint/diff check PASS.
+- **Open operational design gap, not closed acceptance:** fail-closed disable currently blocks even already-initiated provider receipts, potentially leaving outstanding charges pending. Before genuine merchant activation, define a credential-retention/revocation policy that can independently verify prior in-flight intents when new checkout is disabled, while preserving signature, merchant, mode, amount, replay and audit boundaries. Do not enable callbacks or bypass disabled-channel guard speculatively.
+- Synthetic-only evidence; W04 IN PROGRESS, 15/27 DONE / 12 OPEN; authentic vendor callbacks/refunds/settlement H-02 HOLD unchanged.

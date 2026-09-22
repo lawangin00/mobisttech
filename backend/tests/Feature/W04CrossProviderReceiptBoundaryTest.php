@@ -105,6 +105,12 @@ final class W04CrossProviderReceiptBoundaryTest extends TestCase
             ->assertStatus(409)->assertJsonPath('error.code', 'api_409');
         $this->assertSame(0, DB::table('payment_receipts')->count());
         $valid = $this->signed('jazzcash', 'W04-PAID-1', $intent['reference'], 'paid');
+        config()->set('commerce.providers.jazzcash.enabled', false);
+        $this->postJson('/api/v1/payment-callbacks/jazzcash', $valid)
+            ->assertStatus(409)->assertJsonPath('error.code', 'api_409');
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->assertSame('pending', DB::table('payments')->where('public_id', $order['payment_id'])->value('status'));
+        config()->set('commerce.providers.jazzcash.enabled', true);
         config()->set('commerce.providers.jazzcash.merchant', 'synthetic-rotated-merchant');
         $this->postJson('/api/v1/payment-callbacks/jazzcash', $valid)
             ->assertStatus(409)->assertJsonPath('error.code', 'api_409');
