@@ -35,8 +35,11 @@ final class W04ProviderConfigurationShapeTest extends TestCase
                 ['merchant' => 'synthetic-merchant', 'mode' => []],
                 ['merchant' => 'synthetic-merchant', 'mode' => null],
                 ['merchant' => 'synthetic-merchant', 'mode' => '   '],
+                ['merchant' => 'synthetic-merchant', 'mode' => 'sandbox', 'enabled' => 'false'],
+                ['merchant' => 'synthetic-merchant', 'mode' => 'sandbox', 'enabled' => 1],
+                ['merchant' => 'synthetic-merchant', 'mode' => 'sandbox', 'enabled' => 'true'],
             ] as $invalid) {
-                config()->set('commerce.providers.'.$gateway, ['enabled' => true, ...$invalid]);
+                config()->set('commerce.providers.'.$gateway, [...$invalid, 'enabled' => $invalid['enabled'] ?? true]);
                 $this->assertFalse(collect($registry->checkoutChannels())->firstWhere('code', $gateway)['available']);
                 try {
                     $registry->initiate($gateway, ['payment_id' => 'synthetic-only']);

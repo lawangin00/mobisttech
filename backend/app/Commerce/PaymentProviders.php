@@ -24,7 +24,7 @@ final class PaymentProviders
     public function assertAvailable(string $gateway): array
     {
         $configuration = config('commerce.providers.'.$gateway);
-        if (! is_array($configuration) || ! ($configuration['enabled'] ?? false)
+        if (! is_array($configuration) || ($configuration['enabled'] ?? null) !== true
             || ($gateway !== 'cod' && (! isset($this->adapters[$gateway])
                 || ! is_string($configuration['merchant'] ?? null)
                 || trim($configuration['merchant']) === ''
