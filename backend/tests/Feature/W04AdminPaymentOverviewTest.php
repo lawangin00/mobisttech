@@ -6,6 +6,7 @@ use App\Commerce\PaymentProviders;
 use App\Commerce\WebsitePaymentAdministration;
 use App\Models\Admin;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
@@ -63,6 +64,15 @@ final class W04AdminPaymentOverviewTest extends TestCase
         $this->assertSame([false, false, false, false], array_column($status, 'enabled'));
         $this->assertSame([false, false, false, false], array_column($status, 'available'));
         $this->assertFalse($service->codEnabled());
+        $this->assertSame(0, DB::table('site_configuration_revisions')
+            ->where('domain', 'website.payments.cod')->count());
+        DB::table('site_configuration_revisions')->insert([
+            'domain' => 'website.payments.cod', 'version' => 1,
+            'state' => 'published', 'snapshot' => json_encode(['cod_enabled' => true], JSON_THROW_ON_ERROR),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->assertFalse($service->codEnabled(), 'Published COD cannot override a malformed deployment flag.');
+        $this->assertFalse($service->overview($actor)[0]['available']);
         config()->set('commerce.providers.cod.enabled', true);
         $this->assertTrue($service->codEnabled());
         $this->assertTrue($service->overview($actor)[0]['available']);
