@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "80339952fae72414fa52103d9c3e0e4cc07902e6",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T16:58:28Z",
+  "description": "W04 protected COD Admin policy first request failed only because unauthenticated test omitted CSRF cookie, returning correct HTTP 419 before expected 401. The updated test obtains a real CSRF token as unauthenticated client then asserts protected 401, preserving auth/CSRF checks. Verify all COD draft/publish, channel/read-only behavior and full clean-checkout/browser gates on exactly pinned corrected source; genuine external providers remain OFF/HOLD."
+}
