@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import DigitalOperations from './pages/digital-operations';
 import Foundation from './pages/foundation';
 import Integrations from './pages/integrations';
-import PlatformAdmin from './pages/platform-admin';
+import PlatformAdminPaymentNavigation from './pages/platform-admin-payment-navigation';
 import ResetAdministration from './pages/reset-administration';
 import PosLogin from './pages/pos-login';
 import PosShell from './pages/pos-shell';
@@ -22,7 +22,7 @@ void createInertiaApp({
         if (name === 'digital-operations') return DigitalOperations;
         if (name === 'foundation') return Foundation;
         if (name === 'integrations') return Integrations;
-        if (name === 'platform-admin') return PlatformAdmin;
+        if (name === 'platform-admin') return PlatformAdminPaymentNavigation;
         if (name === 'reset-administration') return ResetAdministration;
         if (name === 'pos-login') return PosLogin;
         if (name === 'pos-shell') return PosShell;
