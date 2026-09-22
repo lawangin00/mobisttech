@@ -26,7 +26,10 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
-        then: fn () => require __DIR__.'/../routes/identity.php',
+        then: function (): void {
+            require __DIR__.'/../routes/identity.php';
+            require __DIR__.'/../routes/website-payment-admin.php';
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [HandleInertiaRequests::class]);
