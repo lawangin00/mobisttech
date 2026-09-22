@@ -20,7 +20,7 @@ async function postAndObserve(page: Page, pathname: string, status: number, clic
     const response = await pending;
     // A generic 303 (including a middleware redirect) cannot prove a policy
     // write; require the authenticated JSON contract and its saved revision.
-    expect(response.status(), `${pathname}: ${await response.text()}`).toBe(status);
+    expect(response.status(), pathname).toBe(status);
     expect(response.headers()['content-type']).toContain('application/json');
     const body = await response.json() as { data?: { id?: number; version?: number; cod_enabled?: boolean } };
     expect(body.data?.id).toBeGreaterThan(0);
