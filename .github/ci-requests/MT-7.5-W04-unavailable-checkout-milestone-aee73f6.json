@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "aee73f6c0e456b76e8e384dbf43ab2bd43dfde42",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T02:08:56Z",
+  "description": "W04 clean-host transaction-level regression: enabling synthetic-looking merchant settings without an authentic registered adapter must reject JazzCash, Easypaisa and hosted-card checkout and project milestone creation before orders, reservations, payments, idempotency keys or receipts can mutate. Keep all external providers default-OFF and final schema/cleanup gate strict."
+}
