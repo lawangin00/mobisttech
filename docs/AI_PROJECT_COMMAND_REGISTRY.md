@@ -1,12 +1,12 @@
 # Mobisttech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r19
-**Applied universal implementation epochs:** `U-CI-2026-09-19-1`
+**Registry version:** MT-1.1-r20
+**Applied universal implementation epochs:** `U-CI-2026-09-19-1`, `U-CI-MODE-2026-09-21-2`
 **Universal baseline (review provenance):** Registry 1.36 / System 7.12
 **Bootstrap baseline (review provenance):** 1.14
 **Last-reviewed universal commit:** `2ac3fd8472248dd41f8f627041f5cc8b0304fd87`
 **Roadmap specification:** 1.12
-**Date:** 2026-09-21
+**Date:** 2026-09-22
 **Repository root:** `C:\mobisttech`
 **Remote:** `lawangin00/mobisttech` (independent, public)
 **Project ID:** `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`
@@ -70,9 +70,10 @@ All universal aliases, collision rules, execution-intent isolation, read-only mu
 
 Future universal control fixes auto-apply on canonical first-load/Refresh/new session. This does not advance/reopen Mobisttech roadmap implementation, alter application data, or replace this project's genuine delta rules.
 
-## GitHub-only execution status (21-Sep-2026)
+## GitHub-only execution status (22-Sep-2026)
 
-- Canonical global state `lawangin00/references/UNIVERSAL_EXECUTION_MODE.json` has been created and read back at `2ac3fd8472248dd41f8f627041f5cc8b0304fd87`: `global_mode=GITHUB`, `exceptions={}`. The canonical state, not this project copy, governs later user-issued mode transitions.
+- Canonical global state `lawangin00/references/UNIVERSAL_EXECUTION_MODE.json` remains `global_mode=GITHUB`, `exceptions={}` at verified reference `3f4ba9a73f769538f96fe2979cd3a8c2e94d618b`. The canonical state, not this project copy, governs later user-issued mode transitions.
+- Mode-aware CI rollout `U-CI-MODE-2026-09-21-2`: the existing `.github/workflows/ci.yml` and `.github/workflows/github-only-website.yml` already restrict push triggers to `.github/ci-requests/**`, retain `workflow_dispatch`, run `tools/ci-mode-gate.py --self-test` plus exact-parent/project/mode request validation, and contain real backend/Website quality gates; `deployment-rehearsal.yml` remains separately manual. No workflow edit was needed. Exact-source W04 full request `c7c26ca21e05a0bd95aae71e01d0c99894976a21` produced successful request validation plus clean-checkout acceptance in run `35738247964`; independent Website verification `35738247946` passed. The receipt reflects this existing tested project configuration, not new activation or acceptance of unrun local-only gates.
 - GitHub-only website pilot: `bd18cffc2c56f849060b8fbedbec2583fede45c5`, run `35546044796`, successful checkout, pinned dependency installation, website typecheck, lint and production build. This focused pass is not final backend, browser or release acceptance.
 - The historical private-repository Actions rejection must not be reported as a current website CI blocker; use actual fresh run evidence for the current public repository and exact candidate.
 - GitHub plugin and GitHub Actions are the default for authorized website development, builds and automated tests. Local-only acceptance remains pending until genuinely performed following an explicit execution-mode command or exact scoped exception; do not assume a global mode switch implies local acceptance.
