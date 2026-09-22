@@ -416,8 +416,14 @@ class OrderPaymentTransactionsTest extends TestCase
             $second['payment_id'], $this->key('w04-refund-cross-payment'), '200.02', str_repeat('a', 64)));
         $this->assertSame(0, DB::table('refunds')->count());
         $this->assertNotSame('partial', DB::table('orders')->where('public_id', $second['order_id'])->value('refund_status'));
-        $this->assertSame('completed', $this->service()->manualRefund($this->actor, $return['return_id'],
-            $first['payment_id'], $this->key('w04-refund-valid-payment'), '200.02', str_repeat('b', 64))['status']);
+        $key = $this->key('w04-refund-valid-payment');
+        $original = $this->service()->manualRefund($this->actor, $return['return_id'],
+            $first['payment_id'], $key, '200.02', str_repeat('b', 64));
+        $this->assertSame('completed', $original['status']);
+        $this->assertEquals($original, $this->service()->manualRefund($this->actor, $return['return_id'],
+            $first['payment_id'], $key, '200.02', str_repeat('b', 64)));
+        $this->reject(fn () => $this->service()->manualRefund($this->actor, $return['return_id'],
+            $first['payment_id'], $key, '200.02', str_repeat('c', 64)));
         $this->assertSame(1, DB::table('refunds')->count());
         $this->assertSame('refunded', DB::table('orders')->where('public_id', $first['order_id'])->value('refund_status'));
         $this->assertNotSame('refunded', DB::table('orders')->where('public_id', $second['order_id'])->value('refund_status'));
