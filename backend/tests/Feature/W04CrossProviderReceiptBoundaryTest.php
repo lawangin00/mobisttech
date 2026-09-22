@@ -91,14 +91,27 @@ final class W04CrossProviderReceiptBoundaryTest extends TestCase
         // A valid Easypaisa test signature must not settle a JazzCash payment reference.
         $foreign = $this->signed('easypaisa', 'W04-CROSS-1', $intent['reference'], 'paid');
         $this->reject(fn () => $service->callback('easypaisa', $foreign));
+        $this->postJson('/api/v1/payment-callbacks/easypaisa', $foreign)
+            ->assertNotFound()->assertJsonPath('error.code', 'api_404');
+        $this->postJson('/api/v1/payment-callbacks/jazzcash', $foreign)
+            ->assertStatus(409)->assertJsonPath('error.code', 'api_409');
         $this->assertSame(0, DB::table('payment_receipts')->count());
         $this->assertSame(0, DB::table('sales')->count());
         $this->assertSame('pending', DB::table('payments')->where('public_id', $order['payment_id'])->value('status'));
         $this->assertSame('unpaid', DB::table('orders')->where('public_id', $order['order_id'])->value('payment_status'));
 
+        $this->postJson('/api/v1/payment-callbacks/jazzcash',
+            $this->signed('jazzcash', 'W04-AMOUNT-1', $intent['reference'], 'paid', '200.03'))
+            ->assertStatus(409)->assertJsonPath('error.code', 'api_409');
+        $this->assertSame(0, DB::table('payment_receipts')->count());
         $valid = $this->signed('jazzcash', 'W04-PAID-1', $intent['reference'], 'paid');
-        $this->assertSame('paid', $service->callback('jazzcash', $valid)['payment_status']);
-        $this->assertSame('paid', $service->callback('jazzcash', $valid)['payment_status']);
+        $this->postJson('/api/v1/payment-callbacks/jazzcash', $valid)
+            ->assertOk()->assertJsonPath('data.payment_status', 'paid');
+        $this->postJson('/api/v1/payment-callbacks/jazzcash', $valid)
+            ->assertOk()->assertJsonPath('data.payment_status', 'paid');
+        $this->postJson('/api/v1/payment-callbacks/jazzcash',
+            $this->signed('jazzcash', 'W04-PAID-1', $intent['reference'], 'failed'))
+            ->assertStatus(409)->assertJsonPath('error.code', 'api_409');
         $this->reject(fn () => $service->callback('jazzcash',
             $this->signed('jazzcash', 'W04-PAID-1', $intent['reference'], 'failed')));
         $this->assertSame(1, DB::table('payment_receipts')->count());
@@ -106,11 +119,11 @@ final class W04CrossProviderReceiptBoundaryTest extends TestCase
         $this->assertSame('paid', DB::table('orders')->where('public_id', $order['order_id'])->value('payment_status'));
     }
 
-    private function signed(string $gateway, string $eventId, string $reference, string $status): array
+    private function signed(string $gateway, string $eventId, string $reference, string $status, string $amount = '200.02'): array
     {
         $event = [
             'event_id' => $eventId, 'transaction_reference' => 'TX-'.$eventId,
-            'order_reference' => $reference, 'amount' => '200.02', 'currency' => 'PKR',
+            'order_reference' => $reference, 'amount' => $amount, 'currency' => 'PKR',
             'status' => $status, 'payload_hash' => hash('sha256', $gateway.'|'.$eventId.'|'.$reference.'|'.$status),
         ];
         $event['signature'] = hash_hmac('sha256', json_encode($event, JSON_THROW_ON_ERROR), 'w04-'.$gateway);
