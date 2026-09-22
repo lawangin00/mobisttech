@@ -1,0 +1,8 @@
+# MT-7.5 W04 — elapsed physical reservation hosted-initiation gate (23-Sep-2026)
+
+Status: bounded synthetic pre-scheduler expiration fail-closed checkpoint; W04 remains IN PROGRESS.
+
+- Test-first regression demonstrated a customer could begin or reissue a hosted external payment after its physical order reservation deadline had elapsed but before the expiration scheduler updated payment/order states. The parent order and payment remained pending, so earlier state-only checks allowed continuation (focused 1/1 FAILED before fix).
+- For commerce orders, `OrderTransactions::initiate()` now verifies an existing payment-linked active reservation with a future `reservation_expires_at` before new or cached hosted payment continuation. Digital project-milestone payments have no physical reservation and are not subjected to a fabricated stock deadline. The existing outlet, parent-order, provider and merchant/mode checks remain.
+- Focused synthetic case covers both previously uninitiated and already cached external intents. No new provider reference/receipt/sale is created after deadline. A URL already opened in a third-party processor cannot be revoked by this server gate; signed late-paid events still require separate reconciliation. Concurrent state changes during an external network request remain a separate OPEN follow-up.
+- Focused test-after-fix 1/1 PASS (8 assertions); joined W04/OrderPayment/Customer API filter 49/49 PASS (668 assertions); scoped Pint and diff checks PASS. No real provider transaction, live refund, external settlement, or monolithic CI approval is claimed. H-02 HOLD remains.

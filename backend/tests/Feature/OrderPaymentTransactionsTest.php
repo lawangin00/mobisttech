@@ -283,6 +283,27 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(0, DB::table('reservation_allocations')->whereNull('released_at')->count());
     }
 
+    public function test_w04_elapsed_reservation_without_scheduler_blocks_new_or_cached_hosted_payment(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 2);
+        $this->fakeProvider();
+        foreach ([false, true] as $alreadyInitiated) {
+            $order = $this->service()->checkout($this->scope(), $this->customer,
+                $this->key('elapsed-init-'.(int) $alreadyInitiated), $this->checkoutInput($product->public_id, 'jazzcash'));
+            $original = $alreadyInitiated ? $this->service()->initiate($order['payment_id']) : null;
+            $payment = DB::table('payments')->where('public_id', $order['payment_id'])->firstOrFail();
+            DB::table('reservations')->where('website_payment_id', $payment->id)
+                ->update(['reservation_expires_at' => now()->subSecond()]);
+            $this->reject(fn () => $this->service()->initiate($order['payment_id']));
+            $this->assertSame($original['reference'] ?? null,
+                DB::table('payments')->where('id', $payment->id)->value('gateway_order_reference'));
+            $this->assertSame('pending', DB::table('payments')->where('id', $payment->id)->value('status'));
+        }
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+    }
+
     public function test_w04_cached_redirect_is_not_reissued_after_provider_disable_or_merchant_mode_change(): void
     {
         $product = $this->product();

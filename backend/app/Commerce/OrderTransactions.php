@@ -211,6 +211,15 @@ final class OrderTransactions
             || $order->status !== 'pending' || $order->payment_status !== 'unpaid') {
             throw new LogicException('Payment is not externally initiable.');
         }
+        // An elapsed physical reservation must not issue or reissue a hosted checkout
+        // while the independent expiration scheduler has not yet released its stock.
+        if ($order->order_type === 'commerce') {
+            $reservation = DB::table('reservations')->where('website_payment_id', $payment->id)->first();
+            if (! $reservation || $reservation->state !== 'active' || ! $reservation->reservation_expires_at
+                || now()->gte($reservation->reservation_expires_at)) {
+                throw new LogicException('Payment reservation is no longer active.');
+            }
+        }
         // A cached hosted URL is a payment continuation, not a bypass of the emergency
         // provider-disable gate or the merchant/environment bound to the original intent.
         $configured = $this->providers->assertAvailable($payment->gateway);
