@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "db10bd845c8ac2a634eeb8ae03198d7c1daf95f8",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T01:37:57Z",
+  "description": "W04 security regression on clean hosted checkout: assert enabled merchant configuration without an authentic registered provider adapter cannot advertise or initiate any of the three external Website payment channels; also reject adapter registration with no enabled merchant. Preserve default-OFF genuine providers and final fixture/schema gates."
+}
