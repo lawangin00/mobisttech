@@ -16,7 +16,12 @@ test('P02 category-scoped subcategory and managed device choices persist in inve
     const selected=page.waitForResponse(r=>r.url().endsWith('/internal/admin/outlets/select')&&r.request().method()==='POST');
     await page.getByTestId('outlet-select').selectOption({label:'MT75 P02 Variant Outlet'});
     expect((await selected).status()).toBe(200);
-    await page.goto('/internal/admin/pos/workspace/inventory');
+    // Exercise the rendered, outlet-scoped navigation rather than interrupting an
+    // in-flight Inertia transition with a second full-document page.goto.
+    const inventoryLink=page.getByRole('link',{name:'Inventory',exact:true});
+    await expect(inventoryLink).toBeVisible();
+    await inventoryLink.click();
+    await expect(page).toHaveURL(/\/internal\/admin\/pos\/workspace\/inventory$/);
     await expect(page.getByTestId('workspace-inventory')).toBeVisible();
     await page.getByPlaceholder('Product name').fill('MT75 P02 Variant Phone');
     await page.getByTestId('product-category').selectOption({label:'Mobiles'});
