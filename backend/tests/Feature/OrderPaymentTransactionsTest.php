@@ -241,6 +241,48 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(0, $product->fresh()->qty);
     }
 
+    public function test_w04_cancelled_external_order_cannot_start_or_resume_hosted_payment(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 2);
+        $this->fakeProvider();
+        foreach ([false, true] as $alreadyInitiated) {
+            $order = $this->service()->checkout($this->scope(), $this->customer,
+                $this->key('cancel-init-'.(int) $alreadyInitiated), $this->checkoutInput($product->public_id, 'jazzcash'));
+            $original = $alreadyInitiated ? $this->service()->initiate($order['payment_id']) : null;
+            $this->service()->cancel($this->scope(), $this->customer, $order['order_id'],
+                $this->key('cancel-external-'.(int) $alreadyInitiated));
+            $payment = DB::table('payments')->where('public_id', $order['payment_id'])->firstOrFail();
+            $this->reject(fn () => $this->service()->initiate($order['payment_id']));
+            $this->assertSame('cancelled', DB::table('orders')->where('public_id', $order['order_id'])->value('status'));
+            $this->assertSame($original['reference'] ?? null, DB::table('payments')->where('id', $payment->id)->value('gateway_order_reference'));
+        }
+        $this->assertSame(0, DB::table('sales')->count());
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('reservation_allocations')->whereNull('released_at')->count());
+    }
+
+    public function test_w04_paid_callback_after_customer_cancellation_requires_reconciliation_without_sale(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $fake = $this->fakeProvider();
+        $order = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('cancel-late-receipt'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $intent = $this->service()->initiate($order['payment_id']);
+        $this->service()->cancel($this->scope(), $this->customer, $order['order_id'], $this->key('cancel-late-receipt-done'));
+        $event = $fake->paid('W04-CANCELLED-LATE-PAID', $intent['reference'], '200.02');
+        $result = $this->service()->callback('jazzcash', $event);
+        $this->assertSame('paid_reconciliation', $result['payment_status']);
+        $this->assertSame('cancelled', $result['order_status']);
+        $this->assertTrue($result['reconciliation_required']);
+        $this->assertSame($result, $this->service()->callback('jazzcash', $event));
+        $this->assertSame(1, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+        $this->assertSame(1, $product->fresh()->qty);
+        $this->assertSame(0, DB::table('reservation_allocations')->whereNull('released_at')->count());
+    }
+
     public function test_w04_cached_redirect_is_not_reissued_after_provider_disable_or_merchant_mode_change(): void
     {
         $product = $this->product();

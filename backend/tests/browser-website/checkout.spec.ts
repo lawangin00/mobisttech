@@ -212,6 +212,33 @@ test('MT-7.5 W04 all unavailable checkout channels cannot submit a Website order
     expect(orderSubmits).toBe(0);
 });
 
+test('MT-7.5 W04 cancelled external order cannot display continue-payment action', async ({ page }) => {
+    test.setTimeout(90_000);
+    await login(page);
+    const fakeOrderId = '00000000-0000-4000-8000-000000000079';
+    const fakePaymentId = '00000000-0000-4000-8000-000000000080';
+    let paymentInitiations = 0;
+    await page.route(`**/api/customer/payments/${fakePaymentId}/initiate`, async (route) => {
+        paymentInitiations += 1;
+        await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ message: 'Cancelled order.' }) });
+    });
+    await page.route(`**/api/customer/orders/${fakeOrderId}`, async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {
+            id: fakeOrderId, number: 'MT75-CANCELLED-EXTERNAL', type: 'commerce', status: 'cancelled',
+            fulfillment_status: 'cancelled', payment_status: 'unpaid', subtotal: '50000.00', total: '50000.00',
+            currency: 'PKR', items: [], signed_access_url: '/account', payments: [
+                { public_id: fakePaymentId, gateway: 'jazzcash', status: 'pending', amount: '50000.00', currency: 'PKR' },
+            ],
+        } }) });
+    });
+    await page.goto(`/account/orders/${fakeOrderId}`);
+    await expect(page.getByRole('heading', { name: 'MT75-CANCELLED-EXTERNAL' })).toBeVisible();
+    await expect(page.getByText('jazzcash', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue payment' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Retry with JazzCash' })).toHaveCount(0);
+    expect(paymentInitiations).toBe(0);
+});
+
 test('MT-5.3 digital-only mode prunes checkout while historical account stays available', async ({ page }) => {
     test.setTimeout(60_000);
     await login(page);

@@ -207,7 +207,8 @@ final class OrderTransactions
         DB::transaction(fn () => $this->lockActivePaymentOutlet($paymentPublicId), 3);
         $payment = DB::table('payments')->where('public_id', $paymentPublicId)->firstOrFail();
         $order = DB::table('orders')->where('id', $payment->order_id)->firstOrFail();
-        if ($payment->status !== 'pending' || $payment->gateway === 'cod') {
+        if ($payment->status !== 'pending' || $payment->gateway === 'cod'
+            || $order->status !== 'pending' || $order->payment_status !== 'unpaid') {
             throw new LogicException('Payment is not externally initiable.');
         }
         // A cached hosted URL is a payment continuation, not a bypass of the emergency

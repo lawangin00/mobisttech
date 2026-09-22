@@ -1,0 +1,9 @@
+# MT-7.5 W04 — cancelled external payment initiation and late receipt (23-Sep-2026)
+
+Status: bounded synthetic fail-closed payment/UI checkpoint; W04 remains IN PROGRESS.
+
+- Test-first reproduction: an owned external-commerce order cancelled before hosted initiation still had a `pending` payment, so `OrderTransactions::initiate()` returned a newly issued URL despite released stock and `cancelled` order. Focused regression FAILED before fix (1 assertion).
+- Service now requires both parent order `status=pending` and `payment_status=unpaid` before any external initiation or cached hosted continuation. Existing payment-state and provider/merchant/mode guards remain. No external provider was activated or called in production.
+- Two synthetic cases verify cancellation before and after hosted reference creation; neither can initiate/resume. A separately signed synthetic late `paid` event for a previously initiated cancelled order is durably recorded as `paid_reconciliation` with exactly one receipt, no sale or retained reservation, and identical replay. An already-open external gateway page cannot be remotely revoked by this application guard; genuine processor void/refund and disabled-provider in-flight receipt contracts remain H-02 HOLD.
+- Customer owned-order UI hides Continue payment unless parent order is pending/unpaid; existing no-split-tender, HTTPS redirect and server authorization checks are unchanged. A browser-only fake cancelled external order preserves visible history without presenting Continue payment or Retry actions; no initiation POST fired.
+- Focused new PHP regressions 2/2 PASS (17 assertions); scoped W04/OrderPayment/Customer API filter 48/48 PASS (660 assertions). Website typecheck/build PASS; complete checkout browser suite 6/6 PASS with global disposable-fixture teardown. Scoped Pint PASS. These are local synthetic/fixture tests, not a genuine provider transaction or full monolithic CI acceptance.
