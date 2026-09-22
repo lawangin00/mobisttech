@@ -53,6 +53,21 @@ final class W04AdminPaymentOverviewTest extends TestCase
         $this->assertSame(['code', 'label', 'enabled', 'merchant_configured', 'available'], array_keys($status[1]));
     }
 
+    public function test_status_and_cod_effective_policy_reject_truthy_nonboolean_provider_flags(): void
+    {
+        $service = new WebsitePaymentAdministration(new PaymentProviders);
+        $actor = $this->admin(['website.payments.manage']);
+        config()->set('commerce.providers.cod.enabled', 'false');
+        config()->set('commerce.providers.jazzcash.enabled', 'false');
+        $status = $service->overview($actor);
+        $this->assertSame([false, false, false, false], array_column($status, 'enabled'));
+        $this->assertSame([false, false, false, false], array_column($status, 'available'));
+        $this->assertFalse($service->codEnabled());
+        config()->set('commerce.providers.cod.enabled', true);
+        $this->assertTrue($service->codEnabled());
+        $this->assertTrue($service->overview($actor)[0]['available']);
+    }
+
     private function admin(array $permissions): Admin
     {
         $admin = new Admin;

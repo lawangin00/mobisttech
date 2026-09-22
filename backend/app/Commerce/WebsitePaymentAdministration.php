@@ -30,7 +30,7 @@ final class WebsitePaymentAdministration
             return [
                 'code' => $code,
                 'label' => $channel['label'],
-                'enabled' => $code === 'cod' ? $this->codEnabled() : (bool) ($configuration['enabled'] ?? false),
+                'enabled' => $code === 'cod' ? $this->codEnabled() : ($configuration['enabled'] ?? null) === true,
                 'merchant_configured' => $code === 'cod' || (is_string($configuration['merchant'] ?? null)
                     && trim($configuration['merchant']) !== ''),
                 'available' => $channel['available'],
@@ -44,14 +44,14 @@ final class WebsitePaymentAdministration
         $snapshot = DB::table('site_configuration_revisions')->where('domain', self::COD_DOMAIN)
             ->where('state', 'published')->orderByDesc('version')->value('snapshot');
         if ($snapshot === null) {
-            return (bool) config('commerce.providers.cod.enabled', false);
+            return config('commerce.providers.cod.enabled', false) === true;
         }
         $policy = json_decode($snapshot, true, flags: JSON_THROW_ON_ERROR);
         if (! is_array($policy) || array_keys($policy) !== ['cod_enabled'] || ! is_bool($policy['cod_enabled'])) {
             throw new LogicException('Published COD policy is invalid.');
         }
 
-        return $policy['cod_enabled'] && (bool) config('commerce.providers.cod.enabled', false);
+        return $policy['cod_enabled'] && config('commerce.providers.cod.enabled', false) === true;
     }
 
     public function settings(IdentityAccount $actor): array
