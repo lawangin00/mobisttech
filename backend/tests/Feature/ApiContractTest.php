@@ -559,6 +559,34 @@ class ApiContractTest extends TestCase
         return $product;
     }
 
+    public function test_w04_project_payment_http_excludes_cod_and_rejects_unavailable_gateway_without_mutation(): void
+    {
+        $this->publishMode('digital_only', 1);
+        $channels = '/api/v1/project-payment-channels';
+        $this->getJson($channels)->assertUnauthorized();
+        $customer = $this->customer('w04-project-channels@example.invalid', '03001112239');
+        $client = $this->client();
+        $this->login($client, $customer->email)->assertOk();
+        $response = $this->send($client, 'GET', $channels)->assertOk()
+            ->assertJsonPath('contract', 'project-payment-channels.v1')->assertJsonCount(3, 'data.items');
+        $this->assertSame(['jazzcash', 'easypaisa', 'card'], array_column($response->json('data.items'), 'code'));
+        $this->assertSame([false, false, false], array_column($response->json('data.items'), 'available'));
+        $before = [DB::table('orders')->count(), DB::table('payments')->count(),
+            DB::table('idempotency_requests')->count()];
+        $this->send($client, 'POST', '/api/v1/project-milestones/pay', [
+            'milestone_id' => (string) Str::uuid(), 'gateway' => 'cod',
+        ], true, ['HTTP_IDEMPOTENCY_KEY' => 'w04-project-cod-'.Str::uuid()])
+            ->assertStatus(422)->assertJsonPath('error.code', 'api_422');
+        foreach (['jazzcash', 'easypaisa', 'card'] as $gateway) {
+            $this->send($client, 'POST', '/api/v1/project-milestones/pay', [
+                'milestone_id' => (string) Str::uuid(), 'gateway' => $gateway,
+            ], true, ['HTTP_IDEMPOTENCY_KEY' => 'w04-project-unavailable-'.Str::uuid()])
+                ->assertStatus(409)->assertJsonPath('error.code', 'api_409');
+        }
+        $this->assertSame($before, [DB::table('orders')->count(), DB::table('payments')->count(),
+            DB::table('idempotency_requests')->count()]);
+    }
+
     public function test_mt_5_3_checkout_http_contract_is_fixed_owned_idempotent_and_provider_verified(): void
     {
         $this->publishMode('hybrid', 1);
