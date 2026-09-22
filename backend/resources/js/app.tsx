@@ -33,6 +33,7 @@ void createInertiaApp({
         if (name === 'pos-portal-preferences') return PosPortalPreferences;
         if (name === 'pos-dashboard-report-preferences') return PosDashboardReportPreferences;
         if (name === 'website-commerce-administration') return import('./pages/website-commerce-administration').then((page) => page.default);
+        if (name === 'website-payment-settings') return import('./pages/website-payment-settings').then((page) => page.default);
         throw new Error('Unknown application page');
     },
     setup({ el, App, props }) {
