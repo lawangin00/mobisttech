@@ -32,6 +32,11 @@ final class PaymentProviders
                 || trim($configuration['mode']) === ''))) {
             throw new LogicException('provider_unavailable');
         }
+        // A published Admin COD policy can turn COD off; it never overrides a disabled
+        // deployment setting or activates any external merchant/provider adapter.
+        if ($gateway === 'cod' && ! app(WebsitePaymentAdministration::class)->codEnabled()) {
+            throw new LogicException('provider_unavailable');
+        }
 
         return $configuration;
     }
