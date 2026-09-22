@@ -60,6 +60,31 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->reject(fn () => $this->service()->collectCod($this->actor, $this->outlet, $result['order_id'], $this->key('collect'), '400.03', 'COD-001'));
     }
 
+    public function test_w04_cod_disable_blocks_new_orders_but_preserves_preexisting_collection(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 2);
+        $order = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('before-cod-disabled'), $this->checkoutInput($product->public_id, 'cod'));
+        $this->assertSame('pending_collection', $order['payment_status']);
+        DB::table('site_configuration_revisions')->insert([
+            'domain' => 'website.payments.cod', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode(['cod_enabled' => false], JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        $this->assertFalse(collect(app(PaymentProviders::class)->checkoutChannels())
+            ->firstWhere('code', 'cod')['available']);
+        $this->reject(fn () => $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('after-cod-disabled'), $this->checkoutInput($product->public_id, 'cod')));
+        $this->assertSame(1, DB::table('orders')->count());
+        $collected = $this->service()->collectCod($this->actor, $this->outlet, $order['order_id'],
+            $this->key('collect-before-cod-disabled'), '200.02', 'COD-EXISTING');
+        $this->assertSame('paid', $collected['payment_status']);
+        $this->assertSame(1, DB::table('orders')->count());
+        $this->assertSame(1, DB::table('payment_receipts')->count());
+        $this->assertSame(1, DB::table('sales')->count());
+        $this->assertSame(1, $product->fresh()->qty);
+    }
+
     public function test_checkout_replay_conflict_and_partial_failure_retry_preserve_one_joined_state(): void
     {
         $first = $this->product();

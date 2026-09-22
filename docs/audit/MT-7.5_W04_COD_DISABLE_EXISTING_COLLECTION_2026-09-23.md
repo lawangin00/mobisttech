@@ -1,0 +1,5 @@
+# MT-7.5 W04 — COD publication switch and existing collection boundary (23-Sep-2026 PKT)
+
+Scope: isolated synthetic commerce service test, no payment network/merchant changes. An existing COD order was created and held while COD remained enabled; a synthetic published COD-off revision was then introduced. New COD checkout failed without a new order while the previously accepted order could still be collected once by its authorized outlet operator, producing exactly one paid receipt and sale. The policy switch blocks new orders but does not retroactively erase or strand a preexisting internal collection obligation. This is characterization of current implemented semantics; changing it requires an explicit payment policy decision.
+
+Focused 1/1 PASS (9 assertions), `OrderPaymentTransactionsTest.php` 18/18 PASS (149 assertions), W04 filter 29/29 PASS (496 assertions), scoped Pint and git diff --check PASS. No production code changed. W04 IN PROGRESS, 15/27 DONE / 12 OPEN; H-02 genuine external provider/refund/settlement HOLD unchanged.
