@@ -27,7 +27,8 @@ final class W04CodPolicyAdministrationHttpTest extends TestCase
         $draftPath = '/internal/admin/website/payment-settings/drafts';
         $statusPath = '/internal/admin/website/payment-channels';
         $originalExternal = config('commerce.providers.jazzcash');
-        $this->postJson($draftPath, ['cod_enabled' => false])->assertUnauthorized();
+        $guest = $this->client();
+        $this->send($guest, 'POST', $draftPath, ['cod_enabled' => false])->assertUnauthorized();
 
         [$readOnly, $readOnlyOutlet] = $this->admin(['shops.enter', 'website.payment-credentials.manage']);
         $reader = $this->client();
