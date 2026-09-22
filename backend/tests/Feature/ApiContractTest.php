@@ -602,6 +602,15 @@ class ApiContractTest extends TestCase
             ->assertJsonPath('data.payments.0.gateway', 'cod')
             ->assertJsonPath('data.payment_status', 'unpaid');
 
+        $foreignCancel = $this->customer('mt53-foreign-cancel@example.invalid', '03001112228');
+        $foreignCancelClient = $this->client();
+        $this->login($foreignCancelClient, $foreignCancel->email)->assertOk();
+        $this->send($foreignCancelClient, 'POST', '/api/v1/orders/'.$orderId.'/cancel', [], true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'w04-foreign-cancel-'.Str::uuid(),
+        ])->assertNotFound();
+        $this->assertSame('pending', DB::table('orders')->where('public_id', $orderId)->value('status'));
+        $this->assertSame('held_cod', DB::table('reservations')->where('order_id',
+            DB::table('orders')->where('public_id', $orderId)->value('id'))->value('state'));
         $this->send($client, 'POST', '/api/v1/orders/'.$orderId.'/cancel', [], true, [
             'HTTP_IDEMPOTENCY_KEY' => 'mt53-cancel-'.Str::uuid(),
         ])->assertOk()->assertJsonPath('data.status', 'cancelled');
