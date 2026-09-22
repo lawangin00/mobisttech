@@ -6,13 +6,17 @@ use LogicException;
 
 final class PaymentProviders
 {
+    private const EXTERNAL_GATEWAYS = ['jazzcash', 'easypaisa', 'card'];
+
     /** @var array<string, PaymentProvider> */
     private array $adapters = [];
 
     public function register(string $gateway, PaymentProvider $provider): void
     {
-        if (! preg_match('/\A[a-z][a-z0-9_]{1,39}\z/', $gateway) || $gateway === 'cod') {
-            throw new LogicException('Invalid external payment provider key.');
+        // A second registration must never silently replace an existing verifier.
+        // The Website's approved checkout/payment callback set is deliberately closed.
+        if (! in_array($gateway, self::EXTERNAL_GATEWAYS, true) || isset($this->adapters[$gateway])) {
+            throw new LogicException('Invalid or duplicate external payment provider registration.');
         }
         $this->adapters[$gateway] = $provider;
     }
