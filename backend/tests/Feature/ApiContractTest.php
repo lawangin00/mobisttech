@@ -794,6 +794,33 @@ class ApiContractTest extends TestCase
         }
     }
 
+    public function test_w04_customer_http_rejects_unapproved_tenders_and_raw_card_data(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $product = $this->listedProduct('w04-forbidden-tenders');
+        $this->acquire($product);
+        $customer = $this->customer('w04-tender-guard@example.invalid', '03001112232');
+        $client = $this->client();
+        $this->login($client, $customer->email)->assertOk();
+        $base = ['customer_name' => $customer->name, 'customer_mobile' => $customer->mobile,
+            'city' => 'Karachi', 'delivery_address' => 'Synthetic tender guard address',
+            'gateway' => 'cod', 'lines' => [['product_id' => $product->public_id, 'quantity' => 1]]];
+        $before = [DB::table('orders')->count(), DB::table('payments')->count(),
+            DB::table('reservations')->count(), DB::table('idempotency_requests')->count()];
+        foreach ([['gateway' => 'bank_transfer'], ['gateway' => 'split'],
+            ['card_number' => '4111111111111111'], ['cvv' => '123'],
+            ['card' => ['number' => '4111111111111111']]] as $invalid) {
+            $this->send($client, 'POST', '/api/v1/orders', [...$base, ...$invalid], true, [
+                'HTTP_IDEMPOTENCY_KEY' => 'w04-invalid-tender-'.Str::uuid(),
+            ])->assertStatus(422);
+            $this->assertSame($before, [DB::table('orders')->count(), DB::table('payments')->count(),
+                DB::table('reservations')->count(), DB::table('idempotency_requests')->count()]);
+        }
+        $this->send($client, 'POST', '/api/v1/orders', $base, true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'w04-valid-tender-'.Str::uuid(),
+        ])->assertCreated()->assertJsonPath('data.payment_status', 'pending_collection');
+    }
+
     public function test_mt_5_4_public_content_services_enquiry_and_software_contracts_are_published_and_mode_aware(): void
     {
         $this->publishMode('hybrid', 1);

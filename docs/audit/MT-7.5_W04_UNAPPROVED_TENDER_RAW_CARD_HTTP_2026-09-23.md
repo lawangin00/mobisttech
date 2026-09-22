@@ -1,0 +1,5 @@
+# MT-7.5 W04 — Unapproved tender and raw-card authenticated HTTP negatives (23-Sep-2026 PKT)
+
+Scope: synthetic Website customer API regression; no actual card processing or payment provider activation. Under a normal published hybrid mode and available synthetic product, an authenticated customer submits both unsupported bank-transfer/split tender and raw card-number/CVV objects to `POST /api/v1/orders`. Each fails HTTP 422 before any order, payment, reservation or idempotency mutation. The same customer can still create an ordinary COD order afterward (HTTP 201). This checks the real request/validation boundary and is distinct from existing service-only/raw-card UI tests.
+
+Verification: focused 1/1 PASS (14 assertions); `ApiContractTest.php` 23/23 PASS (840 assertions); W04 filter 28/28 PASS (487 assertions); scoped Pint, `git diff --check` PASS. No production payment logic changed. W04 IN PROGRESS (15/27 DONE, 12 OPEN); genuine provider contract/refund/settlement H-02 HOLD unchanged.
