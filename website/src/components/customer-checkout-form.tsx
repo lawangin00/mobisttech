@@ -89,7 +89,7 @@ export function CustomerCheckoutForm() {
   if (createdOrderId) return <div className="rounded-2xl border bg-white p-5">
     <p>Your order has been created. You can continue any pending payment from your order details.</p>
     {message && <p role="alert" className="mt-3 text-sm text-red-700">{message}</p>}
-    <Link href={"/account/orders/" + createdOrderId} className="mt-3 inline-block rounded-xl bg-slate-950 px-4 py-2 text-white">View order and continue payment</Link>
+    <Link href={"/account/orders/" + createdOrderId} prefetch={false} className="mt-3 inline-block rounded-xl bg-slate-950 px-4 py-2 text-white">View order and continue payment</Link>
   </div>;
   if (lines.length === 0) return <div className="rounded-2xl border bg-white p-5"><p>Your cart is empty.</p><Link href="/products" className="mt-3 inline-block underline">Browse products</Link></div>;
 

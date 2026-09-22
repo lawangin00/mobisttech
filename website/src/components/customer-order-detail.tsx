@@ -79,7 +79,7 @@ export function CustomerOrderDetail({ orderId }: { orderId: string }) {
       {order.payment_status === "failed" && retryChannels.map((channel) => <button key={channel.code} disabled={busy} onClick={() => void retry(channel.code as "jazzcash" | "easypaisa" | "card")} className="rounded-xl border px-4 py-2">Retry with {channel.label}</button>)}
       {canCancel && <button disabled={busy} onClick={() => void cancel()} className="rounded-xl border border-red-300 px-4 py-2 text-red-700">Cancel order</button>}
       <a href={order.signed_access_url} target="_blank" rel="noreferrer" className="rounded-xl border px-4 py-2">Open 30-minute read-only link</a>
-      <Link href="/account" className="rounded-xl border px-4 py-2">Back to account</Link>
+      <Link href="/account" prefetch={false} className="rounded-xl border px-4 py-2">Back to account</Link>
     </div>
     {message && <p className="text-sm text-red-700">{message}</p>}
   </div>;

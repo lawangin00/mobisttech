@@ -1,0 +1,9 @@
+# MT-7.5 W04 — checkout speculative RSC abort diagnostic (23-Sep-2026)
+
+Status: bounded browser transport/prefetch checkpoint; not a payment-provider or W04 family closure.
+
+- An ephemeral local Playwright `requestfailed` observer reproduced `net::ERR_ABORTED` on speculative React Server Component `GET /?_rsc=...` and `GET /account/orders/{id}?_rsc=...` around Next.js `The destination stream closed early` warnings during a passing 5/5 checkout run. Some targets were synthetic fixture order IDs; the observer and fixture artifacts are ignored and not committed.
+- Default automatic prefetch was present on the global home wordmark, account order/project history links, checkout's created-order recovery link and order detail's Back to account link. Scoped `prefetch={false}` on these five Links retains ordinary click navigation, but avoids speculative requests to potentially stale/private destinations while the customer is on checkout.
+- First A/B run with three link changes passed all 5 checkout cases with teardown and reduced observed home/order speculative aborts; a project/account RSC abort and Next warning remained. Two additional scoped link changes followed; the final uninstrumented checkout suite passed 5/5 with full disposable cleanup. Website TypeScript check and optimized build PASS.
+- The final uninstrumented full checkout run emitted no `destination stream closed early` warning in its captured server output. This is a scoped, local observation, not proof that every early-stream warning in all routes or environments is eliminated. The original loading-race synchronization stays intact; no payment operation, provider adapter, authentication control or timeout changed.
+- Actual external merchant integration, authentic provider receipts/refunds/settlement remain H-02 HOLD. W04 IN PROGRESS; stage 15/27 DONE, 12 OPEN.
