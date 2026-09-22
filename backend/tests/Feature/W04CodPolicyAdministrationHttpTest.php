@@ -110,7 +110,13 @@ final class W04CodPolicyAdministrationHttpTest extends TestCase
 
     private function client(): array
     {
-        $client = ['cookies' => [], 'tokens' => [], 'agent' => 'Synthetic W04 COD client'];
+        // Four independent synthetic clients must not share one production 5/min/IP
+        // identity throttle bucket. Keep all real throttles and request boundaries on.
+        static $nextSyntheticIp = 20;
+        $client = [
+            'cookies' => [], 'tokens' => [], 'agent' => 'Synthetic W04 COD client',
+            'ip' => '127.0.0.'.$nextSyntheticIp++,
+        ];
         $this->send($client, 'GET', '/internal/admin/auth/csrf-cookie')->assertOk();
 
         return $client;
@@ -120,7 +126,7 @@ final class W04CodPolicyAdministrationHttpTest extends TestCase
     {
         $server = [
             'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json',
-            'HTTP_USER_AGENT' => $client['agent'],
+            'HTTP_USER_AGENT' => $client['agent'], 'REMOTE_ADDR' => $client['ip'],
         ];
         if (isset($client['tokens']['XSRF-TOKEN-admin'])) {
             $server['HTTP_X_CSRF_TOKEN'] = $client['tokens']['XSRF-TOKEN-admin'];
