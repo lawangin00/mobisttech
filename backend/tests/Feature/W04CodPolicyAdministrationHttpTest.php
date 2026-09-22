@@ -80,6 +80,32 @@ final class W04CodPolicyAdministrationHttpTest extends TestCase
             ->where('id', $draft['id'])->value('state'));
     }
 
+    public function test_cod_publish_rejects_foreign_domain_and_corrupt_latest_draft(): void
+    {
+        [$publisher, $outlet] = $this->admin([
+            'shops.enter', 'website.payments.manage', 'website.publish',
+        ]);
+        $client = $this->client();
+        $this->login($client, $publisher, $outlet);
+        $foreignId = DB::table('site_configuration_revisions')->insertGetId([
+            'domain' => 'website.payments.synthetic-foreign', 'version' => 1,
+            'state' => 'draft', 'snapshot' => json_encode(['cod_enabled' => false]),
+            'created_by_admin_id' => $publisher->id, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $route = '/internal/admin/website/payment-settings/drafts/';
+        $this->send($client, 'POST', $route.$foreignId.'/publish')->assertStatus(409);
+        $this->assertSame('draft', DB::table('site_configuration_revisions')->where('id', $foreignId)->value('state'));
+        $invalidId = DB::table('site_configuration_revisions')->insertGetId([
+            'domain' => 'website.payments.cod', 'version' => 1,
+            'state' => 'draft', 'snapshot' => json_encode(['cod_enabled' => 'false']),
+            'created_by_admin_id' => $publisher->id, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->send($client, 'POST', $route.$invalidId.'/publish')->assertStatus(409);
+        $this->assertSame('draft', DB::table('site_configuration_revisions')->where('id', $invalidId)->value('state'));
+        $this->send($client, 'GET', '/internal/admin/website/payment-channels')->assertOk()
+            ->assertJsonPath('data.0.available', true);
+    }
+
     private function admin(array $permissions): array
     {
         $admin = new Admin;
