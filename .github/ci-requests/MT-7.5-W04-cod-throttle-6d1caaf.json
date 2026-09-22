@@ -1,0 +1,9 @@
+{
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "source_commit": "6d1caaf5b401ca12762671f636e8a756423ef612",
+  "reason": "necessary",
+  "gate": "full",
+  "stage_id": "MT-7.5",
+  "requested_at_utc": "2026-09-22T17:05:31Z",
+  "description": "Third materially corrected exact-source W04 nonsecret COD Admin policy test: prior two distinct failures were absent guest CSRF cookie (419) and four independent synthetic user clients sharing one 5/min/IP identity rate bucket (429). Current test exercises genuine CSRF and unique synthetic REMOTE_ADDR per browser actor, preserves all live throttle limits and all negative/positive assertions. Full clean checkout, all browser gates; no real merchant/provider or credential activation. On another failure apply LOOP_GUARD rather than repeat CI."
+}
