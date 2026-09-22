@@ -1663,3 +1663,6 @@ Next specific executable substep: use the already accepted new-outlet Admin crea
 
 ## MT-7.5 / W04 in-flight external initiation reconciliation checkpoint (23-Sep-2026)
 - Synthetic provider cancellation/expiry during network initiation previously allowed stale hosted continuation. Re-read locked parent order/payment/reservation after provider returns; persist its reference for signed late-receipt reconciliation, but deny redirect when payment can no longer continue. Focused 2/2 PASS (15 assertions), joined W04/OrderPayment 53/53 PASS (715 assertions); audit `docs/audit/MT-7.5_W04_INFLIGHT_INITIATION_RACE_2026-09-23.md`. Authentic provider disable/callback and settlement H-02 HOLD. W04 OPEN; MT-7.5 15/27 DONE, 12 OPEN.
+
+## MT-7.5 / W04 mid-network provider configuration rotation (23-Sep-2026)
+- Added post-network provider available/merchant/mode recheck after durable intent-reference persistence, blocking stale hosted redirects if a synthetic deployment disables channel or rotates merchant/environment while `initiate()` is in flight. Test-first failure reproduced; focused 1/1 PASS (15 assertions), joined W04/API/OrderPayment 73/73 PASS (1511 assertions); audit `docs/audit/MT-7.5_W04_INFLIGHT_PROVIDER_CONFIGURATION_ROTATION_2026-09-23.md`. Authentic merchant and callback disable/settlement policy H-02 HOLD. MT-7.5 15/27 DONE, 12 OPEN; W04 IN PROGRESS.

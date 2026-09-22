@@ -323,6 +323,47 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(0, DB::table('sales')->count());
     }
 
+    public function test_w04_inflight_provider_disable_denies_new_redirect_but_retains_reference(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 3);
+        $fake = new FakePaymentProvider;
+        $config = ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test'];
+        config()->set('commerce.providers.jazzcash', $config);
+        $registry = new PaymentProviders;
+        $registry->register('jazzcash', new class($fake, function () use (&$change, $config) {
+            config()->set('commerce.providers.jazzcash', array_replace($config, $change));
+        }) implements PaymentProvider {
+
+            public function __construct(private PaymentProvider $delegate, private \Closure $onNetwork) {}
+
+            public function initiate(array $intent): array
+            {
+                ($this->onNetwork)();
+
+                return $this->delegate->initiate($intent);
+            }
+
+            public function verify(array $payload): array
+            {
+                return $this->delegate->verify($payload);
+            }
+        });
+        $this->app->instance(PaymentProviders::class, $registry);
+        foreach ([['enabled' => false], ['merchant' => 'rotated-merchant'], ['mode' => 'sandbox']] as $index => $change) {
+            config()->set('commerce.providers.jazzcash', $config);
+            $order = $this->service()->checkout($this->scope(), $this->customer,
+                $this->key('inflight-config-'.$index), $this->checkoutInput($product->public_id, 'jazzcash'));
+            $this->reject(fn () => $this->service()->initiate($order['payment_id']));
+            $reference = DB::table('payments')->where('public_id', $order['payment_id'])->value('gateway_order_reference');
+            $this->assertSame('GW-'.$order['payment_id'], $reference);
+            $this->assertSame(0, DB::table('payment_receipts')->count());
+            $this->assertSame(0, DB::table('sales')->count());
+            config()->set('commerce.providers.jazzcash', $config);
+            $this->assertSame($reference, $this->service()->initiate($order['payment_id'])['reference']);
+        }
+    }
+
     public function test_w04_cancelled_external_order_cannot_start_or_resume_hosted_payment(): void
     {
         $product = $this->product();

@@ -258,6 +258,13 @@ final class OrderTransactions
                     ? $this->sanitize(json_decode($locked->gateway_response ?? '{}', true, flags: JSON_THROW_ON_ERROR))
                     : $this->sanitize($result)];
         }, 3);
+        // Recheck the provider after the network returns: an emergency disable or
+        // merchant/environment rotation must not leak a fresh hosted redirect.
+        // The reference has already committed and remains available for reconciliation.
+        $currentProvider = $this->providers->assertAvailable($payment->gateway);
+        if ($payment->merchant !== $currentProvider['merchant'] || $payment->mode !== $currentProvider['mode']) {
+            throw new LogicException('Payment provider configuration changed during initiation.');
+        }
         if (! $continuation['active']) {
             throw new LogicException('Payment is no longer externally initiable; provider reference retained for reconciliation.');
         }
