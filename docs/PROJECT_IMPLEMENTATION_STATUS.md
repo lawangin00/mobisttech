@@ -1666,3 +1666,6 @@ Next specific executable substep: use the already accepted new-outlet Admin crea
 
 ## MT-7.5 / W04 mid-network provider configuration rotation (23-Sep-2026)
 - Added post-network provider available/merchant/mode recheck after durable intent-reference persistence, blocking stale hosted redirects if a synthetic deployment disables channel or rotates merchant/environment while `initiate()` is in flight. Test-first failure reproduced; focused 1/1 PASS (15 assertions), joined W04/API/OrderPayment 73/73 PASS (1511 assertions); audit `docs/audit/MT-7.5_W04_INFLIGHT_PROVIDER_CONFIGURATION_ROTATION_2026-09-23.md`. Authentic merchant and callback disable/settlement policy H-02 HOLD. MT-7.5 15/27 DONE, 12 OPEN; W04 IN PROGRESS.
+
+## MT-7.5 / W04 early verified callback inside hosted initiation (23-Sep-2026)
+- Synthetic provider callback arrived before `initiate()` returned its vendor reference, using the immutable local payment ID for correlation: one verified receipt, one sale, no stale redirect or duplicate initiation; returned vendor reference persisted. Focused 1/1 PASS (9 assertions); joined W04/API/OrderPayment 74/74 PASS (1520 assertions); audit `docs/audit/MT-7.5_W04_EARLY_SIGNED_CALLBACK_DURING_INITIATION_2026-09-23.md`. Vendor-only early reference and genuine merchant callback semantics remain H-02 OPEN. MT-7.5 15/27 DONE, 12 OPEN.
