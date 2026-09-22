@@ -724,6 +724,40 @@ class ApiContractTest extends TestCase
             DB::table('sales')->count(), DB::table('payment_receipts')->count()]);
     }
 
+    public function test_w04_elapsed_reservation_http_blocks_owned_hosted_continuation_before_scheduler(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $product = $this->listedProduct('w04-elapsed-http-product');
+        $this->acquire($product, 2);
+        $customer = $this->customer('w04-elapsed-http@example.invalid', '03001112238');
+        $client = $this->client();
+        $this->login($client, $customer->email)->assertOk();
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+        $registry = new PaymentProviders;
+        $registry->register('jazzcash', new Mt53ApiPaymentProvider);
+        $this->app->instance(PaymentProviders::class, $registry);
+        $input = ['customer_name' => $customer->name, 'customer_mobile' => $customer->mobile,
+            'city' => 'Karachi', 'delivery_address' => 'Synthetic elapsed gateway', 'gateway' => 'jazzcash',
+            'lines' => [['product_id' => $product->public_id, 'quantity' => 1]]];
+        foreach ([false, true] as $alreadyInitiated) {
+            $order = $this->send($client, 'POST', '/api/v1/orders', $input, true, [
+                'HTTP_IDEMPOTENCY_KEY' => 'w04-elapsed-http-create-'.Str::uuid(),
+            ])->assertCreated();
+            $paymentId = $order->json('data.payment_id');
+            $reference = $alreadyInitiated ? $this->send($client, 'POST', '/api/v1/payments/'.$paymentId.'/initiate', [])
+                ->assertOk()->json('data.reference') : null;
+            $payment = DB::table('payments')->where('public_id', $paymentId)->firstOrFail();
+            DB::table('reservations')->where('website_payment_id', $payment->id)
+                ->update(['reservation_expires_at' => now()->subSecond()]);
+            $this->send($client, 'POST', '/api/v1/payments/'.$paymentId.'/initiate', [])
+                ->assertStatus(409)->assertJsonPath('error.code', 'api_409');
+            $this->assertSame($reference, DB::table('payments')->where('id', $payment->id)->value('gateway_order_reference'));
+            $this->assertSame('pending', DB::table('payments')->where('id', $payment->id)->value('status'));
+        }
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+    }
+
     public function test_w04_cancelled_external_payment_http_blocks_fresh_and_cached_initiation(): void
     {
         $this->publishMode('hybrid', 1);
