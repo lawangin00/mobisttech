@@ -724,6 +724,39 @@ class ApiContractTest extends TestCase
             DB::table('sales')->count(), DB::table('payment_receipts')->count()]);
     }
 
+    public function test_w04_cancelled_external_payment_http_blocks_fresh_and_cached_initiation(): void
+    {
+        $this->publishMode('hybrid', 1);
+        $product = $this->listedProduct('w04-cancelled-gateway');
+        $this->acquire($product, 2);
+        $customer = $this->customer('w04-cancel-gateway@example.invalid', '03001112237');
+        $client = $this->client();
+        $this->login($client, $customer->email)->assertOk();
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+        $registry = new PaymentProviders;
+        $registry->register('jazzcash', new Mt53ApiPaymentProvider);
+        $this->app->instance(PaymentProviders::class, $registry);
+        $input = ['customer_name' => $customer->name, 'customer_mobile' => $customer->mobile,
+            'city' => 'Karachi', 'delivery_address' => 'Synthetic cancelled gateway', 'gateway' => 'jazzcash',
+            'lines' => [['product_id' => $product->public_id, 'quantity' => 1]]];
+        foreach ([false, true] as $alreadyInitiated) {
+            $order = $this->send($client, 'POST', '/api/v1/orders', $input, true, [
+                'HTTP_IDEMPOTENCY_KEY' => 'w04-cancel-http-create-'.Str::uuid(),
+            ])->assertCreated();
+            $paymentId = $order->json('data.payment_id');
+            $reference = $alreadyInitiated ? $this->send($client, 'POST', '/api/v1/payments/'.$paymentId.'/initiate', [])
+                ->assertOk()->json('data.reference') : null;
+            $this->send($client, 'POST', '/api/v1/orders/'.$order->json('data.order_id').'/cancel', [], true, [
+                'HTTP_IDEMPOTENCY_KEY' => 'w04-cancel-http-done-'.Str::uuid(),
+            ])->assertOk()->assertJsonPath('data.status', 'cancelled');
+            $this->send($client, 'POST', '/api/v1/payments/'.$paymentId.'/initiate', [])
+                ->assertStatus(409)->assertJsonPath('error.code', 'api_409');
+            $this->assertSame($reference, DB::table('payments')->where('public_id', $paymentId)->value('gateway_order_reference'));
+        }
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+    }
+
     public function test_w04_published_cod_off_blocks_authenticated_http_checkout_without_mutation(): void
     {
         $this->publishMode('hybrid', 1);
