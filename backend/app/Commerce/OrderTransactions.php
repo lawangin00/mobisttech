@@ -234,16 +234,35 @@ final class OrderTransactions
         if (! isset($result['reference']) || ! is_string($result['reference']) || $result['reference'] === '') {
             throw new LogicException('Provider did not return an initiation reference.');
         }
-        DB::transaction(function () use ($payment, $result) {
+        // The provider may finish after another request cancels/expires the order. Record
+        // its reference for a later verified receipt, but never return a stale hosted URL.
+        $continuation = DB::transaction(function () use ($payment, $result) {
+            $order = DB::table('orders')->where('id', $payment->order_id)->lockForUpdate()->firstOrFail();
             $locked = DB::table('payments')->where('id', $payment->id)->lockForUpdate()->firstOrFail();
             if ($locked->gateway_order_reference && ! hash_equals($locked->gateway_order_reference, $result['reference'])) {
                 throw new LogicException('Payment initiation replay changed its provider reference.');
             }
-            DB::table('payments')->where('id', $locked->id)->update(['gateway_order_reference' => $result['reference'],
-                'gateway_response' => json_encode($this->sanitize($result), JSON_THROW_ON_ERROR), 'updated_at' => now()]);
-        });
+            if (! $locked->gateway_order_reference) {
+                DB::table('payments')->where('id', $locked->id)->update(['gateway_order_reference' => $result['reference'],
+                    'gateway_response' => json_encode($this->sanitize($result), JSON_THROW_ON_ERROR), 'updated_at' => now()]);
+            }
+            $active = $locked->status === 'pending' && $order->status === 'pending' && $order->payment_status === 'unpaid';
+            if ($order->order_type === 'commerce') {
+                $reservation = DB::table('reservations')->where('website_payment_id', $payment->id)->lockForUpdate()->first();
+                $active = $active && $reservation && $reservation->state === 'active'
+                    && $reservation->reservation_expires_at && now()->lt($reservation->reservation_expires_at);
+            }
 
-        return $this->sanitize($result);
+            return ['active' => (bool) $active,
+                'response' => $locked->gateway_order_reference
+                    ? $this->sanitize(json_decode($locked->gateway_response ?? '{}', true, flags: JSON_THROW_ON_ERROR))
+                    : $this->sanitize($result)];
+        }, 3);
+        if (! $continuation['active']) {
+            throw new LogicException('Payment is no longer externally initiable; provider reference retained for reconciliation.');
+        }
+
+        return $continuation['response'];
     }
 
     public function retry(string $ownerScope, ?CustomerAccount $customer, string $orderPublicId, string $key, string $gateway): array

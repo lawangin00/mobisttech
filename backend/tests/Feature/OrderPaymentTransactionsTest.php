@@ -241,6 +241,88 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(0, $product->fresh()->qty);
     }
 
+    public function test_w04_inflight_provider_cancellation_preserves_reference_without_redirect(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $fake = new FakePaymentProvider;
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+        $registry = new PaymentProviders;
+        $registry->register('jazzcash', new class($fake, function () use (&$order) {
+            $this->service()->cancel($this->scope(), $this->customer, $order['order_id'], $this->key('inflight-cancel-done'));
+        }) implements PaymentProvider {
+
+            public function __construct(private PaymentProvider $delegate, private \Closure $onNetwork) {}
+
+            public function initiate(array $intent): array
+            {
+                ($this->onNetwork)();
+
+                return $this->delegate->initiate($intent);
+            }
+
+            public function verify(array $payload): array
+            {
+                return $this->delegate->verify($payload);
+            }
+        });
+        $this->app->instance(PaymentProviders::class, $registry);
+        $order = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('inflight-cancel'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $this->reject(fn () => $this->service()->initiate($order['payment_id']));
+        $payment = DB::table('payments')->where('public_id', $order['payment_id'])->firstOrFail();
+        $this->assertSame('GW-'.$order['payment_id'], $payment->gateway_order_reference);
+        $this->assertSame('cancelled', DB::table('orders')->where('public_id', $order['order_id'])->value('status'));
+        $this->assertSame(0, DB::table('sales')->count());
+        $paid = $this->service()->callback('jazzcash', $fake->paid('W04-INFLIGHT-CANCEL-PAID',
+            $payment->gateway_order_reference, '200.02'));
+        $this->assertSame('paid_reconciliation', $paid['payment_status']);
+        $this->assertTrue($paid['reconciliation_required']);
+        $this->assertSame('cancelled', $paid['order_status']);
+        $this->assertSame(1, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+    }
+
+    public function test_w04_inflight_reservation_expiry_keeps_reference_for_late_receipt(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $fake = new FakePaymentProvider;
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+        $registry = new PaymentProviders;
+        $registry->register('jazzcash', new class($fake, function () use (&$order) {
+            $paymentId = DB::table('payments')->where('public_id', $order['payment_id'])->value('id');
+            DB::table('reservations')->where('website_payment_id', $paymentId)
+                ->update(['reservation_expires_at' => now()->subSecond()]);
+        }) implements PaymentProvider {
+
+            public function __construct(private PaymentProvider $delegate, private \Closure $onNetwork) {}
+
+            public function initiate(array $intent): array
+            {
+                ($this->onNetwork)();
+
+                return $this->delegate->initiate($intent);
+            }
+
+            public function verify(array $payload): array
+            {
+                return $this->delegate->verify($payload);
+            }
+        });
+        $this->app->instance(PaymentProviders::class, $registry);
+        $order = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('inflight-expire'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $this->reject(fn () => $this->service()->initiate($order['payment_id']));
+        $reference = DB::table('payments')->where('public_id', $order['payment_id'])->value('gateway_order_reference');
+        $this->assertSame('GW-'.$order['payment_id'], $reference);
+        $this->assertSame(1, $this->service()->expireDue());
+        $paid = $this->service()->callback('jazzcash', $fake->paid('W04-INFLIGHT-EXPIRE-PAID', $reference, '200.02'));
+        $this->assertSame('paid_reconciliation', $paid['payment_status']);
+        $this->assertTrue($paid['reconciliation_required']);
+        $this->assertSame(0, DB::table('sales')->count());
+    }
+
     public function test_w04_cancelled_external_order_cannot_start_or_resume_hosted_payment(): void
     {
         $product = $this->product();

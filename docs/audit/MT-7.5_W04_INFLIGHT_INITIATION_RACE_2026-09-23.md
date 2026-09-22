@@ -1,0 +1,9 @@
+# MT-7.5 W04 — in-flight hosted initiation versus cancellation/expiry (23-Sep-2026)
+
+Status: bounded synthetic race acceptance; W04 remains IN PROGRESS. No authentic provider adapter or financial settlement.
+
+- Reproduced service defect: a synthetic provider call can complete after its parent order is cancelled, allowing a hosted redirect to be returned even though the reservation has been released. The first deterministic cancellation regression FAILED before correction; the expiry variant also simulates the deadline passing inside the provider call.
+- Following external `initiate`, lock and re-read the parent order, payment and physical reservation, preserve the returned provider reference and sanitized response for later signed callback/reconciliation, and deny hosted continuation when the order is no longer pending/unpaid or the reservation expired. Do not throw inside the persistence transaction: that would roll back the reference needed to reconcile late money.
+- Synthetic tests cover cancellation inside the provider call and deadline elapsing inside the provider call, absence of stale redirect, durable reference, verified late-paid callback becoming `paid_reconciliation`, and zero POS sales. The existing verified provider callback remains subject to default-OFF and H-02 contract gates.
+- Focused 2/2 PASS (15 assertions), scoped Pint 2/2 PASS, joined W04/OrderPayment 53/53 PASS (715 assertions). No real provider network call. Full backend/browser suite not inferred.
+- Remaining OPEN: genuine provider credential/disable/late callback policy, server-to-provider timeout/unknown reference lookup, and independent process concurrency acceptance. A returned provider URL remains impossible to revoke after a client already received it; signed callback reconciliation is authoritative.
