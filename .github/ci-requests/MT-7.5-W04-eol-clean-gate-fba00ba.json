@@ -1,0 +1,9 @@
+{
+    "project_id":  "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+    "source_commit":  "fba00bab196b33e04305bd539571e89db30314ee",
+    "reason":  "necessary",
+    "gate":  "full",
+    "stage_id":  "MT-7.5",
+    "requested_at_utc":  "2026-09-23T23:44:00Z",
+    "description":  "Materially corrected mixed-EOL tracked CI request after prior run passed all product/browser/schema gates and failed only at clean checkout; verify exact source and final no-artifact gate. Providers remain OFF and H-02 HOLD."
+}
