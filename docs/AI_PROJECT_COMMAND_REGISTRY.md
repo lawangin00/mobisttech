@@ -1,6 +1,6 @@
 # Mobisttech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r21
+**Registry version:** MT-1.1-r22
 **Applied universal implementation epochs:** `U-CI-2026-09-19-1`, `U-CI-MODE-2026-09-21-2`
 **Universal baseline (review provenance):** Registry 1.36 / System 7.12
 **Bootstrap baseline (review provenance):** 1.14
@@ -84,3 +84,7 @@ Future universal control fixes auto-apply on canonical first-load/Refresh/new se
 The canonical Universal execution-mode policy now names Normal Chat local execution `LOCAL` (`Shift to Local` / `VP:SHIFT-TO-LOCAL`). Verified LocalMCPcoder is the primary Windows PC backend; separately authorized RDC remains an optional fallback. GitHub mode, exact Sync safety, immutable Project ID, approved product scope, CI milestone-vs-routine behavior, existing checkpoint/ledger and manual surface handoffs are unchanged. Old dated GitHub/RDC rollout evidence above is historical, not the current mode state. The project-owned CI gate accepts both canonical LOCAL and legacy persisted RDC during the transition; no tests, feature stage, license state or release acceptance are implied by this documentation/control update.
 
 Audit reconciliation (23-Sep-2026): Current reviewed canonical Universal Registry `1.48`, Bootstrap `1.26`, Roadmap Specification `1.15`, Execution Mode Policy `1.4`; verified references commit `6802291dc4d3e7a4b959ed93f79da0d52965e4a0`. Prior dated GitHub/RDC snapshots and original baseline provenance remain historical; current mode must always be freshly read from canonical `UNIVERSAL_EXECUTION_MODE.json`. Project requirements, application code and ledger progress are unchanged.
+
+## ChatGPT Project first-command binding
+
+The exact project-scoped marker for this Project ID and its complete canonical repository set is documented in `docs/CHATGPT_PROJECT_CONTEXT.md`. When that marker is installed in the currently selected ChatGPT Project Instructions, inherit the CURRENT Universal Bootstrap/Registry first-bind rule: verify remote identity and selected root, lock once, and execute the original first project-bound command without a second project-choice or `Y` prompt. Git documentation alone is not proof of marker installation. Keep universal-only `Refresh`/`Help` unbound and hard-stop identity conflicts.
