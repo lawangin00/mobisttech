@@ -78,3 +78,7 @@ Future universal control fixes auto-apply on canonical first-load/Refresh/new se
 - The historical private-repository Actions rejection must not be reported as a current website CI blocker; use actual fresh run evidence for the current public repository and exact candidate.
 - GitHub plugin and GitHub Actions are the default for authorized website development, builds and automated tests. Local-only acceptance remains pending until genuinely performed following an explicit execution-mode command or exact scoped exception; do not assume a global mode switch implies local acceptance.
 - Preserve the existing MT-7.5 In Progress point and all unrelated gates; mode-policy reconciliation does not restart or close MT-7.5.
+
+## Universal LOCAL mode alignment (23-Sep-2026)
+
+The canonical Universal execution-mode policy now names Normal Chat local execution `LOCAL` (`Shift to Local` / `VP:SHIFT-TO-LOCAL`). Verified LocalMCPcoder is the primary Windows PC backend; separately authorized RDC remains an optional fallback. GitHub mode, exact Sync safety, immutable Project ID, approved product scope, CI milestone-vs-routine behavior, existing checkpoint/ledger and manual surface handoffs are unchanged. Old dated GitHub/RDC rollout evidence above is historical, not the current mode state. The project-owned CI gate accepts both canonical LOCAL and legacy persisted RDC during the transition; no tests, feature stage, license state or release acceptance are implied by this documentation/control update.

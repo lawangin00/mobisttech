@@ -2,7 +2,7 @@
 """Fail-closed explicit-request CI gate for Mobisttech.
 
 Normal source pushes trigger NO workflow. A controller creates one request file
-in a separate commit for each GitHub-mode stage or approved RDC milestone.
+in a separate commit for each GitHub-mode stage or approved LOCAL milestone.
 """
 import argparse
 import base64
@@ -26,10 +26,10 @@ FOCUSED_SCOPES = (W01_FOCUS, W01_IDENTITY_FOCUS, P02_FOCUS, W03_FOCUS)
 
 def allowed(state, event, request=None):
     assert state.get('schema_version') == 1
-    assert state.get('global_mode') in ('GITHUB', 'RDC')
+    assert state.get('global_mode') in ('GITHUB', 'LOCAL', 'RDC')
     exceptions = state.get('exceptions')
     assert isinstance(exceptions, dict)
-    assert all(value in ('GITHUB', 'RDC') for value in exceptions.values())
+    assert all(value in ('GITHUB', 'LOCAL', 'RDC') for value in exceptions.values())
     if event == 'workflow_dispatch':
         return True
     assert event == 'push' and isinstance(request, dict)
@@ -44,13 +44,13 @@ def allowed(state, event, request=None):
 
 def self_test():
     gh = {'schema_version': 1, 'global_mode': 'GITHUB', 'exceptions': {}}
-    local = {'schema_version': 1, 'global_mode': 'RDC', 'exceptions': {}}
+    local = {'schema_version': 1, 'global_mode': 'LOCAL', 'exceptions': {}}
     request = {'project_id': PROJECT_ID, 'reason': 'stage', 'gate': 'all'}
     assert allowed(gh, 'push', request)
     assert not allowed(local, 'push', request)
     assert allowed(local, 'push', {**request, 'reason': 'milestone'})
     assert allowed(local, 'workflow_dispatch')
-    assert not allowed({**gh, 'exceptions': {PROJECT_ID: 'RDC'}}, 'push', request)
+    assert not allowed({**gh, 'exceptions': {PROJECT_ID: 'LOCAL'}}, 'push', request)
     assert allowed({**local, 'exceptions': {PROJECT_ID: 'GITHUB'}}, 'push', request)
     focused = {**request, 'gate': 'verify', 'stage_id': 'MT-7.5', 'focus': W01_FOCUS}
     assert allowed(gh, 'push', focused)
