@@ -1711,3 +1711,9 @@ Next specific executable substep: use the already accepted new-outlet Admin crea
 ## MT-7.5 / W04 Easypaisa MA initiation transaction ID boundary (23-Sep-2026)
 - The sandbox REST MA transport now rejects a missing, blank, or over-255-byte provider transactionId even when responseCode=0000. This does not accept a payment as PAID, register the transport as a hosted provider, or turn on any external channel. Focused synthetic 7/7 PASS (24 assertions); scoped Pint PASS. Website MA checkout and authenticated final settlement remain pending; H-02 HOLD, W04 IN PROGRESS, MT-7.5 15/27 DONE / 12 OPEN.
 
+
+## MT-7.5 / W04 Easypaisa sandbox configuration and registry sync (23-Sep-2026 PKT)
+
+- The registry-only remote `a28e1cd7db8a9ab663b30198324fdfb374bcde74` was safely fast-forwarded from `ed920688b9c59dc42fa77cecb47a8454ab3a0b98`. All four preexisting uncommitted Easypaisa files were preserved with unchanged SHA-256 hashes; only `docs/AI_PROJECT_COMMAND_REGISTRY.md` changed during that synchronization.
+- Completed the previously uncommitted default-OFF, sandbox-only Easypaisa REST v4 MA configuration/container binding and its two synthetic nonactivation/secret-nondisclosure tests. PHP syntax PASS, scoped Pint PASS (3 files), combined existing transport/configuration tests 9/9 PASS (33 assertions). Audit: `docs/audit/MT-7.5_W04_EASYPAISA_SANDBOX_CONFIGURATION_2026-09-23.md`.
+- W04 remains IN PROGRESS, 15/27 DONE / 12 OPEN; genuine merchant-specific gateway choice, signed callback, real sandbox, credential lifecycle, refund and settlement H-02 HOLD remain. The MA transport is NOT a registered checkout adapter and all external payment channels remain default OFF. Next action: reconcile the documented H-02 official provider contract and approved sandbox inputs before any authentic integration/activation; continue independently executable synthetic W04 acceptance gates without falsely closing H-02.

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Commerce\EasypaisaRestClient;
 use App\Identity\IdentityUserProvider;
 use App\Support\LocalEnvironmentGuard;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -18,7 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(EasypaisaRestClient::class, fn () => new EasypaisaRestClient(config('easypaisa', [])));
     }
 
     /**
