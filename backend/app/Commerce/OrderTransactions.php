@@ -242,6 +242,16 @@ final class OrderTransactions
             if ($locked->gateway_order_reference && ! hash_equals($locked->gateway_order_reference, $result['reference'])) {
                 throw new LogicException('Payment initiation replay changed its provider reference.');
             }
+            // A vendor reference must never resolve to another payment within the
+            // same gateway or shadow another local public ID.
+            // Otherwise a verified callback could settle an unrelated order.
+            $collision = DB::table('payments')->where('id', '!=', $locked->id)
+                ->where('gateway', $locked->gateway)
+                ->where(fn ($query) => $query->where('gateway_order_reference', $result['reference'])
+                    ->orWhere('public_id', $result['reference']))->exists();
+            if ($collision) {
+                throw new LogicException('Provider reference belongs to another payment.');
+            }
             if (! $locked->gateway_order_reference) {
                 DB::table('payments')->where('id', $locked->id)->update(['gateway_order_reference' => $result['reference'],
                     'gateway_response' => json_encode($this->sanitize($result), JSON_THROW_ON_ERROR), 'updated_at' => now()]);

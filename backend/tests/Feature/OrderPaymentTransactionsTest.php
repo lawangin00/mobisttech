@@ -12,6 +12,7 @@ use App\Inventory\InventoryOperations;
 use App\Models\CustomerAccount;
 use App\Models\Outlet;
 use App\Sales\SalesOperations;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -239,6 +240,49 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(3, DB::table('payment_receipts')->count());
         $this->assertSame(3, DB::table('sales')->count());
         $this->assertSame(0, $product->fresh()->qty);
+    }
+
+    public function test_w04_duplicate_provider_order_reference_cannot_bind_to_two_payments(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 3);
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+        $registry = new PaymentProviders;
+        $registry->register('jazzcash', new class implements PaymentProvider
+        {
+            public function initiate(array $intent): array
+            {
+                return ['reference' => 'W04-DUPLICATE-VENDOR-REFERENCE', 'redirect_url' => 'https://gateway.example.invalid/synthetic'];
+            }
+
+            public function verify(array $payload): array
+            {
+                throw new LogicException('Not used in this negative fixture.');
+            }
+        });
+        $this->app->instance(PaymentProviders::class, $registry);
+        $first = $this->service()->checkout($this->scope(), $this->customer, $this->key('collision-one'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $second = $this->service()->checkout($this->scope(), $this->customer, $this->key('collision-two'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $this->service()->initiate($first['payment_id']);
+        $this->reject(fn () => $this->service()->initiate($second['payment_id']));
+        $this->assertNull(DB::table('payments')->where('public_id', $second['payment_id'])->value('gateway_order_reference'));
+        $this->assertSame(1, DB::table('payments')->where('gateway_order_reference', 'W04-DUPLICATE-VENDOR-REFERENCE')->count());
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+        try {
+            DB::table('payments')->where('public_id', $second['payment_id'])
+                ->update(['gateway_order_reference' => 'W04-DUPLICATE-VENDOR-REFERENCE']);
+            $this->fail('Database accepted duplicate gateway reference for two payments.');
+        } catch (QueryException $exception) {
+            $this->assertSame(1, DB::table('payments')->where('gateway_order_reference', 'W04-DUPLICATE-VENDOR-REFERENCE')->count());
+        }
+        // A second merchant/mode must not make the same gateway reference safe:
+        // callback matching is gateway + reference before merchant validation.
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'rotated-merchant', 'mode' => 'sandbox']);
+        $third = $this->service()->checkout($this->scope(), $this->customer, $this->key('collision-rotated'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $this->reject(fn () => $this->service()->initiate($third['payment_id']));
+        $this->assertNull(DB::table('payments')->where('public_id', $third['payment_id'])->value('gateway_order_reference'));
+        $this->assertSame(1, DB::table('payments')->where('gateway_order_reference', 'W04-DUPLICATE-VENDOR-REFERENCE')->count());
     }
 
     public function test_w04_inflight_provider_cancellation_preserves_reference_without_redirect(): void
