@@ -283,6 +283,9 @@ test('MT-7.5 W04 cancelled external order cannot display continue-payment action
 
 test('MT-5.3 digital-only mode prunes checkout while historical account stays available', async ({ page }) => {
     test.setTimeout(60_000);
+    // Independent synthetic journey #6 reuses the same localhost test identity; reset
+    // disposable testing limiter state between journeys, not production limits.
+    execFileSync('php', ['artisan', 'cache:clear', '--env=testing'], { cwd: process.cwd(), stdio: 'inherit' });
     await login(page);
     state('digital_only');
 
