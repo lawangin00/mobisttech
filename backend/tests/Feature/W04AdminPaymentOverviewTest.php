@@ -126,6 +126,29 @@ final class W04AdminPaymentOverviewTest extends TestCase
         $this->assertFalse($service->settings($actor)['cod_enabled']);
     }
 
+    public function test_malformed_published_cod_policy_stays_off_and_can_be_recovered_through_authorized_admin(): void
+    {
+        $actor = $this->admin(['website.payments.manage', 'website.publish']);
+        DB::table('site_configuration_revisions')->insert([
+            'domain' => 'website.payments.cod', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode(['cod_enabled' => 'true'], JSON_THROW_ON_ERROR),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $service = new WebsitePaymentAdministration(new PaymentProviders);
+        $this->assertFalse($service->codEnabled(), 'Malformed published COD must not open checkout.');
+        $this->assertFalse($service->overview($actor)[0]['available']);
+        $settings = $service->settings($actor);
+        $this->assertTrue($settings['published_invalid']);
+        $this->assertFalse($settings['cod_enabled']);
+        $this->assertSame(1, $settings['published_version']);
+        $replacement = $service->saveDraft($actor, ['cod_enabled' => true]);
+        $this->assertSame(2, $replacement['version']);
+        $this->assertFalse($service->codEnabled(), 'Unpublished recovery draft must not open checkout.');
+        $service->publish($actor, $replacement['id']);
+        $this->assertTrue($service->codEnabled());
+        $this->assertFalse($service->settings($actor)['published_invalid']);
+    }
+
     private function admin(array $permissions): Admin
     {
         $admin = new Admin;

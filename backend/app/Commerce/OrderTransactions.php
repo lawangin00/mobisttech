@@ -231,8 +231,9 @@ final class OrderTransactions
         }
         $intent = ['order_number' => $order->order_number, 'payment_id' => $payment->public_id, 'amount' => $payment->amount, 'currency' => $payment->currency];
         $result = $this->providers->initiate($payment->gateway, $intent);
-        if (! isset($result['reference']) || ! is_string($result['reference']) || $result['reference'] === '') {
-            throw new LogicException('Provider did not return an initiation reference.');
+        if (! isset($result['reference']) || ! is_string($result['reference'])
+            || trim($result['reference']) === '' || strlen($result['reference']) > 255) {
+            throw new LogicException('Provider did not return a valid initiation reference.');
         }
         // The provider may finish after another request cancels/expires the order. Record
         // its reference for a later verified receipt, but never return a stale hosted URL.

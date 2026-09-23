@@ -12,6 +12,7 @@ type Channel = {
 type Settings = {
     cod_enabled: boolean;
     published_version: number;
+    published_invalid: boolean;
     draft_invalid: boolean;
     draft: { id: number; version: number; cod_enabled: boolean } | null;
     can_publish: boolean;
@@ -115,6 +116,7 @@ export default function WebsitePaymentSettings({ identity, channels, settings }:
                 <section className="rounded-2xl border bg-white p-5">
                     <h2 className="font-semibold">Cash on Delivery policy</h2>
                     <p className="mt-1 text-sm text-slate-600">Current checkout: {settings.cod_enabled ? 'COD enabled' : 'COD disabled'} · published version {settings.published_version}. Only the nonsecret COD availability flag can be changed here. Saving a draft does not change checkout.</p>
+                    {settings.published_invalid && <p role="alert" className="mt-3 rounded border border-red-300 p-3 text-sm">Published COD policy is invalid. Checkout COD is disabled until a valid replacement draft is published.</p>}
                     {error && <p role="alert" className="mt-3 rounded border border-red-300 p-3 text-sm">{error}</p>}
                     <form onSubmit={saveDraft} className="mt-4 flex flex-wrap items-center gap-3">
                         <label className="flex items-center gap-2 text-sm">

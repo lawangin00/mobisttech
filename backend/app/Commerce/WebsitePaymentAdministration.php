@@ -7,7 +7,6 @@ use App\Identity\IdentityAccount;
 use App\Identity\IdentityAudit;
 use App\Models\Admin;
 use Illuminate\Support\Facades\DB;
-use LogicException;
 
 /** Nonsecret Website payment policy; external merchant credentials are never accepted here. */
 final class WebsitePaymentAdministration
@@ -46,12 +45,11 @@ final class WebsitePaymentAdministration
         if ($snapshot === null) {
             return config('commerce.providers.cod.enabled', false) === true;
         }
-        $policy = json_decode($snapshot, true, flags: JSON_THROW_ON_ERROR);
-        if (! is_array($policy) || array_keys($policy) !== ['cod_enabled'] || ! is_bool($policy['cod_enabled'])) {
-            throw new LogicException('Published COD policy is invalid.');
-        }
+        $publishedValue = $this->parseCodPolicy($snapshot);
 
-        return $policy['cod_enabled'] && config('commerce.providers.cod.enabled', false) === true;
+        // Malformed live policy cannot enable checkout; authorized Admin may
+        // publish a new valid revision without the settings page crashing.
+        return $publishedValue === true && config('commerce.providers.cod.enabled', false) === true;
     }
 
     public function settings(IdentityAccount $actor): array
@@ -76,6 +74,7 @@ final class WebsitePaymentAdministration
         return [
             'cod_enabled' => $this->codEnabled(),
             'published_version' => (int) ($published->version ?? 0),
+            'published_invalid' => (bool) ($published && $this->parseCodPolicy($published->snapshot) === null),
             'draft_invalid' => (bool) ($draft && ! $validDraft),
             'draft' => $validDraft ? [
                 'id' => (int) $draft->id,
@@ -84,6 +83,20 @@ final class WebsitePaymentAdministration
             ] : null,
             'can_publish' => app(Access::class)->allows($admin, 'website.publish'),
         ];
+    }
+
+    private function parseCodPolicy(string $snapshot): ?bool
+    {
+        try {
+            $policy = json_decode($snapshot, true, flags: JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
+        if (! is_array($policy) || array_keys($policy) !== ['cod_enabled'] || ! is_bool($policy['cod_enabled'])) {
+            return null;
+        }
+
+        return $policy['cod_enabled'];
     }
 
     public function saveDraft(IdentityAccount $actor, array $input): array

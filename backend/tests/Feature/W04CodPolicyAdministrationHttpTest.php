@@ -154,6 +154,31 @@ final class W04CodPolicyAdministrationHttpTest extends TestCase
         $this->assertSame('draft', DB::table('site_configuration_revisions')->where('id', $id)->value('state'));
     }
 
+    public function test_authorized_admin_can_open_and_repair_malformed_published_cod_policy(): void
+    {
+        [$admin, $outlet] = $this->admin(['shops.enter', 'website.payments.manage', 'website.publish']);
+        $client = $this->client();
+        $this->login($client, $admin, $outlet);
+        DB::table('site_configuration_revisions')->insert([
+            'domain' => 'website.payments.cod', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode(['cod_enabled' => 'true'], JSON_THROW_ON_ERROR),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $page = html_entity_decode($this->send($client, 'GET', '/internal/admin/website/payment-settings')
+            ->assertOk()->getContent(), ENT_QUOTES | ENT_HTML5);
+        $this->assertStringContainsString('"published_invalid":true', $page);
+        $this->assertStringContainsString('"cod_enabled":false', $page);
+        $this->assertStringContainsString('"available":false', $page);
+        $draft = $this->send($client, 'POST', '/internal/admin/website/payment-settings/drafts',
+            ['cod_enabled' => true])->assertCreated()->json('data');
+        $this->assertSame(2, $draft['version']);
+        $this->send($client, 'POST', '/internal/admin/website/payment-settings/drafts/'.$draft['id'].'/publish')->assertOk();
+        $recovered = html_entity_decode($this->send($client, 'GET', '/internal/admin/website/payment-settings')
+            ->assertOk()->getContent(), ENT_QUOTES | ENT_HTML5);
+        $this->assertStringContainsString('"published_invalid":false', $recovered);
+        $this->assertStringContainsString('"cod_enabled":true', $recovered);
+    }
+
     private function admin(array $permissions): array
     {
         $admin = new Admin;

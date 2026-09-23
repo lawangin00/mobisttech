@@ -335,6 +335,72 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(1, DB::table('sales')->count());
     }
 
+    public function test_w04_provider_reference_at_column_boundary_can_be_reused_without_new_network_call(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+        $registry = new PaymentProviders;
+        $calls = 0;
+        $registry->register('jazzcash', new class($calls) implements PaymentProvider
+        {
+            public function __construct(private int &$calls) {}
+
+            public function initiate(array $intent): array
+            {
+                $this->calls++;
+
+                return ['reference' => str_repeat('X', 255), 'redirect_url' => 'https://gateway.example.invalid/hosted'];
+            }
+
+            public function verify(array $payload): array
+            {
+                throw new LogicException('Not used by the synthetic initiation fixture.');
+            }
+        });
+        $this->app->instance(PaymentProviders::class, $registry);
+        $order = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('reference-at-boundary'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $first = $this->service()->initiate($order['payment_id']);
+        $this->assertSame(str_repeat('X', 255), $first['reference']);
+        $this->assertSame($first, $this->service()->initiate($order['payment_id']));
+        $this->assertSame(1, $calls);
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+    }
+
+    public function test_w04_oversized_provider_initiation_reference_is_rejected_before_payment_binding(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+        $registry = new PaymentProviders;
+        $registry->register('jazzcash', new class implements PaymentProvider
+        {
+            public function initiate(array $intent): array
+            {
+                return ['reference' => str_repeat('X', 256), 'redirect_url' => 'https://gateway.example.invalid/hosted'];
+            }
+
+            public function verify(array $payload): array
+            {
+                throw new LogicException('Not used by the synthetic initiation fixture.');
+            }
+        });
+        $this->app->instance(PaymentProviders::class, $registry);
+        $order = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('oversized-provider-ref'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        try {
+            $this->service()->initiate($order['payment_id']);
+            $this->fail('Oversized vendor reference was accepted.');
+        } catch (LogicException $exception) {
+            $this->assertSame('Provider did not return a valid initiation reference.', $exception->getMessage());
+        }
+        $this->assertNull(DB::table('payments')->where('public_id', $order['payment_id'])->value('gateway_order_reference'));
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+    }
+
     public function test_w04_duplicate_provider_order_reference_cannot_bind_to_two_payments(): void
     {
         $product = $this->product();
