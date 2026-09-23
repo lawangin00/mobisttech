@@ -150,8 +150,20 @@ test('MT-7.5 W04 synthetic hosted initiation failure keeps the created order rec
     await expect(page.getByRole('heading', { name: 'MT75-SYNTHETIC-RECOVERY' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Continue payment' })).toBeVisible();
     expect(orderSubmits).toBe(1);
-    await page.getByRole('button', { name: 'Continue payment' }).click();
+    // Double-click while pending must not create duplicate external-initiation requests.
+    await page.route(`**/api/customer/payments/${fakePaymentId}/initiate`, async (route) => {
+        initiationAttempts += 1;
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        await route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ message: 'Synthetic gateway temporarily unavailable.' }) });
+    });
+    await page.evaluate(() => {
+        const button = [...document.querySelectorAll('button')].find((item) => item.textContent === 'Continue payment');
+        if (!button) throw new Error('Continue payment button missing from owned order.');
+        button.click();
+        button.click();
+    });
     await expect(page.getByText('Synthetic gateway temporarily unavailable.', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue payment' })).toBeEnabled();
     expect(initiationAttempts).toBe(2);
     expect(orderSubmits).toBe(1);
 });
