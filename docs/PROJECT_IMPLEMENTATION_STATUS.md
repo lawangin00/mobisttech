@@ -1693,3 +1693,6 @@ Next specific executable substep: use the already accepted new-outlet Admin crea
 
 ## MT-7.5 / W04 verified receipt replay transaction-reference binding (23-Sep-2026)
 - Test-first synthetic signed event-ID replay with unchanged payload digest but changed transaction reference exposed receipt identity mismatch accepted as idempotent. `OrderTransactions::applyReceipt` now enforces immutable stored transaction reference on replay; original identical replays remain accepted, with no duplicate receipt or sale. Focused 2/2 PASS (29 assertions); scoped joined W04/OrderPayment/ApiContract 84/84 PASS (1593 assertions), Pint PASS. Audit `docs/audit/MT-7.5_W04_REPLAY_TRANSACTION_REFERENCE_2026-09-23.md`. W04 IN PROGRESS, MT-7.5 15/27 DONE, 12 OPEN; genuine provider contracts, credential lifecycle, refunds and settlement H-02 HOLD.
+
+## MT-7.5 / W04 verified callback reference bounds (23-Sep-2026)
+- Test-first rejected adapter-verified event, transaction, and order references above 255 characters before receipt lookup/write, honoring payment/receipt schema limits. Focused registry/cross-provider 4/4 PASS (47 assertions); joined W04/OrderPayment/ApiContract 85/85 PASS (1596 assertions), scoped Pint PASS. Audit: docs/audit/MT-7.5_W04_VERIFIED_EVENT_REFERENCE_BOUNDS_2026-09-23.md. W04 IN PROGRESS; MT-7.5 15/27 DONE, 12 OPEN; genuine provider H-02 HOLD.

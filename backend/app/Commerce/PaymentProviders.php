@@ -89,7 +89,9 @@ final class PaymentProviders
             throw new LogicException('Provider adapter returned an invalid verified event.');
         }
         foreach ($required as $field) {
-            if (! is_string($event[$field]) || trim($event[$field]) === '') {
+            if (! is_string($event[$field]) || trim($event[$field]) === ''
+                || (in_array($field, ['event_id', 'transaction_reference', 'order_reference'], true)
+                    && strlen($event[$field]) > 255)) {
                 throw new LogicException('Provider adapter returned an invalid verified event.');
             }
         }

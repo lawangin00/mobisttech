@@ -50,6 +50,36 @@ final class W04PaymentProviderRegistryTest extends TestCase
         $this->assertSame('approved', $providers->verify('jazzcash', [])['event_id']);
     }
 
+    public function test_verified_adapter_event_rejects_oversized_references_before_receipt_write(): void
+    {
+        $providers = new PaymentProviders;
+        $providers->register('jazzcash', new class implements PaymentProvider
+        {
+            public function initiate(array $intent): array
+            {
+                return [];
+            }
+
+            public function verify(array $payload): array
+            {
+                return ['event_id' => $payload['event_id'], 'transaction_reference' => $payload['transaction_reference'],
+                    'order_reference' => $payload['order_reference'], 'amount' => '1.00', 'currency' => 'PKR',
+                    'status' => 'paid', 'payload_hash' => str_repeat('a', 64)];
+            }
+        });
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+        foreach (['event_id', 'transaction_reference', 'order_reference'] as $field) {
+            $payload = ['event_id' => 'evt', 'transaction_reference' => 'tx', 'order_reference' => 'order'];
+            $payload[$field] = str_repeat('x', 256);
+            try {
+                $providers->verify('jazzcash', $payload);
+                $this->fail('Oversized verified provider reference passed boundary validation.');
+            } catch (LogicException $e) {
+                $this->assertSame('Provider adapter returned an invalid verified event.', $e->getMessage());
+            }
+        }
+    }
+
     private function adapter(string $marker): PaymentProvider
     {
         return new class($marker) implements PaymentProvider
