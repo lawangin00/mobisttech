@@ -270,6 +270,24 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(0, DB::table('sales')->count());
     }
 
+    public function test_w04_cached_hosted_reference_cannot_disagree_with_bound_payment(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $this->fakeProvider();
+        $order = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('cached-reference-tamper'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $original = $this->service()->initiate($order['payment_id']);
+        $payment = DB::table('payments')->where('public_id', $order['payment_id'])->firstOrFail();
+        DB::table('payments')->where('id', $payment->id)->update(['gateway_response' => json_encode([
+            'reference' => 'GW-OTHER-PAYMENT', 'redirect_url' => 'https://gateway.example.invalid/other',
+        ], JSON_THROW_ON_ERROR)]);
+        $this->reject(fn () => $this->service()->initiate($order['payment_id']));
+        $this->assertSame($original['reference'], DB::table('payments')->where('id', $payment->id)->value('gateway_order_reference'));
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+    }
+
     public function test_w04_duplicate_provider_order_reference_cannot_bind_to_two_payments(): void
     {
         $product = $this->product();

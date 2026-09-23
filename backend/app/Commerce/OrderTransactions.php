@@ -227,7 +227,7 @@ final class OrderTransactions
             throw new LogicException('Payment provider configuration no longer matches the original intent.');
         }
         if ($payment->gateway_order_reference) {
-            return $this->safeContinuation($this->sanitize(json_decode($payment->gateway_response ?? '{}', true, flags: JSON_THROW_ON_ERROR)));
+            return $this->safeContinuation($this->sanitize(json_decode($payment->gateway_response ?? '{}', true, flags: JSON_THROW_ON_ERROR)), $payment->gateway_order_reference);
         }
         $intent = ['order_number' => $order->order_number, 'payment_id' => $payment->public_id, 'amount' => $payment->amount, 'currency' => $payment->currency];
         $result = $this->providers->initiate($payment->gateway, $intent);
@@ -279,7 +279,7 @@ final class OrderTransactions
             throw new LogicException('Payment is no longer externally initiable; provider reference retained for reconciliation.');
         }
 
-        return $this->safeContinuation($continuation['response']);
+        return $this->safeContinuation($continuation['response'], $result['reference']);
     }
 
     public function retry(string $ownerScope, ?CustomerAccount $customer, string $orderPublicId, string $key, string $gateway): array
@@ -722,8 +722,12 @@ final class OrderTransactions
     }
 
     /** A persisted vendor reference must survive even if its hosted URL is unsafe. */
-    private function safeContinuation(array $response): array
+    private function safeContinuation(array $response, string $expectedReference): array
     {
+        if (! isset($response['reference']) || ! is_string($response['reference'])
+            || ! hash_equals($expectedReference, $response['reference'])) {
+            throw new LogicException('Hosted continuation reference does not match its payment intent.');
+        }
         if (array_key_exists('redirect_url', $response)) {
             $url = $response['redirect_url'];
             if (! is_string($url) || ! filter_var($url, FILTER_VALIDATE_URL)
