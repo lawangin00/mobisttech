@@ -883,9 +883,21 @@ class ApiContractTest extends TestCase
             $this->assertSame($before, [DB::table('orders')->count(), DB::table('payments')->count(),
                 DB::table('reservations')->count(), DB::table('idempotency_requests')->count()]);
         }
-        $this->send($client, 'POST', '/api/v1/orders', $base, true, [
+        $created = $this->send($client, 'POST', '/api/v1/orders', $base, true, [
             'HTTP_IDEMPOTENCY_KEY' => 'w04-valid-tender-'.Str::uuid(),
         ])->assertCreated()->assertJsonPath('data.payment_status', 'pending_collection');
+        $after = [DB::table('orders')->count(), DB::table('payments')->count(),
+            DB::table('reservations')->count(), DB::table('idempotency_requests')->count()];
+        foreach ([['card_number' => 'synthetic-card-data'], ['cvv' => 'synthetic-card-data'],
+            ['card' => ['number' => 'synthetic-card-data']]] as $invalid) {
+            $this->send($client, 'POST', '/api/v1/orders/'.$created->json('data.order_id').'/payments/retry',
+                ['gateway' => 'card', ...$invalid], true, ['HTTP_IDEMPOTENCY_KEY' => 'w04-card-retry-'.Str::uuid()])
+                ->assertStatus(422);
+            $this->send($client, 'POST', '/api/v1/payments/'.$created->json('data.payment_id').'/initiate',
+                $invalid, true)->assertStatus(422);
+            $this->assertSame($after, [DB::table('orders')->count(), DB::table('payments')->count(),
+                DB::table('reservations')->count(), DB::table('idempotency_requests')->count()]);
+        }
     }
 
     public function test_mt_5_4_public_content_services_enquiry_and_software_contracts_are_published_and_mode_aware(): void

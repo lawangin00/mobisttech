@@ -87,6 +87,8 @@ final class CustomerApiController extends Controller
     public function retryPayment(Request $request, WebsiteApi $api, OrderTransactions $orders, string $order)
     {
         $api->assertCommerce();
+        // Never accept raw card details or arbitrary client fields on a retry.
+        abort_unless(array_keys($request->all()) === ['gateway'], 422, 'Only the gateway is accepted for a payment retry.');
         $customer = $this->customer();
         $gateway = (string) $request->input('gateway');
         abort_unless(in_array($gateway, ['jazzcash', 'easypaisa', 'card'], true), 422);
@@ -95,8 +97,10 @@ final class CustomerApiController extends Controller
         return $this->responses->private($result, 'payment-retry.v1', 201);
     }
 
-    public function initiatePayment(WebsiteApi $api, OrderTransactions $orders, string $payment)
+    public function initiatePayment(Request $request, WebsiteApi $api, OrderTransactions $orders, string $payment)
     {
+        // Hosted initiation receives no card details or other payment fields.
+        abort_unless($request->all() === [], 422, 'Payment initiation does not accept payment details.');
         $customer = $this->customer();
         $api->assertOwnedPayment($customer, $payment);
 
