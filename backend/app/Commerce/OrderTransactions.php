@@ -466,7 +466,8 @@ final class OrderTransactions
         $existing = DB::table('payment_receipts')->where(['gateway' => $gateway, 'merchant' => $event['merchant'],
             'mode' => $event['mode'], 'event_id' => $event['event_id']])->lockForUpdate()->first();
         if ($existing) {
-            if ($existing->payment_id !== $payment->id || $existing->payload_hash !== $event['payload_hash'] || $existing->outcome !== $event['status']) {
+            if ($existing->payment_id !== $payment->id || $existing->payload_hash !== $event['payload_hash']
+                || $existing->transaction_reference !== $event['transaction_reference'] || $existing->outcome !== $event['status']) {
                 throw new LogicException('Provider event replay changed.');
             }
 

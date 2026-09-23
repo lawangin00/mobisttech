@@ -316,6 +316,25 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(0, DB::table('sales')->count());
     }
 
+    public function test_w04_signed_event_replay_cannot_change_transaction_reference_with_unchanged_payload_digest(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        $fake = $this->fakeProvider();
+        $order = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('replay-tx-binding'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $hosted = $this->service()->initiate($order['payment_id']);
+        $event = $fake->paid('W04-TX-REPLAY', $hosted['reference'], '200.02');
+        $this->assertSame('paid', $this->service()->callback('jazzcash', $event)['payment_status']);
+        $changed = [...$event, 'transaction_reference' => 'TX-REPLACED'];
+        unset($changed['signature']);
+        $changed['signature'] = hash_hmac('sha256', json_encode($changed, JSON_THROW_ON_ERROR), 'synthetic-secret');
+        $this->reject(fn () => $this->service()->callback('jazzcash', $changed));
+        $this->assertSame('TX-W04-TX-REPLAY', DB::table('payment_receipts')->value('transaction_reference'));
+        $this->assertSame(1, DB::table('payment_receipts')->count());
+        $this->assertSame(1, DB::table('sales')->count());
+    }
+
     public function test_w04_duplicate_provider_order_reference_cannot_bind_to_two_payments(): void
     {
         $product = $this->product();
