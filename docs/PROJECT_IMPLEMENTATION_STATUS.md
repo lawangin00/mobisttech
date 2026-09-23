@@ -1706,3 +1706,5 @@ Next specific executable substep: use the already accepted new-outlet Admin crea
 
 ## MT-7.5 / W04 Easypaisa inquiry response boundary (23-Sep-2026)
 - REST sandbox transport now rejects mismatched inquiry merchant account, undocumented status/mode, and invalid amount shape before returning an unverified result. Focused tests 4/4 PASS (16 assertions), scoped Pint PASS. Transport remains unregistered; external payments OFF; no settlement/IPN validation accepted. Audit: docs/audit/MT-7.5_W04_EASYPAISA_INQUIRY_BOUNDARY_2026-09-23.md. W04 IN PROGRESS, MT-7.5 15/27 DONE / 12 OPEN, H-02 HOLD.
+## MT-7.5 / W04 Easypaisa MA inquiry amount binding (23-Sep-2026)
+- Staging-only Easypaisa inquiry now checks original exact MA amount/mode and cannot settle a payment, even if provider reports PAID. Synthetic 6/6 PASS (21 assertions), Pint PASS. Audit: docs/audit/MT-7.5_W04_EASYPAISA_MA_INTENT_AMOUNT_GUARD_2026-09-23.md. Hosted checkout remains unchanged; external providers OFF. W04 IN PROGRESS, MT-7.5 15/27 DONE / 12 OPEN, H-02 HOLD.

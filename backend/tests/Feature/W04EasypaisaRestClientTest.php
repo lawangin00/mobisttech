@@ -68,6 +68,33 @@ final class W04EasypaisaRestClientTest extends TestCase
         }
     }
 
+    public function test_inquiry_is_bound_to_original_ma_amount_without_settling_order(): void
+    {
+        Http::fake(['*/inquire-transaction' => Http::response(['orderId' => 'order-1', 'storeId' => 43,
+            'accountNum' => '654123987', 'transactionStatus' => 'PAID', 'paymentMode' => 'MA',
+            'transactionAmount' => '1.23', 'responseCode' => '0000'])]);
+        $client = new EasypaisaRestClient($this->settings());
+        $this->assertSame(['order_id' => 'order-1', 'amount' => '1.23', 'provider_status' => 'PAID',
+            'verified_for_settlement' => false], $client->inquireForPayment('order-1', '1.23'));
+        foreach (['1.24', '0.00', '1.234'] as $amount) {
+            try {
+                $client->inquireForPayment('order-1', $amount);
+                $this->fail('Mismatched or invalid original amount was accepted.');
+            } catch (LogicException $exception) {
+                $this->assertNotEmpty($exception->getMessage());
+            }
+        }
+    }
+
+    public function test_otc_inquiry_cannot_satisfy_ma_payment(): void
+    {
+        Http::fake(['*/inquire-transaction' => Http::response(['orderId' => 'order-1', 'storeId' => 43,
+            'accountNum' => '654123987', 'transactionStatus' => 'PAID', 'paymentMode' => 'OTC',
+            'transactionAmount' => '1.23', 'responseCode' => '0000'])]);
+        $this->expectException(LogicException::class);
+        (new EasypaisaRestClient($this->settings()))->inquireForPayment('order-1', '1.23');
+    }
+
     public function test_mismatched_response_and_invalid_input_fail_closed(): void
     {
         Http::fake(['*' => Http::response(['orderId' => 'unrelated', 'storeId' => 43, 'responseCode' => '0000'])]);

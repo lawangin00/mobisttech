@@ -47,6 +47,23 @@ final class EasypaisaRestClient
         return $result;
     }
 
+    /** Compare inquiry with the immutable MA intent; never settle a payment here. */
+    public function inquireForPayment(string $orderId, string $expectedAmount): array
+    {
+        if (! preg_match('/\A[0-9]+\.[0-9]{2}\z/', $expectedAmount)
+            || bccomp($expectedAmount, '0.00', 2) <= 0) {
+            throw new LogicException('Invalid local Easypaisa payment amount.');
+        }
+        $result = $this->inquire($orderId);
+        if ($result['paymentMode'] !== 'MA'
+            || bccomp((string) $result['transactionAmount'], $expectedAmount, 2) !== 0) {
+            throw new LogicException('Easypaisa inquiry does not match the original MA payment; payment remains unverified.');
+        }
+
+        return ['order_id' => $orderId, 'amount' => $expectedAmount,
+            'provider_status' => $result['transactionStatus'], 'verified_for_settlement' => false];
+    }
+
     private function request(string $endpoint, array $payload): array
     {
         $username = $this->settings['username'] ?? null;
