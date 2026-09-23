@@ -17,6 +17,8 @@ test('actual inventory and warranty lists consume saved portal paging and catego
     const selected=page.waitForResponse(r=>r.url().endsWith('/internal/admin/outlets/select')&&r.ok());
     await page.getByTestId('outlet-select').selectOption({label:'E2E Sales Outlet'});
     await selected;
+    // Selecting an outlet redirects this tab to the POS shell; finish that redirect first.
+    await page.waitForURL('**/internal/admin/pos');
     await page.goto('/internal/admin/pos/workspace/inventory');
     await expect(page.getByTestId('workspace-inventory')).toBeVisible();
     await expect(page.getByTestId('inventory-page')).toContainText('32 products');
