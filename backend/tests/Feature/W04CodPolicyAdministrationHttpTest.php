@@ -136,6 +136,24 @@ final class W04CodPolicyAdministrationHttpTest extends TestCase
         }
     }
 
+    public function test_malformed_draft_is_not_advertised_as_publishable_in_authorized_admin_page(): void
+    {
+        [$admin, $outlet] = $this->admin(['shops.enter', 'website.payments.manage', 'website.publish']);
+        $client = $this->client();
+        $this->login($client, $admin, $outlet);
+        $id = DB::table('site_configuration_revisions')->insertGetId([
+            'domain' => 'website.payments.cod', 'version' => 1, 'state' => 'draft',
+            'snapshot' => json_encode(['cod_enabled' => 'false'], JSON_THROW_ON_ERROR),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $response = $this->send($client, 'GET', '/internal/admin/website/payment-settings')->assertOk();
+        $page = html_entity_decode($response->getContent(), ENT_QUOTES | ENT_HTML5);
+        $this->assertStringContainsString('"draft_invalid":true', $page);
+        $this->assertStringContainsString('"draft":null', $page);
+        $this->send($client, 'POST', '/internal/admin/website/payment-settings/drafts/'.$id.'/publish')->assertStatus(409);
+        $this->assertSame('draft', DB::table('site_configuration_revisions')->where('id', $id)->value('state'));
+    }
+
     private function admin(array $permissions): array
     {
         $admin = new Admin;

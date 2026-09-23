@@ -12,6 +12,7 @@ type Channel = {
 type Settings = {
     cod_enabled: boolean;
     published_version: number;
+    draft_invalid: boolean;
     draft: { id: number; version: number; cod_enabled: boolean } | null;
     can_publish: boolean;
 };
@@ -122,6 +123,7 @@ export default function WebsitePaymentSettings({ identity, channels, settings }:
                         </label>
                         <button type="submit" disabled={busy} className="rounded bg-slate-950 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Save policy draft</button>
                     </form>
+                    {settings.draft_invalid && <p role="alert" className="mt-3 rounded border border-amber-400 p-3 text-sm">The latest COD draft is invalid and cannot be published. Save a new draft to replace it.</p>}
                     {settings.draft && <div className="mt-4 rounded-xl border bg-slate-50 p-3 text-sm">
                         <p>Latest draft v{settings.draft.version}: COD {settings.draft.cod_enabled ? 'enabled' : 'disabled'} (not yet live).</p>
                         {settings.can_publish ? <button type="button" onClick={() => void publishDraft()} disabled={busy} className="mt-2 rounded border border-slate-950 px-4 py-2 font-semibold disabled:opacity-50">Publish latest COD draft</button>

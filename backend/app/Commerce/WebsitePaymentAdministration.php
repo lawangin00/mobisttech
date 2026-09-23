@@ -62,15 +62,25 @@ final class WebsitePaymentAdministration
         $draft = DB::table('site_configuration_revisions')->where('domain', self::COD_DOMAIN)
             ->where('state', 'draft')->where('version', '>', (int) ($published->version ?? 0))
             ->orderByDesc('version')->first();
-        $draftPolicy = $draft ? json_decode($draft->snapshot, true, flags: JSON_THROW_ON_ERROR) : null;
+        $draftPolicy = null;
+        if ($draft) {
+            try {
+                $draftPolicy = json_decode($draft->snapshot, true, flags: JSON_THROW_ON_ERROR);
+            } catch (\JsonException) {
+                // Keep malformed or tampered drafts non-actionable without hiding live COD status.
+            }
+        }
+        $validDraft = $draft && is_array($draftPolicy) && array_keys($draftPolicy) === ['cod_enabled']
+            && is_bool($draftPolicy['cod_enabled']);
 
         return [
             'cod_enabled' => $this->codEnabled(),
             'published_version' => (int) ($published->version ?? 0),
-            'draft' => $draft ? [
+            'draft_invalid' => (bool) ($draft && ! $validDraft),
+            'draft' => $validDraft ? [
                 'id' => (int) $draft->id,
                 'version' => (int) $draft->version,
-                'cod_enabled' => (bool) ($draftPolicy['cod_enabled'] ?? false),
+                'cod_enabled' => $draftPolicy['cod_enabled'],
             ] : null,
             'can_publish' => app(Access::class)->allows($admin, 'website.publish'),
         ];

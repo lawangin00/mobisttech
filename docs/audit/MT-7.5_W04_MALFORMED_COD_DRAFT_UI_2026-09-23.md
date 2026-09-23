@@ -1,0 +1,6 @@
+# W04 malformed COD draft Admin UI and recovery (23-Sep-2026)
+
+- Root cause: `WebsitePaymentAdministration::settings()` cast the malformed string `cod_enabled: "false"` to boolean true in the Admin draft preview, even though the publication endpoint correctly rejects that draft. It was misleadingly displayed as publishable.
+- Read contract now checks draft JSON syntax, the exact one-key shape and boolean type. A malformed latest draft is returned as `draft=null`, `draft_invalid=true`, with effective published COD unchanged. Admin UI shows an explicit invalid-draft warning, offers a new draft, and does not present a Publish control for the malformed draft.
+- Service test first FAILED on incorrect truthy draft, then PASS with valid new-draft recovery and authorized publication (focused 1/1, 8 assertions). Authenticated Admin HTTP confirms invalid flag and no actionable draft, and rejects malformed publish (1/1, 8 assertions). Scoped PHP Pint and backend TypeScript/Vite build PASS; existing two-case real Admin browser suite PASS with disposable teardown.
+- Joined filtered W04/API/OrderPayment after final recovery addition: 79/79 PASS (1565 assertions); no unfiltered full-suite or vendor integration claim. External channels remain default OFF; H-02 authentic merchant, refund and settlement HOLD. W04 IN PROGRESS, 15/27 DONE, 12 OPEN.

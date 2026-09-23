@@ -103,6 +103,29 @@ final class W04AdminPaymentOverviewTest extends TestCase
         $this->assertTrue($newer['cod_enabled'], 'An unpublished draft must not change effective COD.');
     }
 
+    public function test_corrupt_cod_draft_must_not_be_misrepresented_as_a_publishable_boolean(): void
+    {
+        $actor = $this->admin(['website.payments.manage', 'website.publish']);
+        DB::table('site_configuration_revisions')->insert([
+            'domain' => 'website.payments.cod', 'version' => 1, 'state' => 'draft',
+            'snapshot' => json_encode(['cod_enabled' => 'false'], JSON_THROW_ON_ERROR),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $settings = (new WebsitePaymentAdministration(new PaymentProviders))->settings($actor);
+        $this->assertTrue($settings['cod_enabled']);
+        $this->assertNull($settings['draft']);
+        $this->assertTrue($settings['draft_invalid']);
+        $service = new WebsitePaymentAdministration(new PaymentProviders);
+        $replacement = $service->saveDraft($actor, ['cod_enabled' => false]);
+        $this->assertSame(2, $replacement['version']);
+        $ready = $service->settings($actor);
+        $this->assertFalse($ready['draft_invalid']);
+        $this->assertSame($replacement['id'], $ready['draft']['id']);
+        $this->assertTrue($ready['cod_enabled']);
+        $service->publish($actor, $replacement['id']);
+        $this->assertFalse($service->settings($actor)['cod_enabled']);
+    }
+
     private function admin(array $permissions): Admin
     {
         $admin = new Admin;
