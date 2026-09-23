@@ -105,6 +105,19 @@ test('MT-7.5 W04 synthetic hosted initiation failure keeps the created order rec
     });
     const fakeOrderId = '00000000-0000-4000-8000-000000000075';
     const fakePaymentId = '00000000-0000-4000-8000-000000000076';
+    // Complete the already-visible recovery link against a browser-only owned-order fixture.
+    // The real backend retains default-OFF external channels and receives no synthetic payment.
+    await page.route(`**/api/customer/orders/${fakeOrderId}`, async (route) => {
+        if (route.request().method() !== 'GET') return route.continue();
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {
+            id: fakeOrderId, number: 'MT75-SYNTHETIC-RECOVERY', type: 'commerce',
+            status: 'pending', fulfillment_status: 'pending', payment_status: 'unpaid',
+            subtotal: '50000.00', total: '50000.00', currency: 'PKR', items: [],
+            payments: [{ public_id: fakePaymentId, gateway: 'jazzcash', status: 'pending',
+                amount: '50000.00', currency: 'PKR' }],
+            signed_access_url: 'https://example.invalid/readonly-synthetic-order',
+        } }) });
+    });
     let orderSubmits = 0;
     await page.route('**/api/customer/orders', async (route) => {
         if (route.request().method() !== 'POST') return route.continue();
@@ -132,6 +145,15 @@ test('MT-7.5 W04 synthetic hosted initiation failure keeps the created order rec
     await expect(page.getByRole('button', { name: 'Place order' })).toHaveCount(0);
     expect(orderSubmits).toBe(1);
     expect(initiationAttempts).toBe(1);
+    await page.getByRole('link', { name: 'View order and continue payment' }).click();
+    await expect(page).toHaveURL(`http://127.0.0.1:13000/account/orders/${fakeOrderId}`);
+    await expect(page.getByRole('heading', { name: 'MT75-SYNTHETIC-RECOVERY' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue payment' })).toBeVisible();
+    expect(orderSubmits).toBe(1);
+    await page.getByRole('button', { name: 'Continue payment' }).click();
+    await expect(page.getByText('Synthetic gateway temporarily unavailable.', { exact: true })).toBeVisible();
+    expect(initiationAttempts).toBe(2);
+    expect(orderSubmits).toBe(1);
 });
 
 test('MT-7.5 W04 insecure hosted redirect is blocked and the created order remains recoverable', async ({ page }) => {

@@ -1,0 +1,9 @@
+# MT-7.5 / W04 — synthetic checkout-to-owned-order recovery navigation (23-Sep-2026)
+
+Status: focused Website browser acceptance only. W04 remains IN PROGRESS; genuine provider H-02 HOLD unchanged.
+
+The previously accepted synthetic hosted-initiation-failure checkout case stopped after verifying the recovery link href and that checkout did not re-submit. Extended that same browser case with an owned-order **browser-only GET response stub** matching the newly created synthetic order/payment IDs, then clicked the displayed recovery link. The authenticated customer reached the matching order details, saw Continue payment, retried the existing payment against the same simulated 502 response, and no additional order POST occurred. Assertions: first initiation attempt = 1; after recovery = 2; order POST count remains 1. This verifies navigational/visual recovery against a stub, not genuine backend-owned order storage, merchant integration, vendor settlement or authentic payment success.
+
+Verification: targeted checkout browser case 1/1 PASS with disposable-fixture setup/teardown; complete adjacent six-case checkout Playwright suite 6/6 PASS with global teardown; backend and Website TypeScript typechecks PASS. Next.js logged an intermittent `The destination stream closed early` warning in passing browser runs; global elimination is NOT claimed. No production application logic, payment channel enablement, secrets, legacy source, production service or real provider data changed. Synthetic browser fixtures use isolated `mobisttech_test` at port 13306.
+
+Remaining: W04 open parity gates and owner-bound merchant settings/provider contracts; H-02 authentic callbacks, credentials, refunds and settlement remain unverified. Do not mark MT-7.5 completed or revise 15/27 DONE / 12 OPEN based on this focused browser case.
