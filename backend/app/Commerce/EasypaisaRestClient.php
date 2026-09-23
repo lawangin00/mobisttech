@@ -84,6 +84,14 @@ final class EasypaisaRestClient
             throw new LogicException('Easypaisa response failed identity or result validation.');
         }
 
+        // A successful MA initiation must carry the provider's own transaction ID.
+        // Do not mistake a generic 0000 response for a durable payment attempt.
+        if ($endpoint === 'initiate-ma-transaction'
+            && (! is_string($body['transactionId'] ?? null)
+                || trim($body['transactionId']) === '' || strlen($body['transactionId']) > 255)) {
+            throw new LogicException('Easypaisa MA initiation did not return a valid transaction ID.');
+        }
+
         return $body; // Caller must separately establish final status; never mark paid from initiation.
     }
 

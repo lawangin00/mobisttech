@@ -49,6 +49,24 @@ final class W04EasypaisaRestClientTest extends TestCase
             && $request['accountNum'] === '654123987' && $request['orderId'] === 'order-1');
     }
 
+    public function test_ma_init_without_provider_transaction_id_never_counts_as_accepted(): void
+    {
+        foreach ([null, '', str_repeat('x', 256)] as $transactionId) {
+            Http::fake(['*/initiate-ma-transaction' => Http::response([
+                'orderId' => 'order-1', 'storeId' => 43, 'responseCode' => '0000',
+                'transactionId' => $transactionId,
+            ])]);
+            try {
+                (new EasypaisaRestClient($this->settings()))->initiateMa(
+                    'order-1', '1.23', '03001234567', 'buyer@example.invalid'
+                );
+                $this->fail('Invalid provider transaction ID was accepted.');
+            } catch (LogicException $exception) {
+                $this->assertStringContainsString('transaction ID', $exception->getMessage());
+            }
+        }
+    }
+
     public function test_inquiry_rejects_mismatched_account_or_incomplete_provider_status(): void
     {
         foreach ([
