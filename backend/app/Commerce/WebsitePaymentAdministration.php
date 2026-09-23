@@ -60,7 +60,8 @@ final class WebsitePaymentAdministration
         $published = DB::table('site_configuration_revisions')->where('domain', self::COD_DOMAIN)
             ->where('state', 'published')->orderByDesc('version')->first();
         $draft = DB::table('site_configuration_revisions')->where('domain', self::COD_DOMAIN)
-            ->where('state', 'draft')->orderByDesc('version')->first();
+            ->where('state', 'draft')->where('version', '>', (int) ($published->version ?? 0))
+            ->orderByDesc('version')->first();
         $draftPolicy = $draft ? json_decode($draft->snapshot, true, flags: JSON_THROW_ON_ERROR) : null;
 
         return [

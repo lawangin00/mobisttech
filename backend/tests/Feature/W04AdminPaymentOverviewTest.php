@@ -78,6 +78,31 @@ final class W04AdminPaymentOverviewTest extends TestCase
         $this->assertTrue($service->overview($actor)[0]['available']);
     }
 
+    public function test_published_newer_cod_policy_does_not_expose_an_older_draft_as_actionable(): void
+    {
+        $actor = $this->admin(['website.payments.manage', 'website.publish']);
+        foreach ([[1, 'draft', false], [2, 'published', true]] as [$version, $state, $enabled]) {
+            DB::table('site_configuration_revisions')->insert([
+                'domain' => 'website.payments.cod', 'version' => $version, 'state' => $state,
+                'snapshot' => json_encode(['cod_enabled' => $enabled], JSON_THROW_ON_ERROR),
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+        $settings = (new WebsitePaymentAdministration(new PaymentProviders))->settings($actor);
+        $this->assertSame(2, $settings['published_version']);
+        $this->assertTrue($settings['cod_enabled']);
+        $this->assertNull($settings['draft']);
+        DB::table('site_configuration_revisions')->insert([
+            'domain' => 'website.payments.cod', 'version' => 3, 'state' => 'draft',
+            'snapshot' => json_encode(['cod_enabled' => false], JSON_THROW_ON_ERROR),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $newer = (new WebsitePaymentAdministration(new PaymentProviders))->settings($actor);
+        $this->assertSame(3, $newer['draft']['version']);
+        $this->assertFalse($newer['draft']['cod_enabled']);
+        $this->assertTrue($newer['cod_enabled'], 'An unpublished draft must not change effective COD.');
+    }
+
     private function admin(array $permissions): Admin
     {
         $admin = new Admin;
