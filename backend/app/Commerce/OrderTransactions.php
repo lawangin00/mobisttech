@@ -728,6 +728,9 @@ final class OrderTransactions
             || ! hash_equals($expectedReference, $response['reference'])) {
             throw new LogicException('Hosted continuation reference does not match its payment intent.');
         }
+        if (! array_key_exists('redirect_url', $response)) {
+            throw new LogicException('Payment provider did not return a hosted continuation URL.');
+        }
         if (array_key_exists('redirect_url', $response)) {
             $url = $response['redirect_url'];
             if (! is_string($url) || ! filter_var($url, FILTER_VALIDATE_URL)

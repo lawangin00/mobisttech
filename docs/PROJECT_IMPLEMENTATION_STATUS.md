@@ -1687,3 +1687,6 @@ Next specific executable substep: use the already accepted new-outlet Admin crea
 
 ## MT-7.5 / W04 cached hosted continuation reference binding (23-Sep-2026)
 - Test-first caught a persisted hosted response that returned another payment reference while the payment row bound the original reference. Fresh and cached continuations now fail closed if response reference differs from the bound payment reference. Original reference remains durable for reconciliation; no fake settlement. Focused regression 3/3 PASS (18 assertions), joined W04/OrderPayment/ApiContract 82/82 PASS (1583 assertions), Pint PASS; audit `docs/audit/MT-7.5_W04_CACHED_CONTINUATION_REFERENCE_BOUNDARY_2026-09-23.md`. W04 IN PROGRESS, 15/27 DONE, 12 OPEN; genuine providers H-02 HOLD.
+
+## MT-7.5 / W04 missing hosted continuation guard (23-Sep-2026)
+- Test-first rejected provider reference-only response without an HTTPS hosted link for fresh and cached continuations, retaining the reference for verified reconciliation. Focused 3/3 PASS (14 assertions); joined W04/OrderPayment/ApiContract 83/83 PASS (1588 assertions); Pint PASS. Audit `docs/audit/MT-7.5_W04_MISSING_HOSTED_CONTINUATION_2026-09-23.md`. W04 IN PROGRESS; MT-7.5 15/27 DONE, 12 OPEN; genuine providers H-02 HOLD.
