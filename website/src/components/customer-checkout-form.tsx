@@ -19,6 +19,7 @@ export function CustomerCheckoutForm() {
   const [message, setMessage] = useState("");
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const keyRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -39,7 +40,8 @@ export function CustomerCheckoutForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!account || lines.length === 0 || submitting || createdOrderId) return;
+    if (!account || lines.length === 0 || submittingRef.current || createdOrderId) return;
+    submittingRef.current = true;
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     setSubmitting(true);
@@ -80,6 +82,7 @@ export function CustomerCheckoutForm() {
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to place order.");
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }

@@ -122,6 +122,8 @@ test('MT-7.5 W04 synthetic hosted initiation failure keeps the created order rec
     await page.route('**/api/customer/orders', async (route) => {
         if (route.request().method() !== 'POST') return route.continue();
         orderSubmits += 1;
+        // Hold the first order creation open so both submit events arrive before React re-renders.
+        await new Promise((resolve) => setTimeout(resolve, 350));
         await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: {
             order_id: fakeOrderId, order_number: 'MT75-SYNTHETIC-RECOVERY', payment_id: fakePaymentId,
             payment_status: 'pending', amount: '50000.00', currency: 'PKR',
@@ -138,7 +140,13 @@ test('MT-7.5 W04 synthetic hosted initiation failure keeps the created order rec
     await page.getByRole('radio', { name: /JazzCash/ }).check();
     await page.getByLabel('City').fill('Karachi');
     await page.getByLabel('Delivery address').fill('Synthetic W04 recovery address');
-    await page.getByRole('button', { name: 'Place order' }).click();
+    // Two same-tick submit events must produce one order POST and one payment initiation.
+    await page.evaluate(() => {
+        const button = [...document.querySelectorAll('button')].find((item) => item.textContent === 'Place order');
+        if (!button) throw new Error('Place order button missing from checkout.');
+        button.click();
+        button.click();
+    });
     await expect(page.getByText('Synthetic gateway temporarily unavailable.', { exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'View order and continue payment' }))
         .toHaveAttribute('href', `/account/orders/${fakeOrderId}`);
