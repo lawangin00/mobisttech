@@ -227,7 +227,7 @@ final class OrderTransactions
             throw new LogicException('Payment provider configuration no longer matches the original intent.');
         }
         if ($payment->gateway_order_reference) {
-            return $this->sanitize(json_decode($payment->gateway_response ?? '{}', true, flags: JSON_THROW_ON_ERROR));
+            return $this->safeContinuation($this->sanitize(json_decode($payment->gateway_response ?? '{}', true, flags: JSON_THROW_ON_ERROR)));
         }
         $intent = ['order_number' => $order->order_number, 'payment_id' => $payment->public_id, 'amount' => $payment->amount, 'currency' => $payment->currency];
         $result = $this->providers->initiate($payment->gateway, $intent);
@@ -279,7 +279,7 @@ final class OrderTransactions
             throw new LogicException('Payment is no longer externally initiable; provider reference retained for reconciliation.');
         }
 
-        return $continuation['response'];
+        return $this->safeContinuation($continuation['response']);
     }
 
     public function retry(string $ownerScope, ?CustomerAccount $customer, string $orderPublicId, string $key, string $gateway): array
@@ -719,6 +719,23 @@ final class OrderTransactions
     private function digest(array $value): string
     {
         return hash('sha256', json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+    }
+
+    /** A persisted vendor reference must survive even if its hosted URL is unsafe. */
+    private function safeContinuation(array $response): array
+    {
+        if (array_key_exists('redirect_url', $response)) {
+            $url = $response['redirect_url'];
+            if (! is_string($url) || ! filter_var($url, FILTER_VALIDATE_URL)
+                || parse_url($url, PHP_URL_SCHEME) !== 'https'
+                || ! is_string(parse_url($url, PHP_URL_HOST))
+                || parse_url($url, PHP_URL_USER) !== null
+                || parse_url($url, PHP_URL_PASS) !== null) {
+                throw new LogicException('Payment provider returned an unsafe hosted continuation URL.');
+            }
+        }
+
+        return $response;
     }
 
     private function sanitize(array $result): array

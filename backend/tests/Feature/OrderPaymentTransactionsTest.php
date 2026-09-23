@@ -242,6 +242,34 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame(0, $product->fresh()->qty);
     }
 
+    public function test_w04_provider_insecure_redirect_never_issued_but_reference_is_retained(): void
+    {
+        $product = $this->product();
+        $this->acquire($product);
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-merchant', 'mode' => 'test']);
+        $registry = new PaymentProviders;
+        $registry->register('jazzcash', new class implements PaymentProvider
+        {
+            public function initiate(array $intent): array
+            {
+                return ['reference' => 'GW-'.$intent['payment_id'], 'redirect_url' => 'http://gateway.example.invalid/pay'];
+            }
+
+            public function verify(array $payload): array
+            {
+                throw new LogicException('Not used in this negative fixture.');
+            }
+        });
+        $this->app->instance(PaymentProviders::class, $registry);
+        $order = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('insecure-redirect'), $this->checkoutInput($product->public_id, 'jazzcash'));
+        $this->reject(fn () => $this->service()->initiate($order['payment_id']));
+        $this->assertSame('GW-'.$order['payment_id'], DB::table('payments')->where('public_id', $order['payment_id'])->value('gateway_order_reference'));
+        $this->reject(fn () => $this->service()->initiate($order['payment_id']));
+        $this->assertSame(0, DB::table('payment_receipts')->count());
+        $this->assertSame(0, DB::table('sales')->count());
+    }
+
     public function test_w04_duplicate_provider_order_reference_cannot_bind_to_two_payments(): void
     {
         $product = $this->product();

@@ -1,0 +1,5 @@
+# MT-7.5 / W04 — Unsafe hosted continuation rejection (23-Sep-2026)
+
+- Test-first synthetic JazzCash adapter returned an HTTP hosted redirect: before the fix both fresh initiation and its cached continuation succeeded. The Website UI rejected the unsafe scheme, but the backend still returned and persisted an unsafe payment URL.
+- `OrderTransactions::safeContinuation()` now validates any returned hosted redirect is an HTTPS URL without embedded user/password for both freshly initiated and cached payments. A provider reference received during external initiation remains durable before the unsafe redirect is rejected so a later verified receipt can be correlated; no sale or receipt is manufactured.
+- Focused fresh/cached negative and adjacent collision/in-flight tests 3/3 PASS (23 assertions); scoped Pint PASS. This is synthetic transport hygiene, **not** a provider's genuine contract or a claim that the external gateway is active. Genuine merchant enrollment, callbacks, refunds and settlement remain H-02 HOLD; W04 IN PROGRESS, MT-7.5 15/27 DONE, 12 OPEN.
