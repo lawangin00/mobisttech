@@ -35,7 +35,8 @@ final class W04EasypaisaRestClientTest extends TestCase
             '*/initiate-ma-transaction' => Http::response(['orderId' => 'order-1', 'storeId' => 43,
                 'transactionId' => 'synthetic-tx', 'responseCode' => '0000', 'responseDesc' => 'SUCCESS']),
             '*/inquire-transaction' => Http::response(['orderId' => 'order-1', 'storeId' => 43,
-                'transactionStatus' => 'PENDING', 'responseCode' => '0000']),
+                'accountNum' => '654123987', 'transactionStatus' => 'PENDING', 'paymentMode' => 'MA',
+                'transactionAmount' => '1.23', 'responseCode' => '0000']),
         ]);
         $service = new EasypaisaRestClient($this->settings());
         $this->assertSame('synthetic-tx', $service->initiateMa('order-1', '1.23', '03001234567', 'buyer@example.invalid')['transactionId']);
@@ -46,6 +47,25 @@ final class W04EasypaisaRestClientTest extends TestCase
             && $request['transactionType'] === 'MA' && $request['transactionAmount'] === '1.23');
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/inquire-transaction')
             && $request['accountNum'] === '654123987' && $request['orderId'] === 'order-1');
+    }
+
+    public function test_inquiry_rejects_mismatched_account_or_incomplete_provider_status(): void
+    {
+        foreach ([
+            ['accountNum' => 'other', 'transactionStatus' => 'PAID', 'paymentMode' => 'MA', 'transactionAmount' => '1.23'],
+            ['accountNum' => '654123987', 'transactionStatus' => 'UNKNOWN', 'paymentMode' => 'MA', 'transactionAmount' => '1.23'],
+            ['accountNum' => '654123987', 'transactionStatus' => 'PAID', 'paymentMode' => 'MA', 'transactionAmount' => '1.234'],
+            ['accountNum' => '654123987', 'transactionStatus' => 'PAID', 'paymentMode' => 'other', 'transactionAmount' => '1.23'],
+        ] as $invalid) {
+            Http::fake(['*/inquire-transaction' => Http::response(['orderId' => 'order-1', 'storeId' => 43,
+                'responseCode' => '0000', ...$invalid])]);
+            try {
+                (new EasypaisaRestClient($this->settings()))->inquire('order-1');
+                $this->fail('Unbound inquiry response accepted.');
+            } catch (LogicException $exception) {
+                $this->assertStringContainsString('payment remains unverified', $exception->getMessage());
+            }
+        }
     }
 
     public function test_mismatched_response_and_invalid_input_fail_closed(): void

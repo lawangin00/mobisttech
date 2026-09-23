@@ -33,9 +33,18 @@ final class EasypaisaRestClient
             throw new LogicException('Easypaisa inquiry account is not configured.');
         }
 
-        return $this->request('inquire-transaction', [
+        $result = $this->request('inquire-transaction', [
             'orderId' => $this->orderId($orderId), 'storeId' => $this->storeId(), 'accountNum' => $account,
         ]);
+        if (($result['accountNum'] ?? null) === null || (string) $result['accountNum'] !== $account
+            || ! in_array($result['transactionStatus'] ?? null, ['PAID', 'FAILED', 'PENDING', 'BLOCKED', 'EXPIRED', 'REVERSED'], true)
+            || ! in_array($result['paymentMode'] ?? null, ['MA', 'OTC', 'CC'], true)
+            || ! isset($result['transactionAmount']) || ! is_numeric($result['transactionAmount'])
+            || ! preg_match('/\A[0-9]+(?:\.[0-9]{1,2})?\z/', (string) $result['transactionAmount'])) {
+            throw new LogicException('Easypaisa inquiry identity or status is incomplete; payment remains unverified.');
+        }
+
+        return $result;
     }
 
     private function request(string $endpoint, array $payload): array
