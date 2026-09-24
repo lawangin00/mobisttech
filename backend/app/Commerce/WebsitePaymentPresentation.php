@@ -172,10 +172,30 @@ final class WebsitePaymentPresentation
         return $actor;
     }
 
-    /** Applies to newly created COD orders only, after server-side discounts. */
-    public function assertCodAmount(string $amount): void
+    /** Capture customer-facing terms when an order is created; later publications cannot rewrite them. */
+    public function termsForNewOrder(string $gateway): array
     {
-        $policy = $this->published();
+        $snapshot = DB::table('site_configuration_revisions')->where('domain', self::DOMAIN)
+            ->where('state', 'published')->orderByDesc('version')->first();
+        $parsed = $snapshot ? $this->parse($snapshot->snapshot) : null;
+        $policy = $parsed ?? $this->defaults();
+        abort_unless(isset($policy['channels'][$gateway]), 422);
+
+        return [
+            'gateway' => $gateway,
+            'label' => $policy['channels'][$gateway]['label'],
+            'instructions' => $policy['channels'][$gateway]['instructions'],
+            'cod_min_amount' => $gateway === 'cod' ? $policy['cod_min_amount'] : null,
+            'cod_max_amount' => $gateway === 'cod' ? $policy['cod_max_amount'] : null,
+            'presentation_version' => $parsed !== null
+                ? (int) $snapshot->version : 0,
+        ];
+    }
+
+    /** Applies to newly created COD orders only, after server-side discounts. */
+    public function assertCodAmount(string $amount, ?array $terms = null): void
+    {
+        $policy = $terms ?? $this->published();
         if ($policy['cod_min_amount'] !== null && bccomp($amount, $policy['cod_min_amount'], 2) < 0) {
             abort(422, 'Order amount is below the Cash on Delivery minimum.');
         }

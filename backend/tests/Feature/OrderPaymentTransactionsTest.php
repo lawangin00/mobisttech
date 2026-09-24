@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Addendum\FinancialReferences;
 use App\Addendum\MoneySnapshot;
+use App\Api\WebsiteApi;
 use App\Commerce\OrderTransactions;
 use App\Commerce\PaymentProvider;
 use App\Commerce\PaymentProviders;
@@ -96,6 +97,45 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertSame('paid', $this->service()->collectCod($this->actor, $this->outlet, $before['order_id'],
             $this->key('cod-before-limits-collection'), '200.02', 'COD-OLD-TERMS')['payment_status']);
         $this->assertSame(2, DB::table('orders')->count());
+    }
+
+    public function test_w04_payment_terms_snapshot_does_not_change_after_new_presentation_is_published(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 3);
+        $presentation = app(WebsitePaymentPresentation::class);
+        $firstPolicy = $presentation->defaults();
+        $firstPolicy['channels']['cod'] = ['label' => 'Pay on delivery', 'instructions' => 'Keep cash ready.'];
+        $firstPolicy['cod_max_amount'] = '300.00';
+        DB::table('site_configuration_revisions')->insert([
+            'domain' => 'website.payments.presentation', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode($firstPolicy, JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        $old = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('terms-old'), $this->checkoutInput($product->public_id, 'cod'));
+        $oldOrder = DB::table('orders')->where('public_id', $old['order_id'])->firstOrFail();
+        $oldTerms = DB::table('website_order_payment_terms')->where('order_id', $oldOrder->id)->firstOrFail();
+        $this->assertSame('Pay on delivery', $oldTerms->label);
+        $this->assertSame('Keep cash ready.', $oldTerms->instructions);
+        $this->assertSame('300.00', $oldTerms->cod_max_amount);
+        $this->assertSame(1, (int) $oldTerms->presentation_version);
+
+        $secondPolicy = $presentation->defaults();
+        $secondPolicy['channels']['cod'] = ['label' => 'Cash at doorstep', 'instructions' => 'New instruction.'];
+        $secondPolicy['cod_min_amount'] = '300.00';
+        DB::table('site_configuration_revisions')->where('domain', 'website.payments.presentation')
+            ->where('state', 'published')->update(['state' => 'superseded']);
+        DB::table('site_configuration_revisions')->insert([
+            'domain' => 'website.payments.presentation', 'version' => 2, 'state' => 'published',
+            'snapshot' => json_encode($secondPolicy, JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        $this->assertEquals($oldTerms, DB::table('website_order_payment_terms')->where('order_id', $oldOrder->id)->firstOrFail());
+        $this->assertSame('Pay on delivery', app(WebsiteApi::class)
+            ->order($this->customer, $old['order_id'])['payment_terms']['label']);
+        $this->assertSame('paid', $this->service()->collectCod($this->actor, $this->outlet,
+            $old['order_id'], $this->key('terms-collection'), '200.02', 'COD-OLD-SNAPSHOT')['payment_status']);
+        $this->assertSame(1, DB::table('website_order_payment_terms')->count());
+        $this->assertSame('Cash at doorstep', $presentation->published()['channels']['cod']['label']);
     }
 
     public function test_w04_cod_disable_blocks_new_orders_but_preserves_preexisting_collection(): void

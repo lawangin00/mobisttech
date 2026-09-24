@@ -415,7 +415,11 @@ final class WebsiteApi
             ->get(['public_id', 'gateway', 'status', 'amount', 'currency', 'initiated_at', 'paid_at'])
             ->map(fn ($row) => (array) $row)->all();
 
+        $terms = DB::table('website_order_payment_terms')->where('order_id', $order->id)
+            ->first(['gateway', 'label', 'instructions', 'cod_min_amount', 'cod_max_amount', 'presentation_version']);
+
         return $this->orderSummary($order) + ['items' => $items, 'payments' => $payments,
+            'payment_terms' => $terms ? (array) $terms : null,
             'signed_access_url' => URL::temporarySignedRoute('api.customer.orders.signed', now()->addMinutes(30), ['order' => $order->public_id])];
     }
 

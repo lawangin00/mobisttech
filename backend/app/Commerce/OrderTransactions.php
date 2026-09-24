@@ -94,8 +94,9 @@ final class OrderTransactions
             $discountAmount = $loyaltyPoints > 0 ? $loyalty['discount'] : $promotion['discount'];
             $allocations = $loyaltyPoints > 0 ? $loyalty['allocations'] : $promotion['allocations'];
             $total = bcsub($gross, $discountAmount, 2);
+            $paymentTerms = app(WebsitePaymentPresentation::class)->termsForNewOrder($data['gateway']);
             if ($data['gateway'] === 'cod') {
-                app(WebsitePaymentPresentation::class)->assertCodAmount($total);
+                app(WebsitePaymentPresentation::class)->assertCodAmount($total, $paymentTerms);
             }
             $number = 'WEB-'.now()->format('Ymd').'-'.strtoupper(Str::random(12));
             $orderId = DB::table('orders')->insertGetId([
@@ -106,6 +107,11 @@ final class OrderTransactions
                 'subtotal' => $gross, 'total' => $total, 'currency' => 'PKR', 'payment_status' => 'unpaid',
                 'user_id' => $customer?->id, 'customer_id' => $customerId,
                 'owner_scope_hash' => hash('sha256', $ownerScope), 'public_id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now(),
+            ]);
+            DB::table('website_order_payment_terms')->insert([
+                'order_id' => $orderId,
+                ...$paymentTerms,
+                'created_at' => now(),
             ]);
             if ($loyalty['applications']) {
                 $this->loyalty->bind('order', $orderId, $loyalty['applications']);

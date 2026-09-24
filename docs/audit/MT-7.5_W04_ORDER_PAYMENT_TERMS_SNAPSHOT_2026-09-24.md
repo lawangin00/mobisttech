@@ -1,0 +1,8 @@
+# MT-7.5 W04 immutable order payment terms (24-Sep-2026)
+
+Status: bounded new-order payment-terms snapshot checkpoint; W04 IN PROGRESS, MT-7.5 15/27 DONE / 12 OPEN; H-02 HOLD.
+
+- New `website_order_payment_terms` 1:1 order-child record captures selected gateway's customer-facing label/instructions, COD min/max (COD only), and effective presentation revision at creation in the same checkout transaction. Migration uses order-linked cascade only on explicit parent deletion; no historical order is backfilled or overwritten. A legacy order without a snapshot returns `payment_terms: null` rather than current terms invented as historical.
+- The exact policy read for terms is also used for server-side new COD amount validation after discounts; later Admin publications cannot reprice a previously created order or revise its saved terms. Customer-account owned order detail reads its own snapshot; signed public summary is unchanged. No merchant identifiers or credential fields are saved.
+- Isolated MySQL `mobisttech_test:13306`: focused historical-term and existing COD collection test 1/1 PASS (9 assertions); payment/API scoped regression 62/62 PASS (1,187 assertions); Website typecheck PASS; real Edge Website checkout 6/6 PASS with `CI_DISPOSABLE_RESIDUAL_TABLES=none`; scoped Pint PASS after Windows formatting correction. Migration was rolled back/reapplied only on the disposable test DB to validate the final FK behavior. No real payment or external provider accepted.
+- Full backend suite, fresh-schema hosted CI, and combined new snapshot/customer-order detail browser assertions are not established by this checkpoint. Leave W04 open pending remaining accepted gates and H-02 merchant authorization.
