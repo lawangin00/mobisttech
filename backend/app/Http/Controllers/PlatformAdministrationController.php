@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Business\BusinessProfile;
 use App\Cms\WebsiteCms;
 use App\Cms\WebsiteModePublication;
+use App\Cms\WebsiteSecretSettings;
 use App\Documents\CanonicalDocuments;
 use App\Identity\Access;
 use App\Identity\TeamMemberAdministration;
@@ -46,6 +47,7 @@ final class PlatformAdministrationController extends Controller
         PosPaymentOperations $payments,
         PosConfiguration $posConfiguration,
         BusinessProfile $businessProfile,
+        WebsiteSecretSettings $websiteSecrets,
     ) {
         $actor = $this->actor();
         abort_unless($this->canEnter($actor), 403);
@@ -185,6 +187,7 @@ final class PlatformAdministrationController extends Controller
                     'id' => $row->public_id, 'name' => $row->name,
                 ])->all(),
             'integrations' => $this->canIntegrations($actor) ? $integrations->statuses($actor) : [],
+            'website_credentials' => $actor->hasPermission('website.payment-credentials.manage') ? $websiteSecrets->metadata($actor) : [],
             'payment_destinations' => $outlet && $actor->hasPermission('config.payments.manage')
                 ? $payments->destinations($actor, $outlet, false) : [],
             'pos_configuration' => $posConfiguration->catalogue($actor),
@@ -234,6 +237,13 @@ final class PlatformAdministrationController extends Controller
     public function businessProfile(Request $request, BusinessProfile $service)
     {
         return response()->json(['data' => $service->update($this->actor(), $request->all())]);
+    }
+
+    public function websiteCredentialReplace(Request $request, string $key, WebsiteSecretSettings $service)
+    {
+        $data = $request->validate(['value' => 'required|string|max:8192']);
+
+        return response()->json(['data' => $service->replace($this->actor(), $key, $data['value'])]);
     }
 
     public function modeDraft(Request $request, WebsiteModePublication $service)

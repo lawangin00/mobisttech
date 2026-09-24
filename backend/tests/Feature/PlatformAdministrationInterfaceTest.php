@@ -407,6 +407,39 @@ class PlatformAdministrationInterfaceTest extends TestCase
         ];
     }
 
+    public function test_website_credential_http_is_masked_role_gated_and_requires_recent_auth(): void
+    {
+        Carbon::setTestNow('2026-09-25 04:00:00');
+        [$owner] = $this->admin('w07-credential-http@example.invalid',
+            [...$this->platformPermissions(), 'website.payment-credentials.manage']);
+        [$viewer] = $this->admin('w07-credential-viewer@example.invalid', ['website.theme.manage']);
+        $viewerClient = $this->client();
+        $this->login($viewerClient, $viewer->email)->assertOk();
+        $this->send($viewerClient, 'GET', '/internal/admin/platform/data')->assertOk()
+            ->assertJsonPath('data.website_credentials', []);
+        $key = 'payments.jazzcash.api_secret';
+        $url = '/internal/admin/platform/website-credentials/'.$key;
+        $this->send($viewerClient, 'PUT', $url, ['value' => 'synthetic-value'])->assertForbidden();
+        $ownerClient = $this->client();
+        $this->login($ownerClient, $owner->email)->assertOk();
+        $before = $this->send($ownerClient, 'GET', '/internal/admin/platform/data')->assertOk()->json('data.website_credentials');
+        $this->assertCount(6, $before);
+        $this->assertFalse(collect($before)->firstWhere('key', $key)['configured']);
+        $this->send($ownerClient, 'PUT', '/internal/admin/platform/website-credentials/unknown.key',
+            ['value' => 'synthetic-value'])->assertNotFound();
+        $this->send($ownerClient, 'PUT', $url, ['value' => ''])->assertUnprocessable();
+        Carbon::setTestNow('2026-09-25 04:11:00');
+        $this->send($ownerClient, 'PUT', $url, ['value' => 'synthetic-private-value'])->assertForbidden();
+        $this->send($ownerClient, 'POST', '/internal/admin/auth/confirm-password',
+            ['password' => self::PASSWORD])->assertOk();
+        $this->send($ownerClient, 'PUT', $url, ['value' => 'synthetic-private-value'])->assertOk()
+            ->assertJsonPath('data.version', 1)->assertJsonPath('data.masked_value', '********');
+        $payload = $this->send($ownerClient, 'GET', '/internal/admin/platform/data')->assertOk()->getContent();
+        $this->assertStringNotContainsString('synthetic-private-value', $payload);
+        $this->assertStringNotContainsString('ciphertext', $payload);
+        $this->assertStringContainsString('********', $payload);
+    }
+
     private function platformPermissions(): array
     {
         return [

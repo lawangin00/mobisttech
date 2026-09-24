@@ -5,7 +5,9 @@ import WebsitePresentationBuilder from './website-presentation-builder';
 import WebsiteThemeBuilder from './website-theme-builder';
 import WebsiteBrandingBuilder from './website-branding-builder';
 import WebsiteMediaLibrary from './website-media-library';
+import WebsiteSecretEditor from './website-secret-editor';
 
+type WebsiteCredential = { key:string; label:string; configured:boolean; masked_value:string|null; version:number; rotated_at:string|null };
 type ModeRevision = { id:number; version:number; state:string; mode:string|null; published_at:string|null; created_at:string };
 type PolicyRevision = { id:number; policy_type:string; version:number; state:string; effective_date:string; approval_state:string; factual_review_state:string; published_at:string|null; created_at:string };
 type Template = { template_id:string; template_key:string; version:number; document_type:string; channel:string; template_part:string; template_text:string };
@@ -31,6 +33,7 @@ type Data = {
     presentation_revisions:Revision[]; pages:PageRow[]; media:MediaRow[]; software:Software[];
     team_members:TeamMember[]; roles:Role[]; permission_catalogue:Array<{code:string;label:string}>; assignable_outlets:Array<{id:string;name:string}>;
     integrations:Array<{provider:string;status:string;account?:string|null}>; payment_destinations:Destination[];
+    website_credentials:WebsiteCredential[];
     pos_configuration:PosConfiguration; business_profile:BusinessProfile;
     promotions:Promotion[]; loyalty:Loyalty|null;
 };
@@ -96,6 +99,9 @@ function WebsiteTab({data,allowed,busy,run}:{data:Data;allowed:(p:string)=>boole
         </section>
         <section className="rounded-2xl border bg-white p-5"><h2 className="font-semibold">Mode preview / publish impact</h2>{preview?<pre className="mt-3 max-h-[520px] max-w-full overflow-auto rounded bg-slate-950 p-3 text-xs text-white">{JSON.stringify(preview,null,2)}</pre>:<p className="mt-2 text-sm text-slate-500">Preview capabilities, routes, page/navigation visibility, SEO/sitemap and cache domains before publishing.</p>}</section>
         <section className="rounded-2xl border bg-white p-5 xl:col-span-2"><h2 className="font-semibold">Global Website SEO</h2><p className="mt-1 text-sm text-slate-600">Save a private SEO presentation revision, then publish it separately below. Other managed pages retain their own SEO overrides.</p><div className="mt-3 grid gap-2 sm:grid-cols-2"><input value={globalSeoTitle} onChange={e=>setGlobalSeoTitle(e.target.value)} placeholder="Global SEO title" className="rounded border p-2 text-sm"/><input value={globalSeoDescription} onChange={e=>setGlobalSeoDescription(e.target.value)} placeholder="Global SEO description" className="rounded border p-2 text-sm"/><input value={globalSocialTitle} onChange={e=>setGlobalSocialTitle(e.target.value)} placeholder="Global social title" className="rounded border p-2 text-sm"/><input value={globalSocialDescription} onChange={e=>setGlobalSocialDescription(e.target.value)} placeholder="Global social description" className="rounded border p-2 text-sm"/><label className="flex items-center gap-2 text-xs sm:col-span-2"><input type="checkbox" checked={globalCanonical} onChange={e=>setGlobalCanonical(e.target.checked)}/> Set homepage canonical to published Website root</label></div><button disabled={busy||!allowed('website.seo.manage')} onClick={()=>void run(saveGlobalSeo)} className="mt-3 rounded border px-3 py-2 text-sm disabled:opacity-40">Save global SEO draft</button></section>
+        <WebsiteSecretEditor credentials={data.website_credentials} busy={busy}
+          allowed={allowed('website.payment-credentials.manage')}
+          submit={(key,value,clear) => void run(async()=>{await api('/internal/admin/platform/website-credentials/'+encodeURIComponent(key),{method:'PUT',body:JSON.stringify({value})});clear();})}/>
         <WebsiteThemeBuilder snapshot={(data.presentation_revisions.find(row => row.state === 'published')?.snapshot.theme ?? {}) as Record<string,unknown>}
           publishedId={data.presentation_revisions.find(row => row.state === 'published')?.id ?? 0}
           busy={busy} allowed={allowed} save={theme => void run(async()=>{await api('/internal/admin/platform/presentation/draft',{method:'POST',body:JSON.stringify({theme})});})}/>

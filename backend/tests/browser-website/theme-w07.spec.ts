@@ -24,6 +24,7 @@ test.beforeAll(() => {
   });
 });
 test.afterAll(() => {
+  execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W07CredentialE2eCleanupSeeder', '--env=testing', '--force'], { cwd: process.cwd(), stdio: 'inherit' });
   execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W07BrandingE2eCleanupSeeder', '--env=testing', '--force'], { cwd: process.cwd(), stdio: 'inherit' });
   execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W07MediaE2eCleanupSeeder', '--env=testing', '--force'], {
     cwd: process.cwd(), stdio: 'inherit',
@@ -227,6 +228,49 @@ test('W07 protected branding draft, public image gate, fallback and rollback', a
     await page.goto('/');
     await expect(page.locator('header img').first()).toHaveAttribute('src', path);
     expect((await page.request.get(path)).status()).toBe(200);
+  } finally {
+    await releaseAdmin(admin);
+    await admin.close();
+  }
+});
+
+
+test('W07 protected credentials never echo values and remain unavailable in public Website', async ({ page, context }) => {
+  test.setTimeout(150_000);
+  execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W07CredentialE2eBaselineSeeder', '--env=testing', '--force'], { cwd: process.cwd(), stdio: 'inherit' });
+  const admin = await context.newPage();
+  const secret = 'mt75-w07-browser-envelope';
+  try {
+    await admin.goto('http://127.0.0.1:18080/internal/admin/pos/login');
+    await admin.getByTestId('login-email').fill('e2e-protected-owner@example.invalid');
+    await admin.getByTestId('login-password').fill('SyntheticPass123!');
+    await admin.getByTestId('login-submit').click();
+    await admin.waitForURL('**/internal/admin/pos');
+    await admin.goto('http://127.0.0.1:18080/internal/admin/platform');
+    const editor = admin.getByRole('region', { name: 'Website credential editor' });
+    await expect(editor).toBeVisible();
+    await editor.getByRole('combobox', { name: 'Website credential key' }).selectOption('payments.card.api_secret');
+    await expect(editor.getByLabel('Credential status')).toContainText('Not configured');
+    await editor.getByRole('textbox', { name: 'New Website credential value' }).fill(secret);
+    const replaced = admin.waitForResponse(response => response.url().endsWith('/internal/admin/platform/website-credentials/payments.card.api_secret') && response.request().method() === 'PUT');
+    await editor.getByRole('button', { name: 'Replace credential' }).click();
+    const response = await replaced;
+    expect(response.status()).toBe(200);
+    const payload = await response.text();
+    expect(payload).not.toContain(secret);
+    expect(payload).toContain('********');
+    await expect(editor.getByLabel('Credential status')).toContainText('Configured ******** (version 1)');
+    await expect(editor.getByRole('textbox', { name: 'New Website credential value' })).toHaveValue('');
+    expect(await admin.locator('body').innerText()).not.toContain(secret);
+    const adminData = await admin.request.get('http://127.0.0.1:18080/internal/admin/platform/data');
+    expect(adminData.status()).toBe(200);
+    expect(await adminData.text()).not.toContain(secret);
+    const publicResponse = await page.request.get('/');
+    expect(publicResponse.status()).toBe(200);
+    expect(await publicResponse.text()).not.toContain(secret);
+    const publicApi = await page.request.get('http://127.0.0.1:18080/api/v1/content');
+    expect(publicApi.status()).toBe(200);
+    expect(await publicApi.text()).not.toContain(secret);
   } finally {
     await releaseAdmin(admin);
     await admin.close();
