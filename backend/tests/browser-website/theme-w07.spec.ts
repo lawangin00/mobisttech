@@ -90,7 +90,7 @@ test('W07 actual protected theme draft publication rollback and three-mode respo
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('style', /--mobist-color-brand:\s*#008080/);
     const rolled = admin.waitForResponse(r => r.url().endsWith(`/internal/admin/platform/presentation/${firstId}/rollback`) && r.request().method() === 'POST');
-    await revisions.getByRole('button', { name: 'Rollback', exact: true }).last().click();
+    await revisions.getByTestId(`presentation-revision-${firstId}`).getByRole('button', { name: 'Rollback', exact: true }).click();
     expect((await rolled).status()).toBe(200);
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('style', /--mobist-color-brand:\s*#005b60/);
@@ -223,7 +223,7 @@ test('W07 protected branding draft, public image gate, fallback and rollback', a
     await expect(page.locator('header img').first()).toHaveAttribute('src', '/brand/mobist-wordmark.svg');
     expect((await page.request.get(path)).status()).toBe(404);
     const rolled = admin.waitForResponse(r => r.url().endsWith(`/internal/admin/platform/presentation/${firstId}/rollback`) && r.request().method() === 'POST');
-    await revisions.getByRole('button', { name: 'Rollback', exact: true }).last().click();
+    await revisions.getByTestId(`presentation-revision-${firstId}`).getByRole('button', { name: 'Rollback', exact: true }).click();
     expect((await rolled).status()).toBe(200);
     await page.goto('/');
     await expect(page.locator('header img').first()).toHaveAttribute('src', path);
