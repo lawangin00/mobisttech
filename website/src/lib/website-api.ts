@@ -70,7 +70,12 @@ export type SoftwareRelease = {
   public_id: string; version: string; release_date: string; summary: string;
   notes: { added?: string[]; changed?: string[]; fixed?: string[]; security?: string[] }; sha256: string;
 };
+export type SitePromotion = {
+  announcement: { text: string; href: string | null; scope: string } | null;
+  banners: Array<{ title: string; body: string; href: string | null; scope: string }>;
+};
 export type ContentIndex = {
+  promotion: SitePromotion;
   pages: Array<{ slug: string; title: string; purpose: string; scope: string; show_in_navigation: boolean }>;
   policies: Array<Pick<Policy, "type" | "slug" | "title" | "footer_destination" | "effective_date" | "version">>;
   software: Array<{ slug: string; name: string; routes: Record<string, string>; sitemap: boolean }>;

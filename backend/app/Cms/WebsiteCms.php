@@ -54,6 +54,9 @@ final class WebsiteCms
         foreach (array_keys($snapshot) as $section) {
             abort_unless(app(Access::class)->allows($admin, self::PRESENTATION_PERMISSIONS[$section]), 403);
         }
+        if (array_key_exists('promotion', $snapshot)) {
+            $snapshot['promotion'] = $this->promotionSnapshot($snapshot['promotion']);
+        }
         $snapshot = $this->safeTree($snapshot);
 
         return DB::transaction(function () use ($admin, $snapshot) {
@@ -705,6 +708,45 @@ final class WebsiteCms
         if (array_key_exists('navigation', $snapshot)) {
             $this->applyNavigation($admin, $snapshot['navigation']);
         }
+    }
+
+    private function promotionSnapshot(mixed $input): array
+    {
+        abort_unless(is_array($input) && ! array_is_list($input)
+            && array_diff(array_keys($input), ['announcement', 'banners']) === [], 422, 'Invalid Website promotion layout.');
+        $banner = function (mixed $row, bool $announcement): array {
+            abort_unless(is_array($row) && ! array_is_list($row), 422, 'Promotion entry must be an object.');
+            $keys = $announcement ? ['text', 'href', 'scope'] : ['title', 'body', 'href', 'scope'];
+            abort_unless(array_diff(array_keys($row), $keys) === [], 422, 'Unknown promotion field.');
+            $scope = (string) ($row['scope'] ?? 'common');
+            abort_unless(in_array($scope, self::CAPABILITY_SCOPES, true), 422, 'Invalid promotion capability.');
+            $href = $this->nullableUrl($row['href'] ?? null);
+            if ($href !== null) {
+                abort_unless(str_starts_with($href, '/') || str_starts_with($href, 'https://'), 422, 'Public promotion links require HTTPS.');
+                if (str_starts_with($href, '/')) {
+                    abort_unless(preg_match('/\A\/[a-z0-9]+(?:[\/-][a-z0-9]+)*\z/', $href)
+                        && ! in_array(explode('/', trim($href, '/'))[0], self::PROTECTED_ROOTS, true), 422, 'Promotion cannot link to private application routes.');
+                }
+            }
+            if ($announcement) {
+                $text = $this->plain((string) ($row['text'] ?? ''), 280);
+                abort_if($text === '', 422, 'Promotion announcement text is required.');
+
+                return compact('text', 'href', 'scope');
+            }
+            $title = $this->plain((string) ($row['title'] ?? ''), 150);
+            $body = $this->plain((string) ($row['body'] ?? ''), 500);
+            abort_if($title === '', 422, 'Promotion banner title is required.');
+
+            return compact('title', 'body', 'href', 'scope');
+        };
+        $items = $input['banners'] ?? [];
+        abort_unless(is_array($items) && array_is_list($items) && count($items) <= 6, 422, 'Too many promotion banners.');
+
+        return [
+            'announcement' => isset($input['announcement']) ? $banner($input['announcement'], true) : null,
+            'banners' => array_map(fn ($item) => $banner($item, false), $items),
+        ];
     }
 
     private function applyNavigation(Admin $admin, mixed $raw): void

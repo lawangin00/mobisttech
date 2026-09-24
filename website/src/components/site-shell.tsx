@@ -74,7 +74,12 @@ export function SiteHeader({
   ].filter((value): value is { href: string; label: string } => value !== null);
   for (const item of fallback) if (!managedPaths.has(item.href) && !links.some((link) => link.href === item.href)) links.push(item);
 
+  const announcement = content?.promotion?.announcement;
   return (
+    <>
+    {announcement && <div role="status" aria-label="Site announcement" className="bg-slate-950 px-4 py-2 text-center text-sm text-white">
+      {announcement.href ? <a href={announcement.href} className="underline underline-offset-2" rel="noopener noreferrer">{announcement.text}</a> : announcement.text}
+    </div>}
     <header className="border-b border-slate-200 bg-white/95">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <Link href="/" prefetch={false} className="inline-flex items-center" aria-label={business?.business_name ?? "mobiST Technologies"}>
@@ -94,6 +99,7 @@ export function SiteHeader({
         </nav>
       </div>
     </header>
+    </>
   );
 }
 

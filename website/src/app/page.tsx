@@ -6,7 +6,7 @@ import { readCatalogue, readManagedPage, WebsiteApiError } from "@/lib/website-a
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [{ website: profile, business }, publishedHome] = await Promise.all([
+  const [{ website: profile, business, content }, publishedHome] = await Promise.all([
     readStorefrontContext(),
     readManagedPage("home").catch((error) => {
       if (error instanceof WebsiteApiError && error.status === 404) return null;
@@ -65,6 +65,14 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {(content?.promotion?.banners?.length ?? 0) > 0 && <section aria-label="Published Website banners" className="mx-auto grid max-w-7xl gap-4 px-4 py-8 sm:grid-cols-2 sm:px-6">
+        {content!.promotion.banners.map((banner, index) => <article key={index} className="rounded-2xl border bg-slate-50 p-5">
+          <h2 className="text-xl font-bold">{banner.title}</h2>
+          {banner.body && <p className="mt-2 text-slate-600">{banner.body}</p>}
+          {banner.href && <a href={banner.href} rel="noopener noreferrer" className="mt-3 inline-block underline underline-offset-2">Learn more</a>}
+        </article>)}
+      </section>}
 
       {publishedHome?.snapshot.content_purpose === "homepage" && publishedHome.snapshot.content && (
         <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">

@@ -31,3 +31,7 @@ All frozen 72/72 W06 source-file entries and 45/45 legacy route entries have an 
 ## Nested navigation implementation checkpoint (25-Sep-2026; latest)
 
 `MT-7.5_W06_NAVIGATION_HIERARCHY_2026-09-25.md`: public navigation now preserves hierarchy and hides descendants of unavailable ancestors; transitive cycles reject before publish, server Next nested menu replaces flat links. PHP 2/2 (27 assertions), typed build/Pint PASS. Real Admin-to-Next navigation/presentation browser still OPEN. W06 OPEN [E,I]; 17/27 DONE, 10 OPEN.
+
+## Website promotion/banner display checkpoint (25-Sep-2026; latest)
+
+`MT-7.5_W06_PROMOTION_BANNERS_2026-09-25.md`: protected revision-based announcement/banner snapshot now has validated safe link/text/mode, published scoped REST projection, plain text SiteHeader/Home rendering. PHP 3/3 (45 assertions) and affected Website neighbor 4/4 PASS; *direct* protected Admin-public banner browser proof pending. W06 OPEN [E,I], 17/27 DONE, 10 OPEN.

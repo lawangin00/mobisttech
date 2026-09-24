@@ -161,6 +161,53 @@ class WebsiteCmsTest extends TestCase
         $this->assertSame($items->keys()->all(), $after->keys()->all());
     }
 
+    public function test_published_announcement_and_banners_are_versioned_and_block_unsafe_links(): void
+    {
+        $mode = DB::table('site_configuration_revisions')->insertGetId([
+            'domain' => 'website.mode', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode(['mode' => 'hybrid'], JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        DB::table('website_operating_profiles')->updateOrInsert(['id' => 1], [
+            'mode' => 'hybrid', 'version' => 1, 'revision_id' => $mode, 'published_at' => now(),
+        ]);
+        $cms = app(WebsiteCms::class);
+        $first = $cms->savePresentationDraft($this->actor, ['promotion' => [
+            'announcement' => ['text' => '<strong>First W06 announcement</strong>', 'href' => '/services', 'scope' => 'digital'],
+            'banners' => [
+                ['title' => 'W06 commerce banner', 'body' => 'Synthetic products only', 'href' => '/products', 'scope' => 'commerce'],
+                ['title' => 'W06 digital banner', 'body' => 'Synthetic services only', 'href' => '/services', 'scope' => 'digital'],
+            ],
+        ]]);
+        $this->assertNull($this->getJson('/api/v1/content')->assertOk()->json('data.promotion.announcement'));
+        $cms->publishPresentation($this->actor, $first['id']);
+        $published = $this->getJson('/api/v1/content')->assertOk()
+            ->assertJsonPath('data.promotion.announcement.text', 'First W06 announcement')
+            ->assertJsonPath('data.promotion.announcement.href', '/services')
+            ->assertJsonPath('data.promotion.banners.0.title', 'W06 commerce banner')
+            ->assertJsonPath('data.promotion.banners.1.title', 'W06 digital banner');
+        $this->assertCount(2, $published->json('data.promotion.banners'));
+        $this->reject(fn () => $cms->savePresentationDraft($this->actor, ['promotion' => [
+            'announcement' => ['text' => 'Unsafe', 'href' => 'javascript:alert(1)'],
+        ]]));
+        $this->reject(fn () => $cms->savePresentationDraft($this->actor, ['promotion' => [
+            'banners' => [['title' => 'Private route', 'href' => '/checkout']],
+        ]]));
+        $next = $cms->savePresentationDraft($this->actor, ['promotion' => [
+            'announcement' => ['text' => 'Private changed banner', 'href' => '/products'],
+            'banners' => [],
+        ]]);
+        $this->getJson('/api/v1/content')->assertOk()
+            ->assertJsonPath('data.promotion.announcement.text', 'First W06 announcement');
+        $cms->publishPresentation($this->actor, $next['id']);
+        $this->getJson('/api/v1/content')->assertOk()
+            ->assertJsonPath('data.promotion.announcement.text', 'Private changed banner')
+            ->assertJsonCount(0, 'data.promotion.banners');
+        $cms->rollbackPresentation($this->actor, $first['id']);
+        $this->getJson('/api/v1/content')->assertOk()
+            ->assertJsonPath('data.promotion.announcement.text', 'First W06 announcement')
+            ->assertJsonCount(2, 'data.promotion.banners');
+    }
+
     public function test_legal_policy_publication_requires_authority_recent_auth_fact_review_and_resolved_decisions(): void
     {
         $cms = app(WebsiteCms::class);

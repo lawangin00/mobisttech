@@ -271,6 +271,16 @@ final class WebsiteApi
                 'target_behavior' => $row->target_behavior, 'scope' => $row->capability_scope,
             ])->values()->all();
 
+        $promotionJson = DB::table('site_settings')->where('key', 'cms.presentation.promotion')->value('value');
+        $promotion = $promotionJson ? json_decode($promotionJson, true, flags: JSON_THROW_ON_ERROR) : [];
+        $announcement = is_array($promotion['announcement'] ?? null) ? $promotion['announcement'] : null;
+        $bannerRows = is_array($promotion['banners'] ?? null) ? $promotion['banners'] : [];
+        $publicPromotion = [
+            'announcement' => $announcement && $this->capabilities->allowsScope((string) ($announcement['scope'] ?? 'common')) ? $announcement : null,
+            'banners' => array_values(array_filter($bannerRows, fn ($banner) => is_array($banner)
+                && $this->capabilities->allowsScope((string) ($banner['scope'] ?? 'common')))),
+        ];
+
         return [
             'pages' => $pages,
             'policies' => array_map(fn ($policy) => array_intersect_key($policy, array_flip([
@@ -278,6 +288,7 @@ final class WebsiteApi
             ])), $this->cms->publicPolicies()),
             'software' => $software,
             'navigation' => $navigation,
+            'promotion' => $publicPromotion,
         ];
     }
 
