@@ -137,12 +137,21 @@ class IdentitySecurityTest extends TestCase
             'customer_name' => 'Signed Owner', 'customer_mobile' => '03000000001', 'customer_email' => $customer->email,
             'user_id' => $customer->id, 'status' => 'completed']);
 
+        $orderId = DB::table('orders')->where('public_id', $uuid)->value('id');
+        DB::table('website_order_payment_terms')->insert([
+            'order_id' => $orderId, 'gateway' => 'cod', 'label' => 'Private saved terms',
+            'instructions' => 'Owner-only payment instructions.', 'cod_min_amount' => '100.00',
+            'cod_max_amount' => '500.00', 'presentation_version' => 1, 'created_at' => now(),
+        ]);
         $ownerClient = $this->client();
         $this->login($ownerClient, 'customer', $customer->email)->assertOk();
         $signed = $this->send($ownerClient, 'GET', '/api/v1/orders/'.$uuid)->assertOk()->json('data.signed_access_url');
+        $this->assertSame('Private saved terms', $this->send($ownerClient, 'GET', '/api/v1/orders/'.$uuid)->assertOk()->json('data.payment_terms.label'));
         $this->assertIsString($signed);
         $signedResponse = $this->getJson($signed)->assertOk()->assertJsonPath('data.number', 'MT-W01-SIGNED');
         $this->assertStringContainsString('no-store', (string) $signedResponse->headers->get('Cache-Control'));
+        $this->assertArrayNotHasKey('payment_terms', $signedResponse->json('data'));
+        $this->assertArrayNotHasKey('payments', $signedResponse->json('data'));
         $this->getJson($signed.'&signature=invalid')->assertForbidden();
 
         $expired = URL::temporarySignedRoute('api.customer.orders.signed', now()->subMinute(), ['order' => $uuid]);
