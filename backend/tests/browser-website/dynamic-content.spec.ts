@@ -1,6 +1,19 @@
 import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 
+// Admin lives on Laravel :18080. Closing a page does not release its protected desktop slot.
+async function releasePlatformBrowserAdmin(admin: import('@playwright/test').Page) {
+    if (admin.isClosed()) return;
+    const home = await admin.goto('http://127.0.0.1:18080/internal/admin/pos');
+    if (home?.status() !== 200) return;
+    const logout = admin.getByTestId('logout');
+    if (await logout.count() !== 1) return;
+    const completed = admin.waitForResponse(response => response.url().endsWith('/internal/admin/auth/logout')
+        && response.request().method() === 'POST');
+    await logout.click();
+    expect((await completed).status()).toBe(200);
+    await admin.waitForURL('**/internal/admin/pos/login');
+}
 function state(mode: 'hybrid' | 'digital_only' | 'commerce_only') {
     execFileSync('php', [
         'artisan', 'db:seed', '--class=Database\\Seeders\\WebsiteStorefrontE2eStateSeeder',
@@ -176,12 +189,13 @@ test('MT-7.5 authenticated Software draft publication reaches actual Next.js pub
         await expect(page.getByText('MT75 subsequent private revision')).toHaveCount(0);
         await expect(page.getByText('Current version: 1.0.0')).toBeVisible();
     } finally {
+        await releasePlatformBrowserAdmin(admin);
         await admin.close();
     }
 });
 
-test('W06 blank New Software draft is private and its own complete route preview is protected', async ({ page, context }) => {
-    test.setTimeout(120_000);
+test('W06 new independent Software is private until published with its own complete route family', async ({ page, context }) => {
+    test.setTimeout(180_000);
     const newUrl = '/software/mt75-w06-second';
     const firstUrl = '/software/mt54-software';
     expect((await page.goto(newUrl))?.status()).toBe(404);
@@ -231,7 +245,53 @@ test('W06 blank New Software draft is private and its own complete route preview
         await page.goto(firstUrl);
         await expect(page.getByText('Published MT54 software overview')).toBeVisible();
         await expect(page.getByText('Second product only: private W06 overview.')).toHaveCount(0);
+        // Publish the SECOND product through actual permission-protected Admin UI.
+        const release = admin.getByRole('heading', { name: 'Publish, rollback, release & canonical slug' }).locator('xpath=ancestor::section[1]');
+        const published = admin.waitForResponse(response => response.url().includes('/internal/admin/platform/software/revisions/')
+            && response.url().endsWith('/publish') && response.request().method() === 'POST');
+        await release.getByRole('button', { name: 'Publish draft v1' }).click();
+        expect((await published).status()).toBe(200);
+        await expect(release.getByRole('button', { name: 'Rollback v1' })).toBeVisible();
+        expect((await page.goto(newUrl))?.status()).toBe(200);
+        await expect(page.getByRole('heading', { name: 'MT75 W06 Second Software' })).toBeVisible();
+        await expect(page.getByText('Second product only: private W06 overview.')).toBeVisible();
+        expect(await page.title()).toContain('MT75 W06 Second Software');
+        for (const [route, title, expected] of [
+            ['privacy', 'MT75 W06 Second Software Privacy', 'Second software privacy only.'],
+            ['terms', 'MT75 W06 Second Software Terms', 'Second software terms only.'],
+            ['faq', 'MT75 W06 Second Software FAQ', 'Independent FAQ answer.'],
+        ] as const) {
+            expect((await page.goto(newUrl + '/' + route))?.status(), route).toBe(200);
+            await expect(page.getByRole('heading', { name: title })).toBeVisible();
+            await expect(page.getByText(expected)).toBeVisible();
+        }
+        await release.getByPlaceholder('1.0.0').fill('1.0.0');
+        await release.getByPlaceholder('Customer-readable release summary').fill('Second synthetic product first release only.');
+        const draftedRelease = admin.waitForResponse(response => /\/internal\/admin\/platform\/software\/[0-9a-f-]+\/releases$/.test(response.url())
+            && response.request().method() === 'POST');
+        await release.getByRole('button', { name: 'Save release draft' }).click();
+        expect((await draftedRelease).status()).toBe(200);
+        await expect(release.getByRole('button', { name: 'Publish release' })).toBeVisible();
+        const publishedRelease = admin.waitForResponse(response => /\/internal\/admin\/platform\/software\/releases\/[0-9]+\/publish$/.test(response.url())
+            && response.request().method() === 'POST');
+        await release.getByRole('button', { name: 'Publish release' }).click();
+        expect((await publishedRelease).status()).toBe(200);
+        expect((await page.goto(newUrl + '/releases'))?.status()).toBe(200);
+        await expect(page.getByRole('heading', { name: 'MT75 W06 Second Software Releases' })).toBeVisible();
+        await expect(page.getByRole('link', { name: '1.0.0' })).toBeVisible();
+        expect((await page.goto(newUrl + '/releases/1.0.0'))?.status()).toBe(200);
+        await expect(page.getByText('Second synthetic product first release only.')).toBeVisible();
+        expect((await page.goto(newUrl + '/releases/9.9.9'))?.status()).toBe(404);
+        const sitemap = await page.request.get('/sitemap.xml');
+        expect(sitemap.status()).toBe(200);
+        expect(await sitemap.text()).toContain(newUrl + '/releases');
+        // The new product's publication and release must not overwrite the first product.
+        await page.goto(firstUrl);
+        await expect(page.getByText('Published MT54 software overview')).toBeVisible();
+        await expect(page.getByText('Current version: 1.0.0')).toBeVisible();
+        await expect(page.getByText('Second product only: private W06 overview.')).toHaveCount(0);
     } finally {
+        await releasePlatformBrowserAdmin(admin);
         await admin.close();
     }
 });
