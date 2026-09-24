@@ -249,6 +249,19 @@ test('W05 real Admin delivery becomes privately available to its Customer withou
         const downloadPromise = page.waitForEvent('download');
         await files.getByRole('link', { name: 'Download securely' }).last().click();
         expect((await downloadPromise).suggestedFilename()).toBe('mt55-admin-to-customer-acceptance.txt');
+        // Same real project/file URLs cannot become public bearer links.
+        const ownedProjectUrl = new URL(page.url());
+        const privateFilePath = await files.getByRole('link', { name: 'Download securely' }).last().getAttribute('href');
+        expect(privateFilePath).toMatch(/^\/api\/customer\/projects\/[0-9a-f-]+\/files\/[0-9a-f-]+$/);
+        const guestContext = await browser.newContext();
+        try {
+            const guestProject = await guestContext.request.get('http://127.0.0.1:13000' + ownedProjectUrl.pathname.replace('/account/projects/', '/api/customer/projects/'));
+            expect([401, 403]).toContain(guestProject.status());
+            const guestFile = await guestContext.request.get('http://127.0.0.1:13000' + privateFilePath);
+            expect([401, 403]).toContain(guestFile.status());
+        } finally {
+            await guestContext.close();
+        }
     } finally {
         await releaseWebsiteTestAdmin(admin);
         await adminContext.close();
