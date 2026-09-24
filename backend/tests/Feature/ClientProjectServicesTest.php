@@ -235,6 +235,38 @@ class ClientProjectServicesTest extends TestCase
         ])->assertNotFound();
     }
 
+    public function test_expired_approved_quote_remains_owner_readable_but_cannot_create_a_new_milestone_payment_across_mode_switch(): void
+    {
+        $projects = app(ClientProjectServices::class);
+        $project = $this->project($projects);
+        $draft = $projects->createProposal($this->actor, $project['public_id'], $this->proposalInput($project['version'], '1000.00'));
+        $approved = $projects->approveProposal($this->actor, $draft['public_id']);
+        $this->fakeProvider(); // Synthetic availability isolates expiry from the external H-02 OFF gate.
+        $milestone = $approved['milestones'][0]['id'];
+        $before = [DB::table('orders')->count(), DB::table('payments')->count(), DB::table('idempotency_requests')->count()];
+
+        $this->travel(15)->days();
+        try {
+            // Authenticate after time passes: an expired session is not evidence of quote expiry.
+            $client = $this->customerClient();
+            $this->customerLogin($client, $this->customer->email)->assertOk();
+            $this->customerSend($client, 'GET', '/api/v1/projects/'.$project['public_id'])
+                ->assertOk()->assertJsonPath('data.proposals.0.amount', '1000.00')
+                ->assertJsonPath('data.proposals.0.milestones.0.payable', false);
+            $mode = app(WebsiteModePublication::class);
+            $mode->publish($this->actor, $mode->saveDraft($this->actor, 'commerce_only')['id']);
+            $this->customerSend($client, 'GET', '/api/v1/projects/'.$project['public_id'])
+                ->assertOk()->assertJsonPath('data.proposals.0.milestones.0.payable', false);
+            $this->customerSend($client, 'POST', '/api/v1/project-milestones/pay', [
+                'milestone_id' => $milestone, 'gateway' => 'jazzcash',
+            ], ['Idempotency-Key' => $this->key('expired-quote')])->assertStatus(409);
+            $this->assertSame($before, [DB::table('orders')->count(), DB::table('payments')->count(), DB::table('idempotency_requests')->count()]);
+            $this->assertSame('approved', DB::table('project_quotes')->where('public_id', $approved['quote']['public_id'])->value('status'));
+        } finally {
+            $this->travelBack();
+        }
+    }
+
     public function test_conversion_reporting_is_aggregate_and_permissions_are_separate(): void
     {
         $projects = app(ClientProjectServices::class);
