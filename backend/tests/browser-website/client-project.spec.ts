@@ -321,9 +321,29 @@ test('W05 public enquiry creates an approved owner-bound proposal through real A
             && response.request().method() === 'POST');
         await admin.getByRole('button', { name: 'Approve proposal' }).click();
         expect((await approved).ok()).toBeTruthy();
+        // Await the Admin's follow-up owned-project GET and the completed React
+        // render before trying a new transition; HTTP approval precedes reload.
+        await expect(admin.getByRole('button', { name: 'Approve proposal' })).toHaveCount(0);
+        // Actual authorized Admin UI and HTTP state transitions, not intercepted
+        // API or a preseeded Customer history. Completion of the unpaid milestone
+        // remains separately denied by the existing adjacent real-browser case.
+        for (const status of ['in_progress', 'review', 'delivered'] as const) {
+            const changed = admin.waitForResponse(response =>
+                /\/internal\/admin\/digital-operations\/projects\/[0-9a-f-]+$/.test(response.url())
+                && response.request().method() === 'PATCH');
+            await admin.locator('select').filter({ has: admin.locator('option[value="completed"]') }).first().selectOption(status);
+            await expect(admin.getByRole('button', { name: 'Transition project' })).toBeEnabled();
+            await admin.getByRole('button', { name: 'Transition project' }).click();
+            const response = await changed;
+            expect(response.status(), 'Real Admin transition ' + status).toBe(200);
+            expect((await response.json() as { data: { status: string } }).data.status).toBe(status);
+        }
         await login(page);
         await page.getByRole('link', { name: 'W05 Joined Browser Project', exact: true }).click();
         await expect(page.getByRole('heading', { name: 'W05 Joined Browser Project' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'W05 Joined Browser Project' }).locator('..')).toContainText('delivered');
+        await expect(page.getByRole('heading', { name: 'Project history' }).locator('..')
+            .getByText('project status changed', { exact: true })).toHaveCount(3);
         await expect(page.getByRole('heading', { name: 'Proposals & milestones' }).locator('..')).toContainText('W05 exact signed-off scope');
         await expect(page.getByText('PKR 10000.00', { exact: true })).toBeVisible();
         await expect(page.getByText('No external payment provider is configured.', { exact: true })).toBeVisible();
