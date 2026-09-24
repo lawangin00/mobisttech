@@ -27,3 +27,7 @@ All frozen 72/72 W06 source-file entries and 45/45 legacy route entries have an 
 ## Published Software media checkpoint (25-Sep-2026; latest)
 
 `MT-7.5_W06_MEDIA_PUBLICATION_2026-09-25.md`: genuine Admin CMS image upload, published-revision-only Laravel media endpoint, same-origin Next image rendering/OG media, foreign-product/draft/unknown/retired-media denial verified. Edge focused 1/1, joined 4/4; scoped PHP 3/3. W06 remains OPEN [I,E] for navigation hierarchy/banner, managed-page media/global SEO, second-product state/role/cache acceptance and family closure. MT-7.5 17/27 DONE, 10 OPEN.
+
+## Nested navigation implementation checkpoint (25-Sep-2026; latest)
+
+`MT-7.5_W06_NAVIGATION_HIERARCHY_2026-09-25.md`: public navigation now preserves hierarchy and hides descendants of unavailable ancestors; transitive cycles reject before publish, server Next nested menu replaces flat links. PHP 2/2 (27 assertions), typed build/Pint PASS. Real Admin-to-Next navigation/presentation browser still OPEN. W06 OPEN [E,I]; 17/27 DONE, 10 OPEN.

@@ -75,7 +75,7 @@ export type ContentIndex = {
   policies: Array<Pick<Policy, "type" | "slug" | "title" | "footer_destination" | "effective_date" | "version">>;
   software: Array<{ slug: string; name: string; routes: Record<string, string>; sitemap: boolean }>;
   navigation: Array<{
-    key: string; label: string; destination_type: "page" | "route" | "url"; destination_key: string | null;
+    key: string; parent_key: string | null; label: string; destination_type: "page" | "route" | "url"; destination_key: string | null;
     destination_payload: Record<string, unknown> | null; target_behavior: "same_tab" | "new_tab"; scope: string;
   }>;
 };

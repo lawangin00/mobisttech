@@ -1,0 +1,7 @@
+# MT-7.5 W06 nested navigation / ancestor visibility (25-Sep-2026; LOCAL)
+
+Parent SHA: `81299cc450f03b2f2dff9d27db0ee3f66c04d6cd`. Bounded W06 internal navigation behavior; partial family evidence only.
+
+- Existing versioned protected Website navigation draft/publish/rollback authority is reused. `WebsiteCms::applyNavigation` now rejects transitive parent cycles *before* changing published rows. Public content index preserves `parent_key` and stable order; only independently visible, enabled, capability-allowed entries with a full allowed parent chain are projected. Missing/hidden/mode-excluded parent hides its descendants. Next primary site shell renders nested, keyboard-accessible `details/summary` navigation rather than flattening every child into a top-level link; fallback links remain available.
+- Exclusive disposable MySQL CMS focused/neighbor PHP **2/2 PASS (27 assertions)**, including root -> child -> grandchild projection, hidden/disabled ancestor denial, cyclic draft publish denial without mutating the previous published navigation. Laravel PHP syntax/Pint, Website TypeScript and diff checks PASS. This is API/controller evidence and typed UI build, NOT yet a joined real Admin-to-public Next browser navigation acceptance. No original-site file or real navigation/content import.
+- Remaining W06: actual Admin-public browser navigation/menu/mode, presentation banners/header/footer, global SEO and managed-page media, other listed family acceptance. No stable 27-gate count increment.

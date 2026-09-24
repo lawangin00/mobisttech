@@ -728,6 +728,17 @@ final class WebsiteCms
                 'target_behavior' => in_array(($entry['target_behavior'] ?? 'same_tab'), ['same_tab', 'new_tab'], true) ? ($entry['target_behavior'] ?? 'same_tab') : 'same_tab',
                 'capability_scope' => $scope];
         }
+        // Reject transitive loops BEFORE touching published navigation rows.
+        foreach ($items as $key => $item) {
+            $ancestors = [$key => true];
+            $parent = $item['parent_key'];
+            while ($parent !== null && $parent !== '') {
+                $parent = $this->key((string) $parent, 80);
+                abort_unless(isset($items[$parent]) && ! isset($ancestors[$parent]), 422, 'Navigation contains an invalid parent cycle.');
+                $ancestors[$parent] = true;
+                $parent = $items[$parent]['parent_key'];
+            }
+        }
         DB::table('site_navigation_items')->whereNotNull('created_by_admin_id')->whereNotIn('key', array_keys($items))
             ->update(['is_visible' => false, 'is_enabled' => false, 'updated_by_admin_id' => $admin->id, 'updated_at' => now()]);
         foreach ($items as $key => $item) {

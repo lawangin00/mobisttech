@@ -20,6 +20,26 @@ function safeManagedHref(item: ContentIndex["navigation"][number]) {
   }
 }
 
+type ManagedNode = { key: string; label: string; href: string | null; external: boolean; children: ManagedNode[] };
+
+function ManagedNavLink({ node }: { node: ManagedNode }) {
+  if (!node.href) return null;
+  return node.external
+    ? <a href={node.href} target="_blank" rel="noopener noreferrer" className="rounded px-3 py-2 hover:bg-slate-100">{node.label}</a>
+    : <Link href={node.href} prefetch={false} className="rounded px-3 py-2 hover:bg-slate-100">{node.label}</Link>;
+}
+
+function ManagedNavItem({ node }: { node: ManagedNode }) {
+  if (!node.children.length) return <ManagedNavLink node={node} />;
+  return <details className="relative rounded border border-slate-200 px-1 py-1">
+    <summary className="cursor-pointer px-2 py-1">{node.label}</summary>
+    <div className="mt-1 grid min-w-40 gap-1 rounded bg-white p-1 sm:absolute sm:z-20 sm:border sm:shadow-md">
+      {node.href && <ManagedNavLink node={{ ...node, label: `View ${node.label}`, children: [] }} />}
+      {node.children.map(child => <ManagedNavItem key={child.key} node={child} />)}
+    </div>
+  </details>;
+}
+
 export function SiteHeader({
   business,
   profile,
@@ -30,13 +50,20 @@ export function SiteHeader({
   content: ContentIndex | null;
 }) {
   const routes = new Set(profile?.routes ?? []);
-  const links: Array<{ href: string; label: string; external?: boolean }> = [{ href: "/", label: "Home" }];
+  const nodes = new Map<string, ManagedNode>();
   for (const item of content?.navigation ?? []) {
     const href = safeManagedHref(item);
-    if (href && !links.some((link) => link.href === href)) {
-      links.push({ href, label: item.label, external: href.startsWith("https://") });
-    }
+    nodes.set(item.key, { key: item.key, label: item.label, href, external: Boolean(href?.startsWith("https://")), children: [] });
   }
+  const managedRoots: ManagedNode[] = [];
+  for (const item of content?.navigation ?? []) {
+    const node = nodes.get(item.key);
+    if (!node) continue;
+    if (item.parent_key && nodes.has(item.parent_key)) nodes.get(item.parent_key)!.children.push(node);
+    else managedRoots.push(node);
+  }
+  const managedPaths = new Set([...nodes.values()].map(node => node.href).filter(Boolean));
+  const links: Array<{ href: string; label: string; external?: boolean }> = managedPaths.has("/") ? [] : [{ href: "/", label: "Home" }];
   const fallback = [
     routes.has("services") ? { href: "/services", label: "Services" } : null,
     routes.has("enquiry") ? { href: "/enquiry", label: "Enquiry" } : null,
@@ -45,7 +72,7 @@ export function SiteHeader({
     routes.has("compare") ? { href: "/compare", label: "Compare" } : null,
     routes.has("cart") ? { href: "/cart", label: "Cart" } : null,
   ].filter((value): value is { href: string; label: string } => value !== null);
-  for (const item of fallback) if (!links.some((link) => link.href === item.href)) links.push(item);
+  for (const item of fallback) if (!managedPaths.has(item.href) && !links.some((link) => link.href === item.href)) links.push(item);
 
   return (
     <header className="border-b border-slate-200 bg-white/95">
@@ -59,6 +86,7 @@ export function SiteHeader({
           ) : (
             <Link key={item.href} href={item.href} prefetch={false} className="rounded-full px-3 py-2 hover:bg-slate-100">{item.label}</Link>
           ))}
+          {managedRoots.map(node => <ManagedNavItem key={node.key} node={node} />)}
           <Link href="/account" prefetch={false} className="rounded-full px-3 py-2 hover:bg-slate-100">Account</Link>
           {!links.some((item) => item.href === "/contact") && business?.business_email && (
             <a href={"mailto:" + business.business_email} className="rounded-full px-3 py-2 hover:bg-slate-100">Contact</a>

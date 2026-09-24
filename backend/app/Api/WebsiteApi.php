@@ -247,12 +247,25 @@ final class WebsiteApi
                     'sitemap' => ($published['snapshot']['seo']['sitemap'] ?? true) === true];
             })->all();
 
-        $navigation = DB::table('site_navigation_items')->where('is_visible', true)->where('is_enabled', true)
-            ->orderBy('sort_order')->orderBy('id')->get(['key', 'label', 'destination_type', 'destination_key',
-                'destination_payload', 'target_behavior', 'capability_scope'])
-            ->filter(fn ($row) => $this->capabilities->allowsScope((string) $row->capability_scope))
+        $navigationRows = DB::table('site_navigation_items')->orderBy('sort_order')->orderBy('id')
+            ->get(['id', 'parent_id', 'key', 'label', 'is_visible', 'is_enabled', 'destination_type', 'destination_key',
+                'destination_payload', 'target_behavior', 'capability_scope']);
+        $byId = $navigationRows->keyBy('id');
+        $available = $navigationRows->filter(fn ($row) => $row->is_visible && $row->is_enabled
+            && $this->capabilities->allowsScope((string) $row->capability_scope))->keyBy('id');
+        // A child is public only when every ancestor is public; cycles and missing parents fail closed.
+        $allowed = [];
+        for ($pass = 0; $pass < $available->count(); $pass++) {
+            foreach ($available as $row) {
+                if ($row->parent_id === null || isset($allowed[$row->parent_id])) {
+                    $allowed[$row->id] = true;
+                }
+            }
+        }
+        $navigation = $navigationRows->filter(fn ($row) => isset($allowed[$row->id]))
             ->map(fn ($row) => [
-                'key' => $row->key, 'label' => $row->label, 'destination_type' => $row->destination_type,
+                'key' => $row->key, 'parent_key' => $row->parent_id ? ($byId[$row->parent_id]->key ?? null) : null,
+                'label' => $row->label, 'destination_type' => $row->destination_type,
                 'destination_key' => $row->destination_key,
                 'destination_payload' => $row->destination_payload ? json_decode($row->destination_payload, true, flags: JSON_THROW_ON_ERROR) : null,
                 'target_behavior' => $row->target_behavior, 'scope' => $row->capability_scope,

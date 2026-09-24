@@ -119,6 +119,48 @@ class WebsiteCmsTest extends TestCase
         $this->get($url)->assertNotFound();
     }
 
+    public function test_nested_public_navigation_hides_children_of_hidden_parents_and_rejects_cycles(): void
+    {
+        $mode = DB::table('site_configuration_revisions')->insertGetId([
+            'domain' => 'website.mode', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode(['mode' => 'hybrid'], JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        DB::table('website_operating_profiles')->updateOrInsert(['id' => 1], [
+            'mode' => 'hybrid', 'version' => 1, 'revision_id' => $mode, 'published_at' => now(),
+        ]);
+        $cms = app(WebsiteCms::class);
+        $draft = $cms->savePresentationDraft($this->actor, ['navigation' => [
+            ['key' => 'w06-parent', 'label' => 'W06 Managed Solutions', 'destination_type' => 'route',
+                'destination_key' => 'services', 'capability_scope' => 'digital', 'sort_order' => 10],
+            ['key' => 'w06-child', 'parent_key' => 'w06-parent', 'label' => 'W06 Enquiries',
+                'destination_type' => 'route', 'destination_key' => 'enquiry', 'capability_scope' => 'digital', 'sort_order' => 20],
+            ['key' => 'w06-grandchild', 'parent_key' => 'w06-child', 'label' => 'W06 More Services',
+                'destination_type' => 'route', 'destination_key' => 'services', 'capability_scope' => 'digital', 'sort_order' => 30],
+            ['key' => 'w06-hidden', 'label' => 'W06 Hidden', 'destination_type' => 'route',
+                'destination_key' => 'services', 'is_visible' => false],
+            ['key' => 'w06-hidden-child', 'parent_key' => 'w06-hidden', 'label' => 'W06 Hidden Child',
+                'destination_type' => 'route', 'destination_key' => 'enquiry'],
+            ['key' => 'w06-off', 'label' => 'W06 Off', 'destination_type' => 'route',
+                'destination_key' => 'services', 'is_enabled' => false],
+            ['key' => 'w06-off-child', 'parent_key' => 'w06-off', 'label' => 'W06 Off Child',
+                'destination_type' => 'route', 'destination_key' => 'enquiry'],
+        ]]);
+        $cms->publishPresentation($this->actor, $draft['id']);
+        $items = collect($this->getJson('/api/v1/content')->assertOk()->json('data.navigation'))->keyBy('key');
+        $this->assertSame(['w06-parent', 'w06-child', 'w06-grandchild'], $items->keys()->all());
+        $this->assertNull($items['w06-parent']['parent_key']);
+        $this->assertSame('w06-parent', $items['w06-child']['parent_key']);
+        $this->assertSame('w06-child', $items['w06-grandchild']['parent_key']);
+        $this->assertSame('enquiry', $items['w06-child']['destination_key']);
+        $invalid = $cms->savePresentationDraft($this->actor, ['navigation' => [
+            ['key' => 'w06-cycle-a', 'parent_key' => 'w06-cycle-b', 'label' => 'A', 'destination_type' => 'route', 'destination_key' => 'services'],
+            ['key' => 'w06-cycle-b', 'parent_key' => 'w06-cycle-a', 'label' => 'B', 'destination_type' => 'route', 'destination_key' => 'enquiry'],
+        ]]);
+        $this->reject(fn () => $cms->publishPresentation($this->actor, $invalid['id']));
+        $after = collect($this->getJson('/api/v1/content')->assertOk()->json('data.navigation'))->keyBy('key');
+        $this->assertSame($items->keys()->all(), $after->keys()->all());
+    }
+
     public function test_legal_policy_publication_requires_authority_recent_auth_fact_review_and_resolved_decisions(): void
     {
         $cms = app(WebsiteCms::class);
