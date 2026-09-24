@@ -271,6 +271,8 @@ final class WebsiteApi
                 'target_behavior' => $row->target_behavior, 'scope' => $row->capability_scope,
             ])->values()->all();
 
+        $seoJson = DB::table('site_settings')->where('key', 'cms.presentation.seo')->value('value');
+        $seo = $seoJson ? json_decode($seoJson, true, flags: JSON_THROW_ON_ERROR) : [];
         $promotionJson = DB::table('site_settings')->where('key', 'cms.presentation.promotion')->value('value');
         $promotion = $promotionJson ? json_decode($promotionJson, true, flags: JSON_THROW_ON_ERROR) : [];
         $announcement = is_array($promotion['announcement'] ?? null) ? $promotion['announcement'] : null;
@@ -289,6 +291,7 @@ final class WebsiteApi
             'software' => $software,
             'navigation' => $navigation,
             'promotion' => $publicPromotion,
+            'seo' => $seo,
         ];
     }
 

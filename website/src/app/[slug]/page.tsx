@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { readManagedPage, readPolicies, readWebsiteProfile, WebsiteApiError } from "@/lib/website-api";
+import { readBusinessProfile } from "@/lib/business-profile";
 
 export const dynamic = "force-dynamic";
 
@@ -29,12 +30,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!item) return {};
   if (item.kind === "policy") return { title: item.policy.title, robots: { index: true, follow: true } };
   const page = item.page.snapshot;
+  const imageId = page.social_image_media_id;
+  const business = imageId ? await readBusinessProfile() : null;
+  const image = imageId && business ? new URL(`/${encodeURIComponent(page.slug)}/media/${imageId}`, business.public_website).href : undefined;
   return {
     title: page.seo_title ?? page.title,
     description: page.meta_description ?? undefined,
     alternates: page.canonical_url ? { canonical: page.canonical_url } : undefined,
     robots: { index: page.is_indexable, follow: page.is_indexable },
-    openGraph: { title: page.social_title ?? page.seo_title ?? page.title, description: page.social_description ?? page.meta_description ?? undefined },
+    openGraph: { title: page.social_title ?? page.seo_title ?? page.title, description: page.social_description ?? page.meta_description ?? undefined, ...(image ? { images: [{ url: image }] } : {}) },
+    twitter: image ? { card: "summary_large_image", images: [image] } : undefined,
   };
 }
 

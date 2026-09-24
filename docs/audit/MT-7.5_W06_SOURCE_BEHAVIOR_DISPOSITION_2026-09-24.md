@@ -140,3 +140,7 @@ Status: `19/W06` OPEN [I,E]; MT-7.5 **17/27 DONE, 10 OPEN**, Q01 independent exa
 ## 25-Sep-2026 evidence supersession: real published presentation
 
 Source dispositions above retain their original mapping/history. Real protected Admin -> Next published nested navigation (including ancestor-hidden/mode-filtered links), mode-scoped safe-text announcements/banners, private revisions and audited rollback now have joined Edge 6/6 evidence in `MT-7.5_W06_PRESENTATION_ADMIN_PUBLIC_JOIN_2026-09-25.md`; old statements that these exact tests are unverified are superseded. This does not assert equivalence for remaining original controls, global SEO, managed media, role/security, or overall W06 closure.
+
+### W06 current target acceptance supersession (25-Sep-2026)
+
+Global SEO is now editable through protected Admin and versioned/published; Next homepage/root reads the published value. Managed-page social images are revision-scoped, private at rest and served only by a published, mode-allowed page via a same-origin endpoint. Actual protected Admin browser checks confirm both; reserved Next application roots are blocked from CMS page creation and non-SEO roles cannot author global SEO. Evidence: `MT-7.5_W06_GLOBAL_SEO_SOCIAL_MEDIA_SECURITY_2026-09-25.md`. This supersedes only prior implementation-gap labels for these exact behaviors, not the original immutable 72-file/45-route mapping or the remaining W06 finite closure gates.

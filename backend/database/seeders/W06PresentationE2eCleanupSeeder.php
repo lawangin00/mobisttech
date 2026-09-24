@@ -18,7 +18,7 @@ final class W06PresentationE2eCleanupSeeder extends Seeder
             $revisions = DB::table('site_configuration_revisions')->where('domain', 'website.presentation')->lockForUpdate()->get();
             $navigation = DB::table('site_navigation_items')->lockForUpdate()->get();
             $settings = DB::table('site_settings')->whereIn('key', [
-                'cms.presentation.navigation', 'cms.presentation.promotion',
+                'cms.presentation.navigation', 'cms.presentation.promotion', 'cms.presentation.seo',
             ])->lockForUpdate()->get();
 
             // The W06 browser starts from a verified zero-presentation baseline. Fail before ANY
@@ -26,9 +26,10 @@ final class W06PresentationE2eCleanupSeeder extends Seeder
             foreach ($revisions as $row) {
                 $snapshot = json_decode($row->snapshot, true, flags: JSON_THROW_ON_ERROR);
                 abort_unless($owner && (int) $row->created_by_admin_id === (int) $owner
-                    && is_array($snapshot['navigation'] ?? null)
-                    && ($snapshot['navigation'][0]['key'] ?? null) === 'mt75-w06-parent'
-                    && str_starts_with((string) ($snapshot['promotion']['announcement']['text'] ?? ''), 'W06 Browser '), 409);
+                    && ((is_array($snapshot['navigation'] ?? null)
+                        && ($snapshot['navigation'][0]['key'] ?? null) === 'mt75-w06-parent'
+                        && str_starts_with((string) ($snapshot['promotion']['announcement']['text'] ?? ''), 'W06 Browser '))
+                        || str_starts_with((string) ($snapshot['seo']['title'] ?? ''), 'W06 Global SEO ')), 409);
             }
             foreach ($navigation as $row) {
                 abort_unless($owner && (int) $row->created_by_admin_id === (int) $owner
@@ -50,7 +51,7 @@ final class W06PresentationE2eCleanupSeeder extends Seeder
                 DB::table('site_navigation_items')->whereIn('id', $navIds)->delete();
             }
             DB::table('site_settings')->whereIn('key', [
-                'cms.presentation.navigation', 'cms.presentation.promotion',
+                'cms.presentation.navigation', 'cms.presentation.promotion', 'cms.presentation.seo',
             ])->delete();
             $ids = $revisions->pluck('id')->all();
             DB::table('site_configuration_revisions')->whereIn('id', $ids)->update(['restored_from_revision_id' => null]);

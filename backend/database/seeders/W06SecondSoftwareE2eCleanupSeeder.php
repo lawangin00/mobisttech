@@ -37,13 +37,13 @@ final class W06SecondSoftwareE2eCleanupSeeder extends Seeder
             $uploadedBy = DB::table('admins')->where('id', $asset->uploaded_by_admin_id)->value('email');
             abort_unless($uploadedBy === 'e2e-platform@example.invalid'
                 && $asset->sha256 === '234d066b0c0e977d7892934d114a3c8ae7404cc00b3481893eb2f592ae9ebfdc'
-                && $asset->mime_type === 'image/png' && preg_match('/\Acms\/[0-9a-f-]+\.png\z/', $asset->path), 409);
+                && $asset->disk === 'local' && $asset->mime_type === 'image/png' && preg_match('/\Acms\/[0-9a-f-]+\.png\z/', $asset->path), 409);
             DB::table('site_media_assets')->where('id', $asset->id)->delete();
 
             return $asset->path;
         });
         if ($mediaPath) {
-            abort_unless(Storage::disk('public')->delete($mediaPath), 500, 'W06 synthetic image cleanup failed.');
+            abort_unless(Storage::disk('local')->delete($mediaPath), 500, 'W06 synthetic image cleanup failed.');
         }
     }
 }

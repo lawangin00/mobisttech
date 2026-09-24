@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
 import { readStorefrontContext } from "@/lib/storefront";
 import { readCatalogue, readManagedPage, WebsiteApiError } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { website } = await readStorefrontContext();
+  return website?.content?.seo?.canonical_url === "/" ? { alternates: { canonical: "/" } } : {};
+}
 
 export default async function Home() {
   const [{ website: profile, business, content }, publishedHome] = await Promise.all([

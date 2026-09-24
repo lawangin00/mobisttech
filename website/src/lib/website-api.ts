@@ -48,7 +48,7 @@ export type ManagedPage = {
   snapshot: {
     title: string; slug: string; content: string; template: string; show_in_navigation: boolean;
     seo_title: string | null; meta_description: string | null; canonical_url: string | null;
-    social_title: string | null; social_description: string | null; is_indexable: boolean;
+    social_title: string | null; social_description: string | null; social_image_media_id: number | null; is_indexable: boolean;
     content_purpose: string; capability_scope: string; structured_content: Record<string, unknown>; service_slugs: string[];
   };
 };
@@ -74,7 +74,9 @@ export type SitePromotion = {
   announcement: { text: string; href: string | null; scope: string } | null;
   banners: Array<{ title: string; body: string; href: string | null; scope: string }>;
 };
+export type GlobalSeo = { title: string | null; description: string | null; social_title: string | null; social_description: string | null; canonical_url: string | null };
 export type ContentIndex = {
+  seo: GlobalSeo;
   promotion: SitePromotion;
   pages: Array<{ slug: string; title: string; purpose: string; scope: string; show_in_navigation: boolean }>;
   policies: Array<Pick<Policy, "type" | "slug" | "title" | "footer_destination" | "effective_date" | "version">>;

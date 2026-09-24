@@ -45,6 +45,23 @@ final class WebsiteApiController extends Controller
         return $this->responses->public($request, $api->page($slug), 'published-page.v1', 60);
     }
 
+    public function pageMedia(WebsiteApi $api, string $slug, int $media)
+    {
+        // Public access requires the exact published, mode-allowed page's image reference.
+        $page = $api->page($slug);
+        abort_unless((int) ($page['snapshot']['social_image_media_id'] ?? 0) === $media && $media > 0, 404);
+        $asset = DB::table('site_media_assets')->where('id', $media)->where('status', 'active')->first();
+        abort_unless($asset && $asset->disk === 'local' && in_array($asset->mime_type, ['image/png', 'image/jpeg', 'image/webp'], true)
+            && preg_match('/\Acms\/[0-9a-f-]+\.(?:png|jpe?g|webp)\z/i', $asset->path), 404);
+        $disk = Storage::disk('local');
+        abort_unless($disk->exists($asset->path), 404);
+
+        return response($disk->get($asset->path), 200, [
+            'Content-Type' => $asset->mime_type, 'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'no-store',
+        ]);
+    }
+
     public function policies(Request $request, WebsiteApi $api)
     {
         return $this->responses->public($request, ['items' => $api->policies()], 'published-policies.v1', 300);
@@ -66,9 +83,9 @@ final class WebsiteApiController extends Controller
         ]);
         abort_unless(in_array($media, array_map('intval', $ids), true), 404);
         $asset = DB::table('site_media_assets')->where('id', $media)->where('status', 'active')->first();
-        abort_unless($asset && in_array($asset->mime_type, ['image/png', 'image/jpeg', 'image/webp'], true)
+        abort_unless($asset && $asset->disk === 'local' && in_array($asset->mime_type, ['image/png', 'image/jpeg', 'image/webp'], true)
             && preg_match('/\Acms\/[0-9a-f-]+\.(?:png|jpe?g|webp)\z/i', $asset->path), 404);
-        $disk = Storage::disk('public');
+        $disk = Storage::disk('local');
         abort_unless($disk->exists($asset->path), 404);
 
         return response($disk->get($asset->path), 200, [

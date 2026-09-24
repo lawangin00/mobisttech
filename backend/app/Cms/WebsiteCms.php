@@ -21,6 +21,8 @@ final class WebsiteCms
 
     private const PROTECTED_ROOTS = ['account', 'admin', 'api', 'cart', 'checkout', 'login', 'order', 'payment', 'software'];
 
+    private const RESERVED_PAGE_ROOTS = ['products', 'categories', 'compare', 'enquiry', 'services', 'reset-password'];
+
     private const PRESENTATION_PERMISSIONS = [
         'homepage' => 'website.content.manage', 'catalogue' => 'website.content.manage', 'promotion' => 'website.content.manage',
         'navigation' => 'website.navigation.manage', 'seo' => 'website.seo.manage', 'theme' => 'website.theme.manage',
@@ -53,6 +55,9 @@ final class WebsiteCms
         abort_if($snapshot === [] || array_diff(array_keys($snapshot), array_keys(self::PRESENTATION_PERMISSIONS)), 422, 'Unknown Website presentation section.');
         foreach (array_keys($snapshot) as $section) {
             abort_unless(app(Access::class)->allows($admin, self::PRESENTATION_PERMISSIONS[$section]), 403);
+        }
+        if (array_key_exists('seo', $snapshot)) {
+            $snapshot['seo'] = $this->globalSeoSnapshot($snapshot['seo']);
         }
         if (array_key_exists('promotion', $snapshot)) {
             $snapshot['promotion'] = $this->promotionSnapshot($snapshot['promotion']);
@@ -147,18 +152,20 @@ final class WebsiteCms
         }
         abort_if($width > 16384 || $height > 16384, 422, 'Website media dimensions are too large.');
         $sha = hash('sha256', $bytes);
-        $existing = DB::table('site_media_assets')->where('sha256', $sha)->where('byte_size', $size)->where('mime_type', $mime)->first();
+        $existing = DB::table('site_media_assets')->where('sha256', $sha)->where('byte_size', $size)
+            ->where('mime_type', $mime)->where('disk', 'local')->first();
         if ($existing) {
             return $this->mediaPayload($existing);
         }
         $path = 'cms/'.Str::uuid().'.'.$extension;
-        $disk = Storage::disk('public');
+        // Draft CMS media must never be reachable through /storage or an eventual storage:link.
+        $disk = Storage::disk('local');
         abort_if($disk->exists($path), 500, 'Generated CMS media path already exists.');
-        abort_unless($disk->put($path, $bytes, ['visibility' => 'public']), 500, 'CMS media write failed.');
+        abort_unless($disk->put($path, $bytes, ['visibility' => 'private']), 500, 'CMS media write failed.');
         try {
             abort_unless(hash_equals($sha, hash('sha256', $disk->get($path))), 500, 'CMS media verification failed.');
             $id = DB::table('site_media_assets')->insertGetId([
-                'disk' => 'public', 'path' => $path,
+                'disk' => 'local', 'path' => $path,
                 'original_name' => $this->plain((string) ($input['original_name'] ?? ''), 255),
                 'mime_type' => $mime, 'extension' => $extension, 'byte_size' => $size,
                 'width' => $width, 'height' => $height, 'aspect_ratio' => number_format($width / $height, 6, '.', ''),
@@ -710,6 +717,24 @@ final class WebsiteCms
         }
     }
 
+    private function globalSeoSnapshot(mixed $input): array
+    {
+        abort_unless(is_array($input) && ! array_is_list($input)
+            && array_diff(array_keys($input), ['title', 'description', 'social_title', 'social_description', 'canonical_url']) === [],
+            422, 'Invalid global Website SEO settings.');
+        $canonical = $input['canonical_url'] ?? null;
+        abort_unless($canonical === null || $canonical === '' || $canonical === '/', 422,
+            'The homepage canonical URL must use the published Website root.');
+
+        return [
+            'title' => $this->nullablePlain($input['title'] ?? null, 190),
+            'description' => $this->nullablePlain($input['description'] ?? null, 320),
+            'social_title' => $this->nullablePlain($input['social_title'] ?? null, 190),
+            'social_description' => $this->nullablePlain($input['social_description'] ?? null, 320),
+            'canonical_url' => $canonical === '/' ? '/' : null,
+        ];
+    }
+
     private function promotionSnapshot(mixed $input): array
     {
         abort_unless(is_array($input) && ! array_is_list($input)
@@ -813,7 +838,8 @@ final class WebsiteCms
         abort_unless(in_array($scope, self::CAPABILITY_SCOPES, true), 422, 'Invalid page capability scope.');
         $slug = $this->slug((string) ($input['slug'] ?? ''));
         $root = explode('/', $slug)[0] ?? '';
-        abort_if(in_array($root, self::PROTECTED_ROOTS, true) || in_array($slug, array_column(self::POLICY_TYPES, 'slug'), true), 422, 'Managed pages cannot replace protected application or policy routes.');
+        abort_if(in_array($root, self::PROTECTED_ROOTS, true) || in_array($root, self::RESERVED_PAGE_ROOTS, true)
+            || in_array($slug, array_column(self::POLICY_TYPES, 'slug'), true), 422, 'Managed pages cannot replace protected application or policy routes.');
         $structured = $this->safeTree($input['structured_content'] ?? []);
         $serviceSlugs = array_values(array_unique(array_map(fn ($value) => $this->slug((string) $value), $input['service_slugs'] ?? [])));
         if ($purpose === 'service_landing') {

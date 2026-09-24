@@ -20,6 +20,7 @@ class WebsiteCmsTest extends TestCase
         parent::setUp();
         $this->inventoryFixture();
         Storage::fake('public');
+        Storage::fake('local');
     }
 
     public function test_presentation_media_and_pages_are_versioned_safe_and_do_not_leak_drafts(): void
@@ -41,7 +42,8 @@ class WebsiteCmsTest extends TestCase
 
         $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z6ZsAAAAASUVORK5CYII=');
         $media = $cms->registerMedia($this->actor, ['bytes' => $png, 'extension' => 'png', 'original_name' => 'pixel.png', 'alt_text' => 'Pixel']);
-        Storage::disk('public')->assertExists($media['path']);
+        Storage::disk('local')->assertExists($media['path']);
+        Storage::disk('public')->assertMissing($media['path']);
         $this->assertSame(hash('sha256', $png), $media['sha256']);
         $this->reject(fn () => $cms->registerMedia($this->actor, ['bytes' => $png, 'extension' => 'jpg', 'original_name' => 'spoof.jpg']));
 
@@ -75,6 +77,92 @@ class WebsiteCmsTest extends TestCase
             'structured_content' => ['consent_confirmed' => false],
         ]));
         $this->reject(fn () => $cms->savePageDraft($this->actor, null, ['title' => 'Unsafe', 'slug' => 'unsafe-copy', 'content' => '<script>alert(1)</script>']));
+    }
+
+    public function test_global_seo_requires_distinct_permission_safe_canonical_and_publish_before_public_cache(): void
+    {
+        // Repeated disposable DB transactions can reuse version numbers; isolate derived cache per test.
+        config(['infrastructure.derived_cache_store' => 'array']);
+        $mode = DB::table('site_configuration_revisions')->insertGetId([
+            'domain' => 'website.mode', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode(['mode' => 'hybrid'], JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        DB::table('website_operating_profiles')->updateOrInsert(['id' => 1], [
+            'mode' => 'hybrid', 'version' => 1, 'revision_id' => $mode, 'published_at' => now(),
+        ]);
+        $cms = app(WebsiteCms::class);
+        $editor = new Admin;
+        $editor->forceFill(['name' => 'SEO only', 'email' => 'w06-seo-only@example.invalid',
+            'password' => 'SyntheticPass123!', 'permissions' => ['website.seo.manage']])->save();
+        $this->reject(fn () => $cms->savePresentationDraft($editor, ['navigation' => []]));
+        $this->reject(fn () => $cms->savePresentationDraft($this->actor, ['seo' => ['canonical_url' => 'https://other.example/']]));
+        $safeText = $cms->savePresentationDraft($this->actor, ['seo' => ['title' => '<b>Unsafe</b>']]);
+        $this->assertSame('Unsafe', $safeText['snapshot']['seo']['title']);
+        $this->reject(fn () => $cms->savePresentationDraft($this->actor, ['seo' => ['secret' => 'not public']]));
+        $this->assertSame([], $this->getJson('/api/v1/content')->assertOk()->json('data.seo'));
+        $draft = $cms->savePresentationDraft($editor, ['seo' => [
+            'title' => 'W06 Global SEO Verified', 'description' => 'W06 visible only after publish',
+            'social_title' => 'W06 social heading', 'canonical_url' => '/',
+        ]]);
+        $this->assertSame([], $this->getJson('/api/v1/content')->assertOk()->json('data.seo'));
+        $this->reject(fn () => $cms->publishPresentation($editor, $draft['id']));
+        $cms->publishPresentation($this->actor, $draft['id']);
+        $this->getJson('/api/v1/content')->assertOk()
+            ->assertJsonPath('data.seo.title', 'W06 Global SEO Verified')
+            ->assertJsonPath('data.seo.canonical_url', '/');
+        $other = $cms->savePresentationDraft($editor, ['seo' => ['title' => 'W06 private future title']]);
+        $this->getJson('/api/v1/content')->assertOk()->assertJsonPath('data.seo.title', 'W06 Global SEO Verified');
+        $cms->rollbackPresentation($this->actor, $draft['id']);
+        $this->getJson('/api/v1/content')->assertOk()->assertJsonPath('data.seo.title', 'W06 Global SEO Verified');
+        $this->assertSame('draft', DB::table('site_configuration_revisions')->where('id', $other['id'])->value('state'));
+    }
+
+    public function test_managed_social_image_is_published_page_scoped_and_rejects_reserved_routes(): void
+    {
+        // Repeated disposable DB transactions can reuse version numbers; isolate derived cache per test.
+        config(['infrastructure.derived_cache_store' => 'array']);
+        $mode = DB::table('site_configuration_revisions')->insertGetId([
+            'domain' => 'website.mode', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode(['mode' => 'hybrid'], JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        DB::table('website_operating_profiles')->updateOrInsert(['id' => 1], [
+            'mode' => 'hybrid', 'version' => 1, 'revision_id' => $mode, 'published_at' => now(),
+        ]);
+        $cms = app(WebsiteCms::class);
+        foreach (['products', 'categories', 'compare', 'enquiry', 'services', 'reset-password', 'account'] as $reserved) {
+            $this->reject(fn () => $cms->savePageDraft($this->actor, null, [
+                'title' => 'Reserved route', 'slug' => $reserved, 'content' => '<p>Cannot shadow application routes</p>',
+            ]));
+        }
+        $bytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z6ZsAAAAASUVORK5CYII=', true);
+        $asset = $cms->registerMedia($this->actor, ['bytes' => $bytes, 'extension' => 'png',
+            'original_name' => 'w06-managed-social.png', 'alt_text' => 'Synthetic managed image']);
+        Storage::disk('local')->assertExists($asset['path']);
+        Storage::disk('public')->assertMissing($asset['path']);
+        $first = $cms->savePageDraft($this->actor, null, ['title' => 'First W06', 'slug' => 'w06-managed-one',
+            'content' => '<p>First public document.</p>', 'social_image_media_id' => $asset['id']]);
+        $second = $cms->savePageDraft($this->actor, null, ['title' => 'Other W06', 'slug' => 'w06-managed-other',
+            'content' => '<p>Other public document.</p>']);
+        $url = '/api/v1/content/pages/w06-managed-one/media/'.$asset['id'];
+        $this->get($url)->assertNotFound();
+        $cms->publishPage($this->actor, $second['id']);
+        $this->get('/api/v1/content/pages/w06-managed-other/media/'.$asset['id'])->assertNotFound();
+        $cms->publishPage($this->actor, $first['id']);
+        $this->assertSame($asset['id'], app(WebsiteCms::class)->publicPage('w06-managed-one')['snapshot']['social_image_media_id']);
+        $this->getJson('/api/v1/content/pages/w06-managed-one')->assertOk()
+            ->assertJsonPath('data.snapshot.social_image_media_id', $asset['id']);
+        $response = $this->get($url)->assertOk()->assertHeader('Content-Type', 'image/png')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+        $this->assertSame($bytes, $response->getContent());
+        $this->get('/api/v1/content/pages/w06-managed-other/media/'.$asset['id'])->assertNotFound();
+        $this->get('/api/v1/content/pages/w06-managed-one/media/999999999')->assertNotFound();
+        $revision = $cms->savePageDraft($this->actor, $first['page_public_id'], [
+            'title' => 'First W06', 'slug' => 'w06-managed-one', 'content' => '<p>Updated public document.</p>',
+            'social_image_media_id' => null,
+        ]);
+        $this->get($url)->assertOk();
+        $cms->publishPage($this->actor, $revision['id']);
+        $this->get($url)->assertNotFound();
     }
 
     public function test_public_software_image_media_requires_its_own_published_reference(): void

@@ -45,6 +45,9 @@ test.afterAll(() => {
         'artisan', 'db:seed', '--class=Database\\Seeders\\DynamicWebsiteE2eCleanupSeeder',
         '--env=testing', '--force',
     ], { cwd: process.cwd(), stdio: 'inherit' });
+    execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W06ManagedSocialMediaE2eCleanupSeeder', '--env=testing', '--force'], {
+        cwd: process.cwd(), stdio: 'inherit',
+    });
 });
 
 test('MT-5.4 published CMS, digital enquiry and Software Product routes render without draft leakage', async ({ page, request }) => {
@@ -385,6 +388,19 @@ test('W06 actual Admin managed-page SEO revision remains private until public pu
         await admin.goto('http://127.0.0.1:18080/internal/admin/platform');
         await expect(admin.getByRole('heading', { name: 'Platform Administration' })).toBeVisible();
         await admin.getByRole('button', { name: 'Content', exact: true }).click();
+        const mediaSaved = admin.waitForResponse(r => r.url().endsWith('/internal/admin/platform/media') && r.request().method() === 'POST');
+        await admin.getByRole('heading', { name: 'Website media library' }).locator('xpath=ancestor::section[1]')
+            .locator('input[type="file"]').setInputFiles({
+                name: 'mt75-w06-managed-social.png', mimeType: 'image/png',
+                buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z6ZsAAAAASUVORK5CYII=', 'base64'),
+            });
+        const savedMedia = await mediaSaved;
+        expect(savedMedia.status()).toBe(200);
+        const assetId: number = (await savedMedia.json()).data.id;
+        expect(assetId).toBeGreaterThan(0);
+        const mediaUrl = url + '/media/' + assetId;
+        expect((await page.request.get(mediaUrl)).status()).toBe(404);
+        expect((await page.request.get('/software/mt54-software/media/' + assetId)).status()).toBe(404);
         const editor = admin.getByRole('heading', { name: 'Managed pages & digital content' }).locator('xpath=ancestor::section[1]');
         const caseOption = editor.locator('select').first().locator('option', { hasText: 'MT54 Case Study' });
         const caseId = await caseOption.getAttribute('value');
@@ -396,6 +412,7 @@ test('W06 actual Admin managed-page SEO revision remains private until public pu
         await editor.getByPlaceholder('Managed page canonical URL').fill('/mt54-case-study');
         await editor.getByPlaceholder('Managed page social title').fill('W06 Managed Social Heading');
         await editor.getByPlaceholder('Managed page social description').fill('W06 managed social description.');
+        await editor.getByLabel('Managed page social image').selectOption(String(assetId));
         await editor.getByLabel('Include managed page in sitemap').uncheck();
         const draft = admin.waitForResponse(response => response.url().endsWith('/internal/admin/platform/pages/draft')
             && response.request().method() === 'POST');
@@ -405,6 +422,7 @@ test('W06 actual Admin managed-page SEO revision remains private until public pu
         await page.goto(url);
         await expect(page.getByText('Published anonymous case study.')).toBeVisible();
         await expect(page).not.toHaveTitle(/W06 Independent Managed SEO Title/);
+        expect((await page.request.get(mediaUrl)).status()).toBe(404);
         expect(await (await page.request.get('/sitemap.xml')).text()).toContain(url);
         const published = admin.waitForResponse(response => /\/internal\/admin\/platform\/pages\/[0-9]+\/publish$/.test(response.url())
             && response.request().method() === 'POST');
@@ -415,6 +433,13 @@ test('W06 actual Admin managed-page SEO revision remains private until public pu
         await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', 'W06 private draft SEO description.');
         await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/mt54-case-study$/);
         await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'W06 Managed Social Heading');
+        await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', new RegExp(`/mt54-case-study/media/${assetId}$`));
+        await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute('content', new RegExp(`/mt54-case-study/media/${assetId}$`));
+        const publicImage = await page.request.get(mediaUrl);
+        expect(publicImage.status()).toBe(200);
+        expect(publicImage.headers()['content-type']).toContain('image/png');
+        expect((await publicImage.body()).length).toBe(68);
+        expect((await page.request.get('/software/mt54-software/media/' + assetId)).status()).toBe(404);
         await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
         expect((await (await page.request.get('/sitemap.xml')).text())).not.toContain(url);
         await page.goto('/');
@@ -542,5 +567,50 @@ test('W06 genuine Admin presentation joins nested navigation and scoped banners 
             await releasePlatformBrowserAdmin(admin);
             await admin.close();
         }
+    }
+});
+
+
+test('W06 published global SEO remains draft-isolated and separate from product-specific metadata', async ({ page, context }) => {
+    test.setTimeout(150_000);
+    await page.goto('/');
+    await expect(page).not.toHaveTitle(/W06 Global SEO /);
+    const admin = await context.newPage();
+    try {
+        await admin.goto('http://127.0.0.1:18080/internal/admin/pos/login');
+        await admin.getByTestId('login-email').fill('e2e-platform@example.invalid');
+        await admin.getByTestId('login-password').fill('SyntheticPass123!');
+        await admin.getByTestId('login-submit').click();
+        await admin.waitForURL('**/internal/admin/pos');
+        await admin.goto('http://127.0.0.1:18080/internal/admin/platform');
+        const editor = admin.getByRole('heading', { name: 'Global Website SEO' }).locator('xpath=ancestor::section[1]');
+        await editor.getByPlaceholder('Global SEO title').fill('W06 Global SEO Published Homepage');
+        await editor.getByPlaceholder('Global SEO description').fill('W06 global description, revision one.');
+        await editor.getByPlaceholder('Global social title').fill('W06 Global SEO Social Preview');
+        await editor.getByPlaceholder('Global social description').fill('W06 global social description.');
+        await editor.getByLabel('Set homepage canonical to published Website root').check();
+        const saved = admin.waitForResponse(r => r.url().endsWith('/internal/admin/platform/presentation/draft') && r.request().method() === 'POST');
+        await editor.getByRole('button', { name: 'Save global SEO draft' }).click();
+        const result = await saved;
+        expect(result.status()).toBe(200);
+        const id: number = (await result.json()).data.id;
+        await page.goto('/');
+        await expect(page).not.toHaveTitle(/W06 Global SEO /);
+        await expect(page.locator('meta[name="description"]')).not.toHaveAttribute('content', 'W06 global description, revision one.');
+        const presentation = admin.getByRole('heading', { name: 'Website presentation, branding, theme, navigation & SEO' }).locator('xpath=ancestor::section[1]');
+        const published = admin.waitForResponse(r => r.url().endsWith(`/internal/admin/platform/presentation/${id}/publish`) && r.request().method() === 'POST');
+        await presentation.getByRole('button', { name: 'Publish', exact: true }).click();
+        expect((await published).status()).toBe(200);
+        await page.goto('/');
+        await expect(page).toHaveTitle(/W06 Global SEO Published Homepage/);
+        await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', 'W06 global description, revision one.');
+        await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'W06 Global SEO Social Preview');
+        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /https:\/\/mobisttech\.com\/?$/);
+        await page.goto('/software/mt54-software');
+        await expect(page).toHaveTitle(/MT54 Software/);
+        await expect(page).not.toHaveTitle(/W06 Global SEO Published Homepage/);
+    } finally {
+        await releasePlatformBrowserAdmin(admin);
+        await admin.close();
     }
 });
