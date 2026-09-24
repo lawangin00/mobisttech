@@ -78,6 +78,19 @@ if (in_array($mode, ['admin-google', 'orders', 'team-members', 'procurement', 's
     }
 }
 if (in_array($mode, ['orders', 'team-members', 'procurement', 'stocktake', 'transfer', 'payments', 'cash', 'trade-in', 'promotion', 'loyalty', 'repair', 'documents', 'cms', 'digital-services', 'projects', 'engagement', 'operations', 'reset', 'api'], true)) {
+    // W04 immutable, nonsecret Website order terms are an order-bound child;
+    // the older MT-2.1 TARGET_SCHEMA baseline must remain unchanged.
+    $expected[] = 'website_order_payment_terms';
+    foreach (['order_id', 'gateway', 'label', 'instructions', 'cod_min_amount', 'cod_max_amount', 'presentation_version', 'created_at'] as $column) {
+        if (! $schema->hasColumn('website_order_payment_terms', $column)) {
+            throw new RuntimeException('Missing Website order payment-term column: '.$column);
+        }
+    }
+    $termForeign = collect($schema->getForeignKeys('website_order_payment_terms'))->first(fn ($foreign) => $foreign['foreign_table'] === 'orders'
+        && $foreign['columns'] === ['order_id'] && $foreign['foreign_columns'] === ['id']);
+    if (! $termForeign) {
+        throw new RuntimeException('Website order payment terms must reference the originating order.');
+    }
     foreach (['owner_scope_hash'] as $column) {
         if (! $schema->hasColumn('orders', $column)) {
             throw new RuntimeException('Missing order ownership column: '.$column);
