@@ -187,6 +187,29 @@ final class OrderTransactions
             if ($milestone->paid_payment_id || $quote->status !== 'approved' || ($quote->expires_at && now()->gte($quote->expires_at)) || ! $ownerMatches) {
                 throw new LogicException('Milestone ownership, state or validity check failed.');
             }
+            // The milestone row is locked above and has one unique order-item binding.
+            // A fresh request key after navigation/reload must reuse its pending intent,
+            // not attempt a second milestone order or overwrite its saved payment terms.
+            $existing = DB::table('order_item_milestones as link')
+                ->join('order_items as item', 'item.id', '=', 'link.order_item_id')
+                ->join('orders as parent', 'parent.id', '=', 'item.order_id')
+                ->join('payments as payment', 'payment.order_id', '=', 'parent.id')
+                ->where('link.milestone_id', $milestone->id)
+                ->first(['parent.public_id as order_public_id', 'parent.order_number',
+                    'parent.user_id', 'parent.status as order_status', 'parent.payment_status as order_payment_status',
+                    'payment.public_id as payment_public_id', 'payment.gateway', 'payment.status as payment_status',
+                    'payment.amount', 'payment.currency']);
+            if ($existing) {
+                if ((int) $existing->user_id !== (int) $customer->id
+                    || $existing->order_status !== 'pending' || $existing->order_payment_status !== 'unpaid'
+                    || $existing->payment_status !== 'pending' || $existing->gateway !== $data['gateway']) {
+                    throw new LogicException('Milestone already has a payment order; continue or reconcile the existing order.');
+                }
+
+                return ['order_id' => $existing->order_public_id, 'order_number' => $existing->order_number,
+                    'payment_id' => $existing->payment_public_id, 'payment_status' => $existing->payment_status,
+                    'amount' => $existing->amount, 'currency' => $existing->currency];
+            }
             $number = 'PRJ-'.now()->format('Ymd').'-'.strtoupper(Str::random(12));
             $orderId = DB::table('orders')->insertGetId(['order_number' => $number, 'order_type' => 'digital', 'status' => 'pending',
                 'customer_name' => $customer->name, 'customer_mobile' => $customer->mobile ?? $quote->customer_mobile,

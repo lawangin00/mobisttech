@@ -150,6 +150,12 @@ test('MT-5.2 inactive commerce prunes cart but preserves authenticated historica
 
 test('MT-7.5 W01 customer owns expiring historical access and private profile media', async ({ page }) => {
     test.setTimeout(90_000);
+    // This is the sixth independent synthetic account login in the joined hosted
+    // customer/project suite. Reset only disposable test cache between journeys;
+    // never alter the production identity limiter or an in-flight login.
+    if (process.env.CI === 'true' || process.env.MT75_FIRST_OUTLET_E2E_ENABLED === '1') {
+        execFileSync('php', ['artisan', 'cache:clear', '--env=testing'], { cwd: process.cwd(), stdio: 'inherit' });
+    }
     await login(page);
 
     const adminRealm = await page.context().request.get('http://127.0.0.1:18080/internal/admin/account', {

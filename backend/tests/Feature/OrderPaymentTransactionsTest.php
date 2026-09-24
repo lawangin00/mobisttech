@@ -1046,6 +1046,24 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertNull($saved->cod_min_amount);
         $this->assertNull($saved->cod_max_amount);
         $this->assertSame('Project wallet', app(WebsiteApi::class)->order($this->customer, $created['order_id'])['payment_terms']['label']);
+        $recovered = $this->service()->milestone($this->customer, $this->key('milestone-after-navigation'),
+            ['milestone_id' => $milestone, 'gateway' => 'jazzcash']);
+        $this->assertSame($created, $recovered);
+        $this->assertSame(1, DB::table('orders')->count());
+        $this->assertSame(1, DB::table('payments')->count());
+        $this->assertSame(1, DB::table('website_order_payment_terms')->count());
+        $this->assertSame(1, DB::table('order_item_milestones')->count());
+        config()->set('commerce.providers.card', ['enabled' => true, 'merchant' => 'synthetic-card', 'mode' => 'test']);
+        app(PaymentProviders::class)->register('card', new FakePaymentProvider);
+        try {
+            $this->service()->milestone($this->customer, $this->key('milestone-other-gateway'),
+                ['milestone_id' => $milestone, 'gateway' => 'card']);
+            $this->fail('A different gateway replaced an existing pending milestone order.');
+        } catch (LogicException $exception) {
+            $this->assertStringContainsString('already has a payment order', $exception->getMessage());
+        }
+        $this->assertSame(1, DB::table('orders')->count());
+        $this->assertSame(1, DB::table('payments')->count());
         $newPolicy = app(WebsitePaymentPresentation::class)->defaults();
         $newPolicy['channels']['jazzcash'] = ['label' => 'Updated wallet', 'instructions' => 'New terms only.'];
         DB::table('site_configuration_revisions')->where('domain', 'website.payments.presentation')->where('state', 'published')->update(['state' => 'superseded']);
@@ -1055,6 +1073,9 @@ class OrderPaymentTransactionsTest extends TestCase
         ]);
         $this->assertEquals($saved, DB::table('website_order_payment_terms')->where('order_id', $orderId)->firstOrFail());
         $this->assertSame('Project wallet', app(WebsiteApi::class)->order($this->customer, $created['order_id'])['payment_terms']['label']);
+        $this->assertSame($created, $this->service()->milestone($this->customer, $this->key('milestone-after-policy-change'),
+            ['milestone_id' => $milestone, 'gateway' => 'jazzcash']));
+        $this->assertEquals($saved, DB::table('website_order_payment_terms')->where('order_id', $orderId)->firstOrFail());
         $init = $this->service()->initiate($created['payment_id']);
         $paid = $this->service()->callback('jazzcash', $fake->paid('EVT-M', $init['reference'], '100.00'));
         $this->assertSame('paid', $paid['payment_status']);

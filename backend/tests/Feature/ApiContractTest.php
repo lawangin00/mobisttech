@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Addendum\FinancialReferences;
+use App\Addendum\MoneySnapshot;
 use App\Addendum\WebsiteCapabilities;
 use App\Cms\WebsiteCms;
 use App\Commerce\PaymentProvider;
@@ -557,6 +559,56 @@ class ApiContractTest extends TestCase
         ]);
 
         return $product;
+    }
+
+    public function test_w04_project_milestone_http_new_key_reuses_existing_pending_owned_order(): void
+    {
+        $this->publishMode('digital_only', 1);
+        $customer = $this->customer('w04-milestone-recovery@example.invalid', '03001112247');
+        $client = $this->client();
+        $this->login($client, $customer->email)->assertOk();
+        config()->set('commerce.providers.jazzcash', ['enabled' => true, 'merchant' => 'synthetic-wallet', 'mode' => 'test']);
+        $registry = new PaymentProviders;
+        $registry->register('jazzcash', new Mt53ApiPaymentProvider);
+        $this->app->instance(PaymentProviders::class, $registry);
+        $quote = DB::table('project_quotes')->insertGetId([
+            'reference' => 'W04-HTTP-MILESTONE', 'client_name' => $customer->name,
+            'customer_mobile' => $customer->mobile, 'customer_email' => $customer->email,
+            'title' => 'Synthetic owned milestone', 'amount' => '150.00', 'status' => 'approved',
+            'public_id' => (string) Str::uuid(),
+        ]);
+        $quotePublic = DB::table('project_quotes')->where('id', $quote)->value('public_id');
+        $milestone = app(FinancialReferences::class)->milestone($quote,
+            MoneySnapshot::milestone((string) Str::uuid(), $quotePublic, 1, '150.00', str_repeat('a', 64)));
+        $payload = ['milestone_id' => $milestone, 'gateway' => 'jazzcash'];
+        $first = $this->send($client, 'POST', '/api/v1/project-milestones/pay', $payload, true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'w04-milestone-original-'.Str::uuid(),
+        ])->assertCreated()->json('data');
+        $second = $this->send($client, 'POST', '/api/v1/project-milestones/pay', $payload, true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'w04-milestone-revisit-'.Str::uuid(),
+        ])->assertCreated()->json('data');
+        $this->assertSame($first, $second);
+        $this->assertSame(1, DB::table('orders')->count());
+        $this->assertSame(1, DB::table('payments')->count());
+        $this->assertSame(1, DB::table('website_order_payment_terms')->count());
+        config()->set('commerce.providers.card', ['enabled' => true, 'merchant' => 'synthetic-card', 'mode' => 'test']);
+        $registry->register('card', new Mt53ApiPaymentProvider);
+        $this->send($client, 'POST', '/api/v1/project-milestones/pay',
+            ['milestone_id' => $milestone, 'gateway' => 'card'], true, [
+                'HTTP_IDEMPOTENCY_KEY' => 'w04-milestone-changed-gateway-'.Str::uuid(),
+            ])->assertStatus(409)->assertJsonPath('error.code', 'api_409');
+        $this->assertSame(1, DB::table('orders')->count());
+        $this->assertSame(1, DB::table('payments')->count());
+        $this->send($client, 'GET', '/api/v1/orders/'.$first['order_id'])->assertOk()
+            ->assertJsonPath('data.payment_terms.gateway', 'jazzcash');
+        $foreign = $this->customer('w04-milestone-foreign@example.invalid', '03001112248');
+        $other = $this->client();
+        $this->login($other, $foreign->email)->assertOk();
+        $this->send($other, 'GET', '/api/v1/orders/'.$first['order_id'])->assertNotFound();
+        $this->send($other, 'POST', '/api/v1/project-milestones/pay', $payload, true, [
+            'HTTP_IDEMPOTENCY_KEY' => 'w04-milestone-foreign-'.Str::uuid(),
+        ])->assertStatus(409);
+        $this->assertSame(1, DB::table('orders')->count());
     }
 
     public function test_w04_project_payment_http_excludes_cod_and_rejects_unavailable_gateway_without_mutation(): void
