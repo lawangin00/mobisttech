@@ -193,6 +193,11 @@ final class OrderTransactions
                 'customer_email' => $customer->email, 'project_reference' => $quote->reference, 'subtotal' => $milestone->approved_amount,
                 'total' => $milestone->approved_amount, 'currency' => 'PKR', 'payment_status' => 'unpaid', 'user_id' => $customer->id,
                 'owner_scope_hash' => hash('sha256', $scope), 'public_id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('website_order_payment_terms')->insert([
+                'order_id' => $orderId,
+                ...app(WebsitePaymentPresentation::class)->termsForNewOrder($data['gateway']),
+                'created_at' => now(),
+            ]);
             $item = DB::table('order_items')->insertGetId(['order_id' => $orderId, 'item_type' => 'project_milestone', 'title' => $quote->title,
                 'quantity' => 1, 'unit_price' => $milestone->approved_amount, 'line_total' => $milestone->approved_amount,
                 'project_quote_id' => $quote->id, 'external_reference' => $milestone->id, 'created_at' => now(), 'updated_at' => now()]);

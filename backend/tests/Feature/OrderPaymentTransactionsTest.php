@@ -1030,7 +1030,31 @@ class OrderPaymentTransactionsTest extends TestCase
         $quotePublic = DB::table('project_quotes')->where('id', $quote)->value('public_id');
         $milestone = app(FinancialReferences::class)->milestone($quote, MoneySnapshot::milestone((string) Str::uuid(), $quotePublic, 1, '100.00', str_repeat('a', 64)));
         $this->publishMode('digital_only', 2);
+        $oldPolicy = app(WebsitePaymentPresentation::class)->defaults();
+        $oldPolicy['channels']['jazzcash'] = ['label' => 'Project wallet', 'instructions' => 'Original project payment terms.'];
+        DB::table('site_configuration_revisions')->insert([
+            'domain' => 'website.payments.presentation', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode($oldPolicy, JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
         $created = $this->service()->milestone($this->customer, $this->key('milestone'), ['milestone_id' => $milestone, 'gateway' => 'jazzcash']);
+        $orderId = DB::table('orders')->where('public_id', $created['order_id'])->value('id');
+        $saved = DB::table('website_order_payment_terms')->where('order_id', $orderId)->firstOrFail();
+        $this->assertSame('jazzcash', $saved->gateway);
+        $this->assertSame('Project wallet', $saved->label);
+        $this->assertSame('Original project payment terms.', $saved->instructions);
+        $this->assertSame(1, (int) $saved->presentation_version);
+        $this->assertNull($saved->cod_min_amount);
+        $this->assertNull($saved->cod_max_amount);
+        $this->assertSame('Project wallet', app(WebsiteApi::class)->order($this->customer, $created['order_id'])['payment_terms']['label']);
+        $newPolicy = app(WebsitePaymentPresentation::class)->defaults();
+        $newPolicy['channels']['jazzcash'] = ['label' => 'Updated wallet', 'instructions' => 'New terms only.'];
+        DB::table('site_configuration_revisions')->where('domain', 'website.payments.presentation')->where('state', 'published')->update(['state' => 'superseded']);
+        DB::table('site_configuration_revisions')->insert([
+            'domain' => 'website.payments.presentation', 'version' => 2, 'state' => 'published',
+            'snapshot' => json_encode($newPolicy, JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        $this->assertEquals($saved, DB::table('website_order_payment_terms')->where('order_id', $orderId)->firstOrFail());
+        $this->assertSame('Project wallet', app(WebsiteApi::class)->order($this->customer, $created['order_id'])['payment_terms']['label']);
         $init = $this->service()->initiate($created['payment_id']);
         $paid = $this->service()->callback('jazzcash', $fake->paid('EVT-M', $init['reference'], '100.00'));
         $this->assertSame('paid', $paid['payment_status']);
