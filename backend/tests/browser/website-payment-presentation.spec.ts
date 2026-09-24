@@ -20,6 +20,9 @@ test('W04 authorized Admin publishes new-only nonsecret payment presentation wit
     await page.getByTestId('login-password').fill('SyntheticPass123!');
     await page.getByTestId('login-submit').click();
     await page.waitForURL('**/internal/admin/pos');
+    // Wait for the authenticated POS shell to finish its login navigation before
+    // starting a second full navigation to the payment settings page.
+    await expect(page.getByTestId('logout')).toBeVisible();
     expect((await page.goto(pagePath))?.status()).toBe(200);
     await expect(page.getByRole('heading', { name: 'Payment labels, instructions and COD limits' })).toBeVisible();
     const codGroup = page.getByRole('group', { name: 'COD' });
