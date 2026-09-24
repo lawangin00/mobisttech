@@ -90,7 +90,7 @@ test('W04 project milestone initiation failure retains its owned order for conti
     const fakePaymentId = '00000000-0000-4000-8000-000000000086';
     await page.route('**/api/customer/project-payment-channels', async (route) => {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [
-            { code: 'jazzcash', label: 'JazzCash', available: true },
+            { code: 'jazzcash', label: 'JazzCash', instructions: 'Use hosted wallet checkout.', available: true },
             { code: 'easypaisa', label: 'Easypaisa', available: false },
             { code: 'card', label: 'Credit / Debit Card', available: false },
         ] } }) });
@@ -119,6 +119,7 @@ test('W04 project milestone initiation failure retains its owned order for conti
     });
     await page.getByRole('link', { name: 'MT55 Client Project', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Pay with JazzCash' })).toBeEnabled();
+    await expect(page.getByText('Use hosted wallet checkout.', { exact: true })).toBeVisible();
     await page.evaluate(() => {
         const pay = [...document.querySelectorAll('button')].find((button) => button.textContent === 'Pay with JazzCash');
         if (!pay) throw new Error('Synthetic milestone payment option missing.');

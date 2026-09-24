@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { customerRequest } from "@/lib/customer-api";
 
-type Channel = { code: "jazzcash" | "easypaisa" | "card"; label: string; available: boolean };
+type Channel = { code: "jazzcash" | "easypaisa" | "card"; label: string; instructions?: string; available: boolean };
 type Milestone = {
   id: string; sequence: number; kind: string; label: string; amount: string; currency: string;
   due_at: string | null; paid_at: string | null; payment_status: string; payable: boolean;
@@ -149,7 +149,7 @@ export function CustomerProjectPortal({ projectId }: { projectId: string }) {
         {proposal.quote && <p className="mt-3 text-xs text-slate-500">Quote {proposal.quote.reference} · {pretty(proposal.quote.status)} · expires {formatDate(proposal.quote.expires_at)}</p>}
         <div className="mt-5 space-y-3">{proposal.milestones.map((milestone) => <div key={milestone.id} className="rounded-xl bg-slate-50 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3"><div><strong>{milestone.label}</strong><p className="text-sm text-slate-600">{milestone.currency} {milestone.amount} · due {formatDate(milestone.due_at)} · {milestone.paid_at ? "paid " + formatDate(milestone.paid_at) : pretty(milestone.payment_status)}</p></div>
-          {milestone.payable && <div className="flex flex-wrap gap-2">{availableChannels.length === 0 ? <span className="text-xs text-slate-500">No external payment provider is configured.</span> : availableChannels.map((channel) => <button key={channel.code} disabled={Boolean(busy) || createdPayment?.milestoneId === milestone.id} onClick={() => void pay(milestone, channel.code)} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">Pay with {channel.label}</button>)}</div>}</div>
+          {milestone.payable && <div className="flex flex-wrap gap-2">{availableChannels.length === 0 ? <span className="text-xs text-slate-500">No external payment provider is configured.</span> : availableChannels.map((channel) => <div key={channel.code} className="max-w-xs"><button disabled={Boolean(busy) || createdPayment?.milestoneId === milestone.id} onClick={() => void pay(milestone, channel.code)} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">Pay with {channel.label}</button>{channel.instructions && <p className="mt-1 whitespace-pre-wrap text-xs text-slate-600">{channel.instructions}</p>}</div>)}</div>}</div>
         </div>)}</div>
       </article>)}</div>
     </section>
