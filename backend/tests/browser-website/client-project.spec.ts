@@ -1,6 +1,20 @@
 import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 
+// Admin is on Laravel :18080; the POS helper's relative :13000 Website URL cannot release this session.
+async function releaseWebsiteTestAdmin(admin: import('@playwright/test').Page) {
+    if (admin.isClosed()) return;
+    const home = await admin.goto('http://127.0.0.1:18080/internal/admin/pos');
+    if (home?.status() !== 200) return;
+    const logout = admin.getByTestId('logout');
+    if (await logout.count() !== 1) return;
+    const response = admin.waitForResponse(result => result.url().endsWith('/internal/admin/auth/logout')
+        && result.request().method() === 'POST');
+    await logout.click();
+    expect((await response).status()).toBe(200);
+    await admin.waitForURL('**/internal/admin/pos/login');
+}
+
 function state(mode: 'hybrid' | 'digital_only' | 'commerce_only') {
     execFileSync('php', [
         'artisan', 'db:seed', '--class=Database\\Seeders\\WebsiteStorefrontE2eStateSeeder',
@@ -194,4 +208,118 @@ test('W04 owned pending digital order reports missing hosted continuation withou
     await expect(page.getByRole('button', { name: 'Continue payment' })).toBeEnabled();
     await expect(page.getByRole('button', { name: 'Retry with JazzCash' })).toHaveCount(0);
     expect(initiations).toBe(1);
+});
+test('W05 real Admin delivery becomes privately available to its Customer without hosted payment', async ({ page, browser }) => {
+    test.setTimeout(120_000);
+    const adminContext = await browser.newContext();
+    const admin = await adminContext.newPage();
+    try {
+        await admin.goto('http://127.0.0.1:18080/internal/admin/pos/login');
+        await admin.getByTestId('login-email').fill('e2e-digital-operations@example.invalid');
+        await admin.getByTestId('login-password').fill('SyntheticPass123!');
+        await admin.getByTestId('login-submit').click();
+        await admin.waitForURL('**/internal/admin/pos');
+        await admin.goto('http://127.0.0.1:18080/internal/admin/digital-operations');
+        await expect(admin.getByRole('heading', { name: 'Digital Operations' })).toBeVisible();
+        await admin.getByRole('button', { name: 'Projects', exact: true }).click();
+        const projects = admin.getByRole('heading', { name: 'Client projects' }).locator('xpath=ancestor::section[1]');
+        await projects.getByRole('button', { name: /MT55/ }).click();
+        await expect(admin.getByRole('heading', { name: /MT55-E2E|MT55 Client Project/ })).toBeVisible();
+        // The real protected API must reject project completion with an unpaid milestone.
+        const blockedCompletion = admin.waitForResponse(response =>
+            /\/internal\/admin\/digital-operations\/projects\/[0-9a-f-]+$/.test(response.url())
+            && response.request().method() === 'PATCH');
+        await admin.locator('select').filter({ has: admin.locator('option[value="completed"]') }).first().selectOption('completed');
+        await admin.getByRole('button', { name: 'Transition project' }).click();
+        expect((await blockedCompletion).status()).toBe(409);
+        await expect(admin.getByRole('alert')).toHaveText('Request failed.');
+        const uploadResponse = admin.waitForResponse(response =>
+            /\/internal\/admin\/digital-operations\/projects\/[0-9a-f-]+\/files$/.test(response.url())
+            && response.request().method() === 'POST');
+        await admin.locator('input[type="file"]').setInputFiles({
+            name: 'mt55-admin-to-customer-acceptance.txt',
+            mimeType: 'text/plain',
+            buffer: Buffer.from('W05 owner-scoped private delivery'),
+        });
+        expect((await uploadResponse).status()).toBe(200); // Admin delivery controller returns JSON 200.
+        await login(page);
+        await page.getByRole('link', { name: 'MT55 Client Project', exact: true }).click();
+        const files = page.getByRole('heading', { name: 'Private files' }).locator('xpath=ancestor::section[1]');
+        await expect(files).toContainText('mt55-admin-to-customer-acceptance.txt');
+        const downloadPromise = page.waitForEvent('download');
+        await files.getByRole('link', { name: 'Download securely' }).last().click();
+        expect((await downloadPromise).suggestedFilename()).toBe('mt55-admin-to-customer-acceptance.txt');
+    } finally {
+        await releaseWebsiteTestAdmin(admin);
+        await adminContext.close();
+    }
+});
+test('W05 public enquiry creates an approved owner-bound proposal through real Admin and Customer APIs', async ({ page, browser }) => {
+    test.setTimeout(150_000);
+    // Independent sixth synthetic account login shares a disposable test-IP throttle bucket.
+    // Reset testing-only cache before this journey, never production/session policy.
+    execFileSync('php', ['artisan', 'cache:clear', '--env=testing'], { cwd: process.cwd(), stdio: 'inherit' });
+    await page.goto('/enquiry?service=mt55-client-project');
+    await expect(page.getByRole('heading', { name: 'Project enquiry' })).toBeVisible();
+    await page.getByLabel('Name', { exact: true }).fill('MT52 Customer');
+    await page.getByLabel('Mobile', { exact: true }).fill('03005200001');
+    await page.getByLabel('Email (optional)').fill('mt52-customer@example.invalid');
+    await page.getByLabel('What do you need?').fill('W05 joined project acceptance');
+    const createdLead = page.waitForResponse(response => response.url().endsWith('/api/public/enquiries')
+        && response.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Send enquiry' }).click();
+    const leadResponse = await createdLead;
+    expect(leadResponse.ok()).toBeTruthy();
+    const reference = (await leadResponse.json() as { data: { reference: string } }).data.reference;
+    expect(reference).toMatch(/^[A-Z0-9-]+$/);
+    const adminContext = await browser.newContext();
+    const admin = await adminContext.newPage();
+    try {
+        await admin.goto('http://127.0.0.1:18080/internal/admin/pos/login');
+        await admin.getByTestId('login-email').fill('e2e-digital-operations@example.invalid');
+        await admin.getByTestId('login-password').fill('SyntheticPass123!');
+        await admin.getByTestId('login-submit').click();
+        await admin.waitForURL('**/internal/admin/pos');
+        await admin.goto('http://127.0.0.1:18080/internal/admin/digital-operations');
+        await expect(admin.getByRole('heading', { name: 'Digital Operations' })).toBeVisible();
+        await admin.getByRole('button', { name: 'Leads', exact: true }).click();
+        const pipeline = admin.getByRole('heading', { name: 'Enquiry / lead pipeline' }).locator('xpath=ancestor::section[1]');
+        await pipeline.getByRole('button', { name: new RegExp(reference) }).click();
+        await expect(admin.getByText('W05 joined project acceptance')).toBeVisible();
+        await admin.getByPlaceholder('Project title').fill('W05 Joined Browser Project');
+        await admin.locator('select').filter({ has: admin.locator('option', { hasText: 'MT52 Customer' }) }).selectOption({ index: 1 });
+        const createdProject = admin.waitForResponse(response => /\/internal\/admin\/digital-operations\/leads\/[0-9a-f-]+\/projects$/.test(response.url())
+            && response.request().method() === 'POST');
+        await admin.getByRole('button', { name: 'Create client project' }).click();
+        expect((await createdProject).ok()).toBeTruthy();
+        await admin.getByRole('button', { name: 'Projects', exact: true }).click();
+        const projects = admin.getByRole('heading', { name: 'Client projects' }).locator('xpath=ancestor::section[1]');
+        await projects.getByRole('button', { name: /W05 Joined Browser Project/ }).click();
+        await expect(admin.getByRole('heading', { name: /W05 Joined Browser Project/ })).toBeVisible();
+        await admin.getByPlaceholder('Proposal title').fill('W05 Exact Proposal');
+        await admin.getByPlaceholder('Proposal scope').fill('W05 exact signed-off scope');
+        await admin.getByPlaceholder('Exact PKR total e.g. 50000.00').fill('10000.00');
+        await admin.locator('input[type="datetime-local"]').fill(new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 16));
+        const drafted = admin.waitForResponse(response => /\/internal\/admin\/digital-operations\/projects\/[0-9a-f-]+\/proposals$/.test(response.url())
+            && response.request().method() === 'POST');
+        await admin.getByRole('button', { name: 'Save proposal revision' }).click();
+        expect((await drafted).ok()).toBeTruthy();
+        const approved = admin.waitForResponse(response => /\/internal\/admin\/digital-operations\/proposals\/[0-9a-f-]+\/approve$/.test(response.url())
+            && response.request().method() === 'POST');
+        await admin.getByRole('button', { name: 'Approve proposal' }).click();
+        expect((await approved).ok()).toBeTruthy();
+        await login(page);
+        await page.getByRole('link', { name: 'W05 Joined Browser Project', exact: true }).click();
+        await expect(page.getByRole('heading', { name: 'W05 Joined Browser Project' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Proposals & milestones' }).locator('..')).toContainText('W05 exact signed-off scope');
+        await expect(page.getByText('PKR 10000.00', { exact: true })).toBeVisible();
+        await expect(page.getByText('No external payment provider is configured.', { exact: true })).toBeVisible();
+        state('commerce_only');
+        await page.reload();
+        await expect(page.getByRole('heading', { name: 'W05 Joined Browser Project' })).toBeVisible();
+    } finally {
+        state('hybrid');
+        await releaseWebsiteTestAdmin(admin);
+        await adminContext.close();
+    }
 });
