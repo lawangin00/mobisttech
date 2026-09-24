@@ -26,7 +26,7 @@ final class WebsiteCms
     private const PRESENTATION_PERMISSIONS = [
         'homepage' => 'website.content.manage', 'catalogue' => 'website.content.manage', 'promotion' => 'website.content.manage',
         'navigation' => 'website.navigation.manage', 'seo' => 'website.seo.manage', 'theme' => 'website.theme.manage',
-        'branding' => 'website.branding.manage',
+        'branding' => 'website.branding.manage', 'header_footer' => 'website.content.manage',
     ];
 
     private const POLICY_TYPES = [
@@ -55,6 +55,12 @@ final class WebsiteCms
         abort_if($snapshot === [] || array_diff(array_keys($snapshot), array_keys(self::PRESENTATION_PERMISSIONS)), 422, 'Unknown Website presentation section.');
         foreach (array_keys($snapshot) as $section) {
             abort_unless(app(Access::class)->allows($admin, self::PRESENTATION_PERMISSIONS[$section]), 403);
+        }
+        if (array_key_exists('homepage', $snapshot)) {
+            $snapshot['homepage'] = $this->homepageLayoutSnapshot($snapshot['homepage']);
+        }
+        if (array_key_exists('header_footer', $snapshot)) {
+            $snapshot['header_footer'] = $this->headerFooterSnapshot($snapshot['header_footer']);
         }
         if (array_key_exists('seo', $snapshot)) {
             $snapshot['seo'] = $this->globalSeoSnapshot($snapshot['seo']);
@@ -720,6 +726,63 @@ final class WebsiteCms
         }
     }
 
+    private function homepageLayoutSnapshot(mixed $input): array
+    {
+        abort_unless(is_array($input) && ! array_is_list($input)
+            && array_diff(array_keys($input), ['sections']) === [], 422, 'Invalid homepage layout.');
+        $sections = $input['sections'] ?? [];
+        abort_unless(is_array($sections) && array_is_list($sections) && count($sections) === 5, 422, 'All homepage sections must be listed.');
+        $seen = [];
+        $normalized = [];
+        foreach ($sections as $section) {
+            abort_unless(is_array($section) && ! array_is_list($section)
+                && array_diff(array_keys($section), ['key', 'enabled', 'order']) === [], 422, 'Invalid homepage section.');
+            $key = $section['key'] ?? null;
+            abort_unless(is_string($key) && in_array($key, ['hero', 'products', 'solutions', 'about', 'contact'], true)
+                && ! isset($seen[$key]) && is_bool($section['enabled'] ?? null), 422, 'Invalid homepage section key or visibility.');
+            $order = filter_var($section['order'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 100]]);
+            abort_unless($order !== false, 422, 'Invalid homepage section order.');
+            $seen[$key] = true;
+            $normalized[] = ['key' => $key, 'enabled' => $section['enabled'], 'order' => (int) $order];
+        }
+        usort($normalized, fn (array $a, array $b) => [$a['order'], $a['key']] <=> [$b['order'], $b['key']]);
+
+        return ['sections' => $normalized];
+    }
+
+    private function headerFooterSnapshot(mixed $input): array
+    {
+        abort_unless(is_array($input) && ! array_is_list($input)
+            && array_diff(array_keys($input), ['footer_description', 'footer_copyright', 'show_account', 'show_contact', 'show_policies',
+                'show_search', 'show_cart', 'sticky', 'footer_show_logo', 'footer_show_navigation', 'footer_navigation_layout',
+                'contact_cta', 'contact_cta_label']) === [],
+            422, 'Invalid Website header/footer configuration.');
+        foreach (['show_account', 'show_contact', 'show_policies', 'show_search', 'show_cart', 'sticky', 'footer_show_logo', 'footer_show_navigation'] as $field) {
+            abort_unless(! array_key_exists($field, $input) || is_bool($input[$field]), 422, 'Invalid header/footer visibility.');
+        }
+
+        $layout = $input['footer_navigation_layout'] ?? 'one_column';
+        abort_unless(in_array($layout, ['one_column', 'two_columns'], true), 422, 'Invalid footer navigation layout.');
+        $cta = $input['contact_cta'] ?? 'hidden';
+        abort_unless(in_array($cta, ['hidden', 'contact'], true), 422, 'Unsupported public contact action.');
+
+        return [
+            'footer_description' => $this->nullablePlain($input['footer_description'] ?? null, 500),
+            'footer_copyright' => $this->nullablePlain($input['footer_copyright'] ?? null, 200),
+            'show_account' => $input['show_account'] ?? true,
+            'show_contact' => $input['show_contact'] ?? true,
+            'show_policies' => $input['show_policies'] ?? true,
+            'show_search' => $input['show_search'] ?? false,
+            'show_cart' => $input['show_cart'] ?? true,
+            'sticky' => $input['sticky'] ?? false,
+            'footer_show_logo' => $input['footer_show_logo'] ?? false,
+            'footer_show_navigation' => $input['footer_show_navigation'] ?? false,
+            'footer_navigation_layout' => $layout,
+            'contact_cta' => $cta,
+            'contact_cta_label' => $this->nullablePlain($input['contact_cta_label'] ?? null, 60),
+        ];
+    }
+
     private function globalSeoSnapshot(mixed $input): array
     {
         abort_unless(is_array($input) && ! array_is_list($input)
@@ -789,9 +852,27 @@ final class WebsiteCms
             abort_unless(in_array($scope, self::CAPABILITY_SCOPES, true), 422, 'Invalid navigation capability scope.');
             $type = (string) ($entry['destination_type'] ?? 'page');
             abort_unless(in_array($type, ['page', 'route', 'url'], true), 422, 'Invalid navigation destination type.');
+            $destination = $this->nullableKey($entry['destination_key'] ?? null, 100);
+            if ($type === 'route') {
+                abort_unless(in_array($destination, ['home', 'services', 'enquiry', 'products', 'categories', 'compare', 'about', 'contact'], true),
+                    422, 'Navigation must target a supported public Website route.');
+            } elseif ($type === 'page') {
+                abort_unless($destination && DB::table('site_managed_pages')->where('slug', $destination)
+                    ->where('publish_state', 'published')->whereNotNull('current_revision_id')
+                    ->where('show_in_navigation', true)->exists(), 422, 'Navigation must target a published, eligible managed page.');
+            } else {
+                $url = $entry['destination_payload']['url'] ?? null;
+                abort_unless(is_string($url) && strlen($url) <= 500
+                    && ((preg_match('~\Ahttps://[a-z0-9.-]+(?::[0-9]+)?(?:/[a-zA-Z0-9._/%-]*)?\z~i', $url) === 1)
+                        || (preg_match('~\A/[a-z0-9]+(?:[/-][a-z0-9]+)*\z~', $url) === 1
+                            && ! in_array(explode('/', trim($url, '/'))[0], self::PROTECTED_ROOTS, true)
+                            && ! in_array(explode('/', trim($url, '/'))[0], ['reset-password'], true))),
+                    422, 'Navigation URLs must be safe public paths or HTTPS links.');
+                abort_unless($destination === null, 422, 'External navigation destinations cannot include a route key.');
+            }
             $items[$key] = ['key' => $key, 'parent_key' => $entry['parent_key'] ?? null,
                 'label' => $this->plain((string) ($entry['label'] ?? ''), 120), 'destination_type' => $type,
-                'destination_key' => $this->nullableKey($entry['destination_key'] ?? null, 100),
+                'destination_key' => $destination,
                 'destination_payload' => isset($entry['destination_payload']) ? json_encode($this->safeTree($entry['destination_payload']), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES) : null,
                 'sort_order' => max(0, min(10000, (int) ($entry['sort_order'] ?? 0))),
                 'is_visible' => (bool) ($entry['is_visible'] ?? true), 'is_enabled' => (bool) ($entry['is_enabled'] ?? true),
@@ -858,7 +939,7 @@ final class WebsiteCms
         return [
             'title' => $this->plain((string) ($input['title'] ?? ''), 190), 'slug' => $slug,
             'content' => $this->rich((string) ($input['content'] ?? ''), 50000),
-            'template' => $this->key((string) ($input['template'] ?? 'standard'), 40),
+            'template' => in_array(($input['template'] ?? 'standard'), ['standard', 'wide'], true) ? ($input['template'] ?? 'standard') : abort(422, 'Unsupported managed page template.'),
             'show_in_navigation' => (bool) ($input['show_in_navigation'] ?? false), 'content_format' => 'safe_html',
             'seo_title' => $this->nullablePlain($input['seo_title'] ?? null, 190),
             'meta_description' => $this->nullablePlain($input['meta_description'] ?? null, 320),

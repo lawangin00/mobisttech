@@ -72,7 +72,7 @@ export function SiteHeader({
     routes.has("compare") ? { href: "/compare", label: "Compare" } : null,
     routes.has("cart") ? { href: "/cart", label: "Cart" } : null,
   ].filter((value): value is { href: string; label: string } => value !== null);
-  for (const item of fallback) if (!managedPaths.has(item.href) && !links.some((link) => link.href === item.href)) links.push(item);
+  for (const item of fallback.filter(item => item.href !== "/cart" || content?.header_footer?.show_cart !== false)) if (!managedPaths.has(item.href) && !links.some((link) => link.href === item.href)) links.push(item);
 
   const announcement = content?.promotion?.announcement;
   return (
@@ -80,7 +80,7 @@ export function SiteHeader({
     {announcement && <div role="status" aria-label="Site announcement" className="bg-slate-950 px-4 py-2 text-center text-sm text-white">
       {announcement.href ? <a href={announcement.href} className="underline underline-offset-2" rel="noopener noreferrer">{announcement.text}</a> : announcement.text}
     </div>}
-    <header className="border-b border-slate-200 bg-white/95">
+    <header className={"border-b border-slate-200 bg-white/95 " + (content?.header_footer?.sticky ? "sticky top-0 z-30" : "")}>
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <Link href="/" prefetch={false} className="inline-flex items-center" aria-label={business?.business_name ?? "mobiST Technologies"}>
           <Image src="/brand/mobist-wordmark.svg" alt={business?.business_name ?? "mobiST Technologies"} width={184} height={92} className="h-10 w-auto max-w-[184px]" priority />
@@ -91,9 +91,11 @@ export function SiteHeader({
           ) : (
             <Link key={item.href} href={item.href} prefetch={false} className="rounded-full px-3 py-2 hover:bg-slate-100">{item.label}</Link>
           ))}
+          {content?.header_footer?.show_search && routes.has("products") && <Link href="/products" prefetch={false} className="rounded-full px-3 py-2 hover:bg-slate-100">Search products</Link>}
           {managedRoots.map(node => <ManagedNavItem key={node.key} node={node} />)}
-          <Link href="/account" prefetch={false} className="rounded-full px-3 py-2 hover:bg-slate-100">Account</Link>
-          {!links.some((item) => item.href === "/contact") && business?.business_email && (
+          {content?.header_footer?.show_account !== false && <Link href="/account" prefetch={false} className="rounded-full px-3 py-2 hover:bg-slate-100">Account</Link>}
+          {content?.header_footer?.contact_cta === "contact" && business?.business_email && <a href={"mailto:" + business.business_email} className="rounded-full border px-3 py-2">{content.header_footer.contact_cta_label || "Contact us"}</a>}
+          {content?.header_footer?.show_contact !== false && !links.some((item) => item.href === "/contact") && business?.business_email && (
             <a href={"mailto:" + business.business_email} className="rounded-full px-3 py-2 hover:bg-slate-100">Contact</a>
           )}
         </nav>
@@ -117,17 +119,22 @@ export function SiteFooter({
       <div className="mx-auto max-w-7xl px-4 py-8 text-sm text-slate-600 sm:px-6">
         <div className="flex flex-wrap justify-between gap-6">
           <div>
+            {content?.header_footer?.footer_show_logo && <Image src="/brand/mobist-wordmark.svg" alt={business?.business_name ?? "mobiST Technologies"} width={140} height={70} className="mb-2 h-8 w-auto" />}
             <strong className="text-slate-950">{business?.business_name ?? "mobiST Technologies"}</strong>
-            <p className="mt-1">Products and digital solutions from one shared platform.</p>
+            <p className="mt-1">{content?.header_footer?.footer_description || "Products and digital solutions from one shared platform."}</p>
           </div>
           <div className="text-right">
             <p>Website mode: {profile?.mode?.replaceAll("_", " ") ?? "not published"}</p>
-            {business?.business_email && <a className="hover:text-slate-950" href={"mailto:" + business.business_email}>{business.business_email}</a>}
+            {content?.header_footer?.show_contact !== false && business?.business_email && <a className="hover:text-slate-950" href={"mailto:" + business.business_email}>{business.business_email}</a>}
           </div>
         </div>
-        {(content?.policies.length ?? 0) > 0 && <nav aria-label="Policies" className="mt-6 flex flex-wrap gap-x-4 gap-y-2 border-t pt-5">
+        {content?.header_footer?.footer_show_navigation && <nav aria-label="Footer navigation" className={"mt-5 grid gap-2 border-t pt-4 " + (content.header_footer.footer_navigation_layout === "two_columns" ? "sm:grid-cols-2" : "")}>
+          {content.navigation.map(item => { const href = safeManagedHref(item); return href ? <div key={item.key}><a href={href} rel={href.startsWith('https://') ? 'noopener noreferrer' : undefined} className="hover:text-slate-950">{item.label}</a></div> : null; })}
+        </nav>}
+        {content?.header_footer?.show_policies !== false && (content?.policies.length ?? 0) > 0 && <nav aria-label="Policies" className="mt-6 flex flex-wrap gap-x-4 gap-y-2 border-t pt-5">
           {content?.policies.map((policy) => <Link key={policy.slug} href={"/" + policy.slug} prefetch={false} className="hover:text-slate-950">{policy.title}</Link>)}
         </nav>}
+        {content?.header_footer?.footer_copyright && <p className="mt-4 text-xs">{content.header_footer.footer_copyright}</p>}
       </div>
     </footer>
   );

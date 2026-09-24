@@ -19,6 +19,7 @@ final class W06PresentationE2eCleanupSeeder extends Seeder
             $navigation = DB::table('site_navigation_items')->lockForUpdate()->get();
             $settings = DB::table('site_settings')->whereIn('key', [
                 'cms.presentation.navigation', 'cms.presentation.promotion', 'cms.presentation.seo',
+                'cms.presentation.homepage', 'cms.presentation.header_footer',
             ])->lockForUpdate()->get();
 
             // The W06 browser starts from a verified zero-presentation baseline. Fail before ANY
@@ -28,7 +29,9 @@ final class W06PresentationE2eCleanupSeeder extends Seeder
                 abort_unless($owner && (int) $row->created_by_admin_id === (int) $owner
                     && ((is_array($snapshot['navigation'] ?? null)
                         && ($snapshot['navigation'][0]['key'] ?? null) === 'mt75-w06-parent'
-                        && str_starts_with((string) ($snapshot['promotion']['announcement']['text'] ?? ''), 'W06 Browser '))
+                        && (str_starts_with((string) ($snapshot['promotion']['announcement']['text'] ?? ''), 'W06 Browser ')
+                            || (is_array($snapshot['homepage']['sections'] ?? null)
+                                && ($snapshot['header_footer']['footer_description'] ?? null) === 'W06 Guided Footer')))
                         || str_starts_with((string) ($snapshot['seo']['title'] ?? ''), 'W06 Global SEO ')), 409);
             }
             foreach ($navigation as $row) {
@@ -52,6 +55,7 @@ final class W06PresentationE2eCleanupSeeder extends Seeder
             }
             DB::table('site_settings')->whereIn('key', [
                 'cms.presentation.navigation', 'cms.presentation.promotion', 'cms.presentation.seo',
+                'cms.presentation.homepage', 'cms.presentation.header_footer',
             ])->delete();
             $ids = $revisions->pluck('id')->all();
             DB::table('site_configuration_revisions')->whereIn('id', $ids)->update(['restored_from_revision_id' => null]);

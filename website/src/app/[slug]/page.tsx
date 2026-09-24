@@ -57,7 +57,7 @@ export default async function PublishedContentPage({ params }: { params: Promise
   }
 
   const page = item.page.snapshot;
-  return <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+  return <main className={(page.template === "wide" ? "max-w-7xl" : "max-w-5xl") + " mx-auto px-4 py-10 sm:px-6"} data-page-template={page.template}>
     <h1 className="text-3xl font-bold">{page.title}</h1>
     <article className="mt-8 space-y-4 text-slate-700" dangerouslySetInnerHTML={{ __html: page.content }} />
   </main>;

@@ -271,6 +271,10 @@ final class WebsiteApi
                 'target_behavior' => $row->target_behavior, 'scope' => $row->capability_scope,
             ])->values()->all();
 
+        $homeJson = DB::table('site_settings')->where('key', 'cms.presentation.homepage')->value('value');
+        $headerFooterJson = DB::table('site_settings')->where('key', 'cms.presentation.header_footer')->value('value');
+        $homepage = $homeJson ? json_decode($homeJson, true, flags: JSON_THROW_ON_ERROR) : [];
+        $headerFooter = $headerFooterJson ? json_decode($headerFooterJson, true, flags: JSON_THROW_ON_ERROR) : [];
         $seoJson = DB::table('site_settings')->where('key', 'cms.presentation.seo')->value('value');
         $seo = $seoJson ? json_decode($seoJson, true, flags: JSON_THROW_ON_ERROR) : [];
         $promotionJson = DB::table('site_settings')->where('key', 'cms.presentation.promotion')->value('value');
@@ -292,6 +296,8 @@ final class WebsiteApi
             'navigation' => $navigation,
             'promotion' => $publicPromotion,
             'seo' => $seo,
+            'homepage' => $homepage,
+            'header_footer' => $headerFooter,
         ];
     }
 

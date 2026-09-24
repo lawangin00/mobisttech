@@ -457,6 +457,7 @@ test('W06 actual Admin managed-page SEO revision remains private until public pu
         const caseId = await caseOption.getAttribute('value');
         expect(caseId).toBeTruthy();
         await editor.locator('select').first().selectOption(caseId!);
+        await editor.getByRole('combobox', { name: 'Managed page template' }).selectOption('wide');
         await expect(editor.getByPlaceholder('Managed page SEO title')).toHaveValue('');
         await editor.getByPlaceholder('Managed page SEO title').fill('W06 Independent Managed SEO Title');
         await editor.getByPlaceholder('Managed page SEO description').fill('W06 private draft SEO description.');
@@ -470,6 +471,10 @@ test('W06 actual Admin managed-page SEO revision remains private until public pu
         await editor.getByRole('button', { name: 'Save page draft' }).click();
         expect((await draft).status()).toBe(200);
         await expect(editor.getByRole('button', { name: 'Publish v3' })).toBeVisible();
+        await editor.getByText('Preview private draft v3').click();
+        const draftPreview = editor.getByLabel('Private managed page preview v3');
+        await expect(draftPreview).toContainText('wide template');
+        await expect(draftPreview).toContainText('Private case-study draft.');
         await page.goto(url);
         await expect(page.getByText('Published anonymous case study.')).toBeVisible();
         await expect(page).not.toHaveTitle(/W06 Independent Managed SEO Title/);
@@ -481,6 +486,7 @@ test('W06 actual Admin managed-page SEO revision remains private until public pu
         expect((await published).status()).toBe(200);
         expect((await page.goto(url))?.status()).toBe(200);
         await expect(page).toHaveTitle(/W06 Independent Managed SEO Title/);
+        await expect(page.locator('[data-page-template="wide"]')).toBeVisible();
         await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', 'W06 private draft SEO description.');
         await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/mt54-case-study$/);
         await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'W06 Managed Social Heading');
@@ -502,7 +508,7 @@ test('W06 actual Admin managed-page SEO revision remains private until public pu
 });
 
 test('W06 genuine Admin presentation joins nested navigation and scoped banners through private draft publish mode and rollback', async ({ page, context }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(240_000);
     await page.goto('/');
     await expect(page.getByText('W06 Browser First announcement')).toHaveCount(0);
     await expect(page.getByText('W06 Solutions Hub', { exact: true })).toHaveCount(0);
@@ -612,6 +618,53 @@ test('W06 genuine Admin presentation joins nested navigation and scoped banners 
         await expect(page.getByText('W06 Solutions Hub', { exact: true })).toBeVisible();
         await expect(page.getByRole('heading', { name: 'W06 Digital Spotlight' })).toBeVisible();
         await expect(page.getByText('W06 Browser Updated announcement')).toHaveCount(0);
+        // Guided builder: item editor/reorder, section visibility/order, header/footer and private preview.
+        const guided = admin.getByRole('region', { name: 'Guided Website presentation builder' });
+        await expect(guided).toBeVisible();
+        await guided.getByRole('button', { name: 'Add navigation item' }).click();
+        const added = guided.getByTestId('guided-nav-3');
+        await added.getByRole('textbox', { name: 'Navigation key 3' }).fill('mt75-w06-guided');
+        await added.getByRole('textbox', { name: 'Navigation label 3' }).fill('W06 Guided News');
+        await added.getByRole('textbox', { name: 'Navigation destination 3' }).fill('services');
+        await added.getByRole('button', { name: 'Up' }).click();
+        await expect(guided.locator('aside[aria-label="Navigation draft preview"]')).toContainText('W06 Guided News');
+        await guided.getByRole('checkbox', { name: 'Show products' }).uncheck();
+        await guided.getByRole('spinbutton', { name: 'Order contact' }).fill('1');
+        await guided.getByRole('textbox', { name: 'Footer description' }).fill('W06 Guided Footer');
+        await guided.getByRole('textbox', { name: 'Footer copyright' }).fill('W06 synthetic copyright');
+        await guided.getByRole('checkbox', { name: 'show account' }).uncheck();
+        await guided.getByRole('checkbox', { name: 'sticky' }).check();
+        await guided.getByRole('checkbox', { name: 'show search' }).check();
+        await guided.getByRole('checkbox', { name: 'show cart' }).uncheck();
+        await guided.getByRole('checkbox', { name: 'footer show logo' }).check();
+        await guided.getByRole('checkbox', { name: 'footer show navigation' }).check();
+        await guided.getByRole('combobox', { name: 'Footer navigation layout' }).selectOption('two_columns');
+        await guided.getByRole('combobox', { name: 'Contact CTA', exact: true }).selectOption('contact');
+        await guided.getByRole('textbox', { name: 'Contact CTA label' }).fill('W06 Email Us');
+        await expect(guided.locator('aside[aria-label="Homepage draft preview"]')).not.toContainText('products');
+        const guidedSaved = admin.waitForResponse(r => r.url().endsWith('/internal/admin/platform/presentation/draft') && r.request().method() === 'POST');
+        await guided.getByRole('button', { name: 'Save guided presentation draft' }).click();
+        const guidedResponse = await guidedSaved;
+        expect(guidedResponse.status()).toBe(200);
+        const guidedId: number = (await guidedResponse.json()).data.id;
+        await page.goto('/');
+        await expect(page.getByText('W06 Guided Footer')).toHaveCount(0);
+        await expect(page.getByRole('heading', { name: 'Available products' })).toBeVisible();
+        const guidedPublished = admin.waitForResponse(r => r.url().endsWith(`/internal/admin/platform/presentation/${guidedId}/publish`) && r.request().method() === 'POST');
+        await presentation.getByRole('button', { name: 'Publish', exact: true }).click();
+        expect((await guidedPublished).status()).toBe(200);
+        await page.goto('/');
+        await expect(page.getByText('W06 Guided Footer')).toBeVisible();
+        await expect(page.getByText('W06 synthetic copyright')).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Available products' })).toHaveCount(0);
+        await expect(page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Account' })).toHaveCount(0);
+        await expect(page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'W06 Guided News' })).toHaveAttribute('href', '/services');
+        await expect(page.getByRole('region', { name: 'Contact mobiST' })).toBeVisible();
+        await expect(page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Search products' })).toBeVisible();
+        await expect(page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Cart' })).toHaveCount(0);
+        await expect(page.getByRole('navigation', { name: 'Footer navigation' })).toHaveClass(/sm:grid-cols-2/);
+        await expect(page.getByRole('link', { name: 'W06 Email Us' })).toHaveAttribute('href', /^mailto:/);
+        await expect(page.locator('header')).toHaveClass(/sticky/);
     } finally {
         // Do not permit a synthetic Website mode change to spill into neighboring browser tests.
         try { state('hybrid'); } finally {

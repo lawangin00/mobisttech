@@ -6,6 +6,7 @@ use App\Cms\WebsiteCms;
 use App\Models\Admin;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\InventoryFixture;
@@ -21,6 +22,9 @@ class WebsiteCmsTest extends TestCase
         $this->inventoryFixture();
         Storage::fake('public');
         Storage::fake('local');
+        // Each DB-transaction fixture needs its own derived-cache namespace; never touch persisted shared cache.
+        config()->set('infrastructure.derived_cache_store', 'array');
+        Cache::store('array')->clear();
     }
 
     public function test_presentation_media_and_pages_are_versioned_safe_and_do_not_leak_drafts(): void
@@ -165,6 +169,52 @@ class WebsiteCmsTest extends TestCase
         $this->get($url)->assertNotFound();
     }
 
+    public function test_guided_homepage_header_footer_and_managed_templates_are_validated_versioned_and_draft_private(): void
+    {
+        config()->set('infrastructure.derived_cache_store', 'array');
+        Cache::store('array')->clear();
+        $cms = app(WebsiteCms::class);
+        $sections = [
+            ['key' => 'hero', 'enabled' => true, 'order' => 10],
+            ['key' => 'products', 'enabled' => false, 'order' => 20],
+            ['key' => 'solutions', 'enabled' => true, 'order' => 30],
+            ['key' => 'about', 'enabled' => true, 'order' => 40],
+            ['key' => 'contact', 'enabled' => true, 'order' => 1],
+        ];
+        $this->reject(fn () => $cms->savePresentationDraft($this->actor, ['homepage' => ['sections' => array_slice($sections, 1)]]));
+        $this->reject(fn () => $cms->savePresentationDraft($this->actor, ['homepage' => ['sections' => array_merge($sections, [$sections[0]])]]));
+        $this->reject(fn () => $cms->savePresentationDraft($this->actor, ['header_footer' => ['show_policies' => 'false']]));
+        $this->assertSame('unsafe', $cms->savePresentationDraft($this->actor, ['header_footer' => ['footer_description' => '<script>unsafe</script>']])['snapshot']['header_footer']['footer_description']);
+        $first = $cms->savePresentationDraft($this->actor, [
+            'homepage' => ['sections' => $sections],
+            'header_footer' => ['footer_description' => 'W06 first footer', 'footer_copyright' => 'Synthetic copyright',
+                'show_account' => false, 'show_contact' => true, 'show_policies' => true],
+        ]);
+        $this->getJson('/api/v1/content')->assertOk()->assertJsonPath('data.homepage', [])
+            ->assertJsonPath('data.header_footer', []);
+        $cms->publishPresentation($this->actor, $first['id']);
+        $this->getJson('/api/v1/content')->assertOk()->assertJsonPath('data.homepage.sections.0.key', 'contact')
+            ->assertJsonPath('data.homepage.sections.1.key', 'hero')
+            ->assertJsonPath('data.homepage.sections.2.enabled', false)
+            ->assertJsonPath('data.header_footer.footer_description', 'W06 first footer')
+            ->assertJsonPath('data.header_footer.show_account', false);
+        $later = $cms->savePresentationDraft($this->actor, ['header_footer' => [
+            'footer_description' => 'W06 private update', 'show_account' => true,
+        ]]);
+        $this->getJson('/api/v1/content')->assertOk()->assertJsonPath('data.header_footer.footer_description', 'W06 first footer');
+        $cms->publishPresentation($this->actor, $later['id']);
+        $this->getJson('/api/v1/content')->assertOk()->assertJsonPath('data.header_footer.footer_description', 'W06 private update');
+        $cms->rollbackPresentation($this->actor, $first['id']);
+        $this->getJson('/api/v1/content')->assertOk()->assertJsonPath('data.header_footer.footer_description', 'W06 first footer');
+        $this->reject(fn () => $cms->savePageDraft($this->actor, null, ['title' => 'Bad', 'slug' => 'bad-template',
+            'content' => '<p>No</p>', 'template' => 'unsupported']));
+        $draft = $cms->savePageDraft($this->actor, null, ['title' => 'Wide W06', 'slug' => 'wide-w06',
+            'content' => '<p>Private preview</p>', 'template' => 'wide']);
+        $this->reject(fn () => $cms->publicPage('wide-w06'));
+        $cms->publishPage($this->actor, $draft['id']);
+        $this->assertSame('wide', $cms->publicPage('wide-w06')['snapshot']['template']);
+    }
+
     public function test_public_software_image_media_requires_its_own_published_reference(): void
     {
         // New independent synthetic scope; never expose uploaded-but-unpublished CMS media.
@@ -240,6 +290,18 @@ class WebsiteCmsTest extends TestCase
         $this->assertSame('w06-parent', $items['w06-child']['parent_key']);
         $this->assertSame('w06-child', $items['w06-grandchild']['parent_key']);
         $this->assertSame('enquiry', $items['w06-child']['destination_key']);
+        foreach ([
+            ['destination_type' => 'route', 'destination_key' => 'checkout'],
+            ['destination_type' => 'url', 'destination_payload' => ['url' => 'javascript:alert(1)']],
+            ['destination_type' => 'url', 'destination_payload' => ['url' => '/account']],
+            ['destination_type' => 'page', 'destination_key' => 'missing-managed-page'],
+        ] as $unsafe) {
+            $candidate = $cms->savePresentationDraft($this->actor, ['navigation' => [
+                array_merge(['key' => 'w06-bad-link', 'label' => 'Unsafe public link'], $unsafe),
+            ]]);
+            $this->reject(fn () => $cms->publishPresentation($this->actor, $candidate['id']));
+        }
+        $this->assertSame($items->keys()->all(), collect($this->getJson('/api/v1/content')->assertOk()->json('data.navigation'))->pluck('key')->all());
         $invalid = $cms->savePresentationDraft($this->actor, ['navigation' => [
             ['key' => 'w06-cycle-a', 'parent_key' => 'w06-cycle-b', 'label' => 'A', 'destination_type' => 'route', 'destination_key' => 'services'],
             ['key' => 'w06-cycle-b', 'parent_key' => 'w06-cycle-a', 'label' => 'B', 'destination_type' => 'route', 'destination_key' => 'enquiry'],

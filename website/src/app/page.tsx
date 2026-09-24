@@ -19,6 +19,10 @@ export default async function Home() {
       throw error;
     }),
   ]);
+  const arrangement = content?.homepage?.sections;
+  const position = (key: string, fallback: number) => arrangement?.find(item => item.key === key)?.order ?? fallback;
+  const enabled = (key: string) => arrangement?.find(item => item.key === key)?.enabled !== false;
+  const sectionStyle = (key: string, fallback: number) => ({ order: position(key, fallback) });
   const commerce = profile?.capabilities.commerce ?? false;
   const digital = profile?.capabilities.digital ?? false;
   const featured = commerce ? await readCatalogue({ limit: 6 }).catch(() => null) : null;
@@ -33,8 +37,8 @@ export default async function Home() {
         : "Mobile products and digital solutions in one place.");
 
   return (
-    <main>
-      <section className="border-b border-slate-200 bg-gradient-to-b from-white to-slate-50">
+    <main className="flex flex-col">
+      {enabled("hero") && <section style={sectionStyle("hero", 10)} className="border-b border-slate-200 bg-gradient-to-b from-white to-slate-50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
             {business?.business_name ?? "mobiST Technologies"}
@@ -70,9 +74,9 @@ export default async function Home() {
             )}
           </div>
         </div>
-      </section>
+      </section>}
 
-      {(content?.promotion?.banners?.length ?? 0) > 0 && <section aria-label="Published Website banners" className="mx-auto grid max-w-7xl gap-4 px-4 py-8 sm:grid-cols-2 sm:px-6">
+      {(content?.promotion?.banners?.length ?? 0) > 0 && <section style={{ order: 15 }} aria-label="Published Website banners" className="mx-auto grid max-w-7xl gap-4 px-4 py-8 sm:grid-cols-2 sm:px-6">
         {content!.promotion.banners.map((banner, index) => <article key={index} className="rounded-2xl border bg-slate-50 p-5">
           <h2 className="text-xl font-bold">{banner.title}</h2>
           {banner.body && <p className="mt-2 text-slate-600">{banner.body}</p>}
@@ -81,13 +85,13 @@ export default async function Home() {
       </section>}
 
       {publishedHome?.snapshot.content_purpose === "homepage" && publishedHome.snapshot.content && (
-        <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+        <section style={{ order: 35 }} className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
           <article className="text-slate-700" dangerouslySetInnerHTML={{ __html: publishedHome.snapshot.content }} />
         </section>
       )}
 
-      {commerce && featured && (
-        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+      {commerce && featured && enabled("products") && (
+        <section style={sectionStyle("products", 20)} className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -106,6 +110,9 @@ export default async function Home() {
           </div>
         </section>
       )}
+      {digital && enabled("solutions") && <section style={sectionStyle("solutions", 30)} aria-label="Digital solutions" className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6"><h2 className="text-2xl font-bold">Digital solutions</h2><p className="mt-2 text-slate-600">Digital project planning and service enquiries.</p><Link href="/services" prefetch={false} className="mt-3 inline-block underline">Explore digital solutions</Link></section>}
+      {enabled("about") && <section style={sectionStyle("about", 40)} aria-label="About mobiST" className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6"><h2 className="text-2xl font-bold">About {business?.business_name ?? "mobiST Technologies"}</h2><p className="mt-2 text-slate-600">Technology products and digital services in one connected platform.</p></section>}
+      {enabled("contact") && business?.business_email && <section style={sectionStyle("contact", 50)} aria-label="Contact mobiST" className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6"><h2 className="text-2xl font-bold">Contact us</h2><a className="mt-2 inline-block underline" href={"mailto:" + business.business_email}>Send an enquiry</a></section>}
     </main>
   );
 }
