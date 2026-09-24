@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Fail-closed explicit-request CI gate for Mobisttech.
+"""Fail-closed, source-bound CI request gate for mobiST Tech.
 
-Normal source pushes trigger NO workflow. A controller creates one request file
-in a separate commit for each GitHub-mode stage or approved LOCAL milestone.
+Application pushes never start CI. Only an explicit, audited CI-request commit
+may start hosted acceptance; routine LOCAL/DIRECT_LOCAL tests remain local.
 """
 import argparse
 import base64
@@ -17,11 +17,12 @@ PROJECT_ID = '282dba2f-a2d9-47e8-aa8d-e499fbe1706c'
 STATE_API = 'https://api.github.com/repos/lawangin00/references/contents/UNIVERSAL_EXECUTION_MODE.json?ref=main'
 STATE_RAW = 'https://raw.githubusercontent.com/lawangin00/references/refs/heads/main/UNIVERSAL_EXECUTION_MODE.json'
 REQUEST_ROOT = '.github/ci-requests/'
-W01_FOCUS = 'W01-customer'
-W01_IDENTITY_FOCUS = 'W01-identity'
-P02_FOCUS = 'P02-variants'
-W03_FOCUS = 'W03-commerce'
-FOCUSED_SCOPES = (W01_FOCUS, W01_IDENTITY_FOCUS, P02_FOCUS, W03_FOCUS)
+FOCUSED_SCOPES = ('W01-customer', 'W01-identity', 'P02-variants', 'W03-commerce')
+
+
+def meaningful(request, field):
+    value = request.get(field)
+    return isinstance(value, str) and len(value.strip()) >= 8
 
 
 def allowed(state, event, request=None):
@@ -30,47 +31,71 @@ def allowed(state, event, request=None):
     exceptions = state.get('exceptions')
     assert isinstance(exceptions, dict)
     assert all(value in ('GITHUB', 'LOCAL', 'RDC') for value in exceptions.values())
-    if event == 'workflow_dispatch':
-        return True
-    assert event == 'push' and isinstance(request, dict)
+    # A workflow_dispatch event is not proof of owner authorization. Fail
+    # before dependency installation, browser tests or any other expensive job.
+    if event != 'push' or not isinstance(request, dict):
+        return False
     assert request.get('project_id') == PROJECT_ID
     assert request.get('reason') in ('stage', 'milestone', 'necessary')
     assert request.get('gate') in ('website', 'full', 'all', 'verify')
+    assert meaningful(request, 'stage_id') and meaningful(request, 'requested_at_utc')
     if request['gate'] == 'verify':
         assert request.get('stage_id') == 'MT-7.5' and request.get('focus') in FOCUSED_SCOPES, 'Unrecognized isolated verification scope'
+    surface = request.get('execution_surface', 'NORMAL_CHAT')
+    assert surface in ('NORMAL_CHAT', 'LOCAL_WORK')
     mode = exceptions.get(PROJECT_ID, state['global_mode'])
-    return mode == 'GITHUB' or request['reason'] in ('milestone', 'necessary')
+    local_route = surface == 'LOCAL_WORK' or mode in ('LOCAL', 'RDC')
+    if local_route:
+        if request['reason'] not in ('milestone', 'necessary'):
+            return False
+        # Legacy requests without an explicit route cannot authorize fresh LOCAL CI.
+        if request.get('execution_surface') not in ('NORMAL_CHAT', 'LOCAL_WORK'):
+            return False
+        # A request must point to prior authorization, genuinely distinct hosted
+        # need and recorded local test evidence. The controller must verify the
+        # referenced ledger before writing this source-bound request commit.
+        if not all(meaningful(request, key) for key in
+                   ('authorization_ref', 'local_evidence', 'hosted_only_need')):
+            return False
+        if len(request['hosted_only_need'].strip()) < 20:
+            return False
+    return True
 
 
 def self_test():
     gh = {'schema_version': 1, 'global_mode': 'GITHUB', 'exceptions': {}}
     local = {'schema_version': 1, 'global_mode': 'LOCAL', 'exceptions': {}}
-    request = {'project_id': PROJECT_ID, 'reason': 'stage', 'gate': 'all'}
+    request = {'project_id': PROJECT_ID, 'reason': 'stage', 'gate': 'all',
+               'stage_id': 'MT-7.5', 'requested_at_utc': '2026-09-24T00:00:00Z',
+               'execution_surface': 'NORMAL_CHAT'}
+    milestone = {**request, 'reason': 'milestone',
+                 'authorization_ref': 'ledger:MT-7.5:approval',
+                 'local_evidence': 'ledger:MT-7.5:local-pass',
+                 'hosted_only_need': 'Independent clean Linux acceptance milestone'}
     assert allowed(gh, 'push', request)
     assert not allowed(local, 'push', request)
-    assert allowed(local, 'push', {**request, 'reason': 'milestone'})
-    assert allowed(local, 'workflow_dispatch')
+    assert not allowed(local, 'workflow_dispatch', milestone)
+    assert not allowed(gh, 'workflow_dispatch', milestone)
+    assert not allowed(local, 'push', {**request, 'reason': 'milestone'})
+    assert not allowed(local, 'push', {**milestone, 'hosted_only_need': 'repeat local tests'})
+    assert allowed(local, 'push', milestone)
+    assert allowed(local, 'push', {**milestone, 'reason': 'necessary'})
+    assert not allowed(gh, 'push', {**request, 'execution_surface': 'LOCAL_WORK'})
+    assert allowed(gh, 'push', {**milestone, 'execution_surface': 'LOCAL_WORK'})
+    assert not allowed(local, 'push', {key: value for key, value in milestone.items()
+                                      if key != 'execution_surface'})
     assert not allowed({**gh, 'exceptions': {PROJECT_ID: 'LOCAL'}}, 'push', request)
     assert allowed({**local, 'exceptions': {PROJECT_ID: 'GITHUB'}}, 'push', request)
-    focused = {**request, 'gate': 'verify', 'stage_id': 'MT-7.5', 'focus': W01_FOCUS}
-    assert allowed(gh, 'push', focused)
-    assert allowed(gh, 'push', {**focused, 'focus': W01_IDENTITY_FOCUS})
-    assert allowed(gh, 'push', {**focused, 'focus': P02_FOCUS})
-    assert allowed(gh, 'push', {**focused, 'focus': W03_FOCUS})
-    for invalid in ({**focused, 'focus': 'other'}, {**focused, 'stage_id': 'MT-7.6'}, {**request, 'gate': 'verify'}):
+    for invalid in ({**request, 'project_id': 'wrong'},
+                    {**request, 'gate': 'wrong'},
+                    {**request, 'gate': 'verify', 'focus': 'unrecognized'}):
         try:
             allowed(gh, 'push', invalid)
         except AssertionError:
             pass
         else:
-            raise AssertionError('Unrecognized isolated verification scope accepted')
-    try:
-        allowed(local, 'push', {**request, 'project_id': 'wrong'})
-    except AssertionError:
-        pass
-    else:
-        raise AssertionError('Cross-project CI request accepted')
-    print('CI_MODE_REQUEST_FIXTURES=PASS')
+            raise AssertionError('Invalid CI request accepted')
+    print('CI_LOCAL_MANUAL_BYPASS_FIXTURES=PASS')
 
 
 def git(*args):
@@ -105,8 +130,6 @@ def canonical_mode():
     except urllib.error.HTTPError as error:
         if error.code != 403:
             raise
-        # Public canonical state, same exact main branch; a unique query avoids
-        # accepting a stale shared CDN response after an API rate-limit denial.
         raw_url = STATE_RAW + '?request=' + os.environ['GITHUB_SHA']
         raw_request = urllib.request.Request(raw_url, headers={'User-Agent': headers['User-Agent'], 'Cache-Control': 'no-cache'})
         with urllib.request.urlopen(raw_request, timeout=15) as response:
@@ -124,18 +147,15 @@ def main():
         self_test()
         return
     event = os.environ['GITHUB_EVENT_NAME']
-    if event == 'workflow_dispatch':
-        selected = True
-        focus = 'full'
-    else:
-        assert event == 'push', 'Unexpected CI event'
-        request = read_request()
-        selected = allowed(canonical_mode(), event, request)
-        focus = request['focus'] if request['gate'] == 'verify' else 'full'
+    assert event == 'push', 'Unapproved manual CI dispatch; use an audited CI-request commit'
+    request = read_request()
+    selected = allowed(canonical_mode(), event, request)
+    assert selected, 'CI request blocked by effective execution mode or missing justification'
+    focus = request['focus'] if request['gate'] == 'verify' else 'full'
     with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
-        output.write('run_tests=' + ('true' if selected else 'false') + '\n')
+        output.write('run_tests=true\n')
         output.write('run_scope=' + focus + '\n')
-    print('CI_REQUEST_RUN_TESTS=' + ('true' if selected else 'false'))
+    print('CI_REQUEST_RUN_TESTS=true')
     print('CI_REQUEST_RUN_SCOPE=' + focus)
 
 
