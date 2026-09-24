@@ -224,6 +224,12 @@ class ClientProjectServicesTest extends TestCase
         $this->customerLogin($otherClient, $other->email)->assertOk();
         $this->customerSend($otherClient, 'GET', '/api/v1/projects')->assertOk()->assertJsonCount(0, 'data.items');
         $this->customerSend($otherClient, 'GET', '/api/v1/projects/'.$project['public_id'])->assertNotFound();
+        $this->customerSend($otherClient, 'GET', '/api/v1/projects/'.$project['public_id'].'/files/'.$fileId)->assertNotFound();
+        $beforeForeignMilestone = [DB::table('orders')->count(), DB::table('payments')->count()];
+        $this->customerSend($otherClient, 'POST', '/api/v1/project-milestones/pay', [
+            'milestone_id' => $milestone, 'gateway' => 'jazzcash',
+        ], ['Idempotency-Key' => $this->key('foreign-owner')])->assertStatus(409);
+        $this->assertSame($beforeForeignMilestone, [DB::table('orders')->count(), DB::table('payments')->count()]);
         $this->customerSend($otherClient, 'POST', '/api/v1/projects/'.$project['public_id'].'/files/reference', [
             'name' => 'forbidden.txt', 'base64' => base64_encode('blocked'),
         ])->assertNotFound();
