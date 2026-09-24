@@ -141,10 +141,22 @@ final class W04PaymentPresentationAdministrationHttpTest extends TestCase
             'password' => Hash::make('SyntheticPass123!'), 'permissions' => $permissions,
             'auth_version' => 1,
         ])->save();
+        // Keep synthetic three-digit outlet identities unique across the whole test suite.
+        $code = null;
+        for ($candidate = 100; $candidate <= 999; $candidate++) {
+            if (! DB::table('outlets')->where('outlet_code', (string) $candidate)->exists()) {
+                $code = (string) $candidate;
+
+                break;
+            }
+        }
+        if ($code === null) {
+            throw new \RuntimeException('No unused synthetic three-digit outlet code is available.');
+        }
         $outlet = new Outlet;
         $outlet->forceFill([
             'name' => 'W04 COD Outlet', 'public_id' => (string) Str::uuid(),
-            'outlet_code' => (string) random_int(100, 999),
+            'outlet_code' => $code,
         ])->save();
         $admin->shops()->attach($outlet);
 

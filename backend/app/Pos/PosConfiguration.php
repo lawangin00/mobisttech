@@ -14,7 +14,7 @@ use Throwable;
 
 final class PosConfiguration
 {
-    private const CACHE_KEY = 'mobist.target.pos.configuration.v1';
+    private const CACHE_KEY = 'mobist.target.pos.configuration.v2';
 
     private const DEFINITIONS = [
         'invoice.show_logo' => ['domain' => 'documents', 'group' => 'invoice', 'label' => 'Show invoice logo / wordmark', 'type' => 'boolean', 'input' => 'boolean', 'default' => true, 'sort' => 5],
@@ -326,10 +326,10 @@ final class PosConfiguration
     private function current(string $domain): array
     {
         $defaults = $this->defaults($domain);
-        $rows = Cache::remember(self::CACHE_KEY, 300, fn () => DB::table('pos_settings')->get(['key', 'value'])->keyBy('key')->all());
+        $rows = Cache::remember(self::CACHE_KEY, 300, fn () => DB::table('pos_settings')->pluck('value', 'key')->all());
         $result = [];
         foreach ($this->definitions($domain) as $key => $definition) {
-            $raw = isset($rows[$key]) ? $rows[$key]->value : null;
+            $raw = $rows[$key] ?? null;
             $result[$key] = $raw === null ? $defaults[$key] : $this->decode($raw, $definition['type'], $defaults[$key]);
         }
 

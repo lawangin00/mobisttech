@@ -9,6 +9,7 @@ use App\Pos\PosConfiguration;
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -124,6 +125,13 @@ class PlatformAdministrationInterfaceTest extends TestCase
         $this->assertSame('a4', DB::table('pos_settings')->where('key', 'invoice.default_output_format')->value('value'));
         $afterPublish = $this->send($client, 'GET', '/internal/admin/platform/data')->assertOk();
         $this->assertSame('a4', $afterPublish->json('data.pos_configuration.domains.documents.values')['invoice.default_output_format']);
+        // Serialized cache must contain plain scalar settings, never database row objects.
+        $cachedSettings = Cache::get('mobist.target.pos.configuration.v2');
+        $this->assertIsArray($cachedSettings);
+        $this->assertSame('a4', $cachedSettings['invoice.default_output_format']);
+        foreach ($cachedSettings as $rawSetting) {
+            $this->assertTrue(is_string($rawSetting) || $rawSetting === null);
+        }
         [$editor, $editorOutlet] = $this->admin('pos-documents-editor@example.invalid', ['shops.enter', 'config.documents.manage']);
         $editorClient = $this->client();
         $this->login($editorClient, $editor->email)->assertOk();

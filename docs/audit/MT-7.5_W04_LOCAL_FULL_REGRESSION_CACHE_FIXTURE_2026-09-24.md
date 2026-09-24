@@ -1,0 +1,16 @@
+# MT-7.5 / W04: local full-regression POS cache and fixture isolation
+
+Date: 24 September 2026 (PKT). Current execution: Normal Chat LOCAL. Exact authorized project: 282dba2f-a2d9-47e8-aa8d-e499fbe1706c; repository lawangin00/mobisttech, local root C:\mobisttech, main. This is a partial MT-7.5/W04 regression checkpoint, not completion, production acceptance, or H-02 authorization.
+
+## Reproduced failures and bounded corrections
+
+- Full local isolated `--env=testing` MySQL regression first returned 413 passed / 1 failed (10,986 assertions); a synthetic W04 payment presentation editor randomly generated an already used unique three-digit outlet code. The fixture now chooses the first available three-digit code from the existing test database, refuses exhaustion, and does not change production outlet allocation.
+- The next full regression returned 411 passed / 3 failed (10,919 assertions); `PosConfiguration::current()` cached database `stdClass` row objects and observed PHP incomplete-object property reads under the long-running Windows suite. The cache now stores plain `key => value` scalars and uses a new v2 cache key so existing object-valued cache entries are never interpreted as scalar arrays. No stored settings, revisions, database data or permission logic changed.
+- A focused POS configuration assertion verifies the actual v2 cache contains scalar values after publishing a synthetic setting, preventing an object-valued cache regression.
+
+## Acceptance and limitations
+
+- Final full isolated local backend output: **414/414 passed (11,008 assertions)**, duration 339.10 seconds; logged under ignored `backend/storage/framework/testing/w04-full-backend-final.log`. The shell tool timed out while running; the terminal PHP test result is present in its completed log, and subsequent process check showed no remaining PHP test processes. Do not imply that the wrapper's exit code was directly observed.
+- Focused POS platform + W04 presentation: 9/9 passed (255 assertions) before the additional scalar-cache assertion; after the assertion, PlatformAdministrationInterfaceTest 5/5 passed (219 assertions). PHP syntax, scoped Pint and diff checks passed.
+- Isolated POS platform browser: real local Microsoft Edge 1/1 passed, **including normal global fixture teardown**. Earlier joined POS platform plus W04 presentation Edge browser had both tests pass (2/2) but its non-CI global teardown failed because the presentation test deliberately retains its scoped nonsecret revision outside CI. Explicit `W04PaymentPresentationE2eCleanupSeeder` with testing-only first-outlet cleanup opt-in and `PosShellE2eCleanupSeeder` both subsequently exited zero against the guarded disposable database. Do not report that joined browser attempt as a clean end-to-end PASS.
+- No real provider credentials, merchant enablement, authentic callbacks, production database, protected source repositories, execution-mode changes, CI request or hosted GitHub Actions invocation. H-02 remains HOLD. MT-7.5/W04 remains In Progress 15/27 DONE, 12 OPEN.
