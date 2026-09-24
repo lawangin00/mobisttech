@@ -8,7 +8,7 @@ final class ResetDomains
 {
     public const MAP = [
         'commerce' => [
-            'reservation_allocations', 'reservation_lines', 'reservations', 'order_items', 'orders', 'payments',
+            'reservation_allocations', 'reservation_lines', 'reservations', 'order_items', 'website_order_payment_terms', 'orders', 'payments',
             'payment_receipts', 'returns', 'return_lines', 'refunds', 'invoices', 'sales',
             'pos_tender_allocations', 'pos_settlement_events', 'pos_refund_allocations', 'monetary_adjustments',
         ],

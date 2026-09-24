@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Addendum\ResetDomains;
+use App\Addendum\ResetRetention;
 use App\Identity\RealmSessionPolicy;
 use App\Infrastructure\PrivateObjects;
 use App\Models\Admin;
@@ -18,6 +19,18 @@ use Tests\TestCase;
 class GuardedResetServiceTest extends TestCase
 {
     use DatabaseTransactions;
+
+    public function test_order_payment_terms_follow_commerce_reset_selection_without_cross_domain_deletion(): void
+    {
+        $this->assertContains('website_order_payment_terms', ResetDomains::MAP['commerce']);
+        $retention = app(ResetRetention::class);
+        foreach (['transactional', 'business', 'factory'] as $level) {
+            $classification = $retention->classify($level, ['website_order_payment_terms', 'orders']);
+            $this->assertSame('transactional', $classification['tables']['website_order_payment_terms']['group']);
+            $this->assertSame('candidate_clear', $classification['tables']['website_order_payment_terms']['action']);
+        }
+        $this->assertNotContains('website_order_payment_terms', ResetDomains::MAP['service_requests']);
+    }
 
     public function test_preview_requires_recent_auth_and_retained_dependency_blocks_execution(): void
     {
