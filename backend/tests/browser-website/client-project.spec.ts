@@ -137,3 +137,31 @@ test('W04 project milestone initiation failure retains its owned order for conti
     await expect(page.getByRole('button', { name: 'Continue payment' })).toBeVisible();
     expect(creates).toBe(1);
 });
+
+
+test('W04 failed digital milestone order does not offer commerce-only retry', async ({ page }) => {
+    test.setTimeout(90_000);
+    await login(page);
+    const orderId = '00000000-0000-4000-8000-000000000087';
+    await page.route('**/api/customer/checkout/channels', async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [
+            { code: 'cod', label: 'Cash on Delivery', available: true },
+            { code: 'jazzcash', label: 'JazzCash', available: true },
+            { code: 'easypaisa', label: 'Easypaisa', available: false },
+            { code: 'card', label: 'Credit / Debit Card', available: false },
+        ] } }) });
+    });
+    await page.route('**/api/customer/orders/' + orderId, async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {
+            id: orderId, number: 'MT75-FAILED-PROJECT', type: 'digital', status: 'pending',
+            fulfillment_status: 'pending', payment_status: 'failed', subtotal: '10000.00', total: '10000.00',
+            currency: 'PKR', items: [], signed_access_url: '/account', payments: [
+                { public_id: '00000000-0000-4000-8000-000000000088', gateway: 'jazzcash', status: 'failed', amount: '10000.00', currency: 'PKR' },
+            ],
+        } }) });
+    });
+    await page.goto('/account/orders/' + orderId);
+    await expect(page.getByRole('heading', { name: 'MT75-FAILED-PROJECT' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Retry with JazzCash' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Continue payment' })).toHaveCount(0);
+});
