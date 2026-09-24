@@ -22,6 +22,9 @@ test.beforeAll(() => {
 });
 
 test.afterAll(() => {
+    execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W06SecondSoftwareE2eCleanupSeeder', '--env=testing', '--force'], {
+        cwd: process.cwd(), stdio: 'inherit',
+    });
     execFileSync('php', [
         'artisan', 'db:seed', '--class=Database\\Seeders\\DynamicWebsiteE2eCleanupSeeder',
         '--env=testing', '--force',
@@ -172,6 +175,62 @@ test('MT-7.5 authenticated Software draft publication reaches actual Next.js pub
         await expect(page.getByText('Published MT54 software overview')).toBeVisible({ timeout: 15000 });
         await expect(page.getByText('MT75 subsequent private revision')).toHaveCount(0);
         await expect(page.getByText('Current version: 1.0.0')).toBeVisible();
+    } finally {
+        await admin.close();
+    }
+});
+
+test('W06 blank New Software draft is private and its own complete route preview is protected', async ({ page, context }) => {
+    test.setTimeout(120_000);
+    const newUrl = '/software/mt75-w06-second';
+    const firstUrl = '/software/mt54-software';
+    expect((await page.goto(newUrl))?.status()).toBe(404);
+    await page.goto(firstUrl);
+    await expect(page.getByText('Published MT54 software overview')).toBeVisible();
+    const admin = await context.newPage();
+    try {
+        await admin.goto('http://127.0.0.1:18080/internal/admin/pos/login');
+        await admin.getByTestId('login-email').fill('e2e-platform@example.invalid');
+        await admin.getByTestId('login-password').fill('SyntheticPass123!');
+        await admin.getByTestId('login-submit').click();
+        await admin.waitForURL('**/internal/admin/pos');
+        await admin.goto('http://127.0.0.1:18080/internal/admin/platform');
+        await expect(admin.getByRole('heading', { name: 'Platform Administration' })).toBeVisible();
+        await admin.getByRole('button', { name: 'Software', exact: true }).click();
+        const editor = admin.getByRole('heading', { name: 'Software create/edit' }).locator('xpath=ancestor::section[1]');
+        await editor.locator('select').first().selectOption('');
+        await expect(editor.getByPlaceholder('Product name')).toHaveValue('');
+        await editor.getByPlaceholder('Product name').fill('MT75 W06 Second Software');
+        await editor.getByPlaceholder('product-slug').fill('mt75-w06-second');
+        await editor.getByPlaceholder('Summary').fill('Second synthetic Software has independent approved content.');
+        await editor.getByPlaceholder('Overview HTML').fill('<p>Second product only: private W06 overview.</p>');
+        await editor.getByPlaceholder('Product Privacy HTML').fill('<p>Second software privacy only.</p>');
+        await editor.getByPlaceholder('Product Terms HTML').fill('<p>Second software terms only.</p>');
+        await editor.getByPlaceholder('FAQ JSON').fill('[{"question":"Second software?","answer":"<p>Independent FAQ answer.</p>"}]');
+        const created = admin.waitForResponse(response => response.url().endsWith('/internal/admin/platform/software')
+            && response.request().method() === 'POST');
+        await editor.getByRole('button', { name: 'New Software draft' }).click();
+        expect((await created).status()).toBe(200);
+        const candidate = editor.locator('select').first().locator('option', { hasText: 'MT75 W06 Second Software' });
+        await expect(candidate).toHaveCount(1);
+        const createdId = await candidate.getAttribute('value');
+        expect(createdId).toBeTruthy();
+        await editor.locator('select').first().selectOption(createdId!);
+        await editor.getByText('Preview selected revision routes').click();
+        const preview = editor.getByRole('region', { name: 'Protected software route preview' });
+        await expect(preview.getByText('Second product only: private W06 overview.')).toBeVisible();
+        await preview.getByRole('button', { name: 'Privacy' }).click();
+        await expect(preview.getByText('Second software privacy only.')).toBeVisible();
+        await preview.getByRole('button', { name: 'Terms' }).click();
+        await expect(preview.getByText('Second software terms only.')).toBeVisible();
+        await preview.getByRole('button', { name: 'FAQ' }).click();
+        await expect(preview.getByText('Independent FAQ answer.')).toBeVisible();
+        await preview.getByRole('button', { name: 'Releases' }).click();
+        await expect(preview.getByText('No release records yet.')).toBeVisible();
+        expect((await page.goto(newUrl))?.status()).toBe(404);
+        await page.goto(firstUrl);
+        await expect(page.getByText('Published MT54 software overview')).toBeVisible();
+        await expect(page.getByText('Second product only: private W06 overview.')).toHaveCount(0);
     } finally {
         await admin.close();
     }
