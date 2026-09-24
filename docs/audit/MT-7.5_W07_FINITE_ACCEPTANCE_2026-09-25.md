@@ -15,3 +15,6 @@ Theme authoring/publication/rollback, 390px/three-mode public CSS and role/contr
 
 ## Verified safe Website media lifecycle (25-Sep-2026 LOCAL)
 Private upload, alt, immutable new-ID replacement and unused-only tombstone/file deletion with current/draft/historical references denied are accepted under scoped PHP 11/11 and real protected Admin Edge 1/1 terminal evidence, exact owner-scoped cleanup. MT-7.5_W07_MEDIA_LIFECYCLE_2026-09-25.md. Branding public role images, Website secret/recovery, bounded source behavior disposition and final family join remain OPEN; historical media table gap text is superseded for these specific accepted controls only.
+
+## Source disposition checkpoint (25-Sep-2026 LOCAL)
+Pinned frozen W07 119/119 source-file and 15/15 route *target/retirement mapping*, with 36 files/13 routes W07-only and rest shared with accepted earlier gates: MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md. This is not proof of complete behavior parity or W07 DONE. First genuinely pending implementation: safe published branding-role images/private media mapping, followed by Website-specific masked secret/recovery and exact family join.
