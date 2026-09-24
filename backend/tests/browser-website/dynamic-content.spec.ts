@@ -201,7 +201,9 @@ test('MT-7.5 authenticated Software draft publication reaches actual Next.js pub
 });
 
 test('W06 new independent Software is private until published with its own complete route family', async ({ page, context }) => {
-    test.setTimeout(180_000);
+    // The 180s limit expired in authenticated logout after 20+ real route assertions had passed.
+    // Bound the full second-product acceptance to 300s, including mandatory teardown.
+    test.setTimeout(300_000);
     const newUrl = '/software/mt75-w06-second';
     const firstUrl = '/software/mt54-software';
     expect((await page.goto(newUrl))?.status()).toBe(404);
