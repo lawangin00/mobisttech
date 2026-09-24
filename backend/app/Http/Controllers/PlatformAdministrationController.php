@@ -308,6 +308,33 @@ final class PlatformAdministrationController extends Controller
         ])]);
     }
 
+    public function mediaAlt(Request $request, int $media, WebsiteCms $service)
+    {
+        $data = $request->validate(['alt_text' => 'present|nullable|string|max:500']);
+
+        return response()->json(['data' => $service->updateMediaAlt($this->actor(), $media, $data['alt_text'])]);
+    }
+
+    public function mediaReplace(Request $request, int $media, WebsiteCms $service)
+    {
+        $data = $request->validate([
+            'base64' => 'required|string|max:20971520', 'extension' => 'required|string|max:10',
+            'original_name' => 'required|string|max:255', 'alt_text' => 'nullable|string|max:500',
+        ]);
+        $bytes = base64_decode($data['base64'], true);
+        abort_unless(is_string($bytes), 422, 'Media payload is not valid base64.');
+
+        return response()->json(['data' => $service->replaceMedia($this->actor(), $media, [
+            'bytes' => $bytes, 'extension' => $data['extension'], 'original_name' => $data['original_name'],
+            'alt_text' => $data['alt_text'] ?? null,
+        ])]);
+    }
+
+    public function mediaDelete(int $media, WebsiteCms $service)
+    {
+        return response()->json(['data' => $service->deleteUnusedMedia($this->actor(), $media)]);
+    }
+
     public function policyDraft(Request $request, string $type, WebsiteCms $service)
     {
         return response()->json(['data' => $service->savePolicyDraft($this->actor(), $type, $request->all())]);

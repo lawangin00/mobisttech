@@ -162,7 +162,7 @@ final class WebsiteCms
         abort_if($width > 16384 || $height > 16384, 422, 'Website media dimensions are too large.');
         $sha = hash('sha256', $bytes);
         $existing = DB::table('site_media_assets')->where('sha256', $sha)->where('byte_size', $size)
-            ->where('mime_type', $mime)->where('disk', 'local')->first();
+            ->where('mime_type', $mime)->where('disk', 'local')->where('status', 'active')->first();
         if ($existing) {
             return $this->mediaPayload($existing);
         }
@@ -190,6 +190,121 @@ final class WebsiteCms
         IdentityAudit::record('admin', $admin->id, 'website_media_registered', 'site_media_asset:'.$id);
 
         return $this->mediaPayload(DB::table('site_media_assets')->where('id', $id)->firstOrFail());
+    }
+
+    public function updateMediaAlt(IdentityAccount $actor, int $mediaId, mixed $altText): array
+    {
+        $admin = $this->admin($actor);
+        abort_unless(app(Access::class)->allows($admin, 'website.media.manage'), 403);
+
+        return DB::transaction(function () use ($admin, $mediaId, $altText): array {
+            $asset = $this->managedMediaForChange($mediaId);
+            DB::table('site_media_assets')->where('id', $mediaId)->update([
+                'alt_text' => $this->nullablePlain($altText, 500), 'updated_at' => now(),
+            ]);
+            $this->bump('cms.media');
+            IdentityAudit::record('admin', $admin->id, 'website_media_alt_updated', 'site_media_asset:'.$asset->id);
+
+            return $this->mediaPayload(DB::table('site_media_assets')->where('id', $mediaId)->firstOrFail());
+        });
+    }
+
+    /** Replacement creates a new private asset ID; published or historical references NEVER change implicitly. */
+    public function replaceMedia(IdentityAccount $actor, int $mediaId, array $input): array
+    {
+        $admin = $this->admin($actor);
+        abort_unless(app(Access::class)->allows($admin, 'website.media.manage'), 403);
+        $original = $this->managedMediaForChange($mediaId);
+        $replacement = $this->registerMedia($actor, $input);
+        abort_if((int) $replacement['id'] === $mediaId, 422, 'Replacement must provide different verified media bytes.');
+        IdentityAudit::record('admin', $admin->id, 'website_media_replacement_created',
+            'site_media_asset:'.$original->id.' -> site_media_asset:'.$replacement['id']);
+
+        return ['original_id' => $mediaId, 'replacement' => $replacement,
+            'assign_explicitly' => true];
+    }
+
+    public function deleteUnusedMedia(IdentityAccount $actor, int $mediaId): array
+    {
+        $admin = $this->admin($actor);
+        abort_unless(app(Access::class)->allows($admin, 'website.media.manage'), 403);
+        $path = DB::transaction(function () use ($admin, $mediaId): string {
+            $asset = $this->managedMediaForChange($mediaId);
+            abort_if($this->mediaHasAnyUsage($mediaId), 409,
+                'Website media is used in a current, draft, or historical revision and cannot be deleted.');
+            DB::table('site_media_assets')->where('id', $mediaId)->update(['status' => 'retired', 'updated_at' => now()]);
+            $this->bump('cms.media');
+            IdentityAudit::record('admin', $admin->id, 'website_media_retired', 'site_media_asset:'.$mediaId);
+
+            return $asset->path;
+        });
+        // Private file removal follows the committed access-denying tombstone. A failed physical
+        // deletion never makes the retired asset publicly accessible or mutates any other ID.
+        $removed = Storage::disk('local')->delete($path);
+
+        return ['id' => $mediaId, 'retired' => true, 'private_file_removed' => $removed];
+    }
+
+    private function managedMediaForChange(int $mediaId): object
+    {
+        $asset = DB::table('site_media_assets')->where('id', $mediaId)->where('status', 'active')->lockForUpdate()->firstOrFail();
+        abort_unless($asset->disk === 'local'
+            && preg_match('/\Acms\/[0-9a-f-]+\.(?:png|jpe?g|webp|mp4|webm)\z/i', $asset->path)
+            && Storage::disk('local')->exists($asset->path), 409,
+            'Only verified private Website media may be changed.');
+
+        return $asset;
+    }
+
+    private function mediaHasAnyUsage(int $mediaId): bool
+    {
+        if (DB::table('site_media_usages')->where('media_asset_id', $mediaId)->exists()) {
+            return true;
+        }
+        foreach (['site_page_revisions', 'software_product_revisions', 'site_configuration_revisions'] as $table) {
+            foreach (DB::table($table)->select('snapshot')->cursor() as $row) {
+                // An unknown or invalid snapshot is not proof of safe, unused media.
+                $snapshot = json_decode($row->snapshot, true);
+                abort_unless(is_array($snapshot), 409, 'Unrecognized Website media usage history.');
+                if ($this->snapshotReferencesMedia($snapshot, $mediaId)) {
+                    return true;
+                }
+            }
+        }
+        foreach (DB::table('site_settings')->select('key', 'value')->cursor() as $row) {
+            if (str_ends_with($row->key, '_media_id') && (int) $row->value === $mediaId) {
+                return true;
+            }
+            if (str_starts_with($row->key, 'cms.presentation.') && $row->value !== null) {
+                $snapshot = json_decode($row->value, true);
+                abort_unless(is_array($snapshot), 409, 'Unrecognized Website presentation media usage.');
+                if ($this->snapshotReferencesMedia($snapshot, $mediaId)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function snapshotReferencesMedia(mixed $value, int $mediaId, ?string $key = null): bool
+    {
+        if ($key !== null && (str_ends_with($key, '_media_id') || $key === 'media_id')) {
+            return is_int($value) && $value === $mediaId;
+        }
+        if ($key !== null && str_ends_with($key, '_media_ids') && is_array($value)) {
+            return in_array($mediaId, $value, true);
+        }
+        if (! is_array($value)) {
+            return false;
+        }
+        foreach ($value as $childKey => $child) {
+            if ($this->snapshotReferencesMedia($child, $mediaId, is_string($childKey) ? $childKey : null)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function savePageDraft(IdentityAccount $actor, ?string $publicId, array $input): array

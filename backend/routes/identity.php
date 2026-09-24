@@ -217,6 +217,9 @@ Route::prefix('/internal/admin')->middleware(['identity', 'identity.auth'])->gro
     Route::post('/platform/pages/{revision}/publish', [PlatformAdministrationController::class, 'pagePublish'])->defaults('identity_realm', 'admin')->name('admin.platform.pages.publish');
     Route::post('/platform/pages/{revision}/rollback', [PlatformAdministrationController::class, 'pageRollback'])->defaults('identity_realm', 'admin')->name('admin.platform.pages.rollback');
     Route::post('/platform/media', [PlatformAdministrationController::class, 'mediaRegister'])->defaults('identity_realm', 'admin')->name('admin.platform.media.register');
+    Route::patch('/platform/media/{media}/alt', [PlatformAdministrationController::class, 'mediaAlt'])->whereNumber('media')->defaults('identity_realm', 'admin')->name('admin.platform.media.alt');
+    Route::post('/platform/media/{media}/replacement', [PlatformAdministrationController::class, 'mediaReplace'])->whereNumber('media')->defaults('identity_realm', 'admin')->name('admin.platform.media.replace');
+    Route::delete('/platform/media/{media}', [PlatformAdministrationController::class, 'mediaDelete'])->whereNumber('media')->defaults('identity_realm', 'admin')->middleware('identity.recent')->name('admin.platform.media.delete');
     Route::post('/platform/policies/{type}/draft', [PlatformAdministrationController::class, 'policyDraft'])->defaults('identity_realm', 'admin')->name('admin.platform.policies.draft');
     Route::post('/platform/policies/{revision}/publish', [PlatformAdministrationController::class, 'policyPublish'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.platform.policies.publish');
     Route::post('/platform/policies/{revision}/rollback', [PlatformAdministrationController::class, 'policyRollback'])->defaults('identity_realm', 'admin')->middleware(['throttle:identity', 'identity.recent'])->name('admin.platform.policies.rollback');
