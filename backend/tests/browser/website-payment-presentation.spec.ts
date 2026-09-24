@@ -18,11 +18,15 @@ test('W04 authorized Admin publishes new-only nonsecret payment presentation wit
     await page.goto('/internal/admin/pos/login');
     await page.getByTestId('login-email').fill('e2e-protected-owner@example.invalid');
     await page.getByTestId('login-password').fill('SyntheticPass123!');
+    const login = page.waitForResponse(response => response.request().method() === 'POST'
+        && new URL(response.url()).pathname === '/internal/admin/auth/login');
     await page.getByTestId('login-submit').click();
+    expect((await login).status(), 'Synthetic Admin login must be accepted before policy editing').toBe(200);
     await page.waitForURL('**/internal/admin/pos');
-    // Wait for the authenticated POS shell to finish its login navigation before
-    // starting a second full navigation to the payment settings page.
-    await expect(page.getByTestId('logout')).toBeVisible();
+    // Assert the authenticated shell response before opening settings. A URL alone
+    // can be reached even if the browser was subsequently redirected to sign-in.
+    const shell = await page.goto('/internal/admin/pos');
+    expect(shell?.status(), 'Synthetic Admin shell must remain authenticated').toBe(200);
     expect((await page.goto(pagePath))?.status()).toBe(200);
     await expect(page.getByRole('heading', { name: 'Payment labels, instructions and COD limits' })).toBeVisible();
     const codGroup = page.getByRole('group', { name: 'COD' });
