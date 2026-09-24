@@ -1,6 +1,6 @@
 # Mobisttech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r22
+**Registry version:** MT-1.1-r23
 **Applied universal implementation epochs:** `U-CI-2026-09-19-1`, `U-CI-MODE-2026-09-21-2`
 **Universal baseline (review provenance):** Registry 1.36 / System 7.12
 **Bootstrap baseline (review provenance):** 1.14
@@ -88,3 +88,7 @@ Audit reconciliation (23-Sep-2026): Current reviewed canonical Universal Registr
 ## ChatGPT Project first-command binding
 
 The exact project-scoped marker for this Project ID and its complete canonical repository set is documented in `docs/CHATGPT_PROJECT_CONTEXT.md`. When that marker is installed in the currently selected ChatGPT Project Instructions, inherit the CURRENT Universal Bootstrap/Registry first-bind rule: verify remote identity and selected root, lock once, and execute the original first project-bound command without a second project-choice or `Y` prompt. Git documentation alone is not proof of marker installation. Keep universal-only `Refresh`/`Help` unbound and hard-stop identity conflicts.
+
+## Binding finite execution/closure discipline (all stages)
+
+`docs/PROJECT_EXECUTION_EFFICIENCY_POLICY.md` applies to EVERY current and future stage/family, not only MT-7.5/W04. The ledger links the active finite acceptance checklist and identifies the first truly OPEN and independently executable action for each `Y`/`Proceed`/`Resume`. Existing approved source mapping, prior PASS and completed families are reused unless a concrete regression invalidates them. For isolated changes use focused plus impacted neighboring tests; reserve full suite for family/stage/release closure or material cross-system risk. Serialize shared mutable test DB commands, verify baseline and fixture ownership, and NEVER purge unowned data to force PASS. Failure classification, signature, material correction and inherited LOOP_GUARD precede retries. Finish finite non-HOLD closure without speculative micro-fixes; retain required security/payment/integrity/end-to-end gates and separate unresolved external/production/owner HOLDs. No new authority to dispatch hosted CI, activate provider, change product scope or move the roadmap. `tools/run_isolated_test.py` is a cooperative LOCAL lock, not global enforcement of direct runner processes.
