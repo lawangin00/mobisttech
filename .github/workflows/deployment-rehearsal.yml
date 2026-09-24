@@ -2,13 +2,49 @@ name: MT-7.4 isolated Linux deployment rehearsal
 
 on:
   workflow_dispatch:
+    inputs:
+      authorization_ref:
+        description: 'Exact, previously recorded milestone/owner authorization reference in project ledger'
+        required: true
+        type: string
+      local_evidence:
+        description: 'Exact local-verification evidence reference already recorded in project ledger'
+        required: true
+        type: string
+      hosted_only_need:
+        description: 'Distinct Linux-only milestone verification need, not a repeat of local tests'
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
+  preflight:
+    name: Validate documented Linux milestone authorization
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check exact existing authorization and local evidence
+        shell: bash
+        env:
+          AUTH_REF: ${{ inputs.authorization_ref }}
+          LOCAL_EVIDENCE: ${{ inputs.local_evidence }}
+          HOSTED_NEED: ${{ inputs.hosted_only_need }}
+        run: |
+          test "${#AUTH_REF}" -ge 12
+          test "${#LOCAL_EVIDENCE}" -ge 12
+          test "${#HOSTED_NEED}" -ge 20
+          grep -Fq -- "$AUTH_REF" docs/PROJECT_IMPLEMENTATION_STATUS.md
+          grep -Fq -- "$LOCAL_EVIDENCE" docs/PROJECT_IMPLEMENTATION_STATUS.md
+          echo "DOCUMENTED_LINUX_MILESTONE_PREFLIGHT=PASS"
+
   rehearsal:
     name: Synthetic backup restore and Nginx validation
+    needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
