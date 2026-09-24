@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { CustomerAccount, customerRequest } from "@/lib/customer-api";
 import { CartLine, clearCart, readCart } from "@/lib/customer-cart";
 
-type Channel = { code: "cod" | "jazzcash" | "easypaisa" | "card"; label: string; available: boolean; kind: string };
+type Channel = { code: "cod" | "jazzcash" | "easypaisa" | "card"; label: string; instructions?: string; available: boolean; kind: string };
 type CreatedOrder = { order_id: string; order_number: string; payment_id: string; payment_status: string; amount: string; currency: string };
 type PaymentInit = { reference: string; redirect_url?: string; expires_at?: string };
 
@@ -111,7 +111,7 @@ export function CustomerCheckoutForm() {
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {channels.map((channel) => <label key={channel.code} className={"rounded-xl border p-4 " + (!channel.available ? "opacity-50" : "")}>
           <span className="flex items-center gap-2"><input type="radio" name="gateway" value={channel.code} checked={gateway === channel.code} disabled={!channel.available} onChange={() => setGateway(channel.code)} /> <strong>{channel.label}</strong></span>
-          <span className="mt-1 block text-xs text-slate-500">{channel.available ? (channel.code === "cod" ? "Pay when the order is collected/delivered." : "Continue on the configured hosted provider.") : "Not configured."}</span>
+          <span className="mt-1 block text-xs text-slate-500">{channel.available ? (channel.instructions || (channel.code === "cod" ? "Pay when the order is collected/delivered." : "Continue on the configured hosted provider.")) : "Not configured."}</span>
         </label>)}
       </div>
       <p className="mt-3 text-xs text-slate-500">Exactly four Website payment channels are supported. Bank transfer and split tender are not offered here.</p>

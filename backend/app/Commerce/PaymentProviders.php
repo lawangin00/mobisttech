@@ -50,7 +50,9 @@ final class PaymentProviders
             'card' => 'Credit / Debit Card',
         ];
 
-        return collect($labels)->map(function (string $label, string $gateway) {
+        $presentation = app(WebsitePaymentPresentation::class)->published()['channels'];
+
+        return collect($labels)->map(function (string $label, string $gateway) use ($presentation) {
             try {
                 $this->assertAvailable($gateway);
                 $available = true;
@@ -60,7 +62,8 @@ final class PaymentProviders
 
             return [
                 'code' => $gateway,
-                'label' => $label,
+                'label' => $presentation[$gateway]['label'],
+                'instructions' => $presentation[$gateway]['instructions'],
                 'available' => $available,
                 'kind' => $gateway === 'cod' ? 'cash_on_delivery' : 'hosted_or_provider',
             ];
