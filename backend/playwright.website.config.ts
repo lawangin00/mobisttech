@@ -26,6 +26,7 @@ export default defineConfig({
     webServer: [
         {
             command: 'php artisan serve --env=testing --host=127.0.0.1 --port=18080',
+            env: { ...process.env, MT75_BROWSER_E2E: '1' },
             url: 'http://127.0.0.1:18080/api/v1/website-profile',
             reuseExistingServer: false,
             timeout: webServerTimeout,
