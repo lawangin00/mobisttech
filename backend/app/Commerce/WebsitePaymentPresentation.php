@@ -65,6 +65,18 @@ final class WebsitePaymentPresentation
         return $normalized;
     }
 
+    /** Applies to newly created COD orders only, after server-side discounts. */
+    public function assertCodAmount(string $amount): void
+    {
+        $policy = $this->published();
+        if ($policy['cod_min_amount'] !== null && bccomp($amount, $policy['cod_min_amount'], 2) < 0) {
+            abort(422, 'Order amount is below the Cash on Delivery minimum.');
+        }
+        if ($policy['cod_max_amount'] !== null && bccomp($amount, $policy['cod_max_amount'], 2) > 0) {
+            abort(422, 'Order amount exceeds the Cash on Delivery maximum.');
+        }
+    }
+
     public function published(): array
     {
         $snapshot = DB::table('site_configuration_revisions')->where('domain', self::DOMAIN)

@@ -94,6 +94,9 @@ final class OrderTransactions
             $discountAmount = $loyaltyPoints > 0 ? $loyalty['discount'] : $promotion['discount'];
             $allocations = $loyaltyPoints > 0 ? $loyalty['allocations'] : $promotion['allocations'];
             $total = bcsub($gross, $discountAmount, 2);
+            if ($data['gateway'] === 'cod') {
+                app(WebsitePaymentPresentation::class)->assertCodAmount($total);
+            }
             $number = 'WEB-'.now()->format('Ymd').'-'.strtoupper(Str::random(12));
             $orderId = DB::table('orders')->insertGetId([
                 'order_number' => $number, 'order_type' => 'commerce', 'status' => 'pending', 'fulfillment_status' => 'pending',

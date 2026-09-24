@@ -8,6 +8,7 @@ use App\Commerce\OrderTransactions;
 use App\Commerce\PaymentProvider;
 use App\Commerce\PaymentProviders;
 use App\Commerce\ProductReviews;
+use App\Commerce\WebsitePaymentPresentation;
 use App\Inventory\InventoryOperations;
 use App\Models\CustomerAccount;
 use App\Models\Outlet;
@@ -59,6 +60,42 @@ class OrderPaymentTransactionsTest extends TestCase
         $replay = $this->service()->collectCod($this->actor, $this->outlet, $result['order_id'], $this->key('collect'), '400.04', 'COD-001');
         $this->assertEquals($collected, $replay);
         $this->reject(fn () => $this->service()->collectCod($this->actor, $this->outlet, $result['order_id'], $this->key('collect'), '400.03', 'COD-001'));
+    }
+
+    public function test_w04_published_cod_amount_bounds_apply_only_to_new_orders_after_discount(): void
+    {
+        $product = $this->product();
+        $this->acquire($product, 4);
+        $before = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('cod-before-new-limits'), $this->checkoutInput($product->public_id, 'cod'));
+        $this->assertSame('200.02', $before['amount']);
+        $policy = app(WebsitePaymentPresentation::class)->defaults();
+        $policy['cod_min_amount'] = '250.00';
+        $policy['cod_max_amount'] = '450.00';
+        DB::table('site_configuration_revisions')->insert([
+            'domain' => 'website.payments.presentation', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode($policy, JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        $counts = [DB::table('orders')->count(), DB::table('reservations')->count(),
+            DB::table('payments')->count(), DB::table('reservation_allocations')->count()];
+        foreach ([1, 3] as $quantity) {
+            try {
+                $this->service()->checkout($this->scope(), $this->customer,
+                    $this->key('cod-outside-new-limits-'.$quantity),
+                    $this->checkoutInput($product->public_id, 'cod', $quantity));
+                $this->fail('A new COD order outside published amount limits was accepted.');
+            } catch (HttpException $exception) {
+                $this->assertSame(422, $exception->getStatusCode());
+            }
+            $this->assertSame($counts, [DB::table('orders')->count(), DB::table('reservations')->count(),
+                DB::table('payments')->count(), DB::table('reservation_allocations')->count()]);
+        }
+        $within = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('cod-within-new-limits'), $this->checkoutInput($product->public_id, 'cod', 2));
+        $this->assertSame('400.04', $within['amount']);
+        $this->assertSame('paid', $this->service()->collectCod($this->actor, $this->outlet, $before['order_id'],
+            $this->key('cod-before-limits-collection'), '200.02', 'COD-OLD-TERMS')['payment_status']);
+        $this->assertSame(2, DB::table('orders')->count());
     }
 
     public function test_w04_cod_disable_blocks_new_orders_but_preserves_preexisting_collection(): void
