@@ -62,6 +62,9 @@ final class WebsiteCms
         if (array_key_exists('header_footer', $snapshot)) {
             $snapshot['header_footer'] = $this->headerFooterSnapshot($snapshot['header_footer']);
         }
+        if (array_key_exists('theme', $snapshot)) {
+            $snapshot['theme'] = $this->themeSnapshot($snapshot['theme']);
+        }
         if (array_key_exists('seo', $snapshot)) {
             $snapshot['seo'] = $this->globalSeoSnapshot($snapshot['seo']);
         }
@@ -724,6 +727,49 @@ final class WebsiteCms
         if (array_key_exists('navigation', $snapshot)) {
             $this->applyNavigation($admin, $snapshot['navigation']);
         }
+    }
+
+    private function themeSnapshot(mixed $input): array
+    {
+        $defaults = [
+            'primary' => '#008080', 'primary_hover' => '#005b60', 'secondary' => '#005b60',
+            'accent' => '#00b4d8', 'background' => '#f7f8fb', 'surface' => '#ffffff',
+            'text' => '#111827', 'muted_text' => '#667085', 'border' => '#e7eaf0',
+        ];
+        abort_unless(is_array($input) && ! array_is_list($input)
+            && array_diff(array_keys($input), array_keys($defaults)) === [], 422, 'Unsupported Website theme token.');
+        $theme = $defaults;
+        foreach ($input as $key => $color) {
+            abort_unless(is_string($color) && preg_match('/\A#[0-9a-fA-F]{6}\z/', $color),
+                422, 'Website theme colors must be six-digit HEX.');
+            $theme[$key] = strtolower($color);
+        }
+        $luminance = static function (string $color): float {
+            $channels = [hexdec(substr($color, 1, 2)), hexdec(substr($color, 3, 2)), hexdec(substr($color, 5, 2))];
+            $linear = array_map(static function (int $channel): float {
+                $normalized = $channel / 255;
+
+                return $normalized <= 0.04045 ? $normalized / 12.92 : (($normalized + 0.055) / 1.055) ** 2.4;
+            }, $channels);
+
+            return $linear[0] * 0.2126 + $linear[1] * 0.7152 + $linear[2] * 0.0722;
+        };
+        $contrast = static function (string $first, string $second) use ($luminance): float {
+            $a = $luminance($first);
+            $b = $luminance($second);
+
+            return (max($a, $b) + 0.05) / (min($a, $b) + 0.05);
+        };
+        abort_unless($contrast($theme['text'], $theme['surface']) >= 4.5
+            && $contrast($theme['text'], $theme['background']) >= 4.5
+            && $contrast($theme['muted_text'], $theme['surface']) >= 4.5,
+            422, 'Website theme text and background contrast must meet 4.5:1.');
+        foreach (['primary', 'primary_hover', 'secondary', 'accent'] as $key) {
+            abort_unless(max($contrast($theme[$key], '#ffffff'), $contrast($theme[$key], '#111827')) >= 4.5,
+                422, 'Website theme controls must have a readable foreground.');
+        }
+
+        return array_intersect_key($theme, $input);
     }
 
     private function homepageLayoutSnapshot(mixed $input): array

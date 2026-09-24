@@ -3,11 +3,11 @@
 
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
-html { background: #f8fafc; }
+html { background: var(--mobist-color-surface-soft); }
 body {
   margin: 0;
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--mobist-color-surface-soft);
+  color: var(--mobist-color-ink);
   font-family: var(--mobist-font-sans);
 }
 a { text-underline-offset: 3px; }
