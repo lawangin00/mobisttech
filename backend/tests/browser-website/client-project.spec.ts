@@ -167,3 +167,31 @@ test('W04 failed digital milestone order does not offer commerce-only retry', as
     await expect(page.getByRole('button', { name: 'Continue payment' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Cancel order' })).toHaveCount(0);
 });
+
+test('W04 owned pending digital order reports missing hosted continuation without creating another payment', async ({ page }) => {
+    test.setTimeout(90_000);
+    await login(page);
+    const orderId = '00000000-0000-4000-8000-000000000091';
+    const paymentId = '00000000-0000-4000-8000-000000000092';
+    let initiations = 0;
+    await page.route('**/api/customer/orders/' + orderId, async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {
+            id: orderId, number: 'MT75-PROJECT-NO-REDIRECT', type: 'digital', status: 'pending',
+            fulfillment_status: 'pending', payment_status: 'unpaid', subtotal: '10000.00', total: '10000.00',
+            currency: 'PKR', items: [], signed_access_url: '/account', payments: [
+                { public_id: paymentId, gateway: 'jazzcash', status: 'pending', amount: '10000.00', currency: 'PKR' },
+            ],
+        } }) });
+    });
+    await page.route(`**/api/customer/payments/${paymentId}/initiate`, async (route) => {
+        initiations += 1;
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { payment_id: paymentId } }) });
+    });
+    await page.goto('/account/orders/' + orderId);
+    await expect(page.getByRole('heading', { name: 'MT75-PROJECT-NO-REDIRECT' })).toBeVisible();
+    await page.getByRole('button', { name: 'Continue payment' }).click();
+    await expect(page.getByText('Payment provider did not return a continuation URL. Your order is saved; try continuing from this page.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue payment' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Retry with JazzCash' })).toHaveCount(0);
+    expect(initiations).toBe(1);
+});

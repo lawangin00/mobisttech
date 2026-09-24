@@ -33,7 +33,7 @@ export function CustomerOrderDetail({ orderId }: { orderId: string }) {
 
   async function initiate(paymentId: string) {
     const result = await customerRequest<{ redirect_url?: string }>(`payments/${paymentId}/initiate`, { method: "POST", body: JSON.stringify({}) });
-    if (!result.redirect_url) return;
+    if (!result.redirect_url) throw new Error("Payment provider did not return a continuation URL. Your order is saved; try continuing from this page.");
     const target = new URL(result.redirect_url);
     if (target.protocol !== "https:") throw new Error("Payment provider returned an unsafe redirect.");
     window.location.assign(target.toString());
