@@ -7,11 +7,12 @@ const draftPath = `${pagePath}/presentation/drafts`;
 
 test.afterEach(async ({ page }) => { await releaseSyntheticAdminSession(page); });
 test.afterAll(() => {
-    if (process.env.CI === 'true' || process.env.MT75_FIRST_OUTLET_E2E_ENABLED === '1') {
-        execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W04PaymentPresentationE2eCleanupSeeder', '--env=testing', '--force'], {
-            cwd: process.cwd(), stdio: 'inherit', env: process.env,
-        });
-    }
+    // This spec writes a scoped synthetic presentation revision in LOCAL and CI.
+    // Always release it before global Admin-account teardown; the seeder verifies
+    // the exact test DB, port, dedicated editor and ownership before deletion.
+    execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W04PaymentPresentationE2eCleanupSeeder', '--env=testing', '--force'], {
+        cwd: process.cwd(), stdio: 'inherit', env: { ...process.env, MT75_FIRST_OUTLET_E2E_ENABLED: '1' },
+    });
 });
 
 test('W04 authorized Admin publishes new-only nonsecret payment presentation with external channels off', async ({ page }) => {

@@ -33,12 +33,12 @@ test.afterEach(async ({ page }) => {
 });
 
 test.afterAll(() => {
-    if (process.env.CI === 'true') {
-        execFileSync('php', [
-            'artisan', 'db:seed', '--class=Database\\Seeders\\W04CodPolicyE2eCleanupSeeder',
-            '--env=testing', '--force',
-        ], { cwd: process.cwd(), stdio: 'inherit' });
-    }
+    // Local W04 browser edits must release this exact synthetic owner's COD
+    // revisions before global fixture teardown; scoped seeder verifies ownership.
+    execFileSync('php', [
+        'artisan', 'db:seed', '--class=Database\\Seeders\\W04CodPolicyE2eCleanupSeeder',
+        '--env=testing', '--force',
+    ], { cwd: process.cwd(), stdio: 'inherit', env: { ...process.env, MT75_FIRST_OUTLET_E2E_ENABLED: '1' } });
 });
 
 test('MT-7.5 W04 protected Admin COD draft publish reload and compensating rollback affect only COD', async ({ page }) => {

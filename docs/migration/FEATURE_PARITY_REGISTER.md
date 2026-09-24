@@ -151,7 +151,7 @@ Source coverage: 29 tracked files; 16 resolved routes. Target owner: backend ser
 
 ### W04 - Payments COD hosted card and wallets
 
-Source coverage: 52 tracked files; 16 resolved routes. Target owner: backend services/protected CMS plus website Next.js REST client. Gates: MT-2.7, MT-3.3, MT-5.3. Target status: Pending.
+Source coverage: 52 tracked files; 16 resolved routes. Target owner: backend services/protected CMS plus website Next.js REST client. Gates: MT-2.7, MT-3.3, MT-5.3. Target status: DEVELOPMENT COMPLETE under approved 24-Sep-2026 two-track closure (MT-7.5 gate 17/W04 DONE); authentic external provider acceptance and real activation remain separately PRE-LAUNCH H-02 PENDING in `../HOLD_PRE_LAUNCH_REGISTER.md`. Original 52/16 source inventory unchanged.
 
 **Preserve:** Preserve payment manager/provider contracts, verified amount/currency/order/reference, COD collection, callback/webhook replay safety, retry/cancel and encrypted credentials.
 

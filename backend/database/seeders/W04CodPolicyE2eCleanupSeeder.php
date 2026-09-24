@@ -11,7 +11,8 @@ final class W04CodPolicyE2eCleanupSeeder extends Seeder
 {
     public function run(): void
     {
-        abort_unless(app()->environment('testing') && getenv('CI') === 'true'
+        abort_unless(app()->environment('testing')
+            && (getenv('CI') === 'true' || getenv('MT75_FIRST_OUTLET_E2E_ENABLED') === '1')
             && DB::connection()->getDatabaseName() === 'mobisttech_test'
             && (int) DB::selectOne('SELECT @@port AS port')->port === 13306, 403);
 

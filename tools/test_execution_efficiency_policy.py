@@ -29,6 +29,20 @@ def check() -> None:
     assert 0 <= complete <= 27, 'Invalid closure count'
     assert all(row.rsplit('|', 2)[-2].strip().startswith(('DONE', 'OPEN')) for _, _, row in rows), 'Invalid gate status'
     assert '17/W04' in fast and 'H-02' in fast and '27/Q01' in fast
+    # The approved two-track contract is enforceable independently of the moving
+    # 27-gate denominator. A synthetically DONE W04 never completes external H-02.
+    roadmap = (ROOT / 'docs/PROJECT_IMPLEMENTATION_ROADMAP.md').read_text(encoding='utf-8')
+    truth = (ROOT / 'docs/PROJECT_SOURCE_OF_TRUTH.md').read_text(encoding='utf-8')
+    hold = (ROOT / 'docs/HOLD_PRE_LAUNCH_REGISTER.md').read_text(encoding='utf-8')
+    payment_checklist = (ROOT / 'docs/audit/MT-7.5_W04_DEVELOPMENT_ACCEPTANCE_CHECKLIST_2026-09-24.md').read_text(encoding='utf-8')
+    assert rows[16][1] == 'W04' and rows[16][2].rsplit('|', 2)[-2].strip() == 'DONE', 'W04 development terminal proof missing'
+    assert 'DEVELOPMENT ACCEPTANCE' in roadmap and 'PRE-LAUNCH' in roadmap and 'FINAL-AUDIT' in roadmap
+    assert '27-gate count measures development parity only' in roadmap
+    assert 'Project complete: 100%' in roadmap and 'PRE-LAUNCH BLOCKED' in roadmap
+    assert 'DEVELOPMENT ACCEPTANCE' in truth and 'H-02' in truth and 'docs/HOLD_PRE_LAUNCH_REGISTER.md' in truth
+    assert '117/117 PASS' in payment_checklist and 'H-02' in payment_checklist and 'PRE-LAUNCH' in payment_checklist
+    assert all(s in hold for s in ('JazzCash', 'Easypaisa', 'hosted/tokenized card', 'PRE-LAUNCH PENDING', 'PRE-LAUNCH BLOCKED', 'live'))
+    assert 'H-02' in ledger and '16/27 DONE, 11 OPEN' in ledger
     assert 'LOOP_GUARD' in registry and 'full joined regression' in ci.lower()
     print(f'MOBISTTECH_PROJECT_WIDE_EXECUTION_POLICY_PASS: 27 stable gates, baseline {complete} DONE, {27 - complete} OPEN; cooperative lock only')
 
