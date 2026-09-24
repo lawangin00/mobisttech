@@ -132,9 +132,20 @@ class OrderPaymentTransactionsTest extends TestCase
         $this->assertEquals($oldTerms, DB::table('website_order_payment_terms')->where('order_id', $oldOrder->id)->firstOrFail());
         $this->assertSame('Pay on delivery', app(WebsiteApi::class)
             ->order($this->customer, $old['order_id'])['payment_terms']['label']);
+        // The next order must use the newly published terms, not reuse the first order's snapshot.
+        $new = $this->service()->checkout($this->scope(), $this->customer,
+            $this->key('terms-new'), $this->checkoutInput($product->public_id, 'cod', 2));
+        $newTerms = app(WebsiteApi::class)->order($this->customer, $new['order_id'])['payment_terms'];
+        $this->assertSame('Cash at doorstep', $newTerms['label']);
+        $this->assertSame('New instruction.', $newTerms['instructions']);
+        $this->assertSame('300.00', $newTerms['cod_min_amount']);
+        $this->assertNull($newTerms['cod_max_amount']);
+        $this->assertSame(2, (int) $newTerms['presentation_version']);
+        $this->assertSame('Pay on delivery', app(WebsiteApi::class)
+            ->order($this->customer, $old['order_id'])['payment_terms']['label']);
         $this->assertSame('paid', $this->service()->collectCod($this->actor, $this->outlet,
             $old['order_id'], $this->key('terms-collection'), '200.02', 'COD-OLD-SNAPSHOT')['payment_status']);
-        $this->assertSame(1, DB::table('website_order_payment_terms')->count());
+        $this->assertSame(2, DB::table('website_order_payment_terms')->count());
         $this->assertSame('Cash at doorstep', $presentation->published()['channels']['cod']['label']);
     }
 
