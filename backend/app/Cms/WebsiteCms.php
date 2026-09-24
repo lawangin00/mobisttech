@@ -65,6 +65,9 @@ final class WebsiteCms
         if (array_key_exists('theme', $snapshot)) {
             $snapshot['theme'] = $this->themeSnapshot($snapshot['theme']);
         }
+        if (array_key_exists('branding', $snapshot)) {
+            $snapshot['branding'] = $this->brandingSnapshot($snapshot['branding']);
+        }
         if (array_key_exists('seo', $snapshot)) {
             $snapshot['seo'] = $this->globalSeoSnapshot($snapshot['seo']);
         }
@@ -266,7 +269,9 @@ final class WebsiteCms
                 // An unknown or invalid snapshot is not proof of safe, unused media.
                 $snapshot = json_decode($row->snapshot, true);
                 abort_unless(is_array($snapshot), 409, 'Unrecognized Website media usage history.');
-                if ($this->snapshotReferencesMedia($snapshot, $mediaId)) {
+                if ($this->snapshotReferencesMedia($snapshot, $mediaId)
+                    || (isset($snapshot['branding']) && is_array($snapshot['branding'])
+                        && in_array($mediaId, $snapshot['branding'], true))) {
                     return true;
                 }
             }
@@ -278,7 +283,8 @@ final class WebsiteCms
             if (str_starts_with($row->key, 'cms.presentation.') && $row->value !== null) {
                 $snapshot = json_decode($row->value, true);
                 abort_unless(is_array($snapshot), 409, 'Unrecognized Website presentation media usage.');
-                if ($this->snapshotReferencesMedia($snapshot, $mediaId)) {
+                if ($this->snapshotReferencesMedia($snapshot, $mediaId)
+                    || ($row->key === 'cms.presentation.branding' && in_array($mediaId, $snapshot, true))) {
                     return true;
                 }
             }
@@ -842,6 +848,39 @@ final class WebsiteCms
         if (array_key_exists('navigation', $snapshot)) {
             $this->applyNavigation($admin, $snapshot['navigation']);
         }
+    }
+
+    /** Only approved, privately stored CMS image IDs may be assigned to public Website branding roles. */
+    private function brandingSnapshot(mixed $input): array
+    {
+        $roles = ['main_logo', 'wordmark', 'header_logo', 'footer_logo', 'square_icon', 'favicon', 'social_image'];
+        abort_unless(is_array($input) && (! array_is_list($input) || $input === [])
+            && array_diff(array_keys($input), $roles) === [], 422, 'Unknown Website branding role.');
+        $result = [];
+        foreach ($input as $role => $value) {
+            if ($value === null || $value === 0) {
+                $result[$role] = null;
+
+                continue;
+            }
+            $id = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            abort_unless($id && is_int($value), 422, 'Website branding requires a selected verified image ID.');
+            $media = DB::table('site_media_assets')->where('id', $id)->where('status', 'active')->first();
+            abort_unless($media && $media->disk === 'local'
+                && in_array($media->mime_type, ['image/jpeg', 'image/png', 'image/webp'], true)
+                && $media->byte_size > 0 && $media->byte_size <= 10 * 1024 * 1024
+                && preg_match('/\Acms\/[0-9a-f-]+\.(?:png|jpe?g|webp)\z/i', $media->path)
+                && Storage::disk('local')->exists($media->path), 422,
+                'Website branding requires an active private image.');
+            if (in_array($role, ['square_icon', 'favicon'], true)) {
+                abort_unless($media->width > 0 && $media->height > 0
+                    && $media->width / $media->height >= 0.8 && $media->width / $media->height <= 1.25,
+                    422, 'Website icon roles require a near-square image.');
+            }
+            $result[$role] = (int) $id;
+        }
+
+        return $result;
     }
 
     private function themeSnapshot(mixed $input): array

@@ -18,3 +18,7 @@ Private upload, alt, immutable new-ID replacement and unused-only tombstone/file
 
 ## Source disposition checkpoint (25-Sep-2026 LOCAL)
 Pinned frozen W07 119/119 source-file and 15/15 route *target/retirement mapping*, with 36 files/13 routes W07-only and rest shared with accepted earlier gates: MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md. This is not proof of complete behavior parity or W07 DONE. First genuinely pending implementation: safe published branding-role images/private media mapping, followed by Website-specific masked secret/recovery and exact family join.
+
+## Published Website branding checkpoint (25-Sep-2026 LOCAL)
+
+Seven typed safe branding roles, private image identity, approved static fallbacks and role-scoped public media, actual protected Admin private draft/publish/rollback -> Next header/social at 390px: `MT-7.5_W07_BRANDING_PUBLICATION_2026-09-25.md`. Focused Edge 1/1 and affected PHP 13/13 (234 assertions) terminal PASS. W07 stays OPEN for masked Website secrets, recovery, exact full-family join and source parity reconciliation.

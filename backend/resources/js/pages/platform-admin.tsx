@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import SoftwareRoutePreview from './software-route-preview';
 import WebsitePresentationBuilder from './website-presentation-builder';
 import WebsiteThemeBuilder from './website-theme-builder';
+import WebsiteBrandingBuilder from './website-branding-builder';
 import WebsiteMediaLibrary from './website-media-library';
 
 type ModeRevision = { id:number; version:number; state:string; mode:string|null; published_at:string|null; created_at:string };
@@ -98,6 +99,10 @@ function WebsiteTab({data,allowed,busy,run}:{data:Data;allowed:(p:string)=>boole
         <WebsiteThemeBuilder snapshot={(data.presentation_revisions.find(row => row.state === 'published')?.snapshot.theme ?? {}) as Record<string,unknown>}
           publishedId={data.presentation_revisions.find(row => row.state === 'published')?.id ?? 0}
           busy={busy} allowed={allowed} save={theme => void run(async()=>{await api('/internal/admin/platform/presentation/draft',{method:'POST',body:JSON.stringify({theme})});})}/>
+        <WebsiteBrandingBuilder snapshot={(data.presentation_revisions.find(row => row.state === 'published')?.snapshot.branding ?? {}) as Record<string,unknown>}
+          publishedId={data.presentation_revisions.find(row => row.state === 'published')?.id ?? 0}
+          media={data.media} busy={busy} allowed={allowed}
+          save={branding => void run(async()=>{await api('/internal/admin/platform/presentation/draft',{method:'POST',body:JSON.stringify({branding})});})}/>
         <WebsitePresentationBuilder snapshot={data.presentation_revisions.find(row => row.state === 'published')?.snapshot ?? {}}
           version={data.presentation_revisions.find(row => row.state === 'published')?.id ?? 0} allowed={allowed} busy={busy}
           save={payload => void run(async () => { await api('/internal/admin/platform/presentation/draft', { method: 'POST', body: JSON.stringify(payload) }); })}/>

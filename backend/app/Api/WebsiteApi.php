@@ -277,6 +277,16 @@ final class WebsiteApi
         $headerFooter = $headerFooterJson ? json_decode($headerFooterJson, true, flags: JSON_THROW_ON_ERROR) : [];
         $themeJson = DB::table('site_settings')->where('key', 'cms.presentation.theme')->value('value');
         $theme = $themeJson ? json_decode($themeJson, true, flags: JSON_THROW_ON_ERROR) : [];
+        $brandingJson = DB::table('site_settings')->where('key', 'cms.presentation.branding')->value('value');
+        $branding = $brandingJson ? json_decode($brandingJson, true, flags: JSON_THROW_ON_ERROR) : [];
+        // Public payload only exposes published, active, scoped private image IDs. No paths or drafts.
+        $publicBranding = [];
+        foreach (['main_logo', 'wordmark', 'header_logo', 'footer_logo', 'square_icon', 'favicon', 'social_image'] as $role) {
+            $id = $branding[$role] ?? null;
+            $publicBranding[$role] = is_int($id) && $id > 0 && DB::table('site_media_assets')->where('id', $id)
+                ->where('status', 'active')->where('disk', 'local')->whereIn('mime_type', ['image/jpeg', 'image/png', 'image/webp'])
+                ->where('path', 'regexp', '^cms/[0-9a-f-]+\\.(png|jpe?g|webp)$')->exists() ? $id : null;
+        }
         $seoJson = DB::table('site_settings')->where('key', 'cms.presentation.seo')->value('value');
         $seo = $seoJson ? json_decode($seoJson, true, flags: JSON_THROW_ON_ERROR) : [];
         $promotionJson = DB::table('site_settings')->where('key', 'cms.presentation.promotion')->value('value');
@@ -301,6 +311,7 @@ final class WebsiteApi
             'homepage' => $homepage,
             'header_footer' => $headerFooter,
             'theme' => $theme,
+            'branding' => $publicBranding,
         ];
     }
 

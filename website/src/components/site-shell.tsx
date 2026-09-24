@@ -83,7 +83,7 @@ export function SiteHeader({
     <header className={"border-b border-slate-200 bg-white/95 " + (content?.header_footer?.sticky ? "sticky top-0 z-30" : "")}>
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <Link href="/" prefetch={false} className="inline-flex items-center" aria-label={business?.business_name ?? "mobiST Technologies"}>
-          <Image src="/brand/mobist-wordmark.svg" alt={business?.business_name ?? "mobiST Technologies"} width={184} height={92} className="h-10 w-auto max-w-[184px]" priority />
+          <Image src={content?.branding?.header_logo ? `/branding/header_logo/${content.branding.header_logo}` : "/brand/mobist-wordmark.svg"} alt={business?.business_name ?? "mobiST Technologies"} width={184} height={92} className="h-10 w-auto max-w-[184px]" unoptimized={Boolean(content?.branding?.header_logo)} priority />
         </Link>
         <nav aria-label="Primary" className="flex flex-wrap items-center gap-1 text-sm font-medium">
           {links.map((item) => item.external ? (
@@ -119,7 +119,7 @@ export function SiteFooter({
       <div className="mx-auto max-w-7xl px-4 py-8 text-sm text-slate-600 sm:px-6">
         <div className="flex flex-wrap justify-between gap-6">
           <div>
-            {content?.header_footer?.footer_show_logo && <Image src="/brand/mobist-wordmark.svg" alt={business?.business_name ?? "mobiST Technologies"} width={140} height={70} className="mb-2 h-8 w-auto" />}
+            {content?.header_footer?.footer_show_logo && <Image src={content?.branding?.footer_logo ? `/branding/footer_logo/${content.branding.footer_logo}` : "/brand/mobist-wordmark.svg"} alt={business?.business_name ?? "mobiST Technologies"} width={140} height={70} className="mb-2 h-8 w-auto" unoptimized={Boolean(content?.branding?.footer_logo)} />}
             <strong className="text-slate-950">{business?.business_name ?? "mobiST Technologies"}</strong>
             <p className="mt-1">{content?.header_footer?.footer_description || "Products and digital solutions from one shared platform."}</p>
           </div>

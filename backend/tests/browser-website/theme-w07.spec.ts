@@ -24,6 +24,7 @@ test.beforeAll(() => {
   });
 });
 test.afterAll(() => {
+  execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W07BrandingE2eCleanupSeeder', '--env=testing', '--force'], { cwd: process.cwd(), stdio: 'inherit' });
   execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W07MediaE2eCleanupSeeder', '--env=testing', '--force'], {
     cwd: process.cwd(), stdio: 'inherit',
   });
@@ -148,6 +149,79 @@ test('W07 media Admin upload alt separate replacement and unused-only deletion',
     await expect(secondRow).toContainText('retired');
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'MT54 managed homepage' })).toBeVisible();
+  } finally {
+    await releaseAdmin(admin);
+    await admin.close();
+  }
+});
+
+test('W07 protected branding draft, public image gate, fallback and rollback', async ({ page, context }) => {
+  test.setTimeout(220_000);
+  const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z6ZsAAAAASUVORK5CYII=', 'base64');
+  await page.goto('/');
+  await expect(page.locator('header img').first()).toHaveAttribute('src', '/brand/mobist-wordmark.svg');
+  const admin = await context.newPage();
+  try {
+    await admin.goto('http://127.0.0.1:18080/internal/admin/pos/login');
+    await admin.getByTestId('login-email').fill('e2e-platform@example.invalid');
+    await admin.getByTestId('login-password').fill('SyntheticPass123!');
+    await admin.getByTestId('login-submit').click();
+    await admin.waitForURL('**/internal/admin/pos');
+    await admin.goto('http://127.0.0.1:18080/internal/admin/platform');
+    await admin.getByRole('button', { name: 'Content', exact: true }).click();
+    const library = admin.getByRole('heading', { name: 'Website media library' }).locator('xpath=ancestor::section[1]');
+    const upload = admin.waitForResponse(r => r.url().endsWith('/internal/admin/platform/media') && r.request().method() === 'POST');
+    await library.locator('input[type="file"]').first().setInputFiles({ name: 'mt75-w07-media-brand.png', mimeType: 'image/png', buffer: bytes });
+    const uploaded = await upload;
+    expect(uploaded.status()).toBe(200);
+    const id: number = (await uploaded.json()).data.id;
+    const path = `/branding/header_logo/${id}`;
+    expect((await page.request.get(path)).status()).toBe(404);
+    await admin.getByRole('button', { name: 'Website', exact: true }).click();
+    const editor = admin.getByRole('region', { name: 'Website branding editor' });
+    await editor.getByLabel('Website branding header_logo').selectOption(String(id));
+    await editor.getByLabel('Website branding social_image').selectOption(String(id));
+    await expect(editor.getByLabel('Private branding preview')).toContainText(`private image #${id}`);
+    const save = admin.waitForResponse(r => r.url().endsWith('/internal/admin/platform/presentation/draft') && r.request().method() === 'POST');
+    await editor.getByRole('button', { name: 'Save private branding draft' }).click();
+    const draft = await save;
+    expect(draft.status()).toBe(200);
+    const firstId: number = (await draft.json()).data.id;
+    await page.goto('/');
+    await expect(page.locator('header img').first()).toHaveAttribute('src', '/brand/mobist-wordmark.svg');
+    expect((await page.request.get(path)).status()).toBe(404);
+    const revisions = admin.getByRole('heading', { name: 'Website presentation, branding, theme, navigation & SEO' }).locator('xpath=ancestor::section[1]');
+    const published = admin.waitForResponse(r => r.url().endsWith(`/internal/admin/platform/presentation/${firstId}/publish`) && r.request().method() === 'POST');
+    await revisions.getByRole('button', { name: 'Publish', exact: true }).click();
+    expect((await published).status()).toBe(200);
+    await page.goto('/');
+    await expect(page.locator('header img').first()).toHaveAttribute('src', path);
+    expect((await page.request.get(path)).status()).toBe(200);
+    expect((await page.request.get(`/branding/footer_logo/${id}`)).status()).toBe(404);
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', new RegExp(`/branding/social_image/${id}$`));
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(true);
+    await editor.getByLabel('Website branding header_logo').selectOption('');
+    await editor.getByLabel('Website branding social_image').selectOption('');
+    const resetSave = admin.waitForResponse(r => r.url().endsWith('/internal/admin/platform/presentation/draft') && r.request().method() === 'POST');
+    await editor.getByRole('button', { name: 'Save private branding draft' }).click();
+    const reset = await resetSave;
+    expect(reset.status()).toBe(200);
+    const resetId: number = (await reset.json()).data.id;
+    await page.goto('/');
+    await expect(page.locator('header img').first()).toHaveAttribute('src', path);
+    const fallback = admin.waitForResponse(r => r.url().endsWith(`/internal/admin/platform/presentation/${resetId}/publish`) && r.request().method() === 'POST');
+    await revisions.getByRole('button', { name: 'Publish', exact: true }).click();
+    expect((await fallback).status()).toBe(200);
+    await page.goto('/');
+    await expect(page.locator('header img').first()).toHaveAttribute('src', '/brand/mobist-wordmark.svg');
+    expect((await page.request.get(path)).status()).toBe(404);
+    const rolled = admin.waitForResponse(r => r.url().endsWith(`/internal/admin/platform/presentation/${firstId}/rollback`) && r.request().method() === 'POST');
+    await revisions.getByRole('button', { name: 'Rollback', exact: true }).last().click();
+    expect((await rolled).status()).toBe(200);
+    await page.goto('/');
+    await expect(page.locator('header img').first()).toHaveAttribute('src', path);
+    expect((await page.request.get(path)).status()).toBe(200);
   } finally {
     await releaseAdmin(admin);
     await admin.close();

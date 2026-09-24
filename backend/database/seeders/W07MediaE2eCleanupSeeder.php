@@ -17,7 +17,7 @@ final class W07MediaE2eCleanupSeeder extends Seeder
             && (int) DB::selectOne('SELECT @@port AS port')->port === 13306, 403);
         $owner = Admin::where('email', 'e2e-platform@example.invalid')->firstOrFail();
         $rows = DB::table('site_media_assets')->where('original_name', 'like', 'mt75-w07-media-%')->get();
-        $names = ['mt75-w07-media-first.png', 'mt75-w07-media-second.png'];
+        $names = ['mt75-w07-media-first.png', 'mt75-w07-media-second.png', 'mt75-w07-media-brand.png'];
         foreach ($rows as $row) {
             abort_unless(in_array($row->original_name, $names, true) && (int) $row->uploaded_by_admin_id === (int) $owner->id
                 && $row->disk === 'local' && $row->mime_type === 'image/png'

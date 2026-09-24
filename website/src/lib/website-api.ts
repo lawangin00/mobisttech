@@ -80,6 +80,7 @@ export type ContentIndex = {
   header_footer: { footer_description?: string | null; footer_copyright?: string | null; show_account?: boolean; show_contact?: boolean; show_policies?: boolean; show_search?: boolean; show_cart?: boolean; sticky?: boolean; footer_show_logo?: boolean; footer_show_navigation?: boolean; footer_navigation_layout?: "one_column" | "two_columns"; contact_cta?: "hidden" | "contact"; contact_cta_label?: string | null };
   seo: GlobalSeo;
   theme: Partial<Record<"primary" | "primary_hover" | "secondary" | "accent" | "background" | "surface" | "text" | "muted_text" | "border", string>>;
+  branding: Record<"main_logo" | "wordmark" | "header_logo" | "footer_logo" | "square_icon" | "favicon" | "social_image", number | null>;
   promotion: SitePromotion;
   pages: Array<{ slug: string; title: string; purpose: string; scope: string; show_in_navigation: boolean }>;
   policies: Array<Pick<Policy, "type" | "slug" | "title" | "footer_destination" | "effective_date" | "version">>;

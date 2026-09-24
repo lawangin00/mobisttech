@@ -45,6 +45,25 @@ final class WebsiteApiController extends Controller
         return $this->responses->public($request, $api->page($slug), 'published-page.v1', 60);
     }
 
+    public function brandMedia(WebsiteApi $api, string $role, int $media)
+    {
+        // The current published role is the ONLY public authority. Draft/historical/foreign assets 404.
+        $selected = $api->contentIndex()['branding'][$role] ?? null;
+        abort_unless($media > 0 && $selected === $media, 404);
+        $asset = DB::table('site_media_assets')->where('id', $media)->where('status', 'active')->first();
+        abort_unless($asset && $asset->disk === 'local'
+            && in_array($asset->mime_type, ['image/png', 'image/jpeg', 'image/webp'], true)
+            && $asset->byte_size > 0 && $asset->byte_size <= 10 * 1024 * 1024
+            && preg_match('/\Acms\/[0-9a-f-]+\.(?:png|jpe?g|webp)\z/i', $asset->path), 404);
+        $disk = Storage::disk('local');
+        abort_unless($disk->exists($asset->path), 404);
+
+        return response($disk->get($asset->path), 200, [
+            'Content-Type' => $asset->mime_type, 'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'no-store',
+        ]);
+    }
+
     public function pageMedia(WebsiteApi $api, string $slug, int $media)
     {
         // Public access requires the exact published, mode-allowed page's image reference.

@@ -32,10 +32,12 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     metadataBase: business ? new URL(business.public_website) : undefined,
     robots: website?.mode ? { index: true, follow: true } : { index: false, follow: false },
-    openGraph: { type: "website", siteName: brand, title: seo?.social_title || title, description: seo?.social_description || description },
+    openGraph: { type: "website", siteName: brand, title: seo?.social_title || title, description: seo?.social_description || description,
+      ...(website?.content?.branding?.social_image ? { images: [`/branding/social_image/${website.content.branding.social_image}`] } : {}) },
     icons: {
-      icon: [{ url: "/favicon.ico" }, { url: "/icon-192.png", type: "image/png", sizes: "192x192" }],
-      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+      icon: [{ url: website?.content?.branding?.favicon ? `/branding/favicon/${website.content.branding.favicon}` : "/favicon.ico" },
+        { url: website?.content?.branding?.square_icon ? `/branding/square_icon/${website.content.branding.square_icon}` : "/icon-192.png", type: "image/png", sizes: "192x192" }],
+      apple: [{ url: website?.content?.branding?.square_icon ? `/branding/square_icon/${website.content.branding.square_icon}` : "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     },
   };
 }

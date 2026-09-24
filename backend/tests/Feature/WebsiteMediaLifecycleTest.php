@@ -92,10 +92,10 @@ final class WebsiteMediaLifecycleTest extends TestCase
         ]);
         $this->reject(fn () => $cms->deleteUnusedMedia($this->actor, $media['id']));
         DB::table('site_media_usages')->where('media_asset_id', $media['id'])->delete();
-        $revised = $cms->savePresentationDraft($this->actor, ['branding' => ['header_logo_media_id' => $media['id']]]);
+        $revised = $cms->savePresentationDraft($this->actor, ['branding' => ['header_logo' => $media['id']]]);
         $cms->publishPresentation($this->actor, $revised['id']);
         $this->reject(fn () => $cms->deleteUnusedMedia($this->actor, $media['id']));
-        $replacement = $cms->savePresentationDraft($this->actor, ['branding' => ['header_logo_media_id' => null]]);
+        $replacement = $cms->savePresentationDraft($this->actor, ['branding' => ['header_logo' => null]]);
         $cms->publishPresentation($this->actor, $replacement['id']);
         $this->reject(fn () => $cms->deleteUnusedMedia($this->actor, $media['id']));
         Storage::disk('local')->assertExists($media['path']);
