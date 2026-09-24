@@ -35,6 +35,9 @@ test.beforeAll(() => {
 });
 
 test.afterAll(() => {
+    execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W06PresentationE2eCleanupSeeder', '--env=testing', '--force'], {
+        cwd: process.cwd(), stdio: 'inherit',
+    });
     execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W06SecondSoftwareE2eCleanupSeeder', '--env=testing', '--force'], {
         cwd: process.cwd(), stdio: 'inherit',
     });
@@ -419,5 +422,125 @@ test('W06 actual Admin managed-page SEO revision remains private until public pu
     } finally {
         await releasePlatformBrowserAdmin(admin);
         await admin.close();
+    }
+});
+
+test('W06 genuine Admin presentation joins nested navigation and scoped banners through private draft publish mode and rollback', async ({ page, context }) => {
+    test.setTimeout(180_000);
+    await page.goto('/');
+    await expect(page.getByText('W06 Browser First announcement')).toHaveCount(0);
+    await expect(page.getByText('W06 Solutions Hub', { exact: true })).toHaveCount(0);
+    const admin = await context.newPage();
+    try {
+        await admin.goto('http://127.0.0.1:18080/internal/admin/pos/login');
+        await admin.getByTestId('login-email').fill('e2e-platform@example.invalid');
+        await admin.getByTestId('login-password').fill('SyntheticPass123!');
+        await admin.getByTestId('login-submit').click();
+        await admin.waitForURL('**/internal/admin/pos');
+        await admin.goto('http://127.0.0.1:18080/internal/admin/platform');
+        await expect(admin.getByRole('heading', { name: 'Platform Administration' })).toBeVisible();
+        const presentation = admin.getByRole('heading', { name: 'Website presentation, branding, theme, navigation & SEO' })
+            .locator('xpath=ancestor::section[1]');
+        const draftField = presentation.locator('textarea');
+        await expect(presentation.getByRole('button', { name: 'Rollback', exact: true })).toHaveCount(0);
+        const first = {
+            navigation: [
+                { key: 'mt75-w06-parent', label: 'W06 Solutions Hub', destination_type: 'route', destination_key: 'services', capability_scope: 'digital', sort_order: 10 },
+                { key: 'mt75-w06-child', parent_key: 'mt75-w06-parent', label: 'W06 Request Project', destination_type: 'route', destination_key: 'enquiry', capability_scope: 'digital', sort_order: 11 },
+                { key: 'mt75-w06-commerce', label: 'W06 Shop Hub', destination_type: 'route', destination_key: 'products', capability_scope: 'commerce', sort_order: 20 },
+            ],
+            promotion: {
+                announcement: { text: 'W06 Browser First announcement', href: '/services', scope: 'digital' },
+                banners: [
+                    { title: 'W06 Digital Spotlight', body: 'Synthetic service launch', href: '/services', scope: 'digital' },
+                    { title: 'W06 Commerce Spotlight', body: 'Synthetic product launch', href: '/products', scope: 'commerce' },
+                ],
+            },
+        };
+        await draftField.fill(JSON.stringify(first));
+        const firstSaved = admin.waitForResponse(r => r.url().endsWith('/internal/admin/platform/presentation/draft') && r.request().method() === 'POST');
+        await presentation.getByRole('button', { name: 'Save presentation draft' }).click();
+        const firstResponse = await firstSaved;
+        expect(firstResponse.status()).toBe(200);
+        const firstId: number = (await firstResponse.json()).data.id;
+        expect(firstId).toBeGreaterThan(0);
+        await page.goto('/');
+        await expect(page.getByText('W06 Browser First announcement')).toHaveCount(0);
+        await expect(page.getByText('W06 Solutions Hub', { exact: true })).toHaveCount(0);
+        await expect(presentation.getByRole('button', { name: 'Publish', exact: true })).toHaveCount(1);
+        const publishedFirst = admin.waitForResponse(r => r.url().endsWith(`/internal/admin/platform/presentation/${firstId}/publish`) && r.request().method() === 'POST');
+        await presentation.getByRole('button', { name: 'Publish', exact: true }).click();
+        expect((await publishedFirst).status()).toBe(200);
+        await page.goto('/');
+        const bannerSection = page.getByRole('region', { name: 'Published Website banners' });
+        await expect(page.getByRole('status', { name: 'Site announcement' })).toContainText('W06 Browser First announcement');
+        await expect(bannerSection.getByRole('heading', { name: 'W06 Digital Spotlight' })).toBeVisible();
+        await expect(bannerSection.getByRole('heading', { name: 'W06 Commerce Spotlight' })).toBeVisible();
+        const nav = page.getByRole('navigation', { name: 'Primary' });
+        await expect(nav.getByText('W06 Solutions Hub', { exact: true })).toBeVisible();
+        await expect(nav.getByRole('link', { name: 'W06 Request Project' })).toBeHidden();
+        await nav.getByText('W06 Solutions Hub', { exact: true }).click();
+        await expect(nav.getByRole('link', { name: 'W06 Request Project' })).toBeVisible();
+        await expect(nav.getByRole('link', { name: 'W06 Request Project' })).toHaveAttribute('href', '/enquiry');
+        await expect(nav.getByRole('link', { name: 'W06 Shop Hub' })).toHaveAttribute('href', '/products');
+
+        // A real published mode switch removes digital discovery while retaining commerce content.
+        state('commerce_only');
+        await page.goto('/');
+        await expect(page.getByRole('status', { name: 'Site announcement' })).toHaveCount(0);
+        await expect(page.getByText('W06 Solutions Hub', { exact: true })).toHaveCount(0);
+        await expect(page.getByText('W06 Request Project')).toHaveCount(0);
+        await expect(page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'W06 Shop Hub' })).toBeVisible();
+        await expect(page.getByRole('region', { name: 'Published Website banners' }).getByRole('heading', { name: 'W06 Commerce Spotlight' })).toBeVisible();
+        await expect(page.getByText('W06 Digital Spotlight')).toHaveCount(0);
+        state('hybrid');
+        await page.goto('/');
+        await expect(page.getByText('W06 Browser First announcement')).toBeVisible();
+
+        // A newer private revision must not affect the published navigation or promotion.
+        const second = {
+            navigation: first.navigation.map(row => row.key === 'mt75-w06-parent' ? { ...row, is_visible: false } : row),
+            promotion: {
+                announcement: { text: 'W06 Browser Updated announcement', href: '/products', scope: 'commerce' },
+                banners: [{ title: 'W06 Updated Commerce Spotlight', body: 'Changed only after publication', href: '/products', scope: 'commerce' }],
+            },
+        };
+        await draftField.fill(JSON.stringify(second));
+        const secondSaved = admin.waitForResponse(r => r.url().endsWith('/internal/admin/platform/presentation/draft') && r.request().method() === 'POST');
+        await presentation.getByRole('button', { name: 'Save presentation draft' }).click();
+        const secondResponse = await secondSaved;
+        expect(secondResponse.status()).toBe(200);
+        const secondId: number = (await secondResponse.json()).data.id;
+        await page.goto('/');
+        await expect(page.getByText('W06 Browser First announcement')).toBeVisible();
+        await expect(page.getByText('W06 Browser Updated announcement')).toHaveCount(0);
+        await expect(page.getByText('W06 Solutions Hub', { exact: true })).toBeVisible();
+        await expect(presentation.getByRole('button', { name: 'Publish', exact: true })).toHaveCount(1);
+        const publishedSecond = admin.waitForResponse(r => r.url().endsWith(`/internal/admin/platform/presentation/${secondId}/publish`) && r.request().method() === 'POST');
+        await presentation.getByRole('button', { name: 'Publish', exact: true }).click();
+        expect((await publishedSecond).status()).toBe(200);
+        await page.goto('/');
+        await expect(page.getByText('W06 Browser Updated announcement')).toBeVisible();
+        await expect(page.getByText('W06 Solutions Hub', { exact: true })).toHaveCount(0);
+        await expect(page.getByText('W06 Request Project')).toHaveCount(0);
+        await expect(page.getByRole('heading', { name: 'W06 Updated Commerce Spotlight' })).toBeVisible();
+        await expect(page.getByText('W06 Digital Spotlight')).toHaveCount(0);
+        // The superseded v1 is selected intentionally: rollback creates an auditable new publication.
+        const rollbacks = presentation.getByRole('button', { name: 'Rollback', exact: true });
+        await expect(rollbacks).toHaveCount(2);
+        const restored = admin.waitForResponse(r => r.url().endsWith(`/internal/admin/platform/presentation/${firstId}/rollback`) && r.request().method() === 'POST');
+        await rollbacks.last().click();
+        expect((await restored).status()).toBe(200);
+        await page.goto('/');
+        await expect(page.getByText('W06 Browser First announcement')).toBeVisible();
+        await expect(page.getByText('W06 Solutions Hub', { exact: true })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'W06 Digital Spotlight' })).toBeVisible();
+        await expect(page.getByText('W06 Browser Updated announcement')).toHaveCount(0);
+    } finally {
+        // Do not permit a synthetic Website mode change to spill into neighboring browser tests.
+        try { state('hybrid'); } finally {
+            await releasePlatformBrowserAdmin(admin);
+            await admin.close();
+        }
     }
 });

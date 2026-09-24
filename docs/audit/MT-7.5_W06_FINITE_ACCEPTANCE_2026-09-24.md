@@ -39,3 +39,7 @@ All frozen 72/72 W06 source-file entries and 45/45 legacy route entries have an 
 ## Real protected managed-page SEO -> public browser checkpoint (25-Sep-2026; latest)
 
 `MT-7.5_W06_MANAGED_PAGE_SEO_JOIN_2026-09-25.md`: actual Admin Content editor preserves/edits existing page SEO and indexability; private v3 remains publicly inert, publication updates actual Next metadata/robots/sitemap while unrelated homepage stays stable. Edge focused 1/1, joined 5/5, Vite/TS PASS. W06 remains OPEN [E,I] for directly joined navigation/banner publish/rollback, global SEO, managed-page social image and remaining finite W06 gates; 17/27 DONE, 10 OPEN.
+
+## Genuine Website presentation navigation/banner join (25-Sep-2026; latest)
+
+`MT-7.5_W06_PRESENTATION_ADMIN_PUBLIC_JOIN_2026-09-25.md`: actual protected Admin private draft -> publication -> mode-filtered Next nested navigation + scoped announcement/two banners -> second private revision -> publish/ancestor hiding -> protected rollback, all real synthetic Website UI, no provider. Focused Edge 1/1 and joined dynamic-content 6/6 PASS; scoped synthetic fixture cleanup verified relevant table counts zero; unchanged PHP evidence reused. This supersedes only earlier navigation/banner browser OPEN assertions. W06 remains OPEN [I,E] for independent global SEO and managed-page social-media/public collision/security/role/cache evidence and bounded family closure; development count remains 17/27 DONE, 10 OPEN.
