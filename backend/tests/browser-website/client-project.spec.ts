@@ -43,6 +43,56 @@ async function login(page: import('@playwright/test').Page) {
     await Promise.all([accountReady, projectsReady]);
     await expect(page.getByRole('heading', { name: 'MT52 Customer' })).toBeVisible();
 }
+const w05ForeignFixture = (action: 'create' | 'cleanup') => ({ ...process.env, MT75_W05_FOREIGN_FIXTURE_ACTION: action });
+
+test.afterAll(() => {
+    // Guarded exact foreign actor cleanup, including failed/filter-only browser runs.
+    execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W05ForeignCustomerE2eSeeder', '--env=testing', '--force'], {
+        cwd: process.cwd(), stdio: 'inherit', env: w05ForeignFixture('cleanup'),
+    });
+});
+
+test('W05 signed-in foreign Customer cannot read another owned project or file in any Website mode', async ({ page, browser }) => {
+    test.setTimeout(120_000);
+    await login(page);
+    const ownerLink = page.getByRole('link', { name: 'MT55 Client Project', exact: true });
+    const ownerPath = await ownerLink.getAttribute('href');
+    expect(ownerPath).toMatch(/^\/account\/projects\/[0-9a-f-]+$/);
+    await ownerLink.click();
+    await expect(page.getByRole('heading', { name: 'MT55 Client Project' })).toBeVisible();
+    const filePath = await page.getByRole('heading', { name: 'Private files' }).locator('xpath=ancestor::section[1]')
+        .getByRole('link', { name: 'Download securely' }).last().getAttribute('href');
+    expect(filePath).toMatch(/^\/api\/customer\/projects\/[0-9a-f-]+\/files\/[0-9a-f-]+$/);
+    const apiPath = ownerPath!.replace('/account/projects/', '/api/customer/projects/');
+    expect((await page.request.get(apiPath)).status()).toBe(200);
+    execFileSync('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\W05ForeignCustomerE2eSeeder', '--env=testing', '--force'], {
+        cwd: process.cwd(), stdio: 'inherit', env: w05ForeignFixture('create'),
+    });
+    const foreignContext = await browser.newContext();
+    const foreign = await foreignContext.newPage();
+    try {
+        await foreign.goto('http://127.0.0.1:13000/account');
+        await foreign.getByLabel('Email').fill('mt55-foreign-customer@example.invalid');
+        await foreign.getByLabel('Password').fill('SyntheticPass123!');
+        const loggedIn = foreign.waitForResponse(result => result.url().endsWith('/api/customer/auth/login')
+            && result.request().method() === 'POST');
+        await foreign.locator('form').getByRole('button', { name: 'Sign in', exact: true }).click();
+        expect((await loggedIn).status(), 'Foreign Customer must actually sign in').toBe(200);
+        await expect(foreign.getByRole('heading', { name: 'MT55 Foreign Customer' })).toBeVisible();
+        for (const mode of ['hybrid', 'commerce_only', 'digital_only'] as const) {
+            state(mode);
+            const list = await foreign.request.get('http://127.0.0.1:13000/api/customer/projects');
+            expect(list.status(), mode + ' foreign project-list GET').toBe(200);
+            expect((await list.json() as { data: { items: unknown[] } }).data.items).toHaveLength(0);
+            expect((await foreign.request.get('http://127.0.0.1:13000' + apiPath)).status(), mode + ' foreign project GET').toBe(404);
+            expect((await foreign.request.get('http://127.0.0.1:13000' + filePath)).status(), mode + ' foreign private-file GET').toBe(404);
+            expect((await page.request.get(apiPath)).status(), mode + ' owner historical GET').toBe(200);
+        }
+    } finally {
+        state('hybrid');
+        await foreignContext.close();
+    }
+});
 test('MT-5.5 customer project portal preserves private history and truthful provider availability', async ({ page }) => {
     test.setTimeout(90_000);
     await login(page);

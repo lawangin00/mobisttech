@@ -161,7 +161,7 @@ Source coverage: 52 tracked files; 16 resolved routes. Target owner: backend ser
 
 ### W05 - Digital services requests and project quotes
 
-Source coverage: 24 tracked files; 9 resolved routes. Target owner: backend services/protected CMS plus website Next.js REST client. Gates: MT-3.2, MT-3.4, MT-5.4. Target status: Pending.
+Source coverage: 24 tracked files; 9 resolved routes. Target owner: backend services/protected CMS plus website Next.js REST client. Gates: MT-3.2, MT-3.4, MT-5.4. Target status: Complete (W05 development only, 24-Sep-2026; `docs/audit/MT-7.5_W05_DEVELOPMENT_CLOSURE_2026-09-24.md`). Genuine external provider/activation H-02 and Q01 clean-candidate acceptance remain separate PENDING.
 
 **Preserve:** Preserve digital services/content, request references/status, approved quote amounts/currency, secure payment tokens and paid quote linkage.
 
