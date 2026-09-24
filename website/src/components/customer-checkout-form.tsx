@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { CustomerAccount, customerRequest } from "@/lib/customer-api";
 import { CartLine, clearCart, readCart } from "@/lib/customer-cart";
 
-type Channel = { code: "cod" | "jazzcash" | "easypaisa" | "card"; label: string; instructions?: string; available: boolean; kind: string };
+type Channel = { code: "cod" | "jazzcash" | "easypaisa" | "card"; label: string; instructions?: string; cod_min_amount?: string | null; cod_max_amount?: string | null; available: boolean; kind: string };
 type CreatedOrder = { order_id: string; order_number: string; payment_id: string; payment_status: string; amount: string; currency: string };
 type PaymentInit = { reference: string; redirect_url?: string; expires_at?: string };
 
@@ -112,6 +112,7 @@ export function CustomerCheckoutForm() {
         {channels.map((channel) => <label key={channel.code} className={"rounded-xl border p-4 " + (!channel.available ? "opacity-50" : "")}>
           <span className="flex items-center gap-2"><input type="radio" name="gateway" value={channel.code} checked={gateway === channel.code} disabled={!channel.available} onChange={() => setGateway(channel.code)} /> <strong>{channel.label}</strong></span>
           <span className="mt-1 block text-xs text-slate-500">{channel.available ? (channel.instructions || (channel.code === "cod" ? "Pay when the order is collected/delivered." : "Continue on the configured hosted provider.")) : "Not configured."}</span>
+          {channel.code === "cod" && channel.available && (channel.cod_min_amount != null || channel.cod_max_amount != null) && <span className="mt-1 block text-xs text-slate-500">COD order amount: {channel.cod_min_amount ?? "No minimum"} – {channel.cod_max_amount ?? "No maximum"} PKR. Final eligibility is checked when placing the order.</span>}
         </label>)}
       </div>
       <p className="mt-3 text-xs text-slate-500">Exactly four Website payment channels are supported. Bank transfer and split tender are not offered here.</p>

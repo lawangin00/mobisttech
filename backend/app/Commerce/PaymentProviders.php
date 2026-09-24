@@ -50,9 +50,10 @@ final class PaymentProviders
             'card' => 'Credit / Debit Card',
         ];
 
-        $presentation = app(WebsitePaymentPresentation::class)->published()['channels'];
+        $policy = app(WebsitePaymentPresentation::class)->published();
+        $presentation = $policy['channels'];
 
-        return collect($labels)->map(function (string $label, string $gateway) use ($presentation) {
+        return collect($labels)->map(function (string $label, string $gateway) use ($presentation, $policy) {
             try {
                 $this->assertAvailable($gateway);
                 $available = true;
@@ -64,6 +65,10 @@ final class PaymentProviders
                 'code' => $gateway,
                 'label' => $presentation[$gateway]['label'],
                 'instructions' => $presentation[$gateway]['instructions'],
+                ...($gateway === 'cod' ? [
+                    'cod_min_amount' => $policy['cod_min_amount'],
+                    'cod_max_amount' => $policy['cod_max_amount'],
+                ] : []),
                 'available' => $available,
                 'kind' => $gateway === 'cod' ? 'cash_on_delivery' : 'hosted_or_provider',
             ];

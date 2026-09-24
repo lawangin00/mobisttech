@@ -104,7 +104,7 @@ test('MT-7.5 W04 synthetic hosted initiation failure keeps the created order rec
     // Browser-only response stubs: no real wallet credentials, payment activation, or server-side order mutation.
     await page.route('**/api/customer/checkout/channels', async (route) => {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [
-            { code: 'cod', label: 'Cash on Delivery', available: true, kind: 'offline' },
+            { code: 'cod', label: 'Cash on Delivery', available: true, kind: 'offline', cod_min_amount: '100.00', cod_max_amount: '500.00' },
             { code: 'jazzcash', label: 'JazzCash', available: true, kind: 'hosted' },
             { code: 'easypaisa', label: 'Easypaisa', available: false, kind: 'hosted' },
             { code: 'card', label: 'Credit / Debit Card', available: false, kind: 'hosted' },
@@ -143,6 +143,7 @@ test('MT-7.5 W04 synthetic hosted initiation failure keeps the created order rec
     });
 
     await checkoutReady(page);
+    await expect(page.getByText('COD order amount: 100.00 – 500.00 PKR. Final eligibility is checked when placing the order.')).toBeVisible();
     await expect(page.getByRole('radio', { name: /JazzCash/ })).toBeEnabled();
     await page.getByRole('radio', { name: /JazzCash/ }).check();
     await page.getByLabel('City').fill('Karachi');
@@ -193,7 +194,7 @@ test('MT-7.5 W04 insecure hosted redirect is blocked and the created order remai
     // Browser-only gateway responses. The external provider remains OFF and no real provider is contacted.
     await page.route('**/api/customer/checkout/channels', async (route) => {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [
-            { code: 'cod', label: 'Cash on Delivery', available: true, kind: 'offline' },
+            { code: 'cod', label: 'Cash on Delivery', available: true, kind: 'offline', cod_min_amount: '100.00', cod_max_amount: '500.00' },
             { code: 'jazzcash', label: 'JazzCash', available: true, kind: 'hosted' },
             { code: 'easypaisa', label: 'Easypaisa', available: false, kind: 'hosted' },
             { code: 'card', label: 'Credit / Debit Card', available: false, kind: 'hosted' },
@@ -219,6 +220,7 @@ test('MT-7.5 W04 insecure hosted redirect is blocked and the created order remai
     });
 
     await checkoutReady(page);
+    await expect(page.getByText('COD order amount: 100.00 – 500.00 PKR. Final eligibility is checked when placing the order.')).toBeVisible();
     await expect(page.getByRole('radio', { name: /JazzCash/ })).toBeEnabled();
     await page.getByRole('radio', { name: /JazzCash/ }).check();
     await page.getByLabel('City').fill('Karachi');

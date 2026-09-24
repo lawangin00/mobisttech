@@ -47,6 +47,8 @@ final class W04PaymentPresentationValidationTest extends TestCase
         $payload = $policy->defaults();
         $payload['channels']['cod'] = ['label' => 'Pay upon arrival', 'instructions' => 'Have cash ready.'];
         $payload['channels']['jazzcash'] = ['label' => 'JazzCash Wallet', 'instructions' => 'Use hosted checkout.'];
+        $payload['cod_min_amount'] = '100.00';
+        $payload['cod_max_amount'] = '500.00';
         $this->assertSame($payload, $policy->validate(json_decode(json_encode($payload, JSON_THROW_ON_ERROR), true, flags: JSON_THROW_ON_ERROR)));
         DB::table('site_configuration_revisions')->insert([
             'domain' => 'website.payments.presentation', 'version' => 1,
@@ -57,6 +59,10 @@ final class W04PaymentPresentationValidationTest extends TestCase
         $channels = (new PaymentProviders)->checkoutChannels();
         $this->assertSame('Pay upon arrival', $channels[0]['label']);
         $this->assertSame('Have cash ready.', $channels[0]['instructions']);
+        $this->assertSame('100.00', $channels[0]['cod_min_amount']);
+        $this->assertSame('500.00', $channels[0]['cod_max_amount']);
+        $this->assertArrayNotHasKey('cod_min_amount', $channels[1]);
+        $this->assertArrayNotHasKey('cod_max_amount', $channels[1]);
         $this->assertSame('JazzCash Wallet', $channels[1]['label']);
         $this->assertFalse($channels[1]['available']);
         $this->assertFalse($channels[2]['available']);
