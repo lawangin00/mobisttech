@@ -364,3 +364,60 @@ test('W06 new independent Software is private until published with its own compl
         await admin.close();
     }
 });
+
+test('W06 actual Admin managed-page SEO revision remains private until public publish', async ({ page, context }) => {
+    test.setTimeout(150_000);
+    const url = '/mt54-case-study';
+    expect((await page.goto(url))?.status()).toBe(200);
+    await expect(page.getByText('Published anonymous case study.')).toBeVisible();
+    const originalSitemap = await page.request.get('/sitemap.xml');
+    expect(await originalSitemap.text()).toContain(url);
+    const admin = await context.newPage();
+    try {
+        await admin.goto('http://127.0.0.1:18080/internal/admin/pos/login');
+        await admin.getByTestId('login-email').fill('e2e-platform@example.invalid');
+        await admin.getByTestId('login-password').fill('SyntheticPass123!');
+        await admin.getByTestId('login-submit').click();
+        await admin.waitForURL('**/internal/admin/pos');
+        await admin.goto('http://127.0.0.1:18080/internal/admin/platform');
+        await expect(admin.getByRole('heading', { name: 'Platform Administration' })).toBeVisible();
+        await admin.getByRole('button', { name: 'Content', exact: true }).click();
+        const editor = admin.getByRole('heading', { name: 'Managed pages & digital content' }).locator('xpath=ancestor::section[1]');
+        const caseOption = editor.locator('select').first().locator('option', { hasText: 'MT54 Case Study' });
+        const caseId = await caseOption.getAttribute('value');
+        expect(caseId).toBeTruthy();
+        await editor.locator('select').first().selectOption(caseId!);
+        await expect(editor.getByPlaceholder('Managed page SEO title')).toHaveValue('');
+        await editor.getByPlaceholder('Managed page SEO title').fill('W06 Independent Managed SEO Title');
+        await editor.getByPlaceholder('Managed page SEO description').fill('W06 private draft SEO description.');
+        await editor.getByPlaceholder('Managed page canonical URL').fill('/mt54-case-study');
+        await editor.getByPlaceholder('Managed page social title').fill('W06 Managed Social Heading');
+        await editor.getByPlaceholder('Managed page social description').fill('W06 managed social description.');
+        await editor.getByLabel('Include managed page in sitemap').uncheck();
+        const draft = admin.waitForResponse(response => response.url().endsWith('/internal/admin/platform/pages/draft')
+            && response.request().method() === 'POST');
+        await editor.getByRole('button', { name: 'Save page draft' }).click();
+        expect((await draft).status()).toBe(200);
+        await expect(editor.getByRole('button', { name: 'Publish v3' })).toBeVisible();
+        await page.goto(url);
+        await expect(page.getByText('Published anonymous case study.')).toBeVisible();
+        await expect(page).not.toHaveTitle(/W06 Independent Managed SEO Title/);
+        expect(await (await page.request.get('/sitemap.xml')).text()).toContain(url);
+        const published = admin.waitForResponse(response => /\/internal\/admin\/platform\/pages\/[0-9]+\/publish$/.test(response.url())
+            && response.request().method() === 'POST');
+        await editor.getByRole('button', { name: 'Publish v3' }).click();
+        expect((await published).status()).toBe(200);
+        expect((await page.goto(url))?.status()).toBe(200);
+        await expect(page).toHaveTitle(/W06 Independent Managed SEO Title/);
+        await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', 'W06 private draft SEO description.');
+        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/mt54-case-study$/);
+        await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'W06 Managed Social Heading');
+        await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+        expect((await (await page.request.get('/sitemap.xml')).text())).not.toContain(url);
+        await page.goto('/');
+        await expect(page.getByRole('heading', { name: 'MT54 managed homepage' })).toBeVisible();
+    } finally {
+        await releasePlatformBrowserAdmin(admin);
+        await admin.close();
+    }
+});

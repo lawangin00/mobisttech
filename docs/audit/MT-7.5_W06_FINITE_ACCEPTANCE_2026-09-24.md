@@ -35,3 +35,7 @@ All frozen 72/72 W06 source-file entries and 45/45 legacy route entries have an 
 ## Website promotion/banner display checkpoint (25-Sep-2026; latest)
 
 `MT-7.5_W06_PROMOTION_BANNERS_2026-09-25.md`: protected revision-based announcement/banner snapshot now has validated safe link/text/mode, published scoped REST projection, plain text SiteHeader/Home rendering. PHP 3/3 (45 assertions) and affected Website neighbor 4/4 PASS; *direct* protected Admin-public banner browser proof pending. W06 OPEN [E,I], 17/27 DONE, 10 OPEN.
+
+## Real protected managed-page SEO -> public browser checkpoint (25-Sep-2026; latest)
+
+`MT-7.5_W06_MANAGED_PAGE_SEO_JOIN_2026-09-25.md`: actual Admin Content editor preserves/edits existing page SEO and indexability; private v3 remains publicly inert, publication updates actual Next metadata/robots/sitemap while unrelated homepage stays stable. Edge focused 1/1, joined 5/5, Vite/TS PASS. W06 remains OPEN [E,I] for directly joined navigation/banner publish/rollback, global SEO, managed-page social image and remaining finite W06 gates; 17/27 DONE, 10 OPEN.
