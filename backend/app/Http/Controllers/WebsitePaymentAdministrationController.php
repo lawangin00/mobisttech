@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Commerce\WebsitePaymentAdministration;
+use App\Commerce\WebsitePaymentPresentation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -18,6 +19,7 @@ final class WebsitePaymentAdministrationController extends Controller
             'identity' => ['name' => $actor->name, 'job_title' => $actor->job_title],
             'channels' => $channels,
             'settings' => $payments->settings($actor),
+            'presentation' => app(WebsitePaymentPresentation::class)->revisions(),
         ])->toResponse(request())->header('Cache-Control', 'private, no-store');
     }
 
@@ -27,6 +29,23 @@ final class WebsitePaymentAdministrationController extends Controller
 
         return response()->json(['data' => $payments->overview($actor)])
             ->header('Cache-Control', 'private, no-store');
+    }
+
+    public function presentationDraft(Request $request, WebsitePaymentPresentation $presentation)
+    {
+        $actor = Auth::guard('admin')->user() ?? abort(401);
+        $saved = $presentation->saveDraft($actor, $request->all());
+
+        return response()->json(['data' => $saved], 201)->header('Cache-Control', 'private, no-store');
+    }
+
+    public function presentationPublish(Request $request, WebsitePaymentPresentation $presentation, int $revision)
+    {
+        $actor = Auth::guard('admin')->user() ?? abort(401);
+        abort_unless($request->all() === [], 422);
+        $published = $presentation->publish($actor, $revision);
+
+        return response()->json(['data' => $published])->header('Cache-Control', 'private, no-store');
     }
 
     public function draft(Request $request, WebsitePaymentAdministration $payments)

@@ -18,10 +18,13 @@ type Settings = {
     can_publish: boolean;
 };
 
+type PresentationPolicy = { channels: Record<string, { label: string; instructions: string }>; cod_min_amount: string | null; cod_max_amount: string | null };
+type PresentationRevisions = { published: PresentationPolicy; published_version: number; published_invalid: boolean; draft_invalid: boolean; draft: { id: number; version: number; policy: PresentationPolicy } | null };
 type Props = {
     identity: { name: string; job_title: string | null };
     channels: Channel[];
     settings: Settings;
+    presentation: PresentationRevisions;
 };
 
 // Admin uses a separate CSRF cookie; do not rely on Inertia's generic
@@ -40,7 +43,7 @@ async function adminCsrfToken(): Promise<string> {
 
 // Require an actual JSON success from the authorized policy endpoint before
 // refreshing Inertia props. A 303 redirect alone does not prove a draft was saved.
-async function postCodPolicy(path: string, payload: Record<string, unknown>, expectedStatus: number): Promise<void> {
+async function postNonsecretPaymentPolicy(path: string, payload: Record<string, unknown>, expectedStatus: number): Promise<void> {
     const token = await adminCsrfToken();
     const response = await fetch(path, {
         method: 'POST',
@@ -54,13 +57,64 @@ async function postCodPolicy(path: string, payload: Record<string, unknown>, exp
     });
     const body = await response.json().catch(() => null) as { data?: unknown; message?: string } | null;
     if (response.status !== expectedStatus || !body?.data) {
-        throw new Error(body?.message ?? `COD policy request failed (${response.status}).`);
+        throw new Error(body?.message ?? `Payment settings request failed (${response.status}).`);
     }
 }
 
-export default function WebsitePaymentSettings({ identity, channels, settings }: Props) {
+function canonicalAmount(value: string | null): string | null {
+    if (value === null || value === '') return null;
+    if (!/^(?:0|[1-9][0-9]{0,8})(?:\.[0-9]{1,2})?$/.test(value)) {
+        throw new Error('COD amounts must be valid PKR values with at most two decimal places.');
+    }
+    const [whole, fraction = ''] = value.split('.');
+    return `${whole}.${fraction.padEnd(2, '0')}`;
+}
+export default function WebsitePaymentSettings({ identity, channels, settings, presentation }: Props) {
     const [codEnabled, setCodEnabled] = useState(settings.draft?.cod_enabled ?? settings.cod_enabled);
     const [busy, setBusy] = useState(false);
+    const [presentationPolicy, setPresentationPolicy] = useState<PresentationPolicy>(presentation.draft?.policy ?? presentation.published);
+    const [presentationBusy, setPresentationBusy] = useState(false);
+    const [presentationError, setPresentationError] = useState('');
+    function updateChannel(code: string, field: 'label' | 'instructions', value: string) {
+        setPresentationPolicy(previous => ({ ...previous, channels: { ...previous.channels,
+            [code]: { ...previous.channels[code], [field]: value },
+        } }));
+    }
+    function reloadPresentation() {
+        router.visit('/internal/admin/website/payment-settings', {
+            method: 'get', preserveState: false, preserveScroll: true, replace: true,
+            onError: () => setPresentationError('Payment presentation could not be refreshed.'),
+            onFinish: () => setPresentationBusy(false),
+        });
+    }
+    async function savePresentation(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        if (presentationBusy) return;
+        setPresentationBusy(true);
+        setPresentationError('');
+        try {
+            await postNonsecretPaymentPolicy('/internal/admin/website/payment-settings/presentation/drafts', { ...presentationPolicy,
+                cod_min_amount: canonicalAmount(presentationPolicy.cod_min_amount),
+                cod_max_amount: canonicalAmount(presentationPolicy.cod_max_amount),
+            }, 201);
+            reloadPresentation();
+        } catch (cause) {
+            setPresentationError(cause instanceof Error ? cause.message : 'Payment presentation draft failed.');
+            setPresentationBusy(false);
+        }
+    }
+    async function publishPresentation() {
+        if (presentationBusy || !settings.can_publish || !presentation.draft) return;
+        setPresentationBusy(true);
+        setPresentationError('');
+        try {
+            await postNonsecretPaymentPolicy(`/internal/admin/website/payment-settings/presentation/drafts/${presentation.draft.id}/publish`, {}, 200);
+            reloadPresentation();
+        } catch (cause) {
+            setPresentationError(cause instanceof Error ? cause.message : 'Payment presentation publish failed.');
+            setPresentationBusy(false);
+        }
+    }
     const [error, setError] = useState('');
 
     function reloadPolicy() {
@@ -80,7 +134,7 @@ export default function WebsitePaymentSettings({ identity, channels, settings }:
         setBusy(true);
         setError('');
         try {
-            await postCodPolicy('/internal/admin/website/payment-settings/drafts', { cod_enabled: codEnabled }, 201);
+            await postNonsecretPaymentPolicy('/internal/admin/website/payment-settings/drafts', { cod_enabled: codEnabled }, 201);
             reloadPolicy();
         } catch (cause) {
             setError(cause instanceof Error ? cause.message : 'Secure Admin request failed.');
@@ -93,7 +147,7 @@ export default function WebsitePaymentSettings({ identity, channels, settings }:
         setBusy(true);
         setError('');
         try {
-            await postCodPolicy(`/internal/admin/website/payment-settings/drafts/${settings.draft.id}/publish`, {}, 200);
+            await postNonsecretPaymentPolicy(`/internal/admin/website/payment-settings/drafts/${settings.draft.id}/publish`, {}, 200);
             reloadPolicy();
         } catch (cause) {
             setError(cause instanceof Error ? cause.message : 'Secure Admin request failed.');
@@ -132,6 +186,36 @@ export default function WebsitePaymentSettings({ identity, channels, settings }:
                             : <p className="mt-2 text-slate-600">Publishing requires the separate Website publish permission.</p>}
                     </div>}
                     <p className="mt-3 text-xs text-slate-600">Turning COD off may leave checkout without an available channel while external gateways are unconfigured. Existing orders are not cancelled by changing this setting.</p>
+                </section>
+                <section className="rounded-2xl border bg-white p-5">
+                    <h2 className="font-semibold">Payment labels, instructions and COD limits</h2>
+                    <p className="mt-1 text-sm text-slate-600">Published version {presentation.published_version}. Drafts require separate publication. Changes apply to new orders only; existing orders and provider activation are unchanged.</p>
+                    {presentation.published_invalid && <p role="alert" className="mt-2 text-sm text-red-700">Published presentation is invalid; checkout uses safe default labels and limits.</p>}
+                    {presentationError && <p role="alert" className="mt-2 text-sm text-red-700">{presentationError}</p>}
+                    <form onSubmit={savePresentation} className="mt-4 space-y-4">
+                        {channels.map(channel => <fieldset key={channel.code} disabled={presentationBusy} className="grid gap-2 rounded-xl border p-3 sm:grid-cols-2">
+                            <legend className="px-1 text-sm font-semibold">{channel.code.toUpperCase()}</legend>
+                            <label className="grid gap-1 text-sm">Customer-facing name
+                                <input required maxLength={80} value={presentationPolicy.channels[channel.code].label} onChange={event => updateChannel(channel.code, 'label', event.target.value)} className="rounded border p-2" />
+                            </label>
+                            <label className="grid gap-1 text-sm">Customer instructions
+                                <textarea maxLength={500} rows={2} value={presentationPolicy.channels[channel.code].instructions} onChange={event => updateChannel(channel.code, 'instructions', event.target.value)} className="rounded border p-2" />
+                            </label>
+                        </fieldset>)}
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {(['cod_min_amount', 'cod_max_amount'] as const).map(field => <label key={field} className="grid gap-1 text-sm">{field === 'cod_min_amount' ? 'COD minimum (PKR)' : 'COD maximum (PKR)'}
+                                <input type="number" min="0" max="999999999.99" step="0.01" placeholder="No limit" value={presentationPolicy[field] ?? ''} disabled={presentationBusy} onChange={event => setPresentationPolicy(previous => ({ ...previous, [field]: event.target.value === '' ? null : event.target.value }))} className="rounded border p-2" />
+                            </label>)}
+                        </div>
+                        <button disabled={presentationBusy} type="submit" className="rounded bg-slate-950 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Save presentation draft</button>
+                    </form>
+                    {presentation.draft_invalid && <p role="alert" className="mt-3 text-sm text-red-700">Latest presentation draft is invalid. Save a new draft to replace it.</p>}
+                    {presentation.draft && <div className="mt-4 rounded-xl border bg-slate-50 p-3 text-sm">
+                        <p>Draft v{presentation.draft.version} is not yet live.</p>
+                        {settings.can_publish ? <button disabled={presentationBusy} type="button" onClick={() => void publishPresentation()} className="mt-2 rounded border border-slate-950 px-4 py-2 font-semibold disabled:opacity-50">Publish presentation draft</button>
+                            : <p className="mt-2">Publishing requires the separate Website publish permission.</p>}
+                    </div>}
+                    <p className="mt-3 text-xs text-slate-600">External channels stay default-OFF without approved merchant integration. No credentials are accepted here.</p>
                 </section>
                 <section className="rounded-2xl border bg-white p-5">
                     <h2 className="font-semibold">Channel status · masked</h2>

@@ -1,0 +1,22 @@
+# MT-7.5 / W04 nonsecret Admin payment editor acceptance (24-Sep-2026 PKT)
+
+Status: bounded local acceptance, NOT W04 family closure or genuine provider approval. Owner-approved scope: editable four-channel customer-facing names/instructions and COD minimum/maximum order amount, Owner/authorized Admin writes, and new-orders-only policy effects. Existing order amount, gateway and collection obligations remain unchanged.
+
+## Implementation
+
+- `WebsitePaymentPresentation` validates a separate `website.payments.presentation` revision domain. Exact four-channel keys, nonblank label <=80 characters, instructions <=500 characters, optional canonical PKR bounds and minimum <= maximum; rejects unknown/merchant/credential/activation/mode fields and HTML/control characters. Empty optional instructions normalized after Laravel's null transformation. MySQL JSON key ordering normalized to canonical channel order.
+- Admin-realm protected presentation draft and publish endpoints use existing Website payment management and separate Website publish permissions, CSRF, JSON response, private/no-store, an independent MySQL domain advisory lock, transaction, stale/foreign/corrupt revision rejection and safe audit metadata. Existing `website.payments.cod` boolean domain/routes stay separate. No rollback endpoint restores an older credential or provider state.
+- Inertia Admin editor exposes names/instructions, COD minimum/maximum, draft/publish and explicit non-activation warning. Canonical input formatting converts `100` to `100.00` before submission; invalid values stay rejected server-side. Published public checkout gets the safe label/instructions only; COD final post-discount bound check is already separately accepted on newly created orders.
+- Historical orders' persisted payment gateway, amount, status and existing authorized COD collection are not mutated when policy revisions publish. Old customer-order detail renders persisted gateway and monetary values rather than dynamically re-labeling old payment records. New external retry options, if offered, remain current optional new choices; their authentic provider contracts are H-02 HOLD. No migration/import of historical payment terms or external provider credentials performed.
+
+## Test evidence
+
+- Focused new Admin HTTP authorization, CSRF, exact allowlist, draft/publish, stale/foreign/corrupt, external default-OFF and MySQL lock-holder negative tests: 4/4 PASS, 57 assertions. Joined ApiContract/OrderPaymentTransactions/COD and Admin payment feature filter: 73/73 PASS, 1,362 assertions against isolated `mobisttech_test:13306`.
+- Actual Microsoft Edge protected Admin presentation/COD and payment navigation browser join: 5/5 PASS, with explicit draft-not-live, publish, reload, selected channel unavailable and compensating COD policy rollback; guarded first-outlet/POS/presentation/COD teardown: `CI_DISPOSABLE_RESIDUAL_TABLES=none`.
+- Website checkout browser suite: 6/6 PASS, including COD, recovery, unavailable channels, cancelled continuation and digital-only. Guarded synthetic Website cleanup: `CI_DISPOSABLE_RESIDUAL_TABLES=none`.
+- Scoped PHP Pint --test: 5/5 files PASS; backend TypeScript/Vite production build and Website Next.js production build PASS; git diff whitespace check PASS. A full unrestricted backend test command was tool-blocked, so NO full-backend or full-hosted-CI acceptance is claimed for this source.
+
+## Correction record / remaining gates
+
+- Initial browser draft HTTP 422: `<input type=number>` submitted `100` while strict PKR backend required `100.00`. Added explicit client formatting with retained server validation; verified browser draft/publish. Another browser run passed publish/reload but expected old `100` representation, corrected assertion to canonical persisted `100.00`. First browser infrastructure startup timed out at the default 30-second webserver bound; later explicit 120-second bounded startup passed. No unchanged failing test was counted as acceptance.
+- W04 remains IN PROGRESS, MT-7.5 15/27 DONE and 12 OPEN. This confirms only nonsecret settings and synthetic checkout/admin acceptance. Merchant credential owner-binding, genuine JazzCash/Easypaisa/card adapter and signed sandbox, real refund/settlement and separate external activation remain H-02 HOLD. Order-level immutable historical nonsecret presentation snapshots and final hosted full regression remain separate parity/evidence decisions, not claimed here.

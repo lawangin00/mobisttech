@@ -24,3 +24,14 @@ Route::post('/internal/admin/website/payment-settings/drafts/{revision}/publish'
     ->whereNumber('revision')->defaults('identity_realm', 'admin')
     ->middleware(['identity', 'identity.auth', 'throttle:identity'])
     ->name('admin.website.payment-settings.publish');
+
+// Separately versioned nonsecret labels/instructions/COD bounds; never merchant credentials.
+Route::post('/internal/admin/website/payment-settings/presentation/drafts', [WebsitePaymentAdministrationController::class, 'presentationDraft'])
+    ->defaults('identity_realm', 'admin')
+    ->middleware(['identity', 'identity.auth', 'throttle:identity'])
+    ->name('admin.website.payment-presentation.draft');
+
+Route::post('/internal/admin/website/payment-settings/presentation/drafts/{revision}/publish', [WebsitePaymentAdministrationController::class, 'presentationPublish'])
+    ->whereNumber('revision')->defaults('identity_realm', 'admin')
+    ->middleware(['identity', 'identity.auth', 'throttle:identity'])
+    ->name('admin.website.payment-presentation.publish');

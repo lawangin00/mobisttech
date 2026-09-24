@@ -2,6 +2,10 @@
 
 namespace App\Commerce;
 
+use App\Identity\Access;
+use App\Identity\IdentityAccount;
+use App\Identity\IdentityAudit;
+use App\Models\Admin;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -37,7 +41,7 @@ final class WebsitePaymentPresentation
             abort_unless(is_array($details) && count($details) === 2
                 && ! array_diff_key($details, ['label' => '', 'instructions' => '']), 422);
             foreach (['label' => 80, 'instructions' => 500] as $field => $max) {
-                $value = $details[$field];
+                $value = $field === 'instructions' && $details[$field] === null ? '' : $details[$field];
                 abort_unless(is_string($value) && mb_strlen($value) <= $max
                     && ! preg_match('/[<>\x00-\x08\x0B\x0C\x0E-\x1F]/u', $value), 422);
                 abort_unless($field !== 'label' || trim($value) !== '', 422);
@@ -56,13 +60,116 @@ final class WebsitePaymentPresentation
         foreach (array_keys(self::DEFAULT_LABELS) as $code) {
             $normalized['channels'][$code] = [
                 'label' => $input['channels'][$code]['label'],
-                'instructions' => $input['channels'][$code]['instructions'],
+                'instructions' => $input['channels'][$code]['instructions'] ?? '',
             ];
         }
         $normalized['cod_min_amount'] = $input['cod_min_amount'];
         $normalized['cod_max_amount'] = $input['cod_max_amount'];
 
         return $normalized;
+    }
+
+    /** Separate nonsecret revision domain: COD enablement keeps its original revision contract. */
+    public function revisions(): array
+    {
+        $published = DB::table('site_configuration_revisions')->where('domain', self::DOMAIN)
+            ->where('state', 'published')->orderByDesc('version')->first();
+        $draft = DB::table('site_configuration_revisions')->where('domain', self::DOMAIN)
+            ->where('state', 'draft')->where('version', '>', (int) ($published->version ?? 0))
+            ->orderByDesc('version')->first();
+        $draftPolicy = $this->parse($draft?->snapshot);
+
+        return [
+            'published' => $this->published(),
+            'published_version' => (int) ($published->version ?? 0),
+            'published_invalid' => (bool) ($published && $this->parse($published->snapshot) === null),
+            'draft_invalid' => (bool) ($draft && $draftPolicy === null),
+            'draft' => $draftPolicy === null ? null : [
+                'id' => (int) $draft->id, 'version' => (int) $draft->version, 'policy' => $draftPolicy,
+            ],
+        ];
+    }
+
+    private function parse(?string $snapshot): ?array
+    {
+        if ($snapshot === null) {
+            return null;
+        }
+        try {
+            $decoded = json_decode($snapshot, true, flags: JSON_THROW_ON_ERROR);
+
+            return is_array($decoded) ? $this->validate($decoded) : null;
+        } catch (\JsonException|HttpException) {
+            return null;
+        }
+    }
+
+    /** Nonsecret policy drafts are permissioned; they never mutate COD enablement or adapters. */
+    public function saveDraft(IdentityAccount $actor, array $input): array
+    {
+        $admin = $this->authorize($actor);
+        $policy = $this->validate($input);
+
+        return $this->serializedRevision(function () use ($admin, $policy): array {
+            $version = (int) DB::table('site_configuration_revisions')->where('domain', self::DOMAIN)
+                ->lockForUpdate()->max('version') + 1;
+            $id = DB::table('site_configuration_revisions')->insertGetId([
+                'domain' => self::DOMAIN, 'version' => $version, 'state' => 'draft',
+                'snapshot' => json_encode($policy, JSON_THROW_ON_ERROR),
+                'created_by_admin_id' => $admin->id, 'created_at' => now(), 'updated_at' => now(),
+            ]);
+            IdentityAudit::record('admin', $admin->id, 'website_payment_presentation_draft_saved',
+                'site_configuration_revision:'.$id);
+
+            return ['id' => $id, 'version' => $version, 'policy' => $policy];
+        });
+    }
+
+    public function publish(IdentityAccount $actor, int $draftId): array
+    {
+        $admin = $this->authorize($actor);
+        abort_unless(app(Access::class)->allows($admin, 'website.publish'), 403);
+
+        return $this->serializedRevision(function () use ($admin, $draftId): array {
+            $draft = DB::table('site_configuration_revisions')->where('domain', self::DOMAIN)
+                ->where('id', $draftId)->lockForUpdate()->first();
+            abort_unless($draft && $draft->state === 'draft', 409, 'Presentation draft not available.');
+            abort_unless((int) $draft->version === (int) DB::table('site_configuration_revisions')
+                ->where('domain', self::DOMAIN)->max('version'), 409, 'A newer presentation draft exists.');
+            $policy = $this->parse($draft->snapshot);
+            abort_unless($policy !== null, 409, 'Presentation draft is invalid.');
+
+            DB::table('site_configuration_revisions')->where('domain', self::DOMAIN)
+                ->where('state', 'published')->update(['state' => 'superseded', 'updated_at' => now()]);
+            DB::table('site_configuration_revisions')->where('id', $draftId)->update([
+                'state' => 'published', 'published_by_admin_id' => $admin->id,
+                'published_at' => now(), 'updated_at' => now(),
+            ]);
+            IdentityAudit::record('admin', $admin->id, 'website_payment_presentation_published',
+                'site_configuration_revision:'.$draftId);
+
+            return ['id' => $draftId, 'version' => (int) $draft->version, 'policy' => $policy];
+        });
+    }
+
+    private function serializedRevision(callable $operation): array
+    {
+        $connection = DB::connection();
+        $acquired = $connection->selectOne('SELECT GET_LOCK(?, 5) AS acquired', ['mobisttech.website.payments.presentation.revision']);
+        abort_unless((int) ($acquired->acquired ?? 0) === 1, 409, 'Presentation revision is busy.');
+        try {
+            return $connection->transaction($operation);
+        } finally {
+            $connection->selectOne('SELECT RELEASE_LOCK(?) AS released', ['mobisttech.website.payments.presentation.revision']);
+        }
+    }
+
+    private function authorize(IdentityAccount $actor): Admin
+    {
+        abort_unless($actor instanceof Admin
+            && app(Access::class)->allows($actor, 'website.payments.manage'), 403);
+
+        return $actor;
     }
 
     /** Applies to newly created COD orders only, after server-side discounts. */
