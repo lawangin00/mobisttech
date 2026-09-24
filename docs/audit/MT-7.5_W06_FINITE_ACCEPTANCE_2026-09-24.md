@@ -23,3 +23,7 @@ All frozen 72/72 W06 source-file entries and 45/45 legacy route entries have an 
 ## Real W06 software SEO and published-sitemap checkpoint (24-Sep-2026; latest)
 
 `MT-7.5_W06_SOFTWARE_SEO_SITEMAP_JOIN_2026-09-24.md`: real Admin Software SEO controls now persist selected revision, public Next metadata reflects published version, and published `sitemap=false` omits only that product from sitemap, not direct history or the other product. Focused Edge 1/1, joined 4/4, affected PHP 2/2 (50 assertions), protected Vite/TS/Next build, Pint PASS. W06 remains OPEN [I,E] for genuine media public image URL/rendering, navigation/banner/managed global SEO, two-product remaining security/revision and family closure; 17/27 DONE/10 OPEN, H-02 PRE-LAUNCH PENDING. Earlier first-gap text in this document and W06 source disposition is superseded only for proven Software text SEO/sitemap, not other gaps.
+
+## Published Software media checkpoint (25-Sep-2026; latest)
+
+`MT-7.5_W06_MEDIA_PUBLICATION_2026-09-25.md`: genuine Admin CMS image upload, published-revision-only Laravel media endpoint, same-origin Next image rendering/OG media, foreign-product/draft/unknown/retired-media denial verified. Edge focused 1/1, joined 4/4; scoped PHP 3/3. W06 remains OPEN [I,E] for navigation hierarchy/banner, managed-page media/global SEO, second-product state/role/cache acceptance and family closure. MT-7.5 17/27 DONE, 10 OPEN.

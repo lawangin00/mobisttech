@@ -210,6 +210,20 @@ test('W06 new independent Software is private until published with its own compl
         await admin.waitForURL('**/internal/admin/pos');
         await admin.goto('http://127.0.0.1:18080/internal/admin/platform');
         await expect(admin.getByRole('heading', { name: 'Platform Administration' })).toBeVisible();
+        // An actual protected Admin upload must remain private until a published Software snapshot references it.
+        await admin.getByRole('button', { name: 'Content', exact: true }).click();
+        const mediaResponse = admin.waitForResponse(response => response.url().endsWith('/internal/admin/platform/media')
+            && response.request().method() === 'POST');
+        await admin.getByRole('heading', { name: 'Website media library' }).locator('xpath=ancestor::section[1]')
+            .locator('input[type="file"]').setInputFiles({
+                name: 'mt75-w06-media.png', mimeType: 'image/png',
+                buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGMQmhUlNCuKAUIBABuWBBkXZEqoAAAAAElFTkSuQmCC', 'base64'),
+            });
+        const uploaded = await mediaResponse;
+        expect(uploaded.status()).toBe(200);
+        const uploadedBody = await uploaded.json();
+        const assetId: number = uploadedBody.data.id;
+        expect(assetId).toBeGreaterThan(0);
         await admin.getByRole('button', { name: 'Software', exact: true }).click();
         const editor = admin.getByRole('heading', { name: 'Software create/edit' }).locator('xpath=ancestor::section[1]');
         await editor.locator('select').first().selectOption('');
@@ -226,6 +240,10 @@ test('W06 new independent Software is private until published with its own compl
         await editor.getByPlaceholder('Software canonical URL (optional)').fill('/software/mt75-w06-second');
         await editor.getByPlaceholder('Software social title').fill('Second Software Social Heading');
         await editor.getByPlaceholder('Software social description').fill('Second Software social description.');
+        await editor.getByPlaceholder('Hero media ID').fill(String(assetId));
+        await editor.getByPlaceholder('Logo media ID').fill(String(assetId));
+        await editor.getByPlaceholder('Screenshot IDs').fill(String(assetId));
+        await editor.getByLabel('Social image asset').selectOption(String(assetId));
         const created = admin.waitForResponse(response => response.url().endsWith('/internal/admin/platform/software')
             && response.request().method() === 'POST');
         await editor.getByRole('button', { name: 'New Software draft' }).click();
@@ -247,6 +265,8 @@ test('W06 new independent Software is private until published with its own compl
         await preview.getByRole('button', { name: 'Releases' }).click();
         await expect(preview.getByText('No release records yet.')).toBeVisible();
         expect((await page.goto(newUrl))?.status()).toBe(404);
+        expect((await page.request.get(newUrl + '/media/' + assetId)).status()).toBe(404);
+        expect((await page.request.get(firstUrl + '/media/' + assetId)).status()).toBe(404);
         await page.goto(firstUrl);
         await expect(page.getByText('Published MT54 software overview')).toBeVisible();
         await expect(page.getByText('Second product only: private W06 overview.')).toHaveCount(0);
@@ -267,6 +287,19 @@ test('W06 new independent Software is private until published with its own compl
         await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'Second Software Social Heading');
         await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', 'Second Software social description.');
         await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute('content', 'Second Software Social Heading');
+        await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', new RegExp('/software/mt75-w06-second/media/' + assetId + '$'));
+        const mediaUrl = newUrl + '/media/' + assetId;
+        const mediaResult = await page.request.get(mediaUrl);
+        expect(mediaResult.status()).toBe(200);
+        expect(mediaResult.headers()['content-type']).toContain('image/png');
+        expect((await mediaResult.body()).length).toBeGreaterThan(60);
+        await expect(page.getByRole('img', { name: 'MT75 W06 Second Software hero image' })).toBeVisible();
+        await expect(page.getByRole('img', { name: 'MT75 W06 Second Software logo' })).toBeVisible();
+        await expect(page.getByRole('img', { name: 'MT75 W06 Second Software screenshot' })).toBeVisible();
+        await expect.poll(() => page.getByRole('img', { name: 'MT75 W06 Second Software hero image' })
+            .evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(2);
+        expect((await page.request.get(firstUrl + '/media/' + assetId)).status()).toBe(404);
+        expect((await page.request.get(newUrl + '/media/999999')).status()).toBe(404);
         for (const [route, title, expected] of [
             ['privacy', 'MT75 W06 Second Software Privacy', 'Second software privacy only.'],
             ['terms', 'MT75 W06 Second Software Terms', 'Second software terms only.'],

@@ -8,6 +8,8 @@ use App\Commerce\OrderTransactions;
 use App\Digital\DigitalServiceLeads;
 use App\Engagement\CustomerEngagement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 final class WebsiteApiController extends Controller
 {
@@ -51,6 +53,28 @@ final class WebsiteApiController extends Controller
     public function software(Request $request, WebsiteApi $api, string $slug)
     {
         return $this->responses->public($request, $api->software($slug), 'software-overview.v1', 60);
+    }
+
+    public function softwareMedia(WebsiteApi $api, string $slug, int $media)
+    {
+        // Published snapshot, not drafts or a publicly enumerable media library, authorizes access.
+        $overview = $api->software($slug)['overview'];
+        $ids = array_filter([
+            $overview['logo_media_id'] ?? null, $overview['icon_media_id'] ?? null,
+            $overview['hero_media_id'] ?? null, $overview['seo']['social_image_media_id'] ?? null,
+            ...($overview['screenshot_media_ids'] ?? []),
+        ]);
+        abort_unless(in_array($media, array_map('intval', $ids), true), 404);
+        $asset = DB::table('site_media_assets')->where('id', $media)->where('status', 'active')->first();
+        abort_unless($asset && in_array($asset->mime_type, ['image/png', 'image/jpeg', 'image/webp'], true)
+            && preg_match('/\Acms\/[0-9a-f-]+\.(?:png|jpe?g|webp)\z/i', $asset->path), 404);
+        $disk = Storage::disk('public');
+        abort_unless($disk->exists($asset->path), 404);
+
+        return response($disk->get($asset->path), 200, [
+            'Content-Type' => $asset->mime_type, 'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'no-store',
+        ]);
     }
 
     public function softwareSection(Request $request, WebsiteApi $api, string $slug, string $section)

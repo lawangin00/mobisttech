@@ -77,6 +77,48 @@ class WebsiteCmsTest extends TestCase
         $this->reject(fn () => $cms->savePageDraft($this->actor, null, ['title' => 'Unsafe', 'slug' => 'unsafe-copy', 'content' => '<script>alert(1)</script>']));
     }
 
+    public function test_public_software_image_media_requires_its_own_published_reference(): void
+    {
+        // New independent synthetic scope; never expose uploaded-but-unpublished CMS media.
+        $mode = DB::table('site_configuration_revisions')->insertGetId([
+            'domain' => 'website.mode', 'version' => 1, 'state' => 'published',
+            'snapshot' => json_encode(['mode' => 'hybrid'], JSON_THROW_ON_ERROR), 'published_at' => now(),
+        ]);
+        DB::table('website_operating_profiles')->updateOrInsert(['id' => 1], [
+            'mode' => 'hybrid', 'version' => 1, 'revision_id' => $mode, 'published_at' => now(),
+        ]);
+        $cms = app(WebsiteCms::class);
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGMQmhUlNCuKAUIBABuWBBkXZEqoAAAAAElFTkSuQmCC', true);
+        $media = $cms->registerMedia($this->actor, [
+            'bytes' => $png, 'extension' => 'png', 'original_name' => 'mt75-media.png', 'alt_text' => 'Synthetic illustration',
+        ]);
+        $other = $cms->saveSoftwareDraft($this->actor, null, $this->softwareInput('W06 Other', 'w06-other', 'Other overview'));
+        $cms->publishSoftware($this->actor, $other['id']);
+        $input = $this->softwareInput('W06 Media', 'w06-media', 'Software image overview');
+        $input['hero_media_id'] = $media['id'];
+        $input['logo_media_id'] = $media['id'];
+        $input['screenshot_media_ids'] = [$media['id']];
+        $input['social_image_media_id'] = $media['id'];
+        $draft = $cms->saveSoftwareDraft($this->actor, null, $input);
+        $url = '/api/v1/software/w06-media/media/'.$media['id'];
+        $this->get($url)->assertNotFound();
+        $this->get('/api/v1/software/w06-other/media/'.$media['id'])->assertNotFound();
+        $cms->publishSoftware($this->actor, $draft['id']);
+        $served = $this->get($url)->assertOk()->assertHeader('Content-Type', 'image/png')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+        $this->assertSame($png, $served->getContent());
+        $this->get('/api/v1/software/w06-other/media/'.$media['id'])->assertNotFound();
+        $this->get('/api/v1/software/w06-media/media/999999')->assertNotFound();
+        $this->get('/api/v1/software/w06-media/media/not-an-id')->assertNotFound();
+        $later = $cms->saveSoftwareDraft($this->actor, $draft['software_public_id'],
+            $this->softwareInput('W06 Media', 'w06-media', 'Private new revision without media'));
+        $this->get($url)->assertOk(); // Unpublished draft cannot revoke a currently published reference.
+        $cms->publishSoftware($this->actor, $later['id']);
+        $this->get($url)->assertNotFound();
+        $cms->archiveSoftware($this->actor, $draft['software_public_id']);
+        $this->get($url)->assertNotFound();
+    }
+
     public function test_legal_policy_publication_requires_authority_recent_auth_fact_review_and_resolved_decisions(): void
     {
         $cms = app(WebsiteCms::class);

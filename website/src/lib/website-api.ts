@@ -85,6 +85,7 @@ export type SoftwareOverview = {
     name: string; summary: string; overview: string; features: Array<{ title: string; description: string }>;
     platforms: string[]; system_requirements: string; limitations: string[]; support: Record<string, unknown>;
     cta: Record<string, unknown>; seo: Record<string, unknown>;
+    logo_media_id: number | null; hero_media_id: number | null; screenshot_media_ids: number[];
   };
   latest_releases: SoftwareRelease[];
   routes: Record<string, string>; sha256: string;

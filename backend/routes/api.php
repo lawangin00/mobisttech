@@ -18,6 +18,7 @@ Route::prefix('/v1')->middleware('throttle:api-public')->group(function () {
     Route::get('/content/pages/{slug}', [WebsiteApiController::class, 'page'])->where('slug', '[a-z0-9-]+')->name('api.pages.show');
     Route::get('/content/policies', [WebsiteApiController::class, 'policies'])->name('api.policies.index');
     Route::get('/software/{slug}', [WebsiteApiController::class, 'software'])->name('api.software.show');
+    Route::get('/software/{slug}/media/{media}', [WebsiteApiController::class, 'softwareMedia'])->whereNumber('media')->name('api.software.media');
     Route::get('/software/{slug}/{section}', [WebsiteApiController::class, 'softwareSection'])
         ->where('section', 'privacy|terms|faq|releases')->name('api.software.section');
     Route::get('/services', [WebsiteApiController::class, 'services'])->name('api.services.index');
