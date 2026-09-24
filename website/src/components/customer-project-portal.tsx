@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { customerRequest } from "@/lib/customer-api";
 
 type Channel = { code: "jazzcash" | "easypaisa" | "card"; label: string; available: boolean };
@@ -53,6 +53,8 @@ export function CustomerProjectPortal({ projectId }: { projectId: string }) {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState("");
+  const payingRef = useRef(false);
+  const [createdPayment, setCreatedPayment] = useState<{ milestoneId: string; orderId: string } | null>(null);
 
   const refresh = useCallback(async () => {
     const [next, paymentChannels] = await Promise.all([
@@ -73,15 +75,17 @@ export function CustomerProjectPortal({ projectId }: { projectId: string }) {
   const availableChannels = useMemo(() => channels.filter((channel) => channel.available), [channels]);
 
   async function pay(milestone: Milestone, gateway: Channel["code"]) {
-    if (busy) return;
+    if (payingRef.current || busy || createdPayment?.milestoneId === milestone.id) return;
+    payingRef.current = true;
     setBusy(milestone.id);
     setMessage("");
     try {
-      const created = await customerRequest<{ payment_id: string }>("project-milestones/pay", {
+      const created = await customerRequest<{ order_id: string; payment_id: string }>("project-milestones/pay", {
         method: "POST",
         idempotencyKey: "project-milestone-" + milestone.id + "-" + crypto.randomUUID(),
         body: JSON.stringify({ milestone_id: milestone.id, gateway }),
       });
+      setCreatedPayment({ milestoneId: milestone.id, orderId: created.order_id });
       const initiated = await customerRequest<{ redirect_url?: string }>("payments/" + created.payment_id + "/initiate", { method: "POST", body: JSON.stringify({}) });
       if (!initiated.redirect_url) throw new Error("Payment provider did not return a continuation URL.");
       const url = new URL(initiated.redirect_url);
@@ -91,6 +95,7 @@ export function CustomerProjectPortal({ projectId }: { projectId: string }) {
       setMessage(error instanceof Error ? error.message : "Unable to start milestone payment.");
       await refresh().catch(() => undefined);
     } finally {
+      payingRef.current = false;
       setBusy("");
     }
   }
@@ -133,6 +138,7 @@ export function CustomerProjectPortal({ projectId }: { projectId: string }) {
     </div>
 
     {message && <p role="status" className="mt-5 rounded-xl bg-slate-100 p-3 text-sm">{message}</p>}
+    {createdPayment && <p className="mt-3 rounded-xl border bg-white p-3 text-sm">Your milestone payment order was created. <Link href={"/account/orders/" + createdPayment.orderId} prefetch={false} className="font-semibold underline">View order and continue payment</Link> instead of creating another order.</p>}
 
     <section className="mt-8">
       <h2 className="text-xl font-bold">Proposals & milestones</h2>
@@ -143,7 +149,7 @@ export function CustomerProjectPortal({ projectId }: { projectId: string }) {
         {proposal.quote && <p className="mt-3 text-xs text-slate-500">Quote {proposal.quote.reference} · {pretty(proposal.quote.status)} · expires {formatDate(proposal.quote.expires_at)}</p>}
         <div className="mt-5 space-y-3">{proposal.milestones.map((milestone) => <div key={milestone.id} className="rounded-xl bg-slate-50 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3"><div><strong>{milestone.label}</strong><p className="text-sm text-slate-600">{milestone.currency} {milestone.amount} · due {formatDate(milestone.due_at)} · {milestone.paid_at ? "paid " + formatDate(milestone.paid_at) : pretty(milestone.payment_status)}</p></div>
-          {milestone.payable && <div className="flex flex-wrap gap-2">{availableChannels.length === 0 ? <span className="text-xs text-slate-500">No external payment provider is configured.</span> : availableChannels.map((channel) => <button key={channel.code} disabled={busy === milestone.id} onClick={() => void pay(milestone, channel.code)} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">Pay with {channel.label}</button>)}</div>}</div>
+          {milestone.payable && <div className="flex flex-wrap gap-2">{availableChannels.length === 0 ? <span className="text-xs text-slate-500">No external payment provider is configured.</span> : availableChannels.map((channel) => <button key={channel.code} disabled={Boolean(busy) || createdPayment?.milestoneId === milestone.id} onClick={() => void pay(milestone, channel.code)} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">Pay with {channel.label}</button>)}</div>}</div>
         </div>)}</div>
       </article>)}</div>
     </section>

@@ -82,3 +82,57 @@ test('MT-5.5 customer project portal preserves private history and truthful prov
     await expect(page.getByRole('heading', { name: 'MT55 Client Project' })).toBeVisible();
     state('hybrid');
 });
+
+test('W04 project milestone initiation failure retains its owned order for continuation without another order', async ({ page }) => {
+    test.setTimeout(90_000);
+    await login(page);
+    const fakeOrderId = '00000000-0000-4000-8000-000000000085';
+    const fakePaymentId = '00000000-0000-4000-8000-000000000086';
+    await page.route('**/api/customer/project-payment-channels', async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [
+            { code: 'jazzcash', label: 'JazzCash', available: true },
+            { code: 'easypaisa', label: 'Easypaisa', available: false },
+            { code: 'card', label: 'Credit / Debit Card', available: false },
+        ] } }) });
+    });
+    let creates = 0;
+    await page.route('**/api/customer/project-milestones/pay', async (route) => {
+        creates += 1;
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: {
+            order_id: fakeOrderId, payment_id: fakePaymentId,
+        } }) });
+    });
+    let initiations = 0;
+    await page.route(`**/api/customer/payments/${fakePaymentId}/initiate`, async (route) => {
+        initiations += 1;
+        await route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ message: 'Synthetic milestone gateway unavailable.' }) });
+    });
+    await page.route(`**/api/customer/orders/${fakeOrderId}`, async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {
+            id: fakeOrderId, number: 'MT75-PROJECT-RECOVERY', type: 'digital',
+            status: 'pending', fulfillment_status: 'pending', payment_status: 'unpaid',
+            subtotal: '10000.00', total: '10000.00', currency: 'PKR', items: [],
+            payments: [{ public_id: fakePaymentId, gateway: 'jazzcash', status: 'pending', amount: '10000.00', currency: 'PKR' }],
+            signed_access_url: 'https://example.invalid/synthetic-status',
+        } }) });
+    });
+    await page.getByRole('link', { name: 'MT55 Client Project', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Pay with JazzCash' })).toBeEnabled();
+    await page.evaluate(() => {
+        const pay = [...document.querySelectorAll('button')].find((button) => button.textContent === 'Pay with JazzCash');
+        if (!pay) throw new Error('Synthetic milestone payment option missing.');
+        pay.click(); pay.click();
+    });
+    await expect(page.getByRole('status')).toHaveText('Synthetic milestone gateway unavailable.');
+    await expect(page.getByRole('link', { name: 'View order and continue payment' }))
+        .toHaveAttribute('href', `/account/orders/${fakeOrderId}`);
+    await expect(page.getByRole('button', { name: 'Pay with JazzCash' })).toBeDisabled();
+    expect(creates).toBe(1);
+    expect(initiations).toBe(1);
+    await page.getByRole('link', { name: 'View order and continue payment' }).click();
+    await expect(page).toHaveURL(`http://127.0.0.1:13000/account/orders/${fakeOrderId}`);
+    await expect(page.getByRole('heading', { name: 'MT75-PROJECT-RECOVERY' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue payment' })).toBeVisible();
+    expect(creates).toBe(1);
+});
