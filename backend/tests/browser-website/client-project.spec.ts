@@ -135,6 +135,7 @@ test('W04 project milestone initiation failure retains its owned order for conti
     await expect(page).toHaveURL(`http://127.0.0.1:13000/account/orders/${fakeOrderId}`);
     await expect(page.getByRole('heading', { name: 'MT75-PROJECT-RECOVERY' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Continue payment' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Cancel order' })).toHaveCount(0);
     expect(creates).toBe(1);
 });
 
@@ -164,4 +165,5 @@ test('W04 failed digital milestone order does not offer commerce-only retry', as
     await expect(page.getByRole('heading', { name: 'MT75-FAILED-PROJECT' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Retry with JazzCash' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Continue payment' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Cancel order' })).toHaveCount(0);
 });
