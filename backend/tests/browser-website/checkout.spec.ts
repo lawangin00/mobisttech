@@ -300,6 +300,7 @@ test('W04 definitively failed commerce order offers authorized retry after provi
     const failedPaymentId = '00000000-0000-4000-8000-000000000094';
     const newPaymentId = '00000000-0000-4000-8000-000000000095';
     let retries = 0;
+    let retryCreated = false;
     await page.route('**/api/customer/checkout/channels', async (route) => {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [
             { code: 'cod', label: 'Cash on Delivery', available: true },
@@ -310,15 +311,17 @@ test('W04 definitively failed commerce order offers authorized retry after provi
     });
     await page.route('**/api/customer/orders/' + orderId, async (route) => {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {
-            id: orderId, number: 'MT75-COMMERCE-FAILED-RETRY', type: 'commerce', status: 'cancelled',
-            fulfillment_status: 'cancelled', payment_status: 'failed', subtotal: '50000.00', total: '50000.00',
+            id: orderId, number: 'MT75-COMMERCE-FAILED-RETRY', type: 'commerce', status: retryCreated ? 'pending' : 'cancelled',
+            fulfillment_status: retryCreated ? 'pending' : 'cancelled', payment_status: retryCreated ? 'unpaid' : 'failed', subtotal: '50000.00', total: '50000.00',
             currency: 'PKR', items: [], signed_access_url: '/account', payments: [
                 { public_id: failedPaymentId, gateway: 'jazzcash', status: 'failed', amount: '50000.00', currency: 'PKR' },
+                ...(retryCreated ? [{ public_id: newPaymentId, gateway: 'jazzcash', status: 'pending', amount: '50000.00', currency: 'PKR' }] : []),
             ],
         } }) });
     });
     await page.route('**/api/customer/orders/' + orderId + '/payments/retry', async (route) => {
         retries += 1;
+        retryCreated = true;
         expect(route.request().postDataJSON()).toEqual({ gateway: 'jazzcash' });
         await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: { payment_id: newPaymentId } }) });
     });
@@ -332,6 +335,8 @@ test('W04 definitively failed commerce order offers authorized retry after provi
     await expect(page.getByRole('button', { name: 'Cancel order' })).toHaveCount(0);
     await page.getByRole('button', { name: 'Retry with JazzCash' }).click();
     await expect(page.getByText('Synthetic provider unavailable.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue payment' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Retry with JazzCash' })).toHaveCount(0);
     expect(retries).toBe(1);
 });
 test('MT-5.3 digital-only mode prunes checkout while historical account stays available', async ({ page }) => {

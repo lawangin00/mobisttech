@@ -76,6 +76,9 @@ export function CustomerOrderDetail({ orderId }: { orderId: string }) {
       await load();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to retry payment.");
+      // A new retry intent may already exist even if hosted initiation fails.
+      // Refresh owned state so the customer continues it rather than retrying twice.
+      await load().catch(() => undefined);
     } finally { setBusy(false); }
   }
 
