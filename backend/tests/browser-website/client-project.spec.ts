@@ -338,12 +338,32 @@ test('W05 public enquiry creates an approved owner-bound proposal through real A
             expect(response.status(), 'Real Admin transition ' + status).toBe(200);
             expect((await response.json() as { data: { status: string } }).data.status).toBe(status);
         }
+        // The real Admin API must not complete an unpaid approved milestone.
+        // Closing is an independent terminal transition, not payment acceptance.
+        const unpaidCompletion = admin.waitForResponse(response =>
+            /\/internal\/admin\/digital-operations\/projects\/[0-9a-f-]+$/.test(response.url())
+            && response.request().method() === 'PATCH');
+        await admin.locator('select').filter({ has: admin.locator('option[value="completed"]') }).first().selectOption('completed');
+        await expect(admin.getByRole('button', { name: 'Transition project' })).toBeEnabled();
+        await admin.getByRole('button', { name: 'Transition project' }).click();
+        expect((await unpaidCompletion).status(), 'Unpaid final milestone must deny completion').toBe(409);
+        await expect(admin.getByRole('alert')).toHaveText('Request failed.');
+        const closed = admin.waitForResponse(response =>
+            /\/internal\/admin\/digital-operations\/projects\/[0-9a-f-]+$/.test(response.url())
+            && response.request().method() === 'PATCH');
+        await admin.locator('select').filter({ has: admin.locator('option[value="completed"]') }).first().selectOption('closed');
+        await expect(admin.getByRole('button', { name: 'Transition project' })).toBeEnabled();
+        await admin.getByRole('button', { name: 'Transition project' }).click();
+        const closedResponse = await closed;
+        expect(closedResponse.status()).toBe(200);
+        expect((await closedResponse.json() as { data: { status: string } }).data.status).toBe('closed');
         await login(page);
         await page.getByRole('link', { name: 'W05 Joined Browser Project', exact: true }).click();
         await expect(page.getByRole('heading', { name: 'W05 Joined Browser Project' })).toBeVisible();
-        await expect(page.getByRole('heading', { name: 'W05 Joined Browser Project' }).locator('..')).toContainText('delivered');
+        await expect(page.getByRole('heading', { name: 'W05 Joined Browser Project' }).locator('..')).toContainText('closed');
+        await expect(page.getByRole('heading', { name: 'Add a reference file' })).toHaveCount(0);
         await expect(page.getByRole('heading', { name: 'Project history' }).locator('..')
-            .getByText('project status changed', { exact: true })).toHaveCount(3);
+            .getByText('project status changed', { exact: true })).toHaveCount(4);
         await expect(page.getByRole('heading', { name: 'Proposals & milestones' }).locator('..')).toContainText('W05 exact signed-off scope');
         await expect(page.getByText('PKR 10000.00', { exact: true })).toBeVisible();
         await expect(page.getByText('No external payment provider is configured.', { exact: true })).toBeVisible();
