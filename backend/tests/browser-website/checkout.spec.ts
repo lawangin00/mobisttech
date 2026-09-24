@@ -321,6 +321,7 @@ test('W04 definitively failed commerce order offers authorized retry after provi
     });
     await page.route('**/api/customer/orders/' + orderId + '/payments/retry', async (route) => {
         retries += 1;
+        await new Promise((resolve) => setTimeout(resolve, 350));
         retryCreated = true;
         expect(route.request().postDataJSON()).toEqual({ gateway: 'jazzcash' });
         await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: { payment_id: newPaymentId } }) });
@@ -333,7 +334,11 @@ test('W04 definitively failed commerce order offers authorized retry after provi
     await expect(page.getByRole('button', { name: 'Retry with JazzCash' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Continue payment' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Cancel order' })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Retry with JazzCash' }).click();
+    await page.evaluate(() => {
+        const retry = [...document.querySelectorAll('button')].find((button) => button.textContent === 'Retry with JazzCash');
+        if (!retry) throw new Error('Synthetic retry button missing.');
+        retry.click(); retry.click();
+    });
     await expect(page.getByText('Synthetic provider unavailable.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Continue payment' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Retry with JazzCash' })).toHaveCount(0);

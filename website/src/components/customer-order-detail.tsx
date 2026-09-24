@@ -16,6 +16,7 @@ export function CustomerOrderDetail({ orderId }: { orderId: string }) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const continuingRef = useRef(false);
+  const retryingRef = useRef(false);
 
   const load = useCallback(async () => {
     const [owned, channelData] = await Promise.all([
@@ -66,7 +67,8 @@ export function CustomerOrderDetail({ orderId }: { orderId: string }) {
   }
 
   async function retry(gateway: "jazzcash" | "easypaisa" | "card") {
-    if (!order) return;
+    if (!order || retryingRef.current || continuingRef.current) return;
+    retryingRef.current = true;
     setBusy(true); setMessage("");
     try {
       const retried = await customerRequest<Retry>(`orders/${order.id}/payments/retry`, {
@@ -79,7 +81,7 @@ export function CustomerOrderDetail({ orderId }: { orderId: string }) {
       // A new retry intent may already exist even if hosted initiation fails.
       // Refresh owned state so the customer continues it rather than retrying twice.
       await load().catch(() => undefined);
-    } finally { setBusy(false); }
+    } finally { retryingRef.current = false; setBusy(false); }
   }
 
   if (!order) return <div className="min-h-[620px] rounded-2xl bg-slate-50 p-5 text-slate-600">{message || "Loading order…"}</div>;
