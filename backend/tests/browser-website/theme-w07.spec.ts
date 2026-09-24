@@ -156,7 +156,7 @@ test('W07 media Admin upload alt separate replacement and unused-only deletion',
 });
 
 test('W07 protected branding draft, public image gate, fallback and rollback', async ({ page, context }) => {
-  test.setTimeout(220_000);
+  test.setTimeout(360_000);
   const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z6ZsAAAAASUVORK5CYII=', 'base64');
   await page.goto('/');
   await expect(page.locator('header img').first()).toHaveAttribute('src', '/brand/mobist-wordmark.svg');
@@ -199,6 +199,11 @@ test('W07 protected branding draft, public image gate, fallback and rollback', a
     expect((await page.request.get(path)).status()).toBe(200);
     expect((await page.request.get(`/branding/footer_logo/${id}`)).status()).toBe(404);
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', new RegExp(`/branding/social_image/${id}$`));
+    for (const value of ['digital_only', 'commerce_only', 'hybrid'] as const) {
+      mode(value);
+      await page.goto('/');
+      await expect(page.locator('header img').first()).toHaveAttribute('src', path);
+    }
     await page.setViewportSize({ width: 390, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(true);
     await editor.getByLabel('Website branding header_logo').selectOption('');

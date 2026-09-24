@@ -166,7 +166,7 @@ final class WebsiteCms
         $sha = hash('sha256', $bytes);
         $existing = DB::table('site_media_assets')->where('sha256', $sha)->where('byte_size', $size)
             ->where('mime_type', $mime)->where('disk', 'local')->where('status', 'active')->first();
-        if ($existing) {
+        if ($existing && Storage::disk('local')->exists($existing->path)) {
             return $this->mediaPayload($existing);
         }
         $path = 'cms/'.Str::uuid().'.'.$extension;

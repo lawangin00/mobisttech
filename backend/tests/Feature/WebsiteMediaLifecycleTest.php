@@ -56,6 +56,12 @@ final class WebsiteMediaLifecycleTest extends TestCase
         $this->assertTrue($deleted['private_file_removed']);
         Storage::disk('local')->assertMissing($path);
         $this->assertSame('retired', DB::table('site_media_assets')->where('id', $first['id'])->value('status'));
+        // Retired hashes are not reusable IDs; a new private upload gets independent ownership.
+        $reuploaded = $cms->registerMedia($this->actor, ['bytes' => $one, 'extension' => 'png',
+            'original_name' => 'w07-reuploaded.png']);
+        $this->assertNotSame($first['id'], $reuploaded['id']);
+        $this->assertSame('active', $reuploaded['status']);
+        Storage::disk('local')->assertExists($reuploaded['path']);
         $this->reject(fn () => $cms->updateMediaAlt($this->actor, $first['id'], 'cannot revive'));
         $this->reject(fn () => $cms->deleteUnusedMedia($this->actor, $first['id']));
 

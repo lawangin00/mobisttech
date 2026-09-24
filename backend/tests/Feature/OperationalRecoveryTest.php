@@ -78,6 +78,24 @@ class OperationalRecoveryTest extends TestCase
         $this->assertSame('synthetic-key-2026', $snapshot['key_id']);
         $verified = $service->verify($this->admin, $snapshot['public_id'], 'synthetic-key-2026');
         $this->assertNotNull($verified['verified_at']);
+        // Wrong submitted key and changed runtime key are both hard failures, not silent restore.
+        foreach (['wrong-key-2026', ''] as $wrongKey) {
+            try {
+                $service->verify($this->admin, $snapshot['public_id'], $wrongKey);
+                $this->fail('Wrong recovery key was accepted.');
+            } catch (HttpException $error) {
+                $this->assertSame(409, $error->getStatusCode());
+            }
+        }
+        config(['backups.key_id' => 'different-runtime-2026']);
+        try {
+            $service->verify($this->admin, $snapshot['public_id'], 'synthetic-key-2026');
+            $this->fail('Changed runtime recovery key was accepted.');
+        } catch (HttpException $error) {
+            $this->assertSame(409, $error->getStatusCode());
+        } finally {
+            config(['backups.key_id' => 'synthetic-key-2026']);
+        }
 
         DB::table('site_secret_settings')->where('key', 'payment.api_secret')->update([
             'ciphertext' => Crypt::encryptString('rotated-secret-value'),
