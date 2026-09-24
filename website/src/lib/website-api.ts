@@ -73,7 +73,7 @@ export type SoftwareRelease = {
 export type ContentIndex = {
   pages: Array<{ slug: string; title: string; purpose: string; scope: string; show_in_navigation: boolean }>;
   policies: Array<Pick<Policy, "type" | "slug" | "title" | "footer_destination" | "effective_date" | "version">>;
-  software: Array<{ slug: string; name: string; routes: Record<string, string> }>;
+  software: Array<{ slug: string; name: string; routes: Record<string, string>; sitemap: boolean }>;
   navigation: Array<{
     key: string; label: string; destination_type: "page" | "route" | "url"; destination_key: string | null;
     destination_payload: Record<string, unknown> | null; target_behavior: "same_tab" | "new_tab"; scope: string;

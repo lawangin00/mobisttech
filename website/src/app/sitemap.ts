@@ -26,6 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const page of content?.pages ?? []) add("/" + page.slug, "weekly", 0.6);
   for (const policy of content?.policies ?? []) add("/" + policy.slug, "monthly", 0.5);
   for (const software of content?.software ?? []) {
+    if (!software.sitemap) continue;
     for (const route of Object.values(software.routes)) add(route, route.endsWith("/releases") ? "weekly" : "monthly", 0.7);
   }
 

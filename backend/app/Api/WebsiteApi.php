@@ -240,9 +240,12 @@ final class WebsiteApi
             ])->values()->all();
 
         $software = DB::table('software_products')->where('lifecycle_state', 'published')->whereNotNull('current_revision_id')
-            ->orderBy('name')->get(['slug', 'name'])->map(fn ($row) => [
-                'slug' => $row->slug, 'name' => $row->name, 'routes' => $this->cms->publicSoftware($row->slug)['routes'],
-            ])->all();
+            ->orderBy('name')->get(['slug', 'name'])->map(function ($row) {
+                $published = $this->cms->publicSoftware($row->slug);
+
+                return ['slug' => $row->slug, 'name' => $row->name, 'routes' => $published['routes'],
+                    'sitemap' => ($published['snapshot']['seo']['sitemap'] ?? true) === true];
+            })->all();
 
         $navigation = DB::table('site_navigation_items')->where('is_visible', true)->where('is_enabled', true)
             ->orderBy('sort_order')->orderBy('id')->get(['key', 'label', 'destination_type', 'destination_key',

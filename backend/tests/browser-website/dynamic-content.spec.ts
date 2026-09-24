@@ -221,6 +221,11 @@ test('W06 new independent Software is private until published with its own compl
         await editor.getByPlaceholder('Product Privacy HTML').fill('<p>Second software privacy only.</p>');
         await editor.getByPlaceholder('Product Terms HTML').fill('<p>Second software terms only.</p>');
         await editor.getByPlaceholder('FAQ JSON').fill('[{"question":"Second software?","answer":"<p>Independent FAQ answer.</p>"}]');
+        await editor.getByPlaceholder('Software SEO title').fill('Second Software Unique SEO Heading');
+        await editor.getByPlaceholder('Software SEO description').fill('Second Software only SEO description.');
+        await editor.getByPlaceholder('Software canonical URL (optional)').fill('/software/mt75-w06-second');
+        await editor.getByPlaceholder('Software social title').fill('Second Software Social Heading');
+        await editor.getByPlaceholder('Software social description').fill('Second Software social description.');
         const created = admin.waitForResponse(response => response.url().endsWith('/internal/admin/platform/software')
             && response.request().method() === 'POST');
         await editor.getByRole('button', { name: 'New Software draft' }).click();
@@ -255,7 +260,13 @@ test('W06 new independent Software is private until published with its own compl
         expect((await page.goto(newUrl))?.status()).toBe(200);
         await expect(page.getByRole('heading', { name: 'MT75 W06 Second Software' })).toBeVisible();
         await expect(page.getByText('Second product only: private W06 overview.')).toBeVisible();
-        expect(await page.title()).toContain('MT75 W06 Second Software');
+        // Published SEO override intentionally replaces the name-based browser title.
+        await expect(page).toHaveTitle(/Second Software Unique SEO Heading/);
+        await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', 'Second Software only SEO description.');
+        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/software\/mt75-w06-second$/);
+        await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'Second Software Social Heading');
+        await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', 'Second Software social description.');
+        await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute('content', 'Second Software Social Heading');
         for (const [route, title, expected] of [
             ['privacy', 'MT75 W06 Second Software Privacy', 'Second software privacy only.'],
             ['terms', 'MT75 W06 Second Software Terms', 'Second software terms only.'],
@@ -290,6 +301,31 @@ test('W06 new independent Software is private until published with its own compl
         await expect(page.getByText('Published MT54 software overview')).toBeVisible();
         await expect(page.getByText('Current version: 1.0.0')).toBeVisible();
         await expect(page.getByText('Second product only: private W06 overview.')).toHaveCount(0);
+        await expect(page.locator('meta[property="og:title"]')).not.toHaveAttribute('content', 'Second Software Social Heading');
+        // A subsequent SEO-only draft is private until publication, and sitemap=false must suppress discovery without deleting history.
+        await editor.getByPlaceholder('Software SEO title').fill('Second Software Revised SEO Heading');
+        await editor.getByLabel('Include Software in sitemap').uncheck();
+        const revised = admin.waitForResponse(response => response.url().includes('/internal/admin/platform/software/')
+            && response.url().endsWith('/draft') && response.request().method() === 'POST');
+        await editor.getByRole('button', { name: 'Save new draft revision' }).click();
+        expect((await revised).status()).toBe(200);
+        await expect(release.getByRole('button', { name: 'Publish draft v2' })).toBeVisible();
+        await page.goto(newUrl);
+        await expect(page).toHaveTitle(/Second Software Unique SEO Heading/);
+        const before = await page.request.get('/sitemap.xml');
+        expect(await before.text()).toContain(newUrl + '/releases');
+        const publishedSeo = admin.waitForResponse(response => response.url().includes('/internal/admin/platform/software/revisions/')
+            && response.url().endsWith('/publish') && response.request().method() === 'POST');
+        await release.getByRole('button', { name: 'Publish draft v2' }).click();
+        expect((await publishedSeo).status()).toBe(200);
+        await expect(release.getByRole('button', { name: 'Rollback v2' })).toBeVisible();
+        await page.goto(newUrl);
+        await expect(page).toHaveTitle(/Second Software Revised SEO Heading/);
+        const after = await page.request.get('/sitemap.xml');
+        const xml = await after.text();
+        expect(xml).not.toContain(newUrl);
+        expect(xml).toContain(firstUrl + '/releases');
+        expect((await page.goto(newUrl + '/releases/1.0.0'))?.status()).toBe(200);
     } finally {
         await releasePlatformBrowserAdmin(admin);
         await admin.close();

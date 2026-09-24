@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { readSoftware, WebsiteApiError } from "@/lib/website-api";
+import { readBusinessProfile } from "@/lib/business-profile";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,23 @@ const load = cache(async function load(slug: string) {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const product = await load(slug).catch(() => null);
-  return product ? { title: product.overview.name, description: product.overview.summary } : {};
+  if (!product) return {};
+  const seo = product.overview.seo;
+  const text = (value: unknown) => typeof value === "string" && value.trim() ? value.trim() : null;
+  const title = text(seo.title) ?? product.overview.name;
+  const description = text(seo.description) ?? product.overview.summary;
+  const socialTitle = text(seo.social_title) ?? title;
+  const socialDescription = text(seo.social_description) ?? description;
+  const canonicalPath = `/software/${encodeURIComponent(product.slug)}`;
+  const canonical = text(seo.canonical_url) ?? canonicalPath;
+  const business = await readBusinessProfile();
+  const socialUrl = business ? new URL(canonicalPath, business.public_website).href : undefined;
+  return {
+    title, description,
+    alternates: { canonical },
+    openGraph: { type: "website", title: socialTitle, description: socialDescription, ...(socialUrl ? { url: socialUrl } : {}) },
+    twitter: { card: "summary", title: socialTitle, description: socialDescription },
+  };
 }
 
 export default async function SoftwareOverviewPage({ params }: { params: Promise<{ slug: string }> }) {
