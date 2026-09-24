@@ -13,13 +13,13 @@ class PosShellE2eCleanupSeeder extends Seeder
     {
         abort_unless(DB::connection()->getDatabaseName() === 'mobisttech_test', 403);
         $photoPaths = DB::transaction(function () {
-            $emails = ['e2e-sales@example.invalid', 'e2e-inventory@example.invalid', 'e2e-operations@example.invalid', 'e2e-mt43@example.invalid', 'e2e-platform@example.invalid', 'e2e-digital-operations@example.invalid', 'e2e-reset@example.invalid', 'e2e-protected-owner@example.invalid', 'e2e-audit-owner@example.invalid', 'e2e-pref-owner@example.invalid', 'e2e-history@example.invalid', 'e2e-iw-inventory@example.invalid', 'e2e-iw-warranty@example.invalid', 'e2e-transaction@example.invalid', 'e2e-intake@example.invalid'];
+            $emails = ['e2e-sales@example.invalid', 'e2e-inventory@example.invalid', 'e2e-operations@example.invalid', 'e2e-mt43@example.invalid', 'e2e-platform@example.invalid', 'e2e-digital-operations@example.invalid', 'e2e-reset@example.invalid', 'e2e-protected-owner@example.invalid', 'e2e-w04-payment-editor@example.invalid', 'e2e-audit-owner@example.invalid', 'e2e-pref-owner@example.invalid', 'e2e-history@example.invalid', 'e2e-iw-inventory@example.invalid', 'e2e-iw-warranty@example.invalid', 'e2e-transaction@example.invalid', 'e2e-intake@example.invalid'];
             $adminIds = DB::table('admins')->whereIn('email', $emails)->pluck('id')->all();
             $photos = DB::table('admins')->whereIn('email', $emails)->get(['public_id', 'profile_photo'])
                 ->filter(fn ($row) => is_string($row->profile_photo)
                     && preg_match('/^admin-profile-photos\/'.preg_quote($row->public_id, '/').'\/[a-f0-9-]{36}\.(jpg|png|webp)$/D', $row->profile_photo) === 1)
                 ->pluck('profile_photo')->all();
-            $roleIds = DB::table('roles')->whereIn('slug', ['e2e-salesperson', 'e2e-inventory-manager', 'e2e-operations-manager', 'e2e-mt43-manager', 'e2e-platform-administrator', 'e2e-digital-operations-manager', 'e2e-reset-administrator'])->pluck('id')->all();
+            $roleIds = DB::table('roles')->whereIn('slug', ['e2e-salesperson', 'e2e-inventory-manager', 'e2e-operations-manager', 'e2e-mt43-manager', 'e2e-platform-administrator', 'e2e-w04-payment-editor', 'e2e-digital-operations-manager', 'e2e-reset-administrator'])->pluck('id')->all();
             $d03Outlet = DB::table('outlets')->where('outlet_code', 'E43')->where('name', 'E2E D03 Closed Cash Outlet')->first();
             if ($d03Outlet) {
                 $d03Cash = DB::table('cash_sessions')->where('outlet_id', $d03Outlet->id)->get();

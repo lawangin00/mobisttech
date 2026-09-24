@@ -36,6 +36,7 @@ class PosShellE2eSeeder extends Seeder
                 'website.digital-projects.manage', 'website.proposals.approve', 'website.client-files.manage',
                 'website.conversions.view',
             ]);
+            $paymentEditorRole = $this->role('E2E W04 Payment Editor', 'e2e-w04-payment-editor', ['shops.enter', 'website.payments.manage', 'website.publish']);
             $platformRole = $this->role('E2E Platform Administrator', 'e2e-platform-administrator', [
                 'shops.enter', 'shop.profile',
                 'config.documents.manage', 'config.theme.manage', 'config.branding.manage', 'config.payments.manage',
@@ -53,6 +54,7 @@ class PosShellE2eSeeder extends Seeder
             $platform = $this->member('E2E Platform Administrator', 'e2e-platform@example.invalid', 'Platform Administrator');
             $digital = $this->member('E2E Digital Operations Manager', 'e2e-digital-operations@example.invalid', 'Digital Operations Manager');
             $reset = $this->member('E2E Reset Administrator', 'e2e-reset@example.invalid', 'Reset Administrator');
+            $paymentEditor = $this->member('E2E W04 Payment Editor', 'e2e-w04-payment-editor@example.invalid', 'Payment Editor');
             $owner = $this->member('E2E Protected Owner', 'e2e-protected-owner@example.invalid', 'Protected Owner');
             // Only the explicitly opted-in disposable browser fixture receives a deterministic binding.
             if (getenv('MT75_D05_E2E_ENABLED') === '1') {
@@ -79,6 +81,7 @@ class PosShellE2eSeeder extends Seeder
             $this->assign($transaction, $salesRole, [$salesOutlet]);
             $this->assign($intake, $mt43Role, [$salesOutlet]);
             $this->assign($platform, $platformRole, [$salesOutlet]);
+            $this->assign($paymentEditor, $paymentEditorRole, [$salesOutlet]);
             $this->assign($digital, $digitalRole, [$salesOutlet]);
             $this->assign($reset, $resetRole, [$salesOutlet]);
             $this->assign($owner, Role::where('name', 'Full Access')->firstOrFail(), [$salesOutlet]);

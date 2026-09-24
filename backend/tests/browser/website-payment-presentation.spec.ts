@@ -16,7 +16,7 @@ test.afterAll(() => {
 
 test('W04 authorized Admin publishes new-only nonsecret payment presentation with external channels off', async ({ page }) => {
     await page.goto('/internal/admin/pos/login');
-    await page.getByTestId('login-email').fill('e2e-protected-owner@example.invalid');
+    await page.getByTestId('login-email').fill('e2e-w04-payment-editor@example.invalid');
     await page.getByTestId('login-password').fill('SyntheticPass123!');
     const login = page.waitForResponse(response => response.request().method() === 'POST'
         && new URL(response.url()).pathname === '/internal/admin/auth/login');

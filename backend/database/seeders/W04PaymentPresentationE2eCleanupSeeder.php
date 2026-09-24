@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-/** Guarded cleanup: only the synthetic owner and the nonsecret presentation domain. */
+/** Guarded cleanup: only the dedicated synthetic editor and the nonsecret presentation domain. */
 final class W04PaymentPresentationE2eCleanupSeeder extends Seeder
 {
     public function run(): void
@@ -17,8 +17,8 @@ final class W04PaymentPresentationE2eCleanupSeeder extends Seeder
             && (getenv('CI') === 'true' || getenv('MT75_FIRST_OUTLET_E2E_ENABLED') === '1')
             && DB::connection()->getDatabaseName() === 'mobisttech_test'
             && (int) DB::selectOne('SELECT @@port AS port')->port === 13306, 403);
-        $admin = DB::table('admins')->where('email', 'e2e-protected-owner@example.invalid')->first();
-        abort_unless($admin !== null, 409, 'Synthetic presentation browser owner is missing.');
+        $admin = DB::table('admins')->where('email', 'e2e-w04-payment-editor@example.invalid')->first();
+        abort_unless($admin !== null, 409, 'Synthetic presentation browser editor is missing.');
 
         DB::transaction(function () use ($admin): void {
             $revisions = DB::table('site_configuration_revisions')
