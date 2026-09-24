@@ -1,5 +1,9 @@
 # MT-7.5 fast-track: one consolidated 22-family and cross-gate gap audit / finite closure checklist
 
+> **Chronological baseline notice:** the 5/27 baseline, earlier family-table states and old retry instructions below describe their dated checkpoint. The latest accepted numbered-gate entries and appended Git-backed evidence take precedence. Current independent family: **21/H01**, 19/27 DONE, 8 OPEN after W07. Do not use historical source files, old project registries, old launch paths or stale stage states as target instructions.
+
+> **Chronological baseline notice:** the 5/27 baseline, earlier family-table states and old retry instructions below describe their dated checkpoint. The latest accepted numbered-gate entries and appended Git-backed evidence take precedence. Current independent family: **21/H01**, 19/27 DONE, 8 OPEN after W07. Do not use historical source files, old project registries, old launch paths or stale stage states as target instructions.
+
 Status: REVIEW ONLY / MT-7.5 IN PROGRESS. Baseline: project `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`, `main` at `42f3e66be05834e740deb00aa2dcf53d79fb186c` (local = origin/main, clean; isolated MySQL stopped at preflight on 19-Sep-2026). The preceding inventory/warranty work is already committed; no feature, test, source repository, owner data, production or provider action is authorized by this review.
 
 ## Counting and evidence rules
@@ -74,7 +78,7 @@ Current closure state after W03 acceptance: **15/27 Complete, 12/27 OPEN (55.56%
 | 18/W05 | DONE DEVELOPMENT: 24/24 source files, 9/9 routes; real public enquiry -> Admin proposal/state/private delivery -> owned Customer; signed-in foreign Customer denied in all three modes, expiry/milestone/closed-state negatives; joined Edge 7/7, W05/DigitalService PHP 10/10. H-02 provider and Q01 clean-schema separately OPEN; see `MT-7.5_W05_DEVELOPMENT_CLOSURE_2026-09-24.md`. | DONE |
 | 19/W06 | DONE DEVELOPMENT: pinned W06 72/72 source-file and 45/45 route target/retirement dispositions; current CMS PHP 9/9, joined real Admin/Next Edge 7/7, protected guided builder/homepage/header/footer/managed standard-wide private previews and safe Software two-product history/media/SEO/rollback. See `MT-7.5_W06_DEVELOPMENT_CLOSURE_2026-09-25.md`. | DONE |
 | 20/W07 | DONE DEVELOPMENT: 119/119 source files and 15/15 routes mapped to fresh target/retirement; theme/branding/media/secret/recovery protected/public Edge 4/4 joined, PHP 13/13 + 4/4, owner-guarded cleanup. See `MT-7.5_W07_DEVELOPMENT_CLOSURE_2026-09-25.md`. | DONE |
-| 21/H01 | Finish required 1,224-source-file/316-route **behavior disposition**, approved retirement and stale-doc authority audit. | OPEN [E] |
+| 21/H01 | 1,224/1,224 source files and 316/316 original routes pinned to original hashes/family owners; `MT-7.5_H01_FINITE_ACCEPTANCE_2026-09-25.md`, current 252/316 exact source-method/URI review rows, 64 group-only routes remain. 45/45 source H01 document provenance verified; operative README/foundation/ledger authority corrected. Do not equate mapping, service-only UI, or already PASS source suites with target behavior. | OPEN [E,I]: FIRST bounded P08 operator-history/download/delete protected interface vs approved retirement, then remaining 64 original route reviews (W01 41, W02 11, W03 12); P01 and Q01 independently OPEN. |
 | 22/G-A | Close all 41 approved addendum leaf clauses with linked family/backend/UI/security/mode/performance evidence. | OPEN [E] |
 | 23/G-C | Close consolidated documents, POS/Website payment and notices clauses; keep final manual in MT-7.6. | OPEN [E,H] |
 | 24/G-S | Close Software publishing requirement's distinct protected/public/template/release/media/SEO journey. | OPEN [E,H] |

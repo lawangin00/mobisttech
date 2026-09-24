@@ -1,5 +1,7 @@
 # MT-1.1 - Source inventory and feature parity register
 
+> **Pinned historical source-characterization register, NOT the current execution ledger.** Original source-preserve/decision/target-owner descriptions remain valid behavior references subject to the approved fresh-business scope; historical `Pending` statuses and source-data migration language are superseded by the latest `docs/PROJECT_IMPLEMENTATION_STATUS.md` and `docs/PROJECT_SOURCE_OF_TRUTH.md`. Never execute original source runbooks, copy credentials or revive dual-database transport on this target. Exact frozen file/route paths are in the inventories and H01 trace.
+
 Status: Completed characterization; target parity remains Pending until the linked roadmap gates pass.
 
 ## Authority and evidence boundary

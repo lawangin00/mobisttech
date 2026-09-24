@@ -1,5 +1,7 @@
 # Windows application foundations
 
+> **Historical MT-1.3 foundation checkpoint, NOT a current full-install/production runbook.** The statements below that only framework migrations exist and that business tables, routes or product UI are absent refer to the original setup checkpoint, not the current application. For a **new** target first Admin/outlet follow `../operations/FRESH_BUSINESS_BOOTSTRAP.md`, current schema/ledger and guarded local helpers; for an approved future production deployment consult `../deploy/MT-7.4_RUNBOOK.md`. Do not reinitialize or migrate an existing target database solely by following this historical example; original POS/Website databases, launch paths and credentials are never target inputs.
+
 This runbook covers the isolated target foundation, not source-data or business-feature migration. The [implementation ledger](../PROJECT_IMPLEMENTATION_STATUS.md) owns live point/stage status. The structural roadmap and its Word mirror are unchanged by routine progress.
 
 ## Pinned toolchain

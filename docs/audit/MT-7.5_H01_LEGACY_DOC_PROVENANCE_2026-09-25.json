@@ -1,0 +1,563 @@
+{
+  "schema": 1,
+  "scope": "H01-only read-only old-source documentation provenance and risk signals; not behavioral equivalence or current runbook authority",
+  "summary": {
+    "local_current_matches_pinned": 37,
+    "pinned_local_read_only_verified": 37,
+    "old_source_local_paths": 10,
+    "legacy_separate_database_sync": 11,
+    "old_project_control": 15,
+    "local_current_differs_from_pinned": 8,
+    "pinned_blob_read_only_verified": 8,
+    "old_listen_ports": 5,
+    "legacy_sqlite_source": 1,
+    "old_credentials_setup": 10,
+    "binary_non_operational_reference": 8
+  },
+  "source_documents": [
+    {
+      "source": "pos",
+      "original_path": "NOTICE.md",
+      "pinned_sha256": "53791a4487bd15c4cb435b75f7562c38dc89095fc4bd798b0e9b3c0f2c47828f",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_source_local_paths",
+        "legacy_separate_database_sync",
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "source NOTICE attribution reference; final release notices gated separately under G-L"
+    },
+    {
+      "source": "pos",
+      "original_path": "README.md",
+      "pinned_sha256": "b4dfd2c77186ad10827f3c036c8dc386f652d05265b28d77b6badca93d1a4037",
+      "local_read_only_sha_matches_pinned": false,
+      "audited_content_origin": "pinned_git_blob",
+      "source_instruction_risk_tags": [
+        "old_source_local_paths",
+        "old_listen_ports",
+        "legacy_separate_database_sync",
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/AI_PROJECT_COMMAND_REGISTRY.md",
+      "pinned_sha256": "6037806ccd5380e8425de03808e2a3d08f1dba0ed4db212c60dfc35e8d60131d",
+      "local_read_only_sha_matches_pinned": false,
+      "audited_content_origin": "pinned_git_blob",
+      "source_instruction_risk_tags": [
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/BACKUP_SETUP.md",
+      "pinned_sha256": "4715da5ed7dd92dc68a1424023cb884a8a51f4d5afb72b63081362ebb85352b2",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_source_local_paths",
+        "old_listen_ports",
+        "legacy_sqlite_source",
+        "old_credentials_setup"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/BRAND_ASSET_ROLE_MAP.md",
+      "pinned_sha256": "c6a964c092387ace3c3f0f34ad5cedf4b2d6731c32e73a3022eac6cfcb15fca6",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/CRITICAL_REVIEW_ROADMAP_2026-08-27.md",
+      "pinned_sha256": "991ce889a19d1fd15d70ac54fb964e033abf76517e037603313d6f14eb453478",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_source_local_paths",
+        "legacy_separate_database_sync",
+        "old_credentials_setup"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/DECISION_LOG.md",
+      "pinned_sha256": "f1ff2ab0d67b800d505bb05a43d56b4ae182abb19414ca1c6846b14a0058dd83",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_source_local_paths",
+        "legacy_separate_database_sync"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/DYNAMIC_PLATFORM_DP0_1_MIGRATION_DESIGN.md",
+      "pinned_sha256": "57adf6eeefc4418143d7a152c0942be94f9591a7db9af4f37d0b375ab439c4ad",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/DYNAMIC_PLATFORM_GAP_ANALYSIS_AND_ROADMAP.docx",
+      "pinned_sha256": "a1f1b43d1dd5aea3034e495c1fab12fde522ae0447154fe35b553ae050ce22ba",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "binary_non_operational_reference"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/DYNAMIC_PLATFORM_GAP_ANALYSIS_AND_ROADMAP.md",
+      "pinned_sha256": "61b95d59370c23d802ba3c7f6510c22824f349965cb1d99be6af1afea77b1e15",
+      "local_read_only_sha_matches_pinned": false,
+      "audited_content_origin": "pinned_git_blob",
+      "source_instruction_risk_tags": [
+        "legacy_separate_database_sync",
+        "old_credentials_setup",
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/DYNAMIC_PLATFORM_SOURCE_OF_TRUTH.md",
+      "pinned_sha256": "cc3cb3f31f7206ee8d9359b7455dee4fe2c3531b34aa14b5e9ff41bb24dbd8f4",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/MASTER_IMPLEMENTATION_PLAN.md",
+      "pinned_sha256": "2e8ec6f1236b995860c05ed41f51ba40e08749b0dbf26c32f850ce2fa174a5a0",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/MASTER_IMPLEMENTATION_ROADMAP.md",
+      "pinned_sha256": "d514cb4b43263acb36dbe11a360c5f1763996e2ac44b52ec7bb68333235ade7d",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_credentials_setup"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/PHASE2C_INTEGRATION_DESIGN.md",
+      "pinned_sha256": "7c2f62fdc3569af43576a3a009f402c067f89e773c4bfaf068cea66150151d62",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/PLATFORM_UPGRADE_LARAVEL13.md",
+      "pinned_sha256": "2cb3279b8ba1c17582dd33b9bfca6ef0d4bc8fe8dcf66e5870f7428e4e868311",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_source_local_paths"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/PRODUCTION_READINESS.md",
+      "pinned_sha256": "7e37e2d53fad7ca6f00896aa2f03b5ff52670e502f359acf65240f93f6885073",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_credentials_setup"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/PROJECT_IMPLEMENTATION_STATUS.md",
+      "pinned_sha256": "3a8cb3bd622fa9a8ffab3c3157e81a4c8384ca91ceb6f0445394187842940f8d",
+      "local_read_only_sha_matches_pinned": false,
+      "audited_content_origin": "pinned_git_blob",
+      "source_instruction_risk_tags": [
+        "old_source_local_paths",
+        "legacy_separate_database_sync",
+        "old_credentials_setup",
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/PROJECT_STATUS.md",
+      "pinned_sha256": "16ab7d38bde98491efefa9f7476f8ee69d2a990014124e3d49fef895eb2f9987",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/STAGE6_AUTHENTICATED_SMOKE_MATRIX_2026-08-28.md",
+      "pinned_sha256": "8c559d6ae5f766860afd9e75dad48de283fa8eb5ea5472c922a0cffe4931e3a0",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/TEST_CHECKLIST.md",
+      "pinned_sha256": "8b522b2b59ddb93b4e208859253d0be65e4d25b29383f5e4590bf0b6ab0f0f42",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/VISUAL_SYSTEM.md",
+      "pinned_sha256": "1e126cfd0076c81c738fef2fd29d3744eb170a235f09fbd888f65a8478d7ce89",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/evidence/stage6/README.md",
+      "pinned_sha256": "8bfb40bb1576030af085a79643aea088763123d7e35208aa7d9edd6d66dd39c9",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_listen_ports"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/evidence/stage6/pos-login-desktop.png",
+      "pinned_sha256": "4cf58ddbb4c040ccf52d2939773407cc167a20eaff294d3bc3d8e0bc4517d5ed",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "binary_non_operational_reference"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "historical screenshot; never use as current target/manual screenshot"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/evidence/stage6/pos-login-mobile.png",
+      "pinned_sha256": "e3bde87aab11e0ca02e5a9957c48c306a47c89ac8efb37e062715ad625ff8d0e",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "binary_non_operational_reference"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "historical screenshot; never use as current target/manual screenshot"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/evidence/stage6/website-admin-login-desktop.png",
+      "pinned_sha256": "67529b7b9e13e8bb4dce8f027bfe9d91ff65047835180fc212b4668543b604e2",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "binary_non_operational_reference"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "historical screenshot; never use as current target/manual screenshot"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/evidence/stage6/website-admin-login-mobile.png",
+      "pinned_sha256": "f951f96422e92125e45e02bfb983f88bd8f715793a221a21478c842d0d138257",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "binary_non_operational_reference"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "historical screenshot; never use as current target/manual screenshot"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/evidence/stage6/website-home-desktop.png",
+      "pinned_sha256": "aaf26ca0d38ac2fcb6811bff182619685db095cea511cc06a0f641b365d02ca6",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "binary_non_operational_reference"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "historical screenshot; never use as current target/manual screenshot"
+    },
+    {
+      "source": "pos",
+      "original_path": "docs/evidence/stage6/website-home-mobile.png",
+      "pinned_sha256": "16da931a9b3c825de68eccf77c33aa132ab10086d2b6bcb4d9d99a491359910b",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "binary_non_operational_reference"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "historical screenshot; never use as current target/manual screenshot"
+    },
+    {
+      "source": "website",
+      "original_path": "NOTICE.md",
+      "pinned_sha256": "3be5d5d1e9c0f4c8a27fa854e5f62f5d8f936f73298ddf72a8bb414fb392d1e9",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_source_local_paths",
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "source NOTICE attribution reference; final release notices gated separately under G-L"
+    },
+    {
+      "source": "website",
+      "original_path": "README.md",
+      "pinned_sha256": "421ffaa3d04ea76c9e152335359cce19448ed4ae49ee041c52c7028d53c5c6d0",
+      "local_read_only_sha_matches_pinned": false,
+      "audited_content_origin": "pinned_git_blob",
+      "source_instruction_risk_tags": [
+        "old_source_local_paths",
+        "old_listen_ports",
+        "legacy_separate_database_sync",
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "WEBSITE_COMMERCE_ARCHITECTURE.md",
+      "pinned_sha256": "e4468141edc5c76b7a89bc61e78146c9fa23935cb6e0f4271f6410e89bf185e4",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_listen_ports",
+        "legacy_separate_database_sync"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/AI_PROJECT_COMMAND_REGISTRY.md",
+      "pinned_sha256": "6037806ccd5380e8425de03808e2a3d08f1dba0ed4db212c60dfc35e8d60131d",
+      "local_read_only_sha_matches_pinned": false,
+      "audited_content_origin": "pinned_git_blob",
+      "source_instruction_risk_tags": [
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/BRAND_ASSET_ROLE_MAP.md",
+      "pinned_sha256": "c6a964c092387ace3c3f0f34ad5cedf4b2d6731c32e73a3022eac6cfcb15fca6",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/DECISION_LOG.md",
+      "pinned_sha256": "79413df648feb785be0c6fe99af60e428ced40f6b732ed9fb141cb443dfced6d",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "legacy_separate_database_sync"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/DYNAMIC_PLATFORM_DP0_1_MIGRATION_DESIGN.md",
+      "pinned_sha256": "57adf6eeefc4418143d7a152c0942be94f9591a7db9af4f37d0b375ab439c4ad",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/DYNAMIC_PLATFORM_GAP_ANALYSIS_AND_ROADMAP.docx",
+      "pinned_sha256": "a1f1b43d1dd5aea3034e495c1fab12fde522ae0447154fe35b553ae050ce22ba",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "binary_non_operational_reference"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/DYNAMIC_PLATFORM_GAP_ANALYSIS_AND_ROADMAP.md",
+      "pinned_sha256": "61b95d59370c23d802ba3c7f6510c22824f349965cb1d99be6af1afea77b1e15",
+      "local_read_only_sha_matches_pinned": false,
+      "audited_content_origin": "pinned_git_blob",
+      "source_instruction_risk_tags": [
+        "legacy_separate_database_sync",
+        "old_credentials_setup",
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/DYNAMIC_PLATFORM_SOURCE_OF_TRUTH.md",
+      "pinned_sha256": "cc3cb3f31f7206ee8d9359b7455dee4fe2c3531b34aa14b5e9ff41bb24dbd8f4",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/MASTER_IMPLEMENTATION_PLAN.md",
+      "pinned_sha256": "fdb754b8aa55022a184992593e857099dd2a99e8c14c7edba05d3b09b88619cd",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/MASTER_IMPLEMENTATION_ROADMAP.md",
+      "pinned_sha256": "25e82d896c6c3896f9b1d0a996b2563afe320c570d7fcf2a59a21734bfbd7d3a",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_credentials_setup"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/PHASE2C_INTEGRATION_DESIGN.md",
+      "pinned_sha256": "7c2f62fdc3569af43576a3a009f402c067f89e773c4bfaf068cea66150151d62",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/PRODUCTION_READINESS.md",
+      "pinned_sha256": "7e37e2d53fad7ca6f00896aa2f03b5ff52670e502f359acf65240f93f6885073",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [
+        "old_credentials_setup"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/PROJECT_IMPLEMENTATION_STATUS.md",
+      "pinned_sha256": "3a8cb3bd622fa9a8ffab3c3157e81a4c8384ca91ceb6f0445394187842940f8d",
+      "local_read_only_sha_matches_pinned": false,
+      "audited_content_origin": "pinned_git_blob",
+      "source_instruction_risk_tags": [
+        "old_source_local_paths",
+        "legacy_separate_database_sync",
+        "old_credentials_setup",
+        "old_project_control"
+      ],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/PROJECT_STATUS.md",
+      "pinned_sha256": "7e87a67ffd0623555a8f6c2920d8b6ed3f743af366a4cb28733fef6f1e325c67",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    },
+    {
+      "source": "website",
+      "original_path": "docs/TEST_CHECKLIST.md",
+      "pinned_sha256": "9dc015b693cf023a12880fbbbeda1e4bcc07edbc551ebb6c97b61fed5837f3e2",
+      "local_read_only_sha_matches_pinned": true,
+      "audited_content_origin": "matching_local_source_file_read_only",
+      "source_instruction_risk_tags": [],
+      "target_authority": "docs/PROJECT_SOURCE_OF_TRUTH.md + latest docs/PROJECT_IMPLEMENTATION_STATUS.md + approved fresh-business bootstrap; technical current target runbooks only",
+      "disposition": "old roadmap/status/control/configuration text; not a current target instruction"
+    }
+  ]
+}

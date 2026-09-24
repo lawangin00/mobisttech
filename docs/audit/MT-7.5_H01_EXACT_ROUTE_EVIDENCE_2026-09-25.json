@@ -1,0 +1,5255 @@
+{
+  "schema": 1,
+  "purpose": "Reuse exact already-written original method/URI family review, WITHOUT re-executing accepted source/target tests or conflating 177 mapped routes with completed behavior parity",
+  "counts": {
+    "source_routes": 316,
+    "matched_preexisting_exact_rows": 252,
+    "still_only_group_family_disposition": 64,
+    "family_exact_doc_rows": {
+      "P01": 54,
+      "P02": 18,
+      "P03": 12,
+      "P04": 8,
+      "P05": 6,
+      "P06": 36,
+      "P07": 32,
+      "P08": 19,
+      "W04": 16,
+      "W05": 9,
+      "W06": 45,
+      "W07": 15,
+      "W08": 2,
+      "X01": 11
+    },
+    "pending_by_primary_family": {
+      "W01": 41,
+      "W02": 11,
+      "W03": 12
+    }
+  },
+  "previous_exact_route_dispositions": [
+    {
+      "original_route_number": 1,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "/",
+      "action": "App\\Http\\Controllers\\Shop\\LoginController@index",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 9
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 2,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel",
+      "action": "App\\Http\\Controllers\\Admin\\LoginController@index",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 10
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 3,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/backups",
+      "action": "App\\Http\\Controllers\\BackupController@index",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 7
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 4,
+      "source": "pos",
+      "method": "POST",
+      "uri": "admin-panel/backups",
+      "action": "App\\Http\\Controllers\\BackupController@store",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 8
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 5,
+      "source": "pos",
+      "method": "DELETE",
+      "uri": "admin-panel/backups/{backup}",
+      "action": "App\\Http\\Controllers\\BackupController@destroy",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 9
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 6,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/backups/{backup}/download",
+      "action": "App\\Http\\Controllers\\BackupController@download",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 10
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 7,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center",
+      "action": "App\\Http\\Controllers\\Admin\\ControlCenterController@index",
+      "families": [
+        "P01",
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 11
+        },
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 15
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 8,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center/backup-operations",
+      "action": "App\\Http\\Controllers\\PosBackupOperationsController@index",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 11
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 9,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/backup-operations",
+      "action": "App\\Http\\Controllers\\PosBackupOperationsController@update",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 12
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 10,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center/branding",
+      "action": "App\\Http\\Controllers\\PosBrandingController@index",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 16
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 11,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/branding",
+      "action": "App\\Http\\Controllers\\PosBrandingController@publish",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 17
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 12,
+      "source": "pos",
+      "method": "POST",
+      "uri": "admin-panel/control-center/branding/assets",
+      "action": "App\\Http\\Controllers\\PosBrandingController@upload",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 18
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 13,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/branding/preview",
+      "action": "App\\Http\\Controllers\\PosBrandingController@preview",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 19
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 14,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/branding/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\PosBrandingController@rollback",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 20
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 15,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center/dashboard-presentation",
+      "action": "App\\Http\\Controllers\\PosDashboardPresentationController@index",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 7
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 16,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/dashboard-presentation",
+      "action": "App\\Http\\Controllers\\PosDashboardPresentationController@update",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 8
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 17,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center/integration-status",
+      "action": "App\\Http\\Controllers\\PosIntegrationStatusController@index",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 13
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 18,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center/master-data",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@index",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 7
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 19,
+      "source": "pos",
+      "method": "POST",
+      "uri": "admin-panel/control-center/master-data",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@store",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 8
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 20,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/master-data/{option}",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@update",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 9
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 21,
+      "source": "pos",
+      "method": "DELETE",
+      "uri": "admin-panel/control-center/master-data/{option}",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@destroy",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 10
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 22,
+      "source": "pos",
+      "method": "POST",
+      "uri": "admin-panel/control-center/master-data/{option}/active",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@active",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 11
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 23,
+      "source": "pos",
+      "method": "POST",
+      "uri": "admin-panel/control-center/master-data/{option}/archive",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@archive",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 12
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 24,
+      "source": "pos",
+      "method": "POST",
+      "uri": "admin-panel/control-center/master-data/{option}/restore",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@restore",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 13
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 25,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center/navigation",
+      "action": "App\\Http\\Controllers\\PosPortalNavigationController@index",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 21
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 26,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/navigation",
+      "action": "App\\Http\\Controllers\\PosPortalNavigationController@update",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 22
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 27,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center/presentation",
+      "action": "App\\Http\\Controllers\\PosDocumentController@index",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 9
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 28,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/presentation",
+      "action": "App\\Http\\Controllers\\PosDocumentController@publish",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 10
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 29,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/presentation/preview",
+      "action": "App\\Http\\Controllers\\PosDocumentController@preview",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 11
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 30,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/presentation/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\PosDocumentController@rollback",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 12
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 31,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center/report-presentation",
+      "action": "App\\Http\\Controllers\\PosReportPresentationController@index",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 13
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 32,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/report-presentation",
+      "action": "App\\Http\\Controllers\\PosReportPresentationController@update",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 14
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 33,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center/shops/{shop}",
+      "action": "App\\Http\\Controllers\\Admin\\ControlCenterController@editShop",
+      "families": [
+        "P01",
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 12
+        },
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 23
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 34,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/shops/{shop}",
+      "action": "App\\Http\\Controllers\\Admin\\ControlCenterController@updateShop",
+      "families": [
+        "P01",
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 13
+        },
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 24
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 35,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center/table-presentation",
+      "action": "App\\Http\\Controllers\\PosPortalTablePresentationController@index",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 25
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 36,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/table-presentation",
+      "action": "App\\Http\\Controllers\\PosPortalTablePresentationController@update",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 26
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 37,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/control-center/theme",
+      "action": "App\\Http\\Controllers\\PosThemeController@index",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 27
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 38,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/theme",
+      "action": "App\\Http\\Controllers\\PosThemeController@publish",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 28
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 39,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/theme/preview",
+      "action": "App\\Http\\Controllers\\PosThemeController@preview",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 29
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 40,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "admin-panel/control-center/theme/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\PosThemeController@rollback",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 30
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 41,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/dashboard",
+      "action": "App\\Http\\Controllers\\Admin\\DashboardController@index",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 14
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 15
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 42,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/login",
+      "action": "App\\Http\\Controllers\\Admin\\LoginController@index",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 15
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 43,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/logout",
+      "action": "App\\Http\\Controllers\\Admin\\LoginController@logout",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 16
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 44,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/manage-account",
+      "action": "App\\Http\\Controllers\\Admin\\DashboardController@manageAccount",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 17
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 16
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 45,
+      "source": "pos",
+      "method": "POST",
+      "uri": "admin-panel/manage-account/password",
+      "action": "App\\Http\\Controllers\\Admin\\DashboardController@updatePassword",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 18
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 17
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 46,
+      "source": "pos",
+      "method": "POST",
+      "uri": "admin-panel/profile/photo",
+      "action": "App\\Http\\Controllers\\Admin\\DashboardController@updateProfilePhoto",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 19
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 18
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 47,
+      "source": "pos",
+      "method": "DELETE",
+      "uri": "admin-panel/profile/photo",
+      "action": "App\\Http\\Controllers\\Admin\\DashboardController@removeProfilePhoto",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 20
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 19
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 48,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/reports",
+      "action": "App\\Http\\Controllers\\Admin\\DashboardController@index",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 21
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 20
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 49,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/reports/data",
+      "action": "App\\Http\\Controllers\\Report\\ReportsController@getReportData",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 21
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 50,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "admin-panel/select-shop",
+      "action": "App\\Http\\Controllers\\Admin\\ShopAccessController@index",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 22
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 51,
+      "source": "pos",
+      "method": "POST",
+      "uri": "admin-panel/shops/{shop}/enter",
+      "action": "App\\Http\\Controllers\\Admin\\ShopAccessController@enter",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 23
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 52,
+      "source": "pos",
+      "method": "POST",
+      "uri": "admin-panel/submit_login",
+      "action": "App\\Http\\Controllers\\Admin\\LoginController@login_validate",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 24
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 53,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/invoice/{id}/details",
+      "action": "App\\Http\\Controllers\\Shop\\InvoiceController@getInvoiceDetails",
+      "families": [
+        "P04"
+      ],
+      "prior_exact_route_disposition": {
+        "P04": {
+          "doc": "docs/audit/MT-7.5_P04_SALES_RETURNS_PARITY.md",
+          "line": 9
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 54,
+      "source": "pos",
+      "method": "POST",
+      "uri": "api/pos/invoice/store",
+      "action": "App\\Http\\Controllers\\Shop\\PosInvoiceController@store",
+      "families": [
+        "P04"
+      ],
+      "prior_exact_route_disposition": {
+        "P04": {
+          "doc": "docs/audit/MT-7.5_P04_SALES_RETURNS_PARITY.md",
+          "line": 10
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 55,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/pos/product/{productId}/imeis",
+      "action": "App\\Http\\Controllers\\Shop\\InvoiceController@availableImeis",
+      "families": [
+        "P04"
+      ],
+      "prior_exact_route_disposition": {
+        "P04": {
+          "doc": "docs/audit/MT-7.5_P04_SALES_RETURNS_PARITY.md",
+          "line": 11
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 56,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/pos/products/presentation",
+      "action": "App\\Http\\Controllers\\Shop\\PosController@presentation",
+      "families": [
+        "P04"
+      ],
+      "prior_exact_route_disposition": {
+        "P04": {
+          "doc": "docs/audit/MT-7.5_P04_SALES_RETURNS_PARITY.md",
+          "line": 12
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 57,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/reports/category-data",
+      "action": "App\\Http\\Controllers\\Report\\CategoryReportsController@data",
+      "families": [
+        "P02",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 14
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 22
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 58,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/reports/data",
+      "action": "App\\Http\\Controllers\\Report\\ReportsController@getReportData",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 23
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 59,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/shop/inventory/prices",
+      "action": "App\\Http\\Controllers\\Shop\\InventoryPricingController@index",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 7
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 60,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/shop/product-categories",
+      "action": "App\\Http\\Controllers\\Shop\\ProductCategoryController@index",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 15
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 61,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/shop/profit-summary",
+      "action": "App\\Http\\Controllers\\Shop\\ProfitSummaryController@index",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 24
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 62,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/website/catalog/health",
+      "action": "App\\Http\\Controllers\\Api\\PublicCatalogController@health",
+      "families": [
+        "P02",
+        "X01"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 16
+        },
+        "X01": {
+          "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
+          "line": 9
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 63,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/website/catalog/products",
+      "action": "App\\Http\\Controllers\\Api\\PublicCatalogController@products",
+      "families": [
+        "P02",
+        "X01"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 17
+        },
+        "X01": {
+          "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
+          "line": 10
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 64,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/website/orders/health",
+      "action": "App\\Http\\Controllers\\Api\\WebsiteOrderController@health",
+      "families": [
+        "X01"
+      ],
+      "prior_exact_route_disposition": {
+        "X01": {
+          "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
+          "line": 11
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 65,
+      "source": "pos",
+      "method": "POST",
+      "uri": "api/website/orders/reservations",
+      "action": "App\\Http\\Controllers\\Api\\WebsiteOrderController@reserve",
+      "families": [
+        "X01"
+      ],
+      "prior_exact_route_disposition": {
+        "X01": {
+          "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
+          "line": 12
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 66,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "api/website/orders/{websiteOrderNumber}",
+      "action": "App\\Http\\Controllers\\Api\\WebsiteOrderController@status",
+      "families": [
+        "X01"
+      ],
+      "prior_exact_route_disposition": {
+        "X01": {
+          "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
+          "line": 13
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 67,
+      "source": "pos",
+      "method": "POST",
+      "uri": "api/website/orders/{websiteOrderNumber}/confirm",
+      "action": "App\\Http\\Controllers\\Api\\WebsiteOrderController@confirm",
+      "families": [
+        "X01"
+      ],
+      "prior_exact_route_disposition": {
+        "X01": {
+          "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
+          "line": 14
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 68,
+      "source": "pos",
+      "method": "POST",
+      "uri": "api/website/orders/{websiteOrderNumber}/release",
+      "action": "App\\Http\\Controllers\\Api\\WebsiteOrderController@release",
+      "families": [
+        "X01"
+      ],
+      "prior_exact_route_disposition": {
+        "X01": {
+          "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
+          "line": 15
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 69,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "forgot-password",
+      "action": "App\\Http\\Controllers\\Auth\\PasswordResetController@requestForm",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 25
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 70,
+      "source": "pos",
+      "method": "POST",
+      "uri": "forgot-password",
+      "action": "App\\Http\\Controllers\\Auth\\PasswordResetController@sendResetLink",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 26
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 71,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "login",
+      "action": "App\\Http\\Controllers\\Shop\\LoginController@index",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 27
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 72,
+      "source": "pos",
+      "method": "POST",
+      "uri": "login",
+      "action": "App\\Http\\Controllers\\Shop\\LoginController@login_validate",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 28
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 73,
+      "source": "pos",
+      "method": "POST",
+      "uri": "reset-password",
+      "action": "App\\Http\\Controllers\\Auth\\PasswordResetController@reset",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 29
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 74,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "reset-password/{token}",
+      "action": "App\\Http\\Controllers\\Auth\\PasswordResetController@resetForm",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 30
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 75,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop",
+      "action": "App\\Http\\Controllers\\Shop\\LoginController@index",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 31
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 76,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/backups",
+      "action": "App\\Http\\Controllers\\BackupController@index",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 14
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 77,
+      "source": "pos",
+      "method": "POST",
+      "uri": "shop/backups",
+      "action": "App\\Http\\Controllers\\BackupController@store",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 15
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 78,
+      "source": "pos",
+      "method": "DELETE",
+      "uri": "shop/backups/{backup}",
+      "action": "App\\Http\\Controllers\\BackupController@destroy",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 16
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 79,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/backups/{backup}/download",
+      "action": "App\\Http\\Controllers\\BackupController@download",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 17
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 80,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/claims",
+      "action": "App\\Http\\Controllers\\Shop\\ClaimsController@index",
+      "families": [
+        "P05"
+      ],
+      "prior_exact_route_disposition": {
+        "P05": {
+          "doc": "docs/audit/MT-7.5_P05_WARRANTY_CLAIMS_PARITY.md",
+          "line": 9
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 81,
+      "source": "pos",
+      "method": "POST",
+      "uri": "shop/claims",
+      "action": "App\\Http\\Controllers\\Shop\\ClaimsController@store",
+      "families": [
+        "P05"
+      ],
+      "prior_exact_route_disposition": {
+        "P05": {
+          "doc": "docs/audit/MT-7.5_P05_WARRANTY_CLAIMS_PARITY.md",
+          "line": 10
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 82,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/claims/{claim}",
+      "action": "App\\Http\\Controllers\\Shop\\ClaimsController@show",
+      "families": [
+        "P05"
+      ],
+      "prior_exact_route_disposition": {
+        "P05": {
+          "doc": "docs/audit/MT-7.5_P05_WARRANTY_CLAIMS_PARITY.md",
+          "line": 11
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 83,
+      "source": "pos",
+      "method": "PATCH",
+      "uri": "shop/claims/{claim}",
+      "action": "App\\Http\\Controllers\\Shop\\ClaimsController@update",
+      "families": [
+        "P05"
+      ],
+      "prior_exact_route_disposition": {
+        "P05": {
+          "doc": "docs/audit/MT-7.5_P05_WARRANTY_CLAIMS_PARITY.md",
+          "line": 12
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 84,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/dashboard",
+      "action": "App\\Http\\Controllers\\Shop\\DashboardController@index",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 25
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 85,
+      "source": "pos",
+      "method": "POST",
+      "uri": "shop/deleteProduct",
+      "action": "App\\Http\\Controllers\\Shop\\InventoryController@delete",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 8
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 86,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/inventory",
+      "action": "App\\Http\\Controllers\\Shop\\InventoryController@index",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 9
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 87,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/inventory/acquisitions/{acquisition}/cnic/{side}",
+      "action": "App\\Http\\Controllers\\Shop\\StockAcquisitionController@document",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 10
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 88,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/inventory/{product}/acquisitions",
+      "action": "App\\Http\\Controllers\\Shop\\StockAcquisitionController@index",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 11
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 89,
+      "source": "pos",
+      "method": "POST",
+      "uri": "shop/inventory/{product}/adjust-stock",
+      "action": "App\\Http\\Controllers\\Shop\\InventoryController@adjustStock",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 12
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 90,
+      "source": "pos",
+      "method": "POST",
+      "uri": "shop/inventory/{product}/device-configuration",
+      "action": "App\\Http\\Controllers\\Shop\\InventoryController@updateDeviceConfiguration",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 13
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 91,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/inventory/{product}/imeis",
+      "action": "App\\Http\\Controllers\\Shop\\InventoryController@imeis",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 14
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 92,
+      "source": "pos",
+      "method": "POST",
+      "uri": "shop/inventory/{product}/imeis",
+      "action": "App\\Http\\Controllers\\Shop\\InventoryController@updateImeis",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 15
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 93,
+      "source": "pos",
+      "method": "POST",
+      "uri": "shop/inventory/{product}/restock",
+      "action": "App\\Http\\Controllers\\Shop\\StockAcquisitionInputController@restock",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 16
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 94,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/invoices",
+      "action": "App\\Http\\Controllers\\Shop\\InvoiceController@index",
+      "families": [
+        "P04"
+      ],
+      "prior_exact_route_disposition": {
+        "P04": {
+          "doc": "docs/audit/MT-7.5_P04_SALES_RETURNS_PARITY.md",
+          "line": 13
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 95,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/invoices/cnic-index",
+      "action": "App\\Http\\Controllers\\Shop\\ShopCustomerIndexController@invoiceCnics",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 26
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 96,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/login",
+      "action": "App\\Http\\Controllers\\Shop\\LoginController@index",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 32
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 97,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/logout",
+      "action": "App\\Http\\Controllers\\Shop\\LoginController@logout",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 33
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 98,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/manage-account",
+      "action": "App\\Http\\Controllers\\Admin\\DashboardController@manageAccount",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 34
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 27
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 99,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/operator-context/claim/{claim}",
+      "action": "App\\Http\\Controllers\\Shop\\OperatorContextController@claim",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 35
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 100,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/operator-context/current",
+      "action": "App\\Http\\Controllers\\Shop\\OperatorContextController@current",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 36
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 101,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/operator-context/invoice/{invoice}",
+      "action": "App\\Http\\Controllers\\Shop\\OperatorContextController@invoice",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 37
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 102,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/pos",
+      "action": "App\\Http\\Controllers\\Shop\\PosController@index",
+      "families": [
+        "P04"
+      ],
+      "prior_exact_route_disposition": {
+        "P04": {
+          "doc": "docs/audit/MT-7.5_P04_SALES_RETURNS_PARITY.md",
+          "line": 14
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 103,
+      "source": "pos",
+      "method": "POST",
+      "uri": "shop/storeProduct",
+      "action": "App\\Http\\Controllers\\Shop\\InventoryInputController@storeProduct",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 17
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 104,
+      "source": "pos",
+      "method": "POST",
+      "uri": "shop/submit_login",
+      "action": "App\\Http\\Controllers\\Shop\\LoginController@login_validate",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 38
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 105,
+      "source": "pos",
+      "method": "POST",
+      "uri": "shop/updateProduct",
+      "action": "App\\Http\\Controllers\\Shop\\InventoryController@updateProduct",
+      "families": [
+        "P03"
+      ],
+      "prior_exact_route_disposition": {
+        "P03": {
+          "doc": "docs/audit/MT-7.5_H01_P03_INVENTORY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 18
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 106,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/warranty",
+      "action": "App\\Http\\Controllers\\Shop\\WarrantyController@index",
+      "families": [
+        "P05"
+      ],
+      "prior_exact_route_disposition": {
+        "P05": {
+          "doc": "docs/audit/MT-7.5_P05_WARRANTY_CLAIMS_PARITY.md",
+          "line": 13
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 107,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "shop/warranty/search",
+      "action": "App\\Http\\Controllers\\Shop\\WarrantyController@search",
+      "families": [
+        "P05"
+      ],
+      "prior_exact_route_disposition": {
+        "P05": {
+          "doc": "docs/audit/MT-7.5_P05_WARRANTY_CLAIMS_PARITY.md",
+          "line": 14
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 108,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\LoginController@index",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 39
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 109,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/admin/add",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\AdminController@store",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 40
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 110,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/admin/delete",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\AdminController@delete",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 41
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 111,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/admin/edit",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\AdminController@edit",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 42
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 112,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/admins",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\AdminController@index",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 43
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 113,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/backups",
+      "action": "App\\Http\\Controllers\\BackupController@index",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 18
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 114,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/backups",
+      "action": "App\\Http\\Controllers\\BackupController@store",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 19
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 115,
+      "source": "pos",
+      "method": "DELETE",
+      "uri": "super-admin/backups/{backup}",
+      "action": "App\\Http\\Controllers\\BackupController@destroy",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 20
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 116,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/backups/{backup}/download",
+      "action": "App\\Http\\Controllers\\BackupController@download",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 21
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 117,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/business-profile",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\BusinessProfileController@index",
+      "families": [
+        "P01",
+        "P04"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 44
+        },
+        "P04": {
+          "doc": "docs/audit/MT-7.5_P04_SALES_RETURNS_PARITY.md",
+          "line": 15
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 118,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/business-profile",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\BusinessProfileController@update",
+      "families": [
+        "P01",
+        "P04"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 45
+        },
+        "P04": {
+          "doc": "docs/audit/MT-7.5_P04_SALES_RETURNS_PARITY.md",
+          "line": 16
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 119,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\ControlCenterController@index",
+      "families": [
+        "P01",
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 46
+        },
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 31
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 120,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/activity",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\AuditLogController@index",
+      "families": [
+        "P01",
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 47
+        },
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 22
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 121,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/backup-operations",
+      "action": "App\\Http\\Controllers\\PosBackupOperationsController@index",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 23
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 122,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/backup-operations",
+      "action": "App\\Http\\Controllers\\PosBackupOperationsController@update",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 24
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 123,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/branding",
+      "action": "App\\Http\\Controllers\\PosBrandingController@index",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 32
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 124,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/branding",
+      "action": "App\\Http\\Controllers\\PosBrandingController@publish",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 33
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 125,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/control-center/branding/assets",
+      "action": "App\\Http\\Controllers\\PosBrandingController@upload",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 34
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 126,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/branding/preview",
+      "action": "App\\Http\\Controllers\\PosBrandingController@preview",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 35
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 127,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/branding/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\PosBrandingController@rollback",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 36
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 128,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/dashboard-presentation",
+      "action": "App\\Http\\Controllers\\PosDashboardPresentationController@index",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 28
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 129,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/dashboard-presentation",
+      "action": "App\\Http\\Controllers\\PosDashboardPresentationController@update",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 29
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 130,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/integration-status",
+      "action": "App\\Http\\Controllers\\PosIntegrationStatusController@index",
+      "families": [
+        "P08"
+      ],
+      "prior_exact_route_disposition": {
+        "P08": {
+          "doc": "docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 25
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 131,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/master-data",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@index",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 18
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 132,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/control-center/master-data",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@store",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 19
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 133,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/master-data/{option}",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@update",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 20
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 134,
+      "source": "pos",
+      "method": "DELETE",
+      "uri": "super-admin/control-center/master-data/{option}",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@destroy",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 21
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 135,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/control-center/master-data/{option}/active",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@active",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 22
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 136,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/control-center/master-data/{option}/archive",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@archive",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 23
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 137,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/control-center/master-data/{option}/restore",
+      "action": "App\\Http\\Controllers\\PosMasterDataController@restore",
+      "families": [
+        "P02"
+      ],
+      "prior_exact_route_disposition": {
+        "P02": {
+          "doc": "docs/audit/MT-7.5_P02_ROUTE_CROSSWALK.md",
+          "line": 24
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 138,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/navigation",
+      "action": "App\\Http\\Controllers\\PosPortalNavigationController@index",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 37
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 139,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/navigation",
+      "action": "App\\Http\\Controllers\\PosPortalNavigationController@update",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 38
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 140,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/preferences",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\ControlCenterController@preferences",
+      "families": [
+        "P01",
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 48
+        },
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 39
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 141,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/preferences",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\ControlCenterController@updatePreferences",
+      "families": [
+        "P01",
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 49
+        },
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 40
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 142,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/presentation",
+      "action": "App\\Http\\Controllers\\PosDocumentController@index",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 30
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 143,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/presentation",
+      "action": "App\\Http\\Controllers\\PosDocumentController@publish",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 31
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 144,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/presentation/preview",
+      "action": "App\\Http\\Controllers\\PosDocumentController@preview",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 32
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 145,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/presentation/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\PosDocumentController@rollback",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 33
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 146,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/report-presentation",
+      "action": "App\\Http\\Controllers\\PosReportPresentationController@index",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 34
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 147,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/report-presentation",
+      "action": "App\\Http\\Controllers\\PosReportPresentationController@update",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 35
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 148,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/table-presentation",
+      "action": "App\\Http\\Controllers\\PosPortalTablePresentationController@index",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 41
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 149,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/table-presentation",
+      "action": "App\\Http\\Controllers\\PosPortalTablePresentationController@update",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 42
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 150,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/control-center/theme",
+      "action": "App\\Http\\Controllers\\PosThemeController@index",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 43
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 151,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/theme",
+      "action": "App\\Http\\Controllers\\PosThemeController@publish",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 44
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 152,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/theme/preview",
+      "action": "App\\Http\\Controllers\\PosThemeController@preview",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 45
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 153,
+      "source": "pos",
+      "method": "PUT",
+      "uri": "super-admin/control-center/theme/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\PosThemeController@rollback",
+      "families": [
+        "P07"
+      ],
+      "prior_exact_route_disposition": {
+        "P07": {
+          "doc": "docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md",
+          "line": 46
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 154,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/dashboard",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\DashboardController@index",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 50
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 36
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 155,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/login",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\LoginController@index",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 51
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 156,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/logout",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\LoginController@logout",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 52
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 157,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/manage-account",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\DashboardController@manageAccount",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 53
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 37
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 158,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/manage-account/password",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\DashboardController@updatePassword",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 54
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 38
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 159,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/profile/photo",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\DashboardController@updateProfilePhoto",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 55
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 39
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 160,
+      "source": "pos",
+      "method": "DELETE",
+      "uri": "super-admin/profile/photo",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\DashboardController@removeProfilePhoto",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 56
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 40
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 161,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/reports",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\DashboardController@index",
+      "families": [
+        "P01",
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 57
+        },
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 41
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 162,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/reports/data",
+      "action": "App\\Http\\Controllers\\Report\\ReportsController@getReportData",
+      "families": [
+        "P06"
+      ],
+      "prior_exact_route_disposition": {
+        "P06": {
+          "doc": "docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 42
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 163,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/shop/add",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\ShopController@store",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 58
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 164,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/shop/delete",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\ShopController@delete",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 59
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 165,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/shop/edit",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\ShopController@edit",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 60
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 166,
+      "source": "pos",
+      "method": "GET|HEAD",
+      "uri": "super-admin/shops",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\ShopController@index",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 61
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 167,
+      "source": "pos",
+      "method": "POST",
+      "uri": "super-admin/submit_login",
+      "action": "App\\Http\\Controllers\\SuperAdmin\\LoginController@login_validate",
+      "families": [
+        "P01"
+      ],
+      "prior_exact_route_disposition": {
+        "P01": {
+          "doc": "docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md",
+          "line": 62
+        }
+      },
+      "remaining_evidence": "P01 independent family still OPEN"
+    },
+    {
+      "original_route_number": 168,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "/",
+      "action": "App\\Http\\Controllers\\HomeController",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 88
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 169,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "about",
+      "action": "App\\Http\\Controllers\\CompanyPageController@about",
+      "families": [
+        "W05"
+      ],
+      "prior_exact_route_disposition": {
+        "W05": {
+          "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 38
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 171,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/about",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminPageController@about",
+      "families": [
+        "W01",
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 89
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 172,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/about",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminPageController@updateAbout",
+      "families": [
+        "W01",
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 90
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 177,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/branding",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteBrandingController@index",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 133
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 178,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/branding",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteBrandingController@update",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 134
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 179,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/branding/preview",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteBrandingController@preview",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 135
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 180,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/branding/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteBrandingController@rollback",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 136
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 185,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/contact",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminPageController@contact",
+      "families": [
+        "W01",
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 91
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 186,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/contact",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminPageController@updateContact",
+      "families": [
+        "W01",
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 92
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 187,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/contact/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminPageController@rollbackContact",
+      "families": [
+        "W01",
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 93
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 190,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/header-footer",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteHeaderFooterController@index",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 94
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 191,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/header-footer",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteHeaderFooterController@update",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 95
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 192,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/header-footer/preview",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteHeaderFooterController@preview",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 96
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 193,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/header-footer/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteHeaderFooterController@rollback",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 97
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 198,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/integrations",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteIntegrationStatusController@index",
+      "families": [
+        "W08"
+      ],
+      "prior_exact_route_disposition": {
+        "W08": {
+          "doc": "docs/audit/MT-7.5_H01_W08_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 7
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 199,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/integrations/check",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteIntegrationStatusController@check",
+      "families": [
+        "W08"
+      ],
+      "prior_exact_route_disposition": {
+        "W08": {
+          "doc": "docs/audit/MT-7.5_H01_W08_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 8
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 200,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/legal-content",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteManagedPageController@legalIndex",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 98
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 204,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/managed-pages",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteManagedPageController@index",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 99
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 205,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/managed-pages",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteManagedPageController@store",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 100
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 206,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/managed-pages/create",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteManagedPageController@create",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 101
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 207,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/managed-pages/{page}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteManagedPageController@update",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 102
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 208,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/managed-pages/{page}/edit",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteManagedPageController@edit",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 103
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 209,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/managed-pages/{page}/preview",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteManagedPageController@preview",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 104
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 210,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/managed-pages/{page}/publish",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteManagedPageController@publish",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 105
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 211,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/managed-pages/{page}/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteManagedPageController@rollback",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 106
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 212,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/managed-pages/{page}/seo",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteManagedPageController@updateSeo",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 107
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 213,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/managed-pages/{page}/unpublish",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteManagedPageController@unpublish",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 108
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 214,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/media",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteMediaController@index",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 137
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 215,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/media",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteMediaController@store",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 138
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 216,
+      "source": "website",
+      "method": "DELETE",
+      "uri": "admin/media/{asset}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteMediaController@destroy",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 139
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 217,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/media/{asset}/alt-text",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteMediaController@updateAltText",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 140
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 218,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/media/{asset}/replace",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteMediaController@replace",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 141
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 219,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/navigation",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteNavigationController@index",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 109
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 220,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/navigation",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteNavigationController@store",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 110
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 221,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/navigation/preview",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteNavigationController@preview",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 111
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 222,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/navigation/publish",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteNavigationController@publish",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 112
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 223,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/navigation/reorder",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteNavigationController@reorder",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 113
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 224,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/navigation/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteNavigationController@rollback",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 114
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 225,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/navigation/{item}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteNavigationController@update",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 115
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 226,
+      "source": "website",
+      "method": "DELETE",
+      "uri": "admin/navigation/{item}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteNavigationController@destroy",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 116
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 227,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "admin/navigation/{item}/enabled",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteNavigationController@enabled",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 117
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 228,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "admin/navigation/{item}/visibility",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteNavigationController@visibility",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 118
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 229,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/orders",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteOrderManagementController@index",
+      "families": [
+        "W03",
+        "X01"
+      ],
+      "prior_exact_route_disposition": {
+        "X01": {
+          "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
+          "line": 16
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 230,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/orders/report.csv",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteOrderManagementController@export",
+      "families": [
+        "W03",
+        "X01"
+      ],
+      "prior_exact_route_disposition": {
+        "X01": {
+          "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
+          "line": 17
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 231,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/orders/{order}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteOrderManagementController@show",
+      "families": [
+        "W03",
+        "X01"
+      ],
+      "prior_exact_route_disposition": {
+        "X01": {
+          "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
+          "line": 18
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 232,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "admin/orders/{order}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteOrderManagementController@update",
+      "families": [
+        "W03",
+        "X01"
+      ],
+      "prior_exact_route_disposition": {
+        "X01": {
+          "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
+          "line": 19
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 233,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/page-content",
+      "action": "Closure",
+      "families": [
+        "F01",
+        "W06",
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 119
+        },
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 142
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 234,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/payments",
+      "action": "App\\Http\\Controllers\\Admin\\PaymentsCheckoutController@index",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 7
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 235,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/payments",
+      "action": "App\\Http\\Controllers\\Admin\\PaymentsCheckoutController@update",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 8
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 236,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/payments/easypaisa",
+      "action": "App\\Http\\Controllers\\Admin\\EasypaisaConfigurationController@edit",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 9
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 237,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/payments/easypaisa",
+      "action": "App\\Http\\Controllers\\Admin\\EasypaisaConfigurationController@updateSettings",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 10
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 238,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/payments/easypaisa/credentials",
+      "action": "App\\Http\\Controllers\\Admin\\EasypaisaConfigurationController@updateCredentials",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 11
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 239,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/payments/jazzcash",
+      "action": "App\\Http\\Controllers\\Admin\\JazzCashConfigurationController@edit",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 12
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 240,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/payments/jazzcash",
+      "action": "App\\Http\\Controllers\\Admin\\JazzCashConfigurationController@updateSettings",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 13
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 241,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/payments/jazzcash/credentials",
+      "action": "App\\Http\\Controllers\\Admin\\JazzCashConfigurationController@updateCredentials",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 14
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 251,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/promotions",
+      "action": "App\\Http\\Controllers\\Admin\\WebsitePromotionController@index",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 120
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 252,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/promotions",
+      "action": "App\\Http\\Controllers\\Admin\\WebsitePromotionController@store",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 121
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 253,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/promotions-preview",
+      "action": "App\\Http\\Controllers\\Admin\\WebsitePromotionController@preview",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 122
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 254,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/promotions/publish",
+      "action": "App\\Http\\Controllers\\Admin\\WebsitePromotionController@publish",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 123
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 255,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/promotions/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsitePromotionController@rollback",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 124
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 256,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/promotions/{promotionId}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsitePromotionController@update",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 125
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 257,
+      "source": "website",
+      "method": "DELETE",
+      "uri": "admin/promotions/{promotionId}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsitePromotionController@destroy",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 126
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 260,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/seo",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteSeoController@index",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 127
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 261,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/seo",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteSeoController@update",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 128
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 262,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/seo/preview",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteSeoController@preview",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 129
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 263,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/seo/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteSeoController@rollback",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 130
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 272,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/settings",
+      "action": "Closure",
+      "families": [
+        "F01",
+        "W06",
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 131
+        },
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 143
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 273,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/theme",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteThemeController@index",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 144
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 274,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/theme",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteThemeController@update",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 145
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 275,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/theme/preview",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteThemeController@preview",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 146
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 276,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/theme/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteThemeController@rollback",
+      "families": [
+        "W07"
+      ],
+      "prior_exact_route_disposition": {
+        "W07": {
+          "doc": "docs/audit/MT-7.5_W07_SOURCE_BEHAVIOR_DISPOSITION_2026-09-25.md",
+          "line": 147
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 284,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "contact",
+      "action": "App\\Http\\Controllers\\CompanyPageController@contact",
+      "families": [
+        "W05"
+      ],
+      "prior_exact_route_disposition": {
+        "W05": {
+          "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 39
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 293,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "digital-solutions/request",
+      "action": "App\\Http\\Controllers\\ServiceRequestController@create",
+      "families": [
+        "W05"
+      ],
+      "prior_exact_route_disposition": {
+        "W05": {
+          "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 40
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 294,
+      "source": "website",
+      "method": "POST",
+      "uri": "digital-solutions/request",
+      "action": "App\\Http\\Controllers\\ServiceRequestController@store",
+      "families": [
+        "W05"
+      ],
+      "prior_exact_route_disposition": {
+        "W05": {
+          "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 41
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 295,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "digital-solutions/request/{reference}",
+      "action": "App\\Http\\Controllers\\ServiceRequestController@show",
+      "families": [
+        "W05"
+      ],
+      "prior_exact_route_disposition": {
+        "W05": {
+          "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 42
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 303,
+      "source": "website",
+      "method": "POST",
+      "uri": "payments/easypaisa/callback",
+      "action": "App\\Http\\Controllers\\EasypaisaCallbackController@callback",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 15
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 304,
+      "source": "website",
+      "method": "POST",
+      "uri": "payments/easypaisa/webhook",
+      "action": "App\\Http\\Controllers\\EasypaisaCallbackController@webhook",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 16
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 305,
+      "source": "website",
+      "method": "POST",
+      "uri": "payments/jazzcash/callback",
+      "action": "App\\Http\\Controllers\\JazzCashCallbackController@callback",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 17
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 306,
+      "source": "website",
+      "method": "POST",
+      "uri": "payments/jazzcash/webhook",
+      "action": "App\\Http\\Controllers\\JazzCashCallbackController@webhook",
+      "families": [
+        "W04"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 18
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 310,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "project-payment",
+      "action": "App\\Http\\Controllers\\ProjectPaymentController@lookup",
+      "families": [
+        "W04",
+        "W05"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 19
+        },
+        "W05": {
+          "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 43
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 311,
+      "source": "website",
+      "method": "POST",
+      "uri": "project-payment",
+      "action": "App\\Http\\Controllers\\ProjectPaymentController@find",
+      "families": [
+        "W04",
+        "W05"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 20
+        },
+        "W05": {
+          "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 44
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 312,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "project-payment/{token}",
+      "action": "App\\Http\\Controllers\\ProjectPaymentController@show",
+      "families": [
+        "W04",
+        "W05"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 21
+        },
+        "W05": {
+          "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 45
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 313,
+      "source": "website",
+      "method": "POST",
+      "uri": "project-payment/{token}",
+      "action": "App\\Http\\Controllers\\ProjectPaymentController@store",
+      "families": [
+        "W04",
+        "W05"
+      ],
+      "prior_exact_route_disposition": {
+        "W04": {
+          "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
+          "line": 22
+        },
+        "W05": {
+          "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 46
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 316,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "{slug}",
+      "action": "App\\Http\\Controllers\\ManagedPageController",
+      "families": [
+        "W06"
+      ],
+      "prior_exact_route_disposition": {
+        "W06": {
+          "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
+          "line": 132
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    }
+  ],
+  "pending_exact_route_review": [
+    {
+      "original_route_number": 170,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@entry",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 173,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/activity",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminActivityController@index",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 174,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/administrators",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminUserController@index",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 175,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/administrators",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminUserController@store",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 176,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/administrators/{user}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminUserController@update",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 181,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/catalogue-presentation",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@index",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 182,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/catalogue-presentation",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@update",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 183,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/catalogue-presentation/preview",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@preview",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 184,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/catalogue-presentation/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@rollback",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 188,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/dashboard",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminDashboardController@index",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 189,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/dashboard/report.csv",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminDashboardController@export",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 194,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/home-content",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@homeContent",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 195,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/home-content",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateHomeContent",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 196,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/home-content/preview",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@previewHomeContent",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 197,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/home-content/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@rollbackHomeContent",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 201,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/login",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@create",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 202,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/login",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@store",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 203,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/logout",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@destroy",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 242,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/profile",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@edit",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 243,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "admin/profile/password",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@updatePassword",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 244,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "admin/profile/photo",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@updatePhoto",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 245,
+      "source": "website",
+      "method": "DELETE",
+      "uri": "admin/profile/photo",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@destroyPhoto",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 246,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/project-quotes",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@projectQuotes",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 247,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/project-quotes",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@storeQuote",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 248,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/project-quotes/create",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@createQuote",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 249,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/project-quotes/{projectQuote}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateQuote",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 250,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/project-quotes/{projectQuote}/edit",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@editQuote",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 258,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/reviews",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteReviewController@index",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 259,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "admin/reviews/{review}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteReviewController@update",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 264,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/service-requests",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@serviceRequests",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 265,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/service-requests/{serviceRequest}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@serviceRequest",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 266,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "admin/service-requests/{serviceRequest}/status",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateServiceRequestStatus",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 267,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/services",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@services",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 268,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/services",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@storeService",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 269,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/services/create",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@createService",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 270,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/services/{service}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateService",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 271,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/services/{service}/edit",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@editService",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 277,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "cart",
+      "action": "App\\Http\\Controllers\\CartController@index",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 278,
+      "source": "website",
+      "method": "POST",
+      "uri": "cart",
+      "action": "App\\Http\\Controllers\\CartController@add",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 279,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "cart/{lineKey}",
+      "action": "App\\Http\\Controllers\\CartController@update",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 280,
+      "source": "website",
+      "method": "DELETE",
+      "uri": "cart/{lineKey}",
+      "action": "App\\Http\\Controllers\\CartController@remove",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 281,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "checkout",
+      "action": "App\\Http\\Controllers\\OrderController@checkout",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 282,
+      "source": "website",
+      "method": "POST",
+      "uri": "checkout",
+      "action": "App\\Http\\Controllers\\OrderController@store",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 283,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "compare",
+      "action": "App\\Http\\Controllers\\CatalogController@compare",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 285,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "customer/account",
+      "action": "App\\Http\\Controllers\\CustomerAccountController",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 286,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "customer/login",
+      "action": "App\\Http\\Controllers\\CustomerAuthController@login",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 287,
+      "source": "website",
+      "method": "POST",
+      "uri": "customer/login",
+      "action": "App\\Http\\Controllers\\CustomerAuthController@authenticate",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 288,
+      "source": "website",
+      "method": "POST",
+      "uri": "customer/logout",
+      "action": "App\\Http\\Controllers\\CustomerAuthController@logout",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 289,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "customer/register",
+      "action": "App\\Http\\Controllers\\CustomerAuthController@register",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 290,
+      "source": "website",
+      "method": "POST",
+      "uri": "customer/register",
+      "action": "App\\Http\\Controllers\\CustomerAuthController@store",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 291,
+      "source": "website",
+      "method": "POST",
+      "uri": "customer/reviews",
+      "action": "App\\Http\\Controllers\\ProductReviewController@store",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 292,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "digital-solutions",
+      "action": "App\\Http\\Controllers\\CatalogController@services",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 296,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "forgot-password",
+      "action": "App\\Http\\Controllers\\WebsitePasswordController@request",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 297,
+      "source": "website",
+      "method": "POST",
+      "uri": "forgot-password",
+      "action": "App\\Http\\Controllers\\WebsitePasswordController@email",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 298,
+      "source": "website",
+      "method": "GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS",
+      "uri": "mobiles",
+      "action": "Illuminate\\Routing\\RedirectController",
+      "families": [
+        "F01",
+        "W02"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 299,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "mobiles/{product:slug}",
+      "action": "Closure",
+      "families": [
+        "F01",
+        "W02"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 300,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "order/{orderNumber}",
+      "action": "App\\Http\\Controllers\\OrderController@show",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 301,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "order/{orderNumber}/invoice",
+      "action": "App\\Http\\Controllers\\OrderController@invoice",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 302,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "order/{orderNumber}/payment",
+      "action": "App\\Http\\Controllers\\OrderController@payment",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 307,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "product/{product:slug}",
+      "action": "App\\Http\\Controllers\\CatalogController@product",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 308,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "products",
+      "action": "App\\Http\\Controllers\\CatalogController@products",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 309,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "products/{category}",
+      "action": "App\\Http\\Controllers\\CatalogController@category",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 314,
+      "source": "website",
+      "method": "POST",
+      "uri": "reset-password",
+      "action": "App\\Http\\Controllers\\WebsitePasswordController@update",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    },
+    {
+      "original_route_number": 315,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "reset-password/{token}",
+      "action": "App\\Http\\Controllers\\WebsitePasswordController@reset",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {},
+      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
+    }
+  ],
+  "first_pending": "P08 exact route map identifies backend-only per-backup history/download/delete interface absent in current protected Admin routes. First resolve approved operator behavior: add one scoped recent-auth and permissioned backup history/download/delete flow if required, with safe file/path/role HTTP and real UI checks, or cite explicit approved retirement. Do not treat backend service methods as protected UI PASS; then reconcile remaining source routes starting W01 41 legacy Website identity/admin entries, reusing their family closure. Preserve P01 and Q01 independently OPEN."
+}

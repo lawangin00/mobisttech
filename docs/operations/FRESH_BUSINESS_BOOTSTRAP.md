@@ -1,5 +1,7 @@
 # Fresh-business first Admin and outlet bootstrap (MT-7.5)
 
+> **Current bootstrap safety procedure; historical test-status narrative below is from the 20-Sep checkpoint.** Later protected first-outlet/Admin and cross-family Edge test outcomes are recorded in the chronological project ledger; do not treat the older `UNVERIFIED` paragraphs as the active gate list. Production provisioning remains separately unauthorized absent explicit owner instruction.
+
 Authority: `docs/audit/MT-7.5_FRESH_BUSINESS_SCOPE.md`; the owner has excluded ALL old POS/Website business-row, identity, snapshot and cutover migration. The old repositories/databases are immutable read-only functional references, not deployment inputs. No actual production provisioning is approved or executed by this document.
 
 On an explicitly approved NEW target, first apply the canonical target schema and verify that the required system `business_profiles` singleton, protected `Full Access` role and permission definitions exist. Do NOT seed development/demo accounts, outlets, products, customers or transactions in production. Use only a securely configured target MySQL, HTTPS/Admin origins, non-committed APP_KEY and private runtime credentials. These are future operating prerequisites, not claims that any real production database has been deployed.

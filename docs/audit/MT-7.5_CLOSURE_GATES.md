@@ -1,5 +1,9 @@
 # MT-7.5 - Deterministic parity closure / retry control
 
+> **Historical baseline / living gate index:** rows marked Pending in the original source-family inventory are not current stage status. The latest dated `docs/PROJECT_IMPLEMENTATION_STATUS.md` checkpoint and `docs/audit/MT-7.5_FAST_TRACK_REVIEW.md` stable numbered gates supersede earlier row states. At the W07 closure checkpoint 19/27 are DONE, 8 OPEN; P01, H01, Q01 and the five independent cross gates remain OPEN. Do not interpret this historical table as authorization to re-run completed W07 or source tests.
+
+> **Historical baseline / living gate index:** rows marked Pending in the original source-family inventory are not current stage status. The latest dated `docs/PROJECT_IMPLEMENTATION_STATUS.md` checkpoint and `docs/audit/MT-7.5_FAST_TRACK_REVIEW.md` stable numbered gates supersede earlier row states. At the W07 closure checkpoint 19/27 are DONE, 8 OPEN; P01, H01, Q01 and the five independent cross gates remain OPEN. Do not interpret this historical table as authorization to re-run completed W07 or source tests.
+
 Status: IN PROGRESS. This is a gate index, not a claim that test-file existence proves parity. Source of authority: `docs/migration/FEATURE_PARITY_REGISTER.md`, current Goal/Source of Truth/approved requirements, `docs/audit/MT-7.5_TRACEABILITY.md`, and exact test evidence in `docs/audit/MT-7.5_ACCEPTANCE.md`. Do not reopen completed roadmap points to restate their previously accepted result.
 
 ## Execution and closure rule
@@ -31,7 +35,7 @@ For each row below, compare the *original source behavior* with current approved
 | C01 | Complete | Preserve independently completed MT-6.3 Windows Control ownership/launcher acceptance; no unrelated host/source changes. |
 | Q01 | In Progress | Final same-candidate clean checkout plus all family/cross-requirement closure; current GitHub runner prestart billing rejection makes later candidate CI unaccepted. |
 | F01 | Complete | Preserve MT-7.3 shared schema/build/CI foundation; exact current release-candidate verification belongs to Q01, not reopening F01. |
-| H01 | Pending | Complete original source-file/route/behavior-to-target disposition and verify historical docs cannot override approved new instructions; evidence must be exhaustive, not file-name presence. |
+| H01 | OPEN [E,I] — 25-Sep finite checkpoint | Frozen 1,224/316 mapped; source 45 H01 docs pinned/read-only verified; 252/316 route-specific accepted or documented targeted reviews, 64 group-only route reviews and bounded P08 protected backup-operator interface/approved retirement still pending. See `MT-7.5_H01_FINITE_ACCEPTANCE_2026-09-25.md`. Do not infer family behavior PASS or source retirement from path match; P01 and Q01 independent. |
 
 Inventory invariant: five previously Complete (`P08,W08,B01,C01,F01`), sixteen Pending and one In Progress (`Q01`). These are **family** counts, not roadmap-point counts. Never mass-convert Pending solely because its component roadmap owners finished.
 

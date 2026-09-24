@@ -36,7 +36,7 @@ docs/                   Goal, roadmap, registry and verified evidence
 
 The backend and MySQL are the authoritative owners of shared business data. The Website consumes REST APIs. Redis and S3-compatible storage are used only for appropriate, justified roles. Local development runs on Windows when RDC mode is selected; the production target is Linux, Nginx and TLS.
 
-Use the Windows foundation runbook for pinned dependencies, isolated local services and verification commands. The implementation ledger is the only live progress/next-point authority. Foundation availability does not imply migrated business functionality, and historical source tests do not represent target acceptance.
+The Windows foundation runbook is a **historical initial-setup checkpoint**, not a current install/production procedure. Consult the [current fresh-business first-Admin/outlet boundary](docs/operations/FRESH_BUSINESS_BOOTSTRAP.md) and [non-production deployment readiness runbook](docs/deploy/MT-7.4_RUNBOOK.md); verify the current ledger, schema and owned target state before any authorized local operation. No old POS/Website business rows, old credentials, separate databases or source launch commands are deployment inputs. The implementation ledger is the only live progress/next-point authority; historical source tests are characterization, not target acceptance.
 
 The original `C:\mobiST\mobiST-POS` and `C:\mobiST\mobiST-Website` repositories and their GitHub remotes are protected read-only references. No edits, installs, builds, migrations, commits, pushes or remote changes are allowed there.
 
