@@ -73,6 +73,13 @@ test('MT-5.3 COD checkout exposes exactly four channels and preserves owned stat
 
     await expect(page).toHaveURL('http://127.0.0.1:13000/account/orders/' + body.data.order_id);
     await expect(page.getByRole('heading', { name: 'Order status' })).toBeVisible();
+    // Real owned-order API and rendered UI must expose the order-bound terms, not a live policy lookup.
+    const orderDetail = await page.request.get('/api/customer/orders/' + body.data.order_id);
+    expect(orderDetail.status()).toBe(200);
+    const orderJson = await orderDetail.json() as { data: { payment_terms: { gateway: string; label: string; instructions: string; presentation_version: number } | null } };
+    expect(orderJson.data.payment_terms).toMatchObject({ gateway: 'cod', label: 'Cash on Delivery', presentation_version: 0 });
+    await expect(page.getByRole('heading', { name: 'Payment terms at order placement' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Payment terms at order placement' }).locator('..')).toContainText('Cash on Delivery');
     await expect(page.getByText('cod · pending_collection · PKR 50000.00')).toBeVisible();
 
     const cancelled = page.waitForResponse((response) =>
