@@ -67,6 +67,22 @@ final class WebsiteApiController extends Controller
         return $this->responses->public($request, ['items' => $api->policies()], 'published-policies.v1', 300);
     }
 
+    public function softwareRedirect(Request $request)
+    {
+        $path = $request->query('path');
+        abort_unless(is_string($path) && strlen($path) <= 500
+            && preg_match('~\A/software/[a-z0-9-]+(?:/(?:privacy|terms|faq|releases(?:/[a-z0-9.\-]+)?))?\z~', $path), 404);
+        $redirect = DB::table('cms_route_redirects as r')
+            ->join('software_products as p', 'p.id', '=', 'r.software_product_id')
+            ->where('r.from_path', $path)->where('p.lifecycle_state', 'published')
+            ->first(['r.to_path', 'p.slug']);
+        abort_unless($redirect && ($redirect->to_path === '/software/'.$redirect->slug
+            || str_starts_with($redirect->to_path, '/software/'.$redirect->slug.'/')), 404);
+
+        return response()->json(['data' => ['to_path' => $redirect->to_path]])
+            ->header('Cache-Control', 'no-store');
+    }
+
     public function software(Request $request, WebsiteApi $api, string $slug)
     {
         return $this->responses->public($request, $api->software($slug), 'software-overview.v1', 60);

@@ -619,6 +619,9 @@ final class WebsiteCms
             $current = DB::table('software_product_revisions')->where('id', $product->current_revision_id)->lockForUpdate()->firstOrFail();
             $snapshot = json_decode($current->snapshot, true, flags: JSON_THROW_ON_ERROR);
             $snapshot['slug'] = $newSlug;
+            if (($snapshot['seo']['canonical_url'] ?? null) === '/software/'.$oldSlug) {
+                $snapshot['seo']['canonical_url'] = '/software/'.$newSlug;
+            }
             $revisionNo = (int) DB::table('software_product_revisions')->where('software_product_id', $product->id)->max('revision_no') + 1;
             $newRevisionId = DB::table('software_product_revisions')->insertGetId([
                 'software_product_id' => $product->id, 'revision_no' => $revisionNo, 'state' => 'published',

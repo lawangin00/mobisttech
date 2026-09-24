@@ -160,3 +160,5 @@ export function readSoftware(slug: string) { return get<SoftwareOverview>(`/api/
 export function readSoftwareSection<T>(slug: string, section: "privacy" | "terms" | "faq" | "releases") {
   return get<T>(`/api/v1/software/${encodeURIComponent(slug)}/${section}`, "live");
 }
+
+export function readSoftwareRedirect(path: string) { return get<{ to_path: string }>(`/api/v1/software-redirect?path=${encodeURIComponent(path)}`, "live"); }

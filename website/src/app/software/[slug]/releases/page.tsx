@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { redirectRetiredSoftwareRoute } from "@/lib/software-route-redirect";
 import { readSoftware, readSoftwareSection, SoftwareRelease, WebsiteApiError } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,7 @@ async function load(slug: string) {
       readSoftwareSection<{ slug: string; current_version: string | null; items: SoftwareRelease[]; truncated: boolean }>(slug, "releases"),
     ]);
   } catch (error) {
-    if (error instanceof WebsiteApiError && error.status === 404) return null;
+    if (error instanceof WebsiteApiError && error.status === 404) { await redirectRetiredSoftwareRoute(slug, "/releases"); return null; }
     throw error;
   }
 }

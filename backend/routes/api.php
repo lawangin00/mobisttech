@@ -19,6 +19,7 @@ Route::prefix('/v1')->middleware('throttle:api-public')->group(function () {
         ->where(['slug' => '[a-z0-9-]+', 'media' => '[1-9][0-9]*'])->name('api.pages.media');
     Route::get('/content/pages/{slug}', [WebsiteApiController::class, 'page'])->where('slug', '[a-z0-9-]+')->name('api.pages.show');
     Route::get('/content/policies', [WebsiteApiController::class, 'policies'])->name('api.policies.index');
+    Route::get('/software-redirect', [WebsiteApiController::class, 'softwareRedirect'])->name('api.software.redirect');
     Route::get('/software/{slug}', [WebsiteApiController::class, 'software'])->name('api.software.show');
     Route::get('/software/{slug}/media/{media}', [WebsiteApiController::class, 'softwareMedia'])->whereNumber('media')->name('api.software.media');
     Route::get('/software/{slug}/{section}', [WebsiteApiController::class, 'softwareSection'])

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { redirectRetiredSoftwareRoute } from "@/lib/software-route-redirect";
 import { readSoftware, readSoftwareSection, WebsiteApiError } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ async function load(slug: string) {
       readSoftwareSection<{ slug: string; revision: number; privacy: string }>(slug, "privacy"),
     ]);
   } catch (error) {
-    if (error instanceof WebsiteApiError && error.status === 404) return null;
+    if (error instanceof WebsiteApiError && error.status === 404) { await redirectRetiredSoftwareRoute(slug, "/privacy"); return null; }
     throw error;
   }
 }

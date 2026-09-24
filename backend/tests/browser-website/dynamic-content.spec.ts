@@ -365,6 +365,57 @@ test('W06 new independent Software is private until published with its own compl
         expect(xml).not.toContain(newUrl);
         expect(xml).toContain(firstUrl + '/releases');
         expect((await page.goto(newUrl + '/releases/1.0.0'))?.status()).toBe(200);
+        // A real protected rollback must restore the first approved revision, including media,
+        // sitemap and historical release, without changing the independently published MT54.
+        const rolled = admin.waitForResponse(response => response.url().includes('/internal/admin/platform/software/revisions/')
+            && response.url().endsWith('/rollback') && response.request().method() === 'POST');
+        await release.getByRole('button', { name: 'Rollback v1' }).click();
+        expect((await rolled).status()).toBe(200);
+        expect((await page.goto(newUrl))?.status()).toBe(200);
+        await expect(page).toHaveTitle(/Second Software Unique SEO Heading/);
+        await expect(page.getByText('Current version: 1.0.0')).toBeVisible();
+        expect((await page.request.get(newUrl + '/media/' + assetId)).status()).toBe(200);
+        expect((await (await page.request.get('/sitemap.xml')).text())).toContain(newUrl + '/releases');
+        expect((await page.goto(newUrl + '/releases/1.0.0'))?.status()).toBe(200);
+        await page.setViewportSize({ width: 390, height: 844 });
+        expect((await page.goto(newUrl))?.status()).toBe(200);
+        await expect(page.getByRole('heading', { name: 'MT75 W06 Second Software' })).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
+        // Canonical slug is a real authenticated separate workflow, preserving exact old public links.
+        const renamedUrl = '/software/mt75-w06-second-renamed';
+        await release.getByPlaceholder('new-canonical-slug').fill('mt75-w06-second-renamed');
+        await release.getByPlaceholder('Approved reason').fill('Synthetic approved public canonical rename.');
+        const changedSlug = admin.waitForResponse(response => response.url().endsWith(`/internal/admin/platform/software/${createdId}/slug`)
+            && response.request().method() === 'POST');
+        await release.getByRole('button', { name: 'Change canonical slug' }).click();
+        expect((await changedSlug).status()).toBe(200);
+        expect((await page.goto(renamedUrl))?.status()).toBe(200);
+        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/software\/mt75-w06-second-renamed$/);
+        const oldRoute = await page.request.get(newUrl, { maxRedirects: 0 });
+        expect(oldRoute.status()).toBe(308);
+        expect(oldRoute.headers()['location']).toContain(renamedUrl);
+        const oldRelease = await page.request.get(newUrl + '/releases/1.0.0', { maxRedirects: 0 });
+        expect(oldRelease.status()).toBe(308);
+        expect(oldRelease.headers()['location']).toContain(renamedUrl + '/releases/1.0.0');
+        expect((await page.goto(renamedUrl + '/releases/1.0.0'))?.status()).toBe(200);
+        const renamedMap = await (await page.request.get('/sitemap.xml')).text();
+        expect(renamedMap).toContain(renamedUrl + '/releases');
+        expect(renamedMap).not.toContain(newUrl + '/releases');
+        // Archival removes ONLY this product's public family and scoped media, not MT54 history.
+        const archived = admin.waitForResponse(response => response.url().endsWith(`/internal/admin/platform/software/${createdId}/archive`)
+            && response.request().method() === 'POST');
+        await release.getByRole('button', { name: 'Archive' }).click();
+        expect((await archived).status()).toBe(200);
+        for (const suffix of ['', '/privacy', '/terms', '/faq', '/releases', '/releases/1.0.0']) {
+            expect((await page.goto(renamedUrl + suffix))?.status(), `archived ${suffix}`).toBe(404);
+        }
+        expect((await page.request.get(renamedUrl + '/media/' + assetId)).status()).toBe(404);
+        expect((await page.request.get(newUrl, { maxRedirects: 0 })).status()).toBe(404);
+        expect((await page.request.get(newUrl + '/releases/1.0.0', { maxRedirects: 0 })).status()).toBe(404);
+        expect((await (await page.request.get('/sitemap.xml')).text())).not.toContain(renamedUrl);
+        expect((await page.goto(firstUrl))?.status()).toBe(200);
+        await expect(page.getByText('Published MT54 software overview')).toBeVisible();
+        expect((await page.goto(firstUrl + '/releases/1.0.0'))?.status()).toBe(200);
     } finally {
         await releasePlatformBrowserAdmin(admin);
         await admin.close();

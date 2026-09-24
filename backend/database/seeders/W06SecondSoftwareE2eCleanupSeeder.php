@@ -14,7 +14,7 @@ final class W06SecondSoftwareE2eCleanupSeeder extends Seeder
         abort_unless(app()->environment('testing') && DB::connection()->getDatabaseName() === 'mobisttech_test'
             && (int) DB::selectOne('SELECT @@port AS port')->port === 13306, 403);
         $mediaPath = DB::transaction(function (): ?string {
-            $product = DB::table('software_products')->where('slug', 'mt75-w06-second')->lockForUpdate()->first();
+            $product = DB::table('software_products')->whereIn('slug', ['mt75-w06-second', 'mt75-w06-second-renamed'])->lockForUpdate()->first();
             if ($product) {
                 $owner = DB::table('admins')->where('id', $product->created_by_admin_id)->first(['email']);
                 abort_unless($product->name === 'MT75 W06 Second Software'

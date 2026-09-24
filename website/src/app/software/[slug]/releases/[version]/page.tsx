@@ -1,23 +1,24 @@
 import { notFound } from "next/navigation";
+import { redirectRetiredSoftwareRoute } from "@/lib/software-route-redirect";
 import { readSoftware, readSoftwareSection, SoftwareRelease, WebsiteApiError } from "@/lib/website-api";
 
 export const dynamic = "force-dynamic";
 
-async function load(slug: string) {
+async function load(slug: string, version: string) {
   try {
     return await Promise.all([
       readSoftware(slug),
       readSoftwareSection<{ items: SoftwareRelease[] }>(slug, "releases"),
     ]);
   } catch (error) {
-    if (error instanceof WebsiteApiError && error.status === 404) return null;
+    if (error instanceof WebsiteApiError && error.status === 404) { await redirectRetiredSoftwareRoute(slug, "/releases/" + version); return null; }
     throw error;
   }
 }
 
 export default async function SoftwareReleasePage({ params }: { params: Promise<{ slug: string; version: string }> }) {
   const { slug, version } = await params;
-  const result = await load(slug);
+  const result = await load(slug, version);
   if (!result) notFound();
   const [product, section] = result;
   const release = section.items.find((item) => item.version === version);
