@@ -290,6 +290,50 @@ test('MT-7.5 W04 cancelled external order cannot display continue-payment action
     expect(paymentInitiations).toBe(0);
 });
 
+test('W04 definitively failed commerce order offers authorized retry after provider cancellation', async ({ page }) => {
+    test.setTimeout(90_000);
+    // Independent sixth synthetic login shares this fixture's IP throttle bucket.
+    // Clear disposable testing cache only; production request limits stay enabled.
+    execFileSync('php', ['artisan', 'cache:clear', '--env=testing'], { cwd: process.cwd(), stdio: 'inherit' });
+    await login(page);
+    const orderId = '00000000-0000-4000-8000-000000000093';
+    const failedPaymentId = '00000000-0000-4000-8000-000000000094';
+    const newPaymentId = '00000000-0000-4000-8000-000000000095';
+    let retries = 0;
+    await page.route('**/api/customer/checkout/channels', async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [
+            { code: 'cod', label: 'Cash on Delivery', available: true },
+            { code: 'jazzcash', label: 'JazzCash', available: true },
+            { code: 'easypaisa', label: 'Easypaisa', available: false },
+            { code: 'card', label: 'Credit / Debit Card', available: false },
+        ] } }) });
+    });
+    await page.route('**/api/customer/orders/' + orderId, async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {
+            id: orderId, number: 'MT75-COMMERCE-FAILED-RETRY', type: 'commerce', status: 'cancelled',
+            fulfillment_status: 'cancelled', payment_status: 'failed', subtotal: '50000.00', total: '50000.00',
+            currency: 'PKR', items: [], signed_access_url: '/account', payments: [
+                { public_id: failedPaymentId, gateway: 'jazzcash', status: 'failed', amount: '50000.00', currency: 'PKR' },
+            ],
+        } }) });
+    });
+    await page.route('**/api/customer/orders/' + orderId + '/payments/retry', async (route) => {
+        retries += 1;
+        expect(route.request().postDataJSON()).toEqual({ gateway: 'jazzcash' });
+        await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: { payment_id: newPaymentId } }) });
+    });
+    await page.route('**/api/customer/payments/' + newPaymentId + '/initiate', async (route) => {
+        await route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ message: 'Synthetic provider unavailable.' }) });
+    });
+    await page.goto('/account/orders/' + orderId);
+    await expect(page.getByRole('heading', { name: 'MT75-COMMERCE-FAILED-RETRY' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Retry with JazzCash' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue payment' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Cancel order' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Retry with JazzCash' }).click();
+    await expect(page.getByText('Synthetic provider unavailable.')).toBeVisible();
+    expect(retries).toBe(1);
+});
 test('MT-5.3 digital-only mode prunes checkout while historical account stays available', async ({ page }) => {
     test.setTimeout(60_000);
     // Independent synthetic journey #6 reuses the same localhost test identity; reset

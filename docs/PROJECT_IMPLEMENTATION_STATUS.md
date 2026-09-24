@@ -1794,3 +1794,6 @@ User approved editable nonsecret payment-channel labels and customer instruction
 
 
 - W04 owned-order missing continuation feedback (24-Sep-2026): pending digital order initiation returning success without redirect_url now reports the missing hosted continuation rather than silently doing nothing; existing owned order/payment remain unchanged. Website typecheck and local Edge focused 1/1, joined project 4/4 PASS with guarded cleanup. Audit docs/audit/MT-7.5_W04_MISSING_CONTINUATION_FEEDBACK_2026-09-24.md. LOCAL routine, no hosted CI. MT-7.5/W04 In Progress 15/27 DONE / 12 OPEN; H-02 HOLD.
+
+
+- W04 failed commerce payment retry UI (24-Sep-2026): definitively failed external commerce orders have status cancelled by backend but support retry; customer UI now offers available non-COD retry only with commerce + failed order/payment statuses, preserving customer-cancelled-unpaid/digital exclusion. Website typecheck and local Edge checkout 7/7 PASS with guarded cleanup after testing-only sixth-login limiter cache isolation; initial joined 429 failed and was corrected. Audit docs/audit/MT-7.5_W04_FAILED_COMMERCE_RETRY_UI_2026-09-24.md. LOCAL only, no hosted CI/provider activation. MT-7.5/W04 In Progress 15/27 DONE, 12 OPEN; H-02 HOLD.

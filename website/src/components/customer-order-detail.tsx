@@ -81,7 +81,7 @@ export function CustomerOrderDetail({ orderId }: { orderId: string }) {
 
   if (!order) return <div className="min-h-[620px] rounded-2xl bg-slate-50 p-5 text-slate-600">{message || "Loading order…"}</div>;
   const latest = order.payments.at(-1);
-  const retryChannels = order.type === "commerce" && order.status !== "cancelled" ? channels.filter((item) => item.available && item.code !== "cod") : [];
+  const retryChannels = order.type === "commerce" && order.payment_status === "failed" && latest?.status === "failed" ? channels.filter((item) => item.available && item.code !== "cod") : [];
   const canCancel = order.type === "commerce" && !["cancelled", "completed"].includes(order.status) && !["paid", "paid_reconciliation"].includes(order.payment_status);
 
   return <div className="min-h-[620px] space-y-6">
