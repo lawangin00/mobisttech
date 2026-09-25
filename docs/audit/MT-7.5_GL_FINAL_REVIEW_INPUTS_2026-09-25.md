@@ -24,8 +24,9 @@ The technical/privacy/product facts needed for final legal review are now reconc
    - Do not infer this from branding.
 
 2. **Website commercial policy terms**
-   - Returns/exchanges: eligibility, time window, condition requirements, exclusions, refund/exchange method and any delivery/return-cost rule.
-   - Warranty/support: covered products/services, duration/source of warranty, claim requirements, exclusions and support channel commitments.
+   - A previously owner-approved POS invoice clause is available as a factual review input and must be preserved verbatim until the owner decides whether/how it applies to the Website/public policy: `????? ??? ??? ???? ???? ????? ???????? ?? ????/?????? ?? ???? ?? 20% ?? 40% ?? ????? ????? ?? ?????? ?? ????? ??? ???? ?? ???? ?????? ?????` This historical clause resolves neither Website scope nor legal publication approval by itself.
+   - Still required for public Returns/Exchanges: exact applicability (which products/channels), exchange eligibility/condition rules, how the 20%-40% deduction is selected, exclusions, refund/exchange method and any delivery/return-cost rule.
+   - Still required for public Warranty/Support: covered products/services, duration/source of warranty beyond the stated touch-screen/camera exclusion, claim requirements, other exclusions and support-channel commitments.
    - Delivery/order commitments: scope, timing language, COD/payment handling commitments and any cancellation boundary that should be contractual rather than operational guidance.
    - Digital-services/project commitments that must appear in Terms, including milestone/payment/cancellation/refund treatment where applicable.
 
@@ -39,3 +40,6 @@ The technical/privacy/product facts needed for final legal review are now reconc
 After the exact inputs above are supplied/approved, update only the affected private policy revisions, record truthful approval/review/effective metadata through the existing protected policy workflow, verify release-distribution NOTICE/dependency contents on the exact candidate, and then close G-L. Public publication remains a separate explicit release action; do not infer it from approval.
 
 **Result: no further implementation gap is currently identified inside 26/G-L. The gate is blocked only on the exact human/legal inputs above plus the final exact-candidate notice check.**
+## Repeatable current-candidate technical preflight
+
+`python tools/docs/gl_release_notice_check.py` is the deterministic G-L technical preflight. At `cb08698d28aeef9b81222bf91ebede6f6867c5d6` it PASSed: dependency lockfiles have no drift from MT-7.2 audit anchor `bf5adbc4fd5e6afaeccf50b6cbbdd8b843d2412c`; root LICENSE is absent pending exact holder; Composer root application license field remains absent; NOTICE contains current D09 proprietary/third-party posture; and current backend/Website TypeScript/JavaScript source contains no identified non-essential analytics/tracker marker. This preflight must be rerun on the exact final candidate after legal inputs are applied.
