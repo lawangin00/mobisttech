@@ -145,8 +145,8 @@ class WebsiteModePublicationTest extends TestCase
                 ['key' => 'common-nav', 'label' => 'Common', 'destination_type' => 'route', 'destination_key' => 'home', 'capability_scope' => 'common'],
                 ['key' => 'digital-nav', 'label' => 'Digital', 'destination_type' => 'route', 'destination_key' => 'services', 'capability_scope' => 'digital'],
                 ['key' => 'commerce-nav', 'label' => 'Commerce', 'destination_type' => 'route', 'destination_key' => 'products', 'capability_scope' => 'commerce'],
-                ['key' => 'digital-only-nav', 'label' => 'Digital only', 'destination_type' => 'route', 'destination_key' => 'digital-home', 'capability_scope' => 'digital_only'],
-                ['key' => 'commerce-only-nav', 'label' => 'Commerce only', 'destination_type' => 'route', 'destination_key' => 'commerce-home', 'capability_scope' => 'commerce_only'],
+                ['key' => 'digital-only-nav', 'label' => 'Digital only', 'destination_type' => 'route', 'destination_key' => 'enquiry', 'capability_scope' => 'digital_only'],
+                ['key' => 'commerce-only-nav', 'label' => 'Commerce only', 'destination_type' => 'route', 'destination_key' => 'categories', 'capability_scope' => 'commerce_only'],
             ],
         ]);
         $cms->publishPresentation($this->actor, $presentation['id']);
