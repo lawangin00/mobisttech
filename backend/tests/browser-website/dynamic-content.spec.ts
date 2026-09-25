@@ -223,7 +223,7 @@ test('W06 new independent Software is private until published with its own compl
         const mediaResponse = admin.waitForResponse(response => response.url().endsWith('/internal/admin/platform/media')
             && response.request().method() === 'POST');
         await admin.getByRole('heading', { name: 'Website media library' }).locator('xpath=ancestor::section[1]')
-            .locator('input[type="file"]').setInputFiles({
+            .locator('input[type="file"]').first().setInputFiles({
                 name: 'mt75-w06-media.png', mimeType: 'image/png',
                 buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGMQmhUlNCuKAUIBABuWBBkXZEqoAAAAAElFTkSuQmCC', 'base64'),
             });
@@ -443,7 +443,7 @@ test('W06 actual Admin managed-page SEO revision remains private until public pu
         await admin.getByRole('button', { name: 'Content', exact: true }).click();
         const mediaSaved = admin.waitForResponse(r => r.url().endsWith('/internal/admin/platform/media') && r.request().method() === 'POST');
         await admin.getByRole('heading', { name: 'Website media library' }).locator('xpath=ancestor::section[1]')
-            .locator('input[type="file"]').setInputFiles({
+            .locator('input[type="file"]').first().setInputFiles({
                 name: 'mt75-w06-managed-social.png', mimeType: 'image/png',
                 buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z6ZsAAAAASUVORK5CYII=', 'base64'),
             });
