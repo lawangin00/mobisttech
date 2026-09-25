@@ -32,5 +32,10 @@ final class W06ManagedSocialMediaE2eCleanupSeeder extends Seeder
         if ($path) {
             abort_unless(Storage::disk('local')->delete($path), 500, 'W06 managed social image cleanup failed.');
         }
+        // Whichever exact-owned media fixture is cleaned last may release only the derived
+        // cms.media cache marker, and only after the disposable schema is truly media-empty.
+        if (! DB::table('site_media_assets')->exists() && ! DB::table('site_media_usages')->exists()) {
+            DB::table('publication_versions')->where('domain', 'cms.media')->delete();
+        }
     }
 }

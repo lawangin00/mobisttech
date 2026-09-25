@@ -32,5 +32,10 @@ final class W07MediaE2eCleanupSeeder extends Seeder
             Storage::disk('local')->delete($row->path);
             DB::table('site_media_assets')->where('id', $row->id)->where('status', 'retired')->delete();
         }
+        // Media mutation APIs bump cms.media. Release only this derived cache marker when
+        // the disposable test schema has no media assets or usages left; never mask residue.
+        if (! DB::table('site_media_assets')->exists() && ! DB::table('site_media_usages')->exists()) {
+            DB::table('publication_versions')->where('domain', 'cms.media')->delete();
+        }
     }
 }

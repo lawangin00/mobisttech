@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Cms\WebsiteCms;
 use App\Models\Admin;
+use Database\Seeders\W07MediaE2eCleanupSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -84,6 +85,26 @@ final class WebsiteMediaLifecycleTest extends TestCase
             'password' => 'SyntheticPass123!', 'permissions' => ['website.content.manage']])->save();
         $this->reject(fn () => $cms->updateMediaAlt($outsider, $second['id'], 'forbidden'));
         $this->reject(fn () => $cms->deleteUnusedMedia($outsider, $second['id']));
+    }
+
+    public function test_w07_fixture_cleanup_releases_cms_media_marker_only_after_media_is_empty(): void
+    {
+        $owner = Admin::where('email', 'e2e-platform@example.invalid')->first() ?? new Admin;
+        $owner->forceFill([
+            'name' => 'Synthetic W07 media owner', 'email' => 'e2e-platform@example.invalid',
+            'password' => 'SyntheticPass123!', 'permissions' => ['website.media.manage'],
+        ])->save();
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z6ZsAAAAASUVORK5CYII=', true);
+        app(WebsiteCms::class)->registerMedia($owner, [
+            'bytes' => $png, 'extension' => 'png', 'original_name' => 'mt75-w07-media-first.png',
+        ]);
+        $this->assertTrue(DB::table('publication_versions')->where('domain', 'cms.media')->exists());
+
+        app(W07MediaE2eCleanupSeeder::class)->run();
+
+        $this->assertFalse(DB::table('site_media_assets')->exists());
+        $this->assertFalse(DB::table('site_media_usages')->exists());
+        $this->assertFalse(DB::table('publication_versions')->where('domain', 'cms.media')->exists());
     }
 
     public function test_explicit_usage_and_configuration_history_block_media_deletion(): void
