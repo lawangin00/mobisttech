@@ -13,7 +13,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       allow: indexable ? "/" : undefined,
       disallow: indexable ? ["/api/", "/internal/", "/account", "/reset-password", "/cart", "/checkout", "/compare",
         ...(!profile?.capabilities.commerce ? ["/products", "/categories", "/mobiles", "/product/"] : []),
-        ...(!profile?.capabilities.digital ? ["/services", "/enquiry"] : []),
+        ...(!profile?.capabilities.digital ? ["/services", "/knowledge", "/enquiry"] : []),
       ] : ["/"],
     },
     sitemap: business && indexable ? `${business.public_website.replace(/\/$/, "")}/sitemap.xml` : undefined,

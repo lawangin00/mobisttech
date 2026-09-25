@@ -68,7 +68,15 @@ final class WebsiteApiController extends Controller
     {
         // Public access requires the exact published, mode-allowed page's image reference.
         $page = $api->page($slug);
-        abort_unless((int) ($page['snapshot']['social_image_media_id'] ?? 0) === $media && $media > 0, 404);
+        $allowed = [(int) ($page['snapshot']['social_image_media_id'] ?? 0)];
+        if (($page['snapshot']['content_purpose'] ?? null) === 'case_study') {
+            foreach ($page['snapshot']['structured_content']['screenshot_media_ids'] ?? [] as $id) {
+                if (is_int($id)) {
+                    $allowed[] = $id;
+                }
+            }
+        }
+        abort_unless($media > 0 && in_array($media, $allowed, true), 404);
         $asset = DB::table('site_media_assets')->where('id', $media)->where('status', 'active')->first();
         abort_unless($asset && $asset->disk === 'local' && in_array($asset->mime_type, ['image/png', 'image/jpeg', 'image/webp'], true)
             && preg_match('/\Acms\/[0-9a-f-]+\.(?:png|jpe?g|webp)\z/i', $asset->path), 404);

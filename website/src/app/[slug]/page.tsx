@@ -67,6 +67,17 @@ export default async function PublishedContentPage({ params }: { params: Promise
   const testimonial = page.content_purpose === "digital_testimonial" ? page.structured_content : null;
   const testimonialCases = Array.isArray(testimonial?.case_study_slugs)
     ? testimonial.case_study_slugs.slice(0, 20).filter((value): value is string => typeof value === "string" && value.length > 0 && value.length <= 160) : [];
+  const knowledge = ["faq", "insight", "guide"].includes(page.content_purpose) ? page.structured_content : null;
+  const knowledgeCategory = caseText(knowledge?.category);
+  const knowledgeTags = caseList(knowledge?.tags);
+  const faqItems = page.content_purpose === "faq" && Array.isArray(knowledge?.items)
+    ? knowledge.items.slice(0, 50).flatMap((row: unknown) => {
+        if (typeof row !== "object" || row === null || Array.isArray(row)) return [];
+        const fields = row as Record<string, unknown>;
+        const question = caseText(fields.question);
+        const answer = typeof fields.answer === "string" && fields.answer.length <= 5000 ? fields.answer : null;
+        return question && answer ? [{ question, answer }] : [];
+      }) : [];
   const disclosure = story?.client_disclosure;
   const category = caseText(story?.category);
   const industry = disclosure === 'named' || disclosure === 'industry_only' ? caseText(story?.industry) : null;
@@ -74,6 +85,9 @@ export default async function PublishedContentPage({ params }: { params: Promise
   const solution = caseText(story?.solution);
   const technologies = caseList(story?.technologies);
   const outcomes = caseList(story?.outcomes);
+  const screenshots = Array.isArray(story?.screenshot_media_ids)
+    ? story.screenshot_media_ids.slice(0, 12).filter((value): value is number => Number.isInteger(value) && Number(value) > 0) : [];
+  const relatedTestimonials = item.page.related_testimonials ?? [];
   return <main className={(page.template === "wide" ? "max-w-7xl" : "max-w-5xl") + " mx-auto px-4 py-10 sm:px-6"} data-page-template={page.template}>
     <h1 className="text-3xl font-bold">{page.title}</h1>
     {story && <p className="mt-2 text-sm text-slate-500" data-testid="case-disclosure">
@@ -81,7 +95,13 @@ export default async function PublishedContentPage({ params }: { params: Promise
       {disclosure === "anonymous" ? "Anonymous case study" : disclosure === "industry_only" ? "Industry-only case study" : "Published case study"}
     </p>}
     {testimonial && <p className="mt-2 text-sm text-slate-500" data-testid="digital-testimonial-status">Published client feedback</p>}
+    {knowledge && <div className="mt-2 flex flex-wrap gap-2 text-sm text-slate-500" data-testid="knowledge-taxonomy">
+      {knowledgeCategory && <span>{knowledgeCategory}</span>}
+      {knowledgeTags.map(tag => <span key={tag} className="rounded-full border px-2 py-0.5">{tag}</span>)}
+    </div>}
     <article className="mt-8 space-y-4 text-slate-700" dangerouslySetInnerHTML={{ __html: page.content }} />
+    {faqItems.length > 0 && <section className="mt-8" data-testid="reusable-faq"><h2 className="text-lg font-bold">Frequently asked questions</h2><div className="mt-3 space-y-3">{faqItems.map((row,index) => <details key={index} className="rounded-xl border bg-white p-3"><summary className="cursor-pointer font-semibold">{row.question}</summary><div className="mt-2 text-slate-700" dangerouslySetInnerHTML={{__html:row.answer}} /></details>)}</div></section>}
+    {knowledge && page.service_slugs.length > 0 && <section className="mt-6"><h2 className="font-semibold">Related services</h2><ul className="mt-2 space-y-1">{page.service_slugs.map(serviceSlug => <li key={serviceSlug}><Link prefetch={false} className="underline underline-offset-2" href={'/services/'+encodeURIComponent(serviceSlug)}>{serviceSlug.replaceAll('-', ' ')}</Link></li>)}</ul></section>}
     {testimonialCases.length > 0 && <section className="mt-6"><h2 className="font-semibold">Related case studies</h2><ul className="mt-2 space-y-1">{testimonialCases.map(caseSlug => <li key={caseSlug}><Link prefetch={false} className="underline underline-offset-2" href={'/' + encodeURIComponent(caseSlug)}>{caseSlug.replaceAll('-', ' ')}</Link></li>)}</ul></section>}
     {story && (problem || solution) && <section className="mt-8 grid gap-4 sm:grid-cols-2">
       {problem && <div><h2 className="font-semibold">The challenge</h2><p className="mt-2 whitespace-pre-wrap">{problem}</p></div>}
@@ -93,5 +113,7 @@ export default async function PublishedContentPage({ params }: { params: Promise
     {story && outcomes.length > 0 && <section className="mt-6"><h2 className="font-semibold">Outcomes</h2>
       <ul className="mt-2 list-inside list-disc">{outcomes.map((outcome, index) => <li key={index}>{outcome}</li>)}</ul>
     </section>}
+    {story && screenshots.length > 0 && <section className="mt-8"><h2 className="font-semibold">Project media</h2><div className="mt-3 grid gap-3 sm:grid-cols-2">{screenshots.map((mediaId,index) => <img key={mediaId} src={'/'+encodeURIComponent(page.slug)+'/media/'+mediaId} alt={page.title+' screenshot '+(index+1)} loading="lazy" className="h-auto w-full rounded-xl border" />)}</div></section>}
+    {story && relatedTestimonials.length > 0 && <section className="mt-8"><h2 className="font-semibold">Client feedback</h2><ul className="mt-2 space-y-1">{relatedTestimonials.map(row => <li key={row.slug}><Link prefetch={false} className="underline underline-offset-2" href={'/'+encodeURIComponent(row.slug)}>{row.title}</Link></li>)}</ul></section>}
   </main>;
 }

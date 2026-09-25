@@ -18,7 +18,7 @@ final class WebsiteModePublication
 
     private const ROUTES = [
         'common' => ['home', 'about', 'contact', 'policies', 'software'],
-        'digital' => ['services', 'case-studies', 'enquiry', 'consultation'],
+        'digital' => ['services', 'case-studies', 'knowledge', 'enquiry', 'consultation'],
         'commerce' => ['products', 'categories', 'compare', 'cart', 'checkout'],
     ];
 

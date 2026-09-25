@@ -32,6 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   if (profile.capabilities.digital) {
     add("/services", "weekly", 0.8);
+    add("/knowledge", "weekly", 0.7);
     add("/enquiry", "monthly", 0.4);
     const services = await readServices().catch(() => []);
     for (const service of services) add("/services/" + service.slug, "weekly", 0.7);

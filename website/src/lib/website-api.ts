@@ -60,6 +60,7 @@ export type CataloguePage = {
 };
 export type ManagedPage = {
   public_id: string; version: number; published_at: string | null; sha256: string;
+  related_testimonials?: Array<{ slug: string; title: string }>;
   snapshot: {
     title: string; slug: string; content: string; template: string; show_in_navigation: boolean;
     seo_title: string | null; meta_description: string | null; canonical_url: string | null;
@@ -105,7 +106,7 @@ export type ContentIndex = {
   theme: Partial<Record<"primary" | "primary_hover" | "secondary" | "accent" | "background" | "surface" | "text" | "muted_text" | "border", string>>;
   branding: Record<"main_logo" | "wordmark" | "header_logo" | "footer_logo" | "square_icon" | "favicon" | "social_image", number | null>;
   promotion: SitePromotion;
-  pages: Array<{ slug: string; title: string; purpose: string; scope: string; show_in_navigation: boolean }>;
+  pages: Array<{ slug: string; title: string; purpose: string; scope: string; show_in_navigation: boolean; category?: string | null; tags?: string[]; service_slugs?: string[] }>;
   policies: Array<Pick<Policy, "type" | "slug" | "title" | "footer_destination" | "effective_date" | "version">>;
   software: Array<{ slug: string; name: string; routes: Record<string, string>; sitemap: boolean }>;
   navigation: Array<{

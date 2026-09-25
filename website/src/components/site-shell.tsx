@@ -66,6 +66,7 @@ export function SiteHeader({
   const links: Array<{ href: string; label: string; external?: boolean }> = managedPaths.has("/") ? [] : [{ href: "/", label: "Home" }];
   const fallback = [
     routes.has("services") ? { href: "/services", label: "Services" } : null,
+    routes.has("knowledge") ? { href: "/knowledge", label: "Knowledge" } : null,
     routes.has("enquiry") ? { href: "/enquiry", label: "Enquiry" } : null,
     routes.has("products") ? { href: "/products", label: "Products" } : null,
     routes.has("categories") ? { href: "/categories", label: "Categories" } : null,

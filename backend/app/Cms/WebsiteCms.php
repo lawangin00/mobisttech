@@ -21,7 +21,7 @@ final class WebsiteCms
 
     private const PROTECTED_ROOTS = ['account', 'admin', 'api', 'cart', 'checkout', 'login', 'order', 'payment', 'software'];
 
-    private const RESERVED_PAGE_ROOTS = ['products', 'categories', 'compare', 'enquiry', 'services', 'reset-password'];
+    private const RESERVED_PAGE_ROOTS = ['products', 'categories', 'compare', 'enquiry', 'services', 'knowledge', 'reset-password'];
 
     private const PRESENTATION_PERMISSIONS = [
         'homepage' => 'website.content.manage', 'catalogue' => 'website.content.manage', 'promotion' => 'website.content.manage',
@@ -788,6 +788,9 @@ final class WebsiteCms
                 'case_study_slugs' => array_values(array_filter($structured['case_study_slugs'] ?? [], 'is_string')),
             ];
         }
+        if (($snapshot['content_purpose'] ?? null) === 'case_study') {
+            abort_unless(($snapshot['structured_content']['display_enabled'] ?? true) === true, 404);
+        }
 
         return ['public_id' => $page->public_id, 'version' => (int) $revision->version, 'published_at' => $revision->published_at,
             'snapshot' => $snapshot, 'sha256' => $revision->snapshot_sha256];
@@ -1069,7 +1072,7 @@ final class WebsiteCms
             abort_unless(in_array($type, ['page', 'route', 'url'], true), 422, 'Invalid navigation destination type.');
             $destination = $this->nullableKey($entry['destination_key'] ?? null, 100);
             if ($type === 'route') {
-                abort_unless(in_array($destination, ['home', 'services', 'enquiry', 'products', 'categories', 'compare', 'about', 'contact'], true),
+                abort_unless(in_array($destination, ['home', 'services', 'knowledge', 'enquiry', 'products', 'categories', 'compare', 'about', 'contact'], true),
                     422, 'Navigation must target a supported public Website route.');
             } elseif ($type === 'page') {
                 abort_unless($destination && DB::table('site_managed_pages')->where('slug', $destination)
@@ -1163,7 +1166,60 @@ final class WebsiteCms
             $structured['case_study_slugs'] = $caseStudySlugs;
         }
         if ($purpose === 'case_study') {
-            abort_unless(in_array(($structured['client_disclosure'] ?? null), ['named', 'industry_only', 'anonymous'], true), 422, 'Case study disclosure state is required.');
+            $disclosure = (string) ($structured['client_disclosure'] ?? '');
+            abort_unless(in_array($disclosure, ['named', 'industry_only', 'anonymous'], true), 422, 'Case study disclosure state is required.');
+            $displayOrder = filter_var($structured['display_order'] ?? 100, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 10000]]);
+            abort_unless($displayOrder !== false, 422, 'Case study display order must be between 0 and 10000.');
+            $screens = [];
+            foreach ($structured['screenshot_media_ids'] ?? [] as $mediaId) {
+                $id = $this->mediaIdOrNull($mediaId);
+                abort_unless($id && DB::table('site_media_assets')->where('id', $id)
+                    ->whereIn('mime_type', ['image/png', 'image/jpeg', 'image/webp'])->exists(), 422,
+                    'Case study screenshots require an active Website image.');
+                $screens[] = $id;
+            }
+            $screens = array_values(array_unique($screens));
+            abort_if(count($screens) > 12, 422, 'Case studies support at most 12 screenshots.');
+            $technologies = $this->plainList($structured['technologies'] ?? [], 30, 100);
+            $outcomes = $this->plainList($structured['outcomes'] ?? [], 30, 500);
+            $structured = [
+                'client_disclosure' => $disclosure,
+                'category' => $this->nullablePlain($structured['category'] ?? null, 100),
+                'industry' => $disclosure === 'anonymous' ? null : $this->nullablePlain($structured['industry'] ?? null, 120),
+                'problem' => $this->nullablePlain($structured['problem'] ?? null, 2000),
+                'solution' => $this->nullablePlain($structured['solution'] ?? null, 2000),
+                'technologies' => $technologies,
+                'outcomes' => $outcomes,
+                'screenshot_media_ids' => $screens,
+                'display_enabled' => (bool) ($structured['display_enabled'] ?? true),
+                'display_order' => (int) $displayOrder,
+            ];
+        }
+        if (in_array($purpose, ['faq', 'insight', 'guide'], true)) {
+            $category = $this->nullablePlain($structured['category'] ?? null, 100);
+            $tags = [];
+            foreach ($structured['tags'] ?? [] as $tag) {
+                $value = $this->plain((string) $tag, 60);
+                if ($value !== '') {
+                    $tags[] = $value;
+                }
+            }
+            $tags = array_values(array_unique($tags));
+            abort_if(count($tags) > 20, 422, 'Knowledge content supports at most 20 tags.');
+            $knowledge = ['category' => $category, 'tags' => $tags];
+            if ($purpose === 'faq') {
+                $items = [];
+                foreach ($structured['items'] ?? [] as $item) {
+                    abort_unless(is_array($item), 422, 'FAQ items must be objects.');
+                    $question = $this->plain((string) ($item['question'] ?? ''), 300);
+                    $answer = $this->rich((string) ($item['answer'] ?? ''), 5000);
+                    abort_if($question === '' || $answer === '', 422, 'FAQ question and answer are required.');
+                    $items[] = ['question' => $question, 'answer' => $answer];
+                }
+                abort_if($items === [] || count($items) > 50, 422, 'FAQ pages require 1 to 50 reusable items.');
+                $knowledge['items'] = $items;
+            }
+            $structured = $knowledge;
         }
 
         return [

@@ -232,9 +232,13 @@ final class WebsiteApi
 
     public function contentIndex(): array
     {
-        $pages = DB::table('site_managed_pages')
-            ->where('publish_state', 'published')->whereNotNull('current_revision_id')->where('is_indexable', true)
-            ->orderBy('title')->get(['slug', 'title', 'content_purpose', 'capability_scope', 'show_in_navigation'])
+        $pages = DB::table('site_managed_pages as page')
+            ->join('site_page_revisions as revision', 'revision.id', '=', 'page.current_revision_id')
+            ->where('page.publish_state', 'published')->where('revision.state', 'published')->where('page.is_indexable', true)
+            ->orderBy('page.title')->get([
+                'page.slug', 'page.title', 'page.content_purpose', 'page.capability_scope',
+                'page.show_in_navigation', 'revision.snapshot',
+            ])
             ->filter(function ($row) {
                 if (! $this->capabilities->allowsScope((string) $row->capability_scope)) {
                     return false;
@@ -250,10 +254,21 @@ final class WebsiteApi
                     return false;
                 }
             })
-            ->map(fn ($row) => [
-                'slug' => $row->slug, 'title' => $row->title, 'purpose' => $row->content_purpose,
-                'scope' => $row->capability_scope, 'show_in_navigation' => (bool) $row->show_in_navigation,
-            ])->values()->all();
+            ->map(function ($row) {
+                $entry = [
+                    'slug' => $row->slug, 'title' => $row->title, 'purpose' => $row->content_purpose,
+                    'scope' => $row->capability_scope, 'show_in_navigation' => (bool) $row->show_in_navigation,
+                ];
+                if (in_array($row->content_purpose, ['faq', 'insight', 'guide'], true)) {
+                    $snapshot = json_decode($row->snapshot, true, flags: JSON_THROW_ON_ERROR);
+                    $structured = is_array($snapshot['structured_content'] ?? null) ? $snapshot['structured_content'] : [];
+                    $entry['category'] = is_string($structured['category'] ?? null) ? $structured['category'] : null;
+                    $entry['tags'] = array_values(array_filter($structured['tags'] ?? [], 'is_string'));
+                    $entry['service_slugs'] = array_values(array_filter($snapshot['service_slugs'] ?? [], 'is_string'));
+                }
+
+                return $entry;
+            })->values()->all();
 
         $software = DB::table('software_products')->where('lifecycle_state', 'published')->whereNotNull('current_revision_id')
             ->orderBy('name')->get(['slug', 'name'])->map(function ($row) {
@@ -337,6 +352,35 @@ final class WebsiteApi
         $payload = $this->cache->remember('cms.pages', 'api:v1:page:'.$slug, fn () => $this->cms->publicPage($slug));
         $scope = (string) ($payload['snapshot']['capability_scope'] ?? 'common');
         abort_unless($this->capabilities->allowsScope($scope), 404);
+        if (($payload['snapshot']['content_purpose'] ?? null) === 'case_study') {
+            $rows = DB::table('site_managed_pages as page')
+                ->join('site_page_revisions as revision', 'revision.id', '=', 'page.current_revision_id')
+                ->where('page.publish_state', 'published')->where('revision.state', 'published')
+                ->where('page.content_purpose', 'digital_testimonial')->orderBy('page.id')->limit(201)
+                ->get(['page.slug', 'page.title', 'revision.snapshot']);
+            abort_if($rows->count() > 200, 503, 'Published testimonial linkage exceeds the API payload budget.');
+            $related = [];
+            foreach ($rows as $row) {
+                $snapshot = json_decode($row->snapshot, true, flags: JSON_THROW_ON_ERROR);
+                $structured = is_array($snapshot['structured_content'] ?? null) ? $snapshot['structured_content'] : [];
+                if (($structured['consent_confirmed'] ?? false) !== true
+                    || ($structured['moderation_state'] ?? null) !== 'approved'
+                    || ($structured['display_enabled'] ?? false) !== true
+                    || ! in_array($slug, $structured['case_study_slugs'] ?? [], true)
+                    || ! $this->capabilities->allowsScope((string) ($snapshot['capability_scope'] ?? 'common'))) {
+                    continue;
+                }
+                $related[] = [
+                    'slug' => $row->slug, 'title' => $row->title,
+                    'display_order' => (int) ($structured['display_order'] ?? 100),
+                ];
+            }
+            usort($related, fn (array $left, array $right) => [$left['display_order'], $left['slug']] <=> [$right['display_order'], $right['slug']]);
+            $payload['related_testimonials'] = array_map(
+                fn (array $row) => ['slug' => $row['slug'], 'title' => $row['title']],
+                array_slice($related, 0, 8)
+            );
+        }
 
         return $payload;
     }
@@ -464,17 +508,17 @@ final class WebsiteApi
                     ];
                 } elseif (in_array($kind, ['case_study', 'digital_testimonial'], true)
                     && ($snapshot['is_indexable'] ?? false) === true
+                    && ($kind !== 'case_study' || ($snapshot['structured_content']['display_enabled'] ?? true) === true)
                     && count($related[$row->service_slug]['related_pages']) < 8) {
                     $related[$row->service_slug]['related_pages'][] = [
                         'slug' => $snapshot['slug'], 'title' => $snapshot['title'], 'purpose' => $kind,
-                        'display_order' => $kind === 'digital_testimonial'
-                            ? (int) ($snapshot['structured_content']['display_order'] ?? 100) : null,
+                        'display_order' => (int) ($snapshot['structured_content']['display_order'] ?? 100),
                     ];
                 }
             }
             foreach ($related as &$entry) {
                 usort($entry['related_pages'], function (array $left, array $right): int {
-                    if ($left['purpose'] === 'digital_testimonial' && $right['purpose'] === 'digital_testimonial') {
+                    if ($left['purpose'] === $right['purpose']) {
                         return [$left['display_order'] ?? 100, $left['slug']] <=> [$right['display_order'] ?? 100, $right['slug']];
                     }
                     if ($left['purpose'] === 'digital_testimonial') {
@@ -484,7 +528,7 @@ final class WebsiteApi
                         return -1;
                     }
 
-                    return $left['slug'] <=> $right['slug'];
+                    return [$left['display_order'] ?? 100, $left['slug']] <=> [$right['display_order'] ?? 100, $right['slug']];
                 });
             }
             unset($entry);
