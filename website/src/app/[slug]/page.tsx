@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { readManagedPage, readPolicies, readWebsiteProfile, WebsiteApiError } from "@/lib/website-api";
@@ -63,6 +64,9 @@ export default async function PublishedContentPage({ params }: { params: Promise
 
   const page = item.page.snapshot;
   const story = page.content_purpose === "case_study" ? page.structured_content : null;
+  const testimonial = page.content_purpose === "digital_testimonial" ? page.structured_content : null;
+  const testimonialCases = Array.isArray(testimonial?.case_study_slugs)
+    ? testimonial.case_study_slugs.slice(0, 20).filter((value): value is string => typeof value === "string" && value.length > 0 && value.length <= 160) : [];
   const disclosure = story?.client_disclosure;
   const category = caseText(story?.category);
   const industry = disclosure === 'named' || disclosure === 'industry_only' ? caseText(story?.industry) : null;
@@ -76,7 +80,9 @@ export default async function PublishedContentPage({ params }: { params: Promise
       {category && <span>{category} · </span>}{industry && <span>{industry} · </span>}
       {disclosure === "anonymous" ? "Anonymous case study" : disclosure === "industry_only" ? "Industry-only case study" : "Published case study"}
     </p>}
+    {testimonial && <p className="mt-2 text-sm text-slate-500" data-testid="digital-testimonial-status">Published client feedback</p>}
     <article className="mt-8 space-y-4 text-slate-700" dangerouslySetInnerHTML={{ __html: page.content }} />
+    {testimonialCases.length > 0 && <section className="mt-6"><h2 className="font-semibold">Related case studies</h2><ul className="mt-2 space-y-1">{testimonialCases.map(caseSlug => <li key={caseSlug}><Link prefetch={false} className="underline underline-offset-2" href={'/' + encodeURIComponent(caseSlug)}>{caseSlug.replaceAll('-', ' ')}</Link></li>)}</ul></section>}
     {story && (problem || solution) && <section className="mt-8 grid gap-4 sm:grid-cols-2">
       {problem && <div><h2 className="font-semibold">The challenge</h2><p className="mt-2 whitespace-pre-wrap">{problem}</p></div>}
       {solution && <div><h2 className="font-semibold">The solution</h2><p className="mt-2 whitespace-pre-wrap">{solution}</p></div>}

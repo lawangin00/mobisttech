@@ -357,6 +357,7 @@ final class WebsiteCms
             abort_unless($revision->state === 'draft', 409, 'Only a draft page revision can be published.');
             $page = DB::table('site_managed_pages')->where('id', $revision->site_managed_page_id)->lockForUpdate()->firstOrFail();
             $snapshot = json_decode($revision->snapshot, true, flags: JSON_THROW_ON_ERROR);
+            $this->assertPublishablePageSnapshot($snapshot);
             $collision = DB::table('site_managed_pages')->where('slug', $snapshot['slug'])->where('id', '<>', $page->id)->exists();
             abort_if($collision, 409, 'Page slug is already in use.');
             DB::table('site_page_revisions')->where('site_managed_page_id', $page->id)->where('state', 'published')
@@ -394,6 +395,7 @@ final class WebsiteCms
                 'restored_from_revision_id' => $source->id, 'created_at' => now(), 'updated_at' => now(),
             ]);
             $snapshot = json_decode($source->snapshot, true, flags: JSON_THROW_ON_ERROR);
+            $this->assertPublishablePageSnapshot($snapshot);
             DB::table('site_page_revisions')->where('site_managed_page_id', $page->id)->where('state', 'published')
                 ->update(['state' => 'superseded', 'updated_at' => now()]);
             DB::table('site_page_revisions')->where('id', $newId)->update([
@@ -779,6 +781,13 @@ final class WebsiteCms
         abort_unless($page->current_revision_id, 404);
         $revision = DB::table('site_page_revisions')->where('id', $page->current_revision_id)->where('state', 'published')->firstOrFail();
         $snapshot = json_decode($revision->snapshot, true, flags: JSON_THROW_ON_ERROR);
+        if (($snapshot['content_purpose'] ?? null) === 'digital_testimonial') {
+            abort_unless($this->testimonialPubliclyVisible($snapshot), 404);
+            $structured = is_array($snapshot['structured_content'] ?? null) ? $snapshot['structured_content'] : [];
+            $snapshot['structured_content'] = [
+                'case_study_slugs' => array_values(array_filter($structured['case_study_slugs'] ?? [], 'is_string')),
+            ];
+        }
 
         return ['public_id' => $page->public_id, 'version' => (int) $revision->version, 'published_at' => $revision->published_at,
             'snapshot' => $snapshot, 'sha256' => $revision->snapshot_sha256];
@@ -1136,7 +1145,22 @@ final class WebsiteCms
             abort_if($serviceSlugs === [], 422, 'Service landing pages must be associated with at least one Digital Service.');
         }
         if ($purpose === 'digital_testimonial') {
-            abort_unless(($structured['consent_confirmed'] ?? false) === true, 422, 'Digital testimonial display requires explicit consent evidence.');
+            abort_unless(($structured['consent_confirmed'] ?? false) === true, 422, 'Digital testimonial storage requires explicit consent evidence.');
+            $moderation = (string) ($structured['moderation_state'] ?? 'pending');
+            abort_unless(in_array($moderation, ['pending', 'approved', 'rejected'], true), 422, 'Invalid testimonial moderation state.');
+            $displayOrder = filter_var($structured['display_order'] ?? 100, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 10000]]);
+            abort_unless($displayOrder !== false, 422, 'Testimonial display order must be between 0 and 10000.');
+            $caseStudySlugs = [];
+            foreach ($structured['case_study_slugs'] ?? [] as $caseSlug) {
+                $caseStudySlugs[] = $this->slug((string) $caseSlug);
+            }
+            $caseStudySlugs = array_values(array_unique($caseStudySlugs));
+            abort_if(count($caseStudySlugs) > 20, 422, 'Too many testimonial case-study associations.');
+            abort_if($serviceSlugs === [] && $caseStudySlugs === [], 422, 'Digital testimonials require a Digital Service or case-study association.');
+            $structured['moderation_state'] = $moderation;
+            $structured['display_enabled'] = (bool) ($structured['display_enabled'] ?? false);
+            $structured['display_order'] = (int) $displayOrder;
+            $structured['case_study_slugs'] = $caseStudySlugs;
         }
         if ($purpose === 'case_study') {
             abort_unless(in_array(($structured['client_disclosure'] ?? null), ['named', 'industry_only', 'anonymous'], true), 422, 'Case study disclosure state is required.');
@@ -1156,6 +1180,29 @@ final class WebsiteCms
             'is_indexable' => (bool) ($input['is_indexable'] ?? true), 'content_purpose' => $purpose,
             'capability_scope' => $scope, 'structured_content' => $structured, 'service_slugs' => $serviceSlugs,
         ];
+    }
+
+    private function assertPublishablePageSnapshot(array $snapshot): void
+    {
+        if (($snapshot['content_purpose'] ?? null) !== 'digital_testimonial') {
+            return;
+        }
+        abort_unless($this->testimonialPubliclyVisible($snapshot), 422, 'Digital testimonial publication requires consent, approved moderation and enabled display.');
+        $structured = is_array($snapshot['structured_content'] ?? null) ? $snapshot['structured_content'] : [];
+        foreach ($structured['case_study_slugs'] ?? [] as $caseSlug) {
+            abort_unless(DB::table('site_managed_pages')->where('slug', $this->slug((string) $caseSlug))
+                ->where('content_purpose', 'case_study')->where('publish_state', 'published')->whereNotNull('current_revision_id')->exists(),
+                422, 'Testimonial case-study associations must reference published case studies.');
+        }
+    }
+
+    private function testimonialPubliclyVisible(array $snapshot): bool
+    {
+        $structured = is_array($snapshot['structured_content'] ?? null) ? $snapshot['structured_content'] : [];
+
+        return ($structured['consent_confirmed'] ?? false) === true
+            && ($structured['moderation_state'] ?? null) === 'approved'
+            && ($structured['display_enabled'] ?? false) === true;
     }
 
     private function pageProjection(array $snapshot, Admin $admin, bool $existing): array

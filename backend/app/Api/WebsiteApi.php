@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 final class WebsiteApi
 {
@@ -234,7 +235,21 @@ final class WebsiteApi
         $pages = DB::table('site_managed_pages')
             ->where('publish_state', 'published')->whereNotNull('current_revision_id')->where('is_indexable', true)
             ->orderBy('title')->get(['slug', 'title', 'content_purpose', 'capability_scope', 'show_in_navigation'])
-            ->filter(fn ($row) => $this->capabilities->allowsScope((string) $row->capability_scope))
+            ->filter(function ($row) {
+                if (! $this->capabilities->allowsScope((string) $row->capability_scope)) {
+                    return false;
+                }
+                if ($row->content_purpose !== 'digital_testimonial') {
+                    return true;
+                }
+                try {
+                    $this->cms->publicPage((string) $row->slug);
+
+                    return true;
+                } catch (HttpExceptionInterface) {
+                    return false;
+                }
+            })
             ->map(fn ($row) => [
                 'slug' => $row->slug, 'title' => $row->title, 'purpose' => $row->content_purpose,
                 'scope' => $row->capability_scope, 'show_in_navigation' => (bool) $row->show_in_navigation,
@@ -403,7 +418,11 @@ final class WebsiteApi
                 if (! in_array($kind, ['service_landing', 'case_study', 'digital_testimonial'], true)
                     || ! $this->capabilities->allowsScope((string) ($snapshot['capability_scope'] ?? ''))
                     || ($snapshot['slug'] ?? null) !== $row->public_slug
-                    || ($kind === 'digital_testimonial' && ($snapshot['structured_content']['consent_confirmed'] ?? false) !== true)) {
+                    || ($kind === 'digital_testimonial' && (
+                        ($snapshot['structured_content']['consent_confirmed'] ?? false) !== true
+                        || ($snapshot['structured_content']['moderation_state'] ?? null) !== 'approved'
+                        || ($snapshot['structured_content']['display_enabled'] ?? false) !== true
+                    ))) {
                     continue;
                 }
                 $related[$row->service_slug] ??= ['landing' => null, 'related_pages' => []];
@@ -448,9 +467,27 @@ final class WebsiteApi
                     && count($related[$row->service_slug]['related_pages']) < 8) {
                     $related[$row->service_slug]['related_pages'][] = [
                         'slug' => $snapshot['slug'], 'title' => $snapshot['title'], 'purpose' => $kind,
+                        'display_order' => $kind === 'digital_testimonial'
+                            ? (int) ($snapshot['structured_content']['display_order'] ?? 100) : null,
                     ];
                 }
             }
+            foreach ($related as &$entry) {
+                usort($entry['related_pages'], function (array $left, array $right): int {
+                    if ($left['purpose'] === 'digital_testimonial' && $right['purpose'] === 'digital_testimonial') {
+                        return [$left['display_order'] ?? 100, $left['slug']] <=> [$right['display_order'] ?? 100, $right['slug']];
+                    }
+                    if ($left['purpose'] === 'digital_testimonial') {
+                        return 1;
+                    }
+                    if ($right['purpose'] === 'digital_testimonial') {
+                        return -1;
+                    }
+
+                    return $left['slug'] <=> $right['slug'];
+                });
+            }
+            unset($entry);
         }
         $items = array_map(fn (array $item) => [...$item, ...($related[$item['slug']] ?? [
             'landing' => null, 'related_pages' => [],

@@ -77,7 +77,7 @@ export type ServiceLanding = {
   seo_title: string | null; meta_description: string | null;
   structured: Record<string, unknown>;
 };
-export type RelatedServicePage = { slug: string; title: string; purpose: "case_study" | "digital_testimonial" };
+export type RelatedServicePage = { slug: string; title: string; purpose: "case_study" | "digital_testimonial"; display_order?: number | null };
 export type DigitalService = {
   slug: string; name: string; category: string | null; short_description: string; description: string | null;
   price_type: "quote" | "fixed" | "starting_from" | "package"; price: string | null;
