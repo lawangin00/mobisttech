@@ -3,8 +3,8 @@
   "purpose": "Reuse exact already-written original method/URI family review, WITHOUT re-executing accepted source/target tests or conflating 177 mapped routes with completed behavior parity",
   "counts": {
     "source_routes": 316,
-    "matched_preexisting_exact_rows": 252,
-    "still_only_group_family_disposition": 64,
+    "matched_preexisting_exact_rows": 275,
+    "still_only_group_family_disposition": 41,
     "family_exact_doc_rows": {
       "P01": 54,
       "P02": 18,
@@ -14,6 +14,8 @@
       "P06": 36,
       "P07": 32,
       "P08": 19,
+      "W02": 11,
+      "W03": 16,
       "W04": 16,
       "W05": 9,
       "W06": 45,
@@ -22,9 +24,7 @@
       "X01": 11
     },
     "pending_by_primary_family": {
-      "W01": 41,
-      "W02": 11,
-      "W03": 12
+      "W01": 41
     }
   },
   "previous_exact_route_dispositions": [
@@ -3131,6 +3131,74 @@
       "remaining_evidence": "prior accepted family proof only; no new test"
     },
     {
+      "original_route_number": 181,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/catalogue-presentation",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@index",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {
+        "W02": {
+          "doc": "docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 7
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 182,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/catalogue-presentation",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@update",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {
+        "W02": {
+          "doc": "docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 8
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 183,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/catalogue-presentation/preview",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@preview",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {
+        "W02": {
+          "doc": "docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 9
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 184,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/catalogue-presentation/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@rollback",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {
+        "W02": {
+          "doc": "docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 10
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
       "original_route_number": 185,
       "source": "website",
       "method": "GET|HEAD",
@@ -3739,6 +3807,10 @@
         "X01"
       ],
       "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 7
+        },
         "X01": {
           "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
           "line": 16
@@ -3757,6 +3829,10 @@
         "X01"
       ],
       "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 8
+        },
         "X01": {
           "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
           "line": 17
@@ -3775,6 +3851,10 @@
         "X01"
       ],
       "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 9
+        },
         "X01": {
           "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
           "line": 18
@@ -3793,6 +3873,10 @@
         "X01"
       ],
       "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 10
+        },
         "X01": {
           "doc": "docs/audit/MT-7.5_X01_RESERVATION_PARITY.md",
           "line": 19
@@ -4079,6 +4163,40 @@
       "remaining_evidence": "prior accepted family proof only; no new test"
     },
     {
+      "original_route_number": 258,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/reviews",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteReviewController@index",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 11
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 259,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "admin/reviews/{review}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteReviewController@update",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 12
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
       "original_route_number": 260,
       "source": "website",
       "method": "GET|HEAD",
@@ -4238,6 +4356,125 @@
       "remaining_evidence": "prior accepted family proof only; no new test"
     },
     {
+      "original_route_number": 277,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "cart",
+      "action": "App\\Http\\Controllers\\CartController@index",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 13
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 278,
+      "source": "website",
+      "method": "POST",
+      "uri": "cart",
+      "action": "App\\Http\\Controllers\\CartController@add",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 14
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 279,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "cart/{lineKey}",
+      "action": "App\\Http\\Controllers\\CartController@update",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 15
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 280,
+      "source": "website",
+      "method": "DELETE",
+      "uri": "cart/{lineKey}",
+      "action": "App\\Http\\Controllers\\CartController@remove",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 16
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 281,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "checkout",
+      "action": "App\\Http\\Controllers\\OrderController@checkout",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 17
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 282,
+      "source": "website",
+      "method": "POST",
+      "uri": "checkout",
+      "action": "App\\Http\\Controllers\\OrderController@store",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 18
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 283,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "compare",
+      "action": "App\\Http\\Controllers\\CatalogController@compare",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {
+        "W02": {
+          "doc": "docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 11
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
       "original_route_number": 284,
       "source": "website",
       "method": "GET|HEAD",
@@ -4250,6 +4487,40 @@
         "W05": {
           "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
           "line": 39
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 291,
+      "source": "website",
+      "method": "POST",
+      "uri": "customer/reviews",
+      "action": "App\\Http\\Controllers\\ProductReviewController@store",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 19
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 292,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "digital-solutions",
+      "action": "App\\Http\\Controllers\\CatalogController@services",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {
+        "W02": {
+          "doc": "docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 12
         }
       },
       "remaining_evidence": "prior accepted family proof only; no new test"
@@ -4301,6 +4572,93 @@
         "W05": {
           "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
           "line": 42
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 298,
+      "source": "website",
+      "method": "GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS",
+      "uri": "mobiles",
+      "action": "Illuminate\\Routing\\RedirectController",
+      "families": [
+        "F01",
+        "W02"
+      ],
+      "prior_exact_route_disposition": {
+        "W02": {
+          "doc": "docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 13
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 299,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "mobiles/{product:slug}",
+      "action": "Closure",
+      "families": [
+        "F01",
+        "W02"
+      ],
+      "prior_exact_route_disposition": {
+        "W02": {
+          "doc": "docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 14
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 300,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "order/{orderNumber}",
+      "action": "App\\Http\\Controllers\\OrderController@show",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 20
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 301,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "order/{orderNumber}/invoice",
+      "action": "App\\Http\\Controllers\\OrderController@invoice",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 21
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 302,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "order/{orderNumber}/payment",
+      "action": "App\\Http\\Controllers\\OrderController@payment",
+      "families": [
+        "W03"
+      ],
+      "prior_exact_route_disposition": {
+        "W03": {
+          "doc": "docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 22
         }
       },
       "remaining_evidence": "prior accepted family proof only; no new test"
@@ -4369,6 +4727,57 @@
         "W04": {
           "doc": "docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md",
           "line": 18
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 307,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "product/{product:slug}",
+      "action": "App\\Http\\Controllers\\CatalogController@product",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {
+        "W02": {
+          "doc": "docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 15
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 308,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "products",
+      "action": "App\\Http\\Controllers\\CatalogController@products",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {
+        "W02": {
+          "doc": "docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 16
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 309,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "products/{category}",
+      "action": "App\\Http\\Controllers\\CatalogController@category",
+      "families": [
+        "W02"
+      ],
+      "prior_exact_route_disposition": {
+        "W02": {
+          "doc": "docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 17
         }
       },
       "remaining_evidence": "prior accepted family proof only; no new test"
@@ -4536,54 +4945,6 @@
       "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminUserController@update",
       "families": [
         "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 181,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/catalogue-presentation",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@index",
-      "families": [
-        "W02"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 182,
-      "source": "website",
-      "method": "PUT",
-      "uri": "admin/catalogue-presentation",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@update",
-      "families": [
-        "W02"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 183,
-      "source": "website",
-      "method": "PUT",
-      "uri": "admin/catalogue-presentation/preview",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@preview",
-      "families": [
-        "W02"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 184,
-      "source": "website",
-      "method": "PUT",
-      "uri": "admin/catalogue-presentation/revisions/{revision}/rollback",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteCataloguePresentationController@rollback",
-      "families": [
-        "W02"
       ],
       "prior_exact_route_disposition": {},
       "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
@@ -4805,30 +5166,6 @@
       "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
     },
     {
-      "original_route_number": 258,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/reviews",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteReviewController@index",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 259,
-      "source": "website",
-      "method": "PATCH",
-      "uri": "admin/reviews/{review}",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteReviewController@update",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
       "original_route_number": 264,
       "source": "website",
       "method": "GET|HEAD",
@@ -4925,90 +5262,6 @@
       "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
     },
     {
-      "original_route_number": 277,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "cart",
-      "action": "App\\Http\\Controllers\\CartController@index",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 278,
-      "source": "website",
-      "method": "POST",
-      "uri": "cart",
-      "action": "App\\Http\\Controllers\\CartController@add",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 279,
-      "source": "website",
-      "method": "PATCH",
-      "uri": "cart/{lineKey}",
-      "action": "App\\Http\\Controllers\\CartController@update",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 280,
-      "source": "website",
-      "method": "DELETE",
-      "uri": "cart/{lineKey}",
-      "action": "App\\Http\\Controllers\\CartController@remove",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 281,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "checkout",
-      "action": "App\\Http\\Controllers\\OrderController@checkout",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 282,
-      "source": "website",
-      "method": "POST",
-      "uri": "checkout",
-      "action": "App\\Http\\Controllers\\OrderController@store",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 283,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "compare",
-      "action": "App\\Http\\Controllers\\CatalogController@compare",
-      "families": [
-        "W02"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
       "original_route_number": 285,
       "source": "website",
       "method": "GET|HEAD",
@@ -5081,30 +5334,6 @@
       "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
     },
     {
-      "original_route_number": 291,
-      "source": "website",
-      "method": "POST",
-      "uri": "customer/reviews",
-      "action": "App\\Http\\Controllers\\ProductReviewController@store",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 292,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "digital-solutions",
-      "action": "App\\Http\\Controllers\\CatalogController@services",
-      "families": [
-        "W02"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
       "original_route_number": 296,
       "source": "website",
       "method": "GET|HEAD",
@@ -5124,104 +5353,6 @@
       "action": "App\\Http\\Controllers\\WebsitePasswordController@email",
       "families": [
         "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 298,
-      "source": "website",
-      "method": "GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS",
-      "uri": "mobiles",
-      "action": "Illuminate\\Routing\\RedirectController",
-      "families": [
-        "F01",
-        "W02"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 299,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "mobiles/{product:slug}",
-      "action": "Closure",
-      "families": [
-        "F01",
-        "W02"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 300,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "order/{orderNumber}",
-      "action": "App\\Http\\Controllers\\OrderController@show",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 301,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "order/{orderNumber}/invoice",
-      "action": "App\\Http\\Controllers\\OrderController@invoice",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 302,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "order/{orderNumber}/payment",
-      "action": "App\\Http\\Controllers\\OrderController@payment",
-      "families": [
-        "W03"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 307,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "product/{product:slug}",
-      "action": "App\\Http\\Controllers\\CatalogController@product",
-      "families": [
-        "W02"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 308,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "products",
-      "action": "App\\Http\\Controllers\\CatalogController@products",
-      "families": [
-        "W02"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 309,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "products/{category}",
-      "action": "App\\Http\\Controllers\\CatalogController@category",
-      "families": [
-        "W02"
       ],
       "prior_exact_route_disposition": {},
       "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
