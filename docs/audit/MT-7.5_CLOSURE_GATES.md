@@ -189,3 +189,7 @@ All earlier H01 pending/P03 tool-blocked/W02 typed-layout discovery text above i
 ## 23/G-C development closure supersession — 25-Sep-2026 08:31 PKT
 
 `MT-7.5_GC_DEVELOPMENT_CLOSURE_2026-09-25.md` records **23/G-C DONE DEVELOPMENT**: consolidated document/payment/notices technical scope is accepted, including focused legal-policy PHP/protected/public Edge evidence. Authentic Gmail/provider activity, final legal/owner/license choices and the final MT-7.6 manual are explicitly not closed by this gate. **MT-7.5 22/27 DONE, 5 OPEN; next 24/G-S.**
+
+## Q01 terminal development closure (25-Sep-2026)
+
+Historical Q01 In Progress/billing-blocker text above is superseded. Exact candidate `6cfa5d3b027e5768a33121362bf5d03172ecd653` was verified by request-only child `df4fa3e5af139800c716f0b9361fa01e8b8bba47` in GitHub Actions run `36138681492`; request validation and clean-checkout acceptance both completed SUCCESS. Full backend 442/442, race/reset 24/24, builds/style/security, all POS/Admin + Website browser/performance families, final MySQL schema with `business_rows=0`, and `WORKTREE=clean` PASS. **Q01 Complete; MT-7.5 development parity 27/27 Complete.** External/provider/production/owner-legal PRE-LAUNCH holds remain separate. MT-7.6 is not started by this closure.
