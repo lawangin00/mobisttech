@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Catalog\ProductDefinitions;
 use App\Catalog\ProductWebsitePublication;
 use App\Identity\Access;
+use App\Identity\IdentityAudit;
+use App\Inventory\AcquisitionDocuments;
 use App\Inventory\InventoryOperations;
 use App\Migration\SourceRow;
 use App\Models\Admin;
@@ -134,6 +136,51 @@ final class PosTransactionController extends Controller
         $result = $inventory->acquire($actor, $outlet, $product, $this->key($request), $request->all());
 
         return response()->json(['data' => $result]);
+    }
+
+    public function acquisitionDocument(Request $request, int $acquisition, string $side, AcquisitionDocuments $documents)
+    {
+        [$actor, $outlet] = $this->context($request, ['shop.inventory']);
+        $bytes = $documents->read($actor, $outlet, $acquisition, $side);
+        $image = @getimagesizefromstring($bytes);
+        abort_unless($image && in_array($image['mime'], ['image/png', 'image/jpeg'], true), 409,
+            'Stored acquisition evidence is not a supported image.');
+        IdentityAudit::record('admin', $actor->id, 'acquisition_evidence_read', 'acquisition:'.$acquisition.':'.$side, $outlet->id);
+
+        return response($bytes)->withHeaders([
+            'Content-Type' => $image['mime'], 'Content-Disposition' => 'attachment; filename="acquisition-'.$acquisition.'-'.$side.'.'.($image['mime'] === 'image/png' ? 'png' : 'jpg').'"',
+            'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff', 'Referrer-Policy' => 'no-referrer',
+        ]);
+    }
+
+    public function acquisitionDocumentAttach(Request $request, int $acquisition, string $side, AcquisitionDocuments $documents)
+    {
+        [$actor, $outlet] = $this->context($request, ['shop.inventory']);
+        abort_if(array_diff(array_keys($request->all()), ['image_base64']), 422, 'Unexpected evidence fields.');
+        $data = Validator::make($request->all(), ['image_base64' => ['required', 'string', 'max:7000000']])->validate();
+        $bytes = base64_decode($data['image_base64'], true);
+        abort_unless(is_string($bytes) && strlen($bytes) <= 5 * 1024 * 1024, 422, 'Invalid acquisition image.');
+        try {
+            $image = @getimagesizefromstring($bytes);
+            abort_unless($image && in_array($image['mime'], ['image/png', 'image/jpeg'], true), 422,
+                'Acquisition evidence must be a PNG or JPEG up to 5 MB.');
+            $documents->attach($actor, $outlet, $acquisition, $side, $bytes);
+        } catch (\InvalidArgumentException $error) {
+            throw ValidationException::withMessages(['image_base64' => 'Acquisition evidence must be a PNG or JPEG up to 5 MB.']);
+        }
+
+        return response()->json(['data' => ['attached' => true, 'acquisition_id' => $acquisition, 'side' => $side]]);
+    }
+
+    public function archiveProduct(Request $request, string $product, InventoryOperations $inventory)
+    {
+        [$actor, $outlet] = $this->context($request, ['shop.inventory']);
+        $data = Validator::make($request->all(), [
+            'expected_version' => ['required', 'integer', 'min:1'],
+        ])->validate();
+        abort_if(array_diff(array_keys($request->all()), ['expected_version']), 422, 'Unexpected archive fields.');
+
+        return response()->json(['data' => $inventory->archive($actor, $outlet, $product, $this->key($request), (int) $data['expected_version'])]);
     }
 
     public function imeis(Request $request, string $product, InventoryOperations $inventory)
@@ -341,9 +388,11 @@ final class PosTransactionController extends Controller
             ->orderBy('unit_no')->limit(30)->get()->map(fn (StockUnit $unit) => $this->unitPayload($unit))->all() : [];
         $acquisitions = $inventory ? DB::table('stock_acquisitions')->where('product_id', $product->id)
             ->where('outlet_id', $product->outlet_id)->latest('id')->limit(20)
-            ->get(['source_type', 'quantity', 'unit_purchase_price', 'acquired_at'])
-            ->map(fn ($row) => ['source_type' => $row->source_type, 'quantity' => (int) $row->quantity,
-                'unit_purchase_price' => (string) $row->unit_purchase_price, 'acquired_at' => $row->acquired_at])->all() : [];
+            ->get(['id', 'source_type', 'quantity', 'unit_purchase_price', 'acquired_at', 'cnic_front_path', 'cnic_back_path'])
+            ->map(fn ($row) => ['id' => (int) $row->id, 'source_type' => $row->source_type, 'quantity' => (int) $row->quantity,
+                'unit_purchase_price' => (string) $row->unit_purchase_price, 'acquired_at' => $row->acquired_at,
+                'has_front' => is_string($row->cnic_front_path) && $row->cnic_front_path !== '',
+                'has_back' => is_string($row->cnic_back_path) && $row->cnic_back_path !== ''])->all() : [];
         $movements = $inventory ? DB::table('stock_movements')->where('product_id', $product->id)
             ->where('outlet_id', $product->outlet_id)->latest('id')->limit(30)
             ->get(['type', 'quantity_change', 'stock_before', 'stock_after', 'created_at'])

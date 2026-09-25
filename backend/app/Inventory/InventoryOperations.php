@@ -111,12 +111,12 @@ final class InventoryOperations
         });
     }
 
-    public function archive(IdentityAccount $actor, Outlet $outlet, string $productId, string $key): array
+    public function archive(IdentityAccount $actor, Outlet $outlet, string $productId, string $key, ?int $expectedVersion = null): array
     {
-        return $this->mutate($actor, $outlet, $productId, 'archive', $key, [], function ($product) {
-            if ($product->qty !== 0 || $this->stock->holds($product->id)->isNotEmpty()) {
-                throw new LogicException('Stock or holds prevent archiving.');
-            }
+        return $this->mutate($actor, $outlet, $productId, 'archive', $key, $expectedVersion === null ? [] : ['expected_version' => $expectedVersion], function ($product) use ($expectedVersion) {
+            abort_if($expectedVersion !== null && (int) $product->version !== $expectedVersion, 409, 'Product changed; reload before archiving.');
+            abort_if($product->qty !== 0 || $this->stock->holds($product->id)->isNotEmpty(), 409,
+                'Stock or holds prevent archiving.');
             $product->forceFill(['isDeleted' => true, 'archived_at' => now(), 'version' => $product->version + 1])->save();
             CatalogChanged::record('product', $product->public_id, $product->version);
 

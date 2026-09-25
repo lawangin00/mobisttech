@@ -35,7 +35,7 @@ For each row below, compare the *original source behavior* with current approved
 | C01 | Complete | Preserve independently completed MT-6.3 Windows Control ownership/launcher acceptance; no unrelated host/source changes. |
 | Q01 | In Progress | Final same-candidate clean checkout plus all family/cross-requirement closure; current GitHub runner prestart billing rejection makes later candidate CI unaccepted. |
 | F01 | Complete | Preserve MT-7.3 shared schema/build/CI foundation; exact current release-candidate verification belongs to Q01, not reopening F01. |
-| H01 | OPEN [E,I] — 25-Sep finite checkpoint | Frozen 1,224/316 mapped; source 45 H01 docs pinned/read-only verified; 275/316 route-specific accepted or documented targeted reviews, 41 W01 group-only original route reviews and bounded P08 protected backup-operator interface/approved retirement still pending. See `MT-7.5_H01_FINITE_ACCEPTANCE_2026-09-25.md`. Do not infer family behavior PASS or source retirement from path match; P01 and Q01 independent. |
+| H01 | OPEN [I,E], 25-Sep current | 1,224 source files/316 exact original routes/45 historical docs traced, all documentation provenance validated; protected Website audit + combined Website performance/CSV and P03 archived-product/private-image PHP evidence verified. Genuine remaining P03 out-of-transaction browser upload/download/archive UI (tool-blocked) and four W02 protected catalogue presentation behaviors. See H01 finite checklist latest; P01/Q01 remain independent. |
 
 Inventory invariant: five previously Complete (`P08,W08,B01,C01,F01`), sixteen Pending and one In Progress (`Q01`). These are **family** counts, not roadmap-point counts. Never mass-convert Pending solely because its component roadmap owners finished.
 
