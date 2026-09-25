@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "stage_id": "MT-7.5",
+  "reason": "milestone",
+  "gate": "full",
+  "source_commit": "04bf63aa3f071cd1bd111d7ab65f4f34f79a3256",
+  "requested_at_utc": "2026-09-25T12:01:44Z",
+  "execution_surface": "NORMAL_CHAT",
+  "authorization_ref": "docs/PROJECT_IMPLEMENTATION_STATUS.md:27/Q01 clean-checkout receipt + Website public-content checkpoint (25-Sep-2026 PKT)",
+  "local_evidence": "Source includes clean-checkout H01 receipt directory precondition and current Website media primary-upload selectors. Prior run 36126672244 passed request/style/full backend/race/build/budget/secret/fresh-owner/POS-Admin/Website checkout/customer-project before the now-corrected Website public-content selector failure. GitHub-only Website verification 36126672245 PASS.",
+  "hosted_only_need": "One exact-source clean Linux terminal Q01 run proving all remaining Website public-content, performance, final schema/cleanup and tracked-worktree gates on the corrected candidate."
+}
