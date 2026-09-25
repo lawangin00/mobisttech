@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "stage_id": "MT-7.5",
+  "reason": "milestone",
+  "gate": "full",
+  "source_commit": "fc411c0a869e6f2bf57d75d8a8a687ad2458e6ad",
+  "requested_at_utc": "2026-09-25T09:56:59Z",
+  "execution_surface": "NORMAL_CHAT",
+  "authorization_ref": "docs/PROJECT_IMPLEMENTATION_STATUS.md:27/Q01 request-encoding orchestration checkpoint (25-Sep-2026 PKT)",
+  "local_evidence": "Hosted run 36101561600 exposed and corrected Pint ordered_imports; local full backend 440/441 PASS isolated and corrected random synthetic outlet-code collision; corrected PlatformAdministrationInterfaceTest 6/6 PASS (240 assertions); scoped Pint 2 files PASS; request run 36121109557 was BOM-only orchestration failure before acceptance.",
+  "hosted_only_need": "One BOM-free materially changed exact-source clean Linux final Q01 verification of the corrected candidate across full backend, builds, Chromium, performance, schema cleanup and tracked worktree."
+}
