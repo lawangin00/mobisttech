@@ -1,11 +1,11 @@
 # Mobisttech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r24
+**Registry version:** MT-1.1-r25
 **Applied universal implementation epochs:** `U-CI-2026-09-19-1`, `U-CI-MODE-2026-09-21-2`
-**Universal baseline (review provenance):** Registry 1.36 / System 7.12
-**Bootstrap baseline (review provenance):** 1.14
-**Last-reviewed universal commit:** `6802291dc4d3e7a4b959ed93f79da0d52965e4a0`
-**Roadmap specification:** 1.12
+**Universal baseline (review provenance):** Registry 1.51 / System 7.12
+**Bootstrap baseline (review provenance):** 1.29
+**Last-reviewed universal commit:** `c51e63879798c594f023527d631513a9ca83d51e`
+**Roadmap specification:** 1.16
 **Date:** 2026-09-25
 **Repository root:** `C:\mobisttech`
 **Remote:** `lawangin00/mobisttech` (independent, public)
@@ -33,7 +33,6 @@ This is a **delta-only** project registry. At runtime it inherits the current ca
 - Current user instruction has highest authority. Project Goal defines required functionality; approved Preferences and requirements addendum define implementation boundaries. Legacy source documents are technical evidence only; old architecture/command semantics do not carry into this project.
 - `Initialize Project` for this project completes only MT-0.1. Do not rerun initialization merely because Goal/Preferences/addendum/control files are reconciled later.
 - `Y` / `Proceed`: continue an active `In Progress` point, otherwise execute the first verified Pending point. After one point is fully completed, verified, committed and pushed, stop; do not automatically start the next point.
-- `Resume` after a ChatGPT stream/recovery/polling timeout or interrupted response is a continuity recovery, not a fresh execution request. Before any mutation, retry or new CI dispatch, recover the exact current checkpoint read-only from Git/ledger and, when applicable, the already-started CI run/job state. A stream/poll wrapper timeout is not itself a task or CI failure. Reuse completed/PASS evidence, never restart completed work, never create a duplicate or parallel run for an already-active request, and continue only from the first genuinely pending action. If the existing run is terminal, use that terminal result; on failure, classify the exact failing signature and apply LOOP_GUARD/material-correction rules before any retry.
 - Chat/Work/Local Work handoffs are exclusively user-initiated through existing explicit manual commands. Do not propose an automatic conversation-surface handoff, infer one from a task type, or impose proposal/acceptance/decline dependencies on continuing work. An actual missing technical capability may justify suggesting an explicit **execution-mode** command; it must never cause an automatic mode change or handoff.
 - Audit/Verify/Sync/Checkpoint/manual-handoff mutation scope is limited to this monorepo. Never synchronize, repair, pull/fetch, repoint or mutate protected legacy source repositories as a side effect of this project's commands.
 - Authorized implementation on the user-selected execution mode plus intended commit/push to this project's remote are within point scope. Destructive operations, live production/customer-data cutover, real external messaging and provider activation require separate authorization.
@@ -84,7 +83,7 @@ Future universal control fixes auto-apply on canonical first-load/Refresh/new se
 
 The canonical Universal execution-mode policy now names Normal Chat local execution `LOCAL` (`Shift to Local` / `VP:SHIFT-TO-LOCAL`). Verified LocalMCPcoder is the primary Windows PC backend; separately authorized RDC remains an optional fallback. GitHub mode, exact Sync safety, immutable Project ID, approved product scope, CI milestone-vs-routine behavior, existing checkpoint/ledger and manual surface handoffs are unchanged. Old dated GitHub/RDC rollout evidence above is historical, not the current mode state. The project-owned CI gate accepts both canonical LOCAL and legacy persisted RDC during the transition; no tests, feature stage, license state or release acceptance are implied by this documentation/control update.
 
-Audit reconciliation (23-Sep-2026): Current reviewed canonical Universal Registry `1.48`, Bootstrap `1.26`, Roadmap Specification `1.15`, Execution Mode Policy `1.4`; verified references commit `6802291dc4d3e7a4b959ed93f79da0d52965e4a0`. Prior dated GitHub/RDC snapshots and original baseline provenance remain historical; current mode must always be freshly read from canonical `UNIVERSAL_EXECUTION_MODE.json`. Project requirements, application code and ledger progress are unchanged.
+Audit reconciliation (25-Sep-2026): Current reviewed canonical Universal Registry `1.51`, Bootstrap `1.29`, Roadmap Specification `1.16`, Execution Mode Policy `1.7`, Response Format `2.3`, CI Dispatch Policy `1.2`; verified references commit `c51e63879798c594f023527d631513a9ca83d51e`. Prior dated GitHub/RDC snapshots and original baseline provenance remain historical; current mode must always be freshly read from canonical `UNIVERSAL_EXECUTION_MODE.json`. Project requirements, application code and ledger progress are unchanged.
 
 ## ChatGPT Project first-command binding
 
