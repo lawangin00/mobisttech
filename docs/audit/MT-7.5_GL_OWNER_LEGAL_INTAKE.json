@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "gate": "26/G-L",
+  "state": "HOLD_HUMAN_LEGAL_INPUT_REQUIRED",
+  "trading_identity": {
+    "public_business_name": "mobiST Technologies",
+    "registered_legal_holder": null,
+    "registered_legal_holder_verified": false
+  },
+  "historical_owner_input": {
+    "pos_invoice_clause_urdu": "خریدا ہوا مال واپس نہیں ہوگا۔ ایکسچینج پر آئٹم/پروڈکٹ کے حساب سے 20% تا 40% تک کٹوتی ہوگی۔ ٹچ اسکرین یا کیمرہ ڈیڈ ہونے کی کوئی وارنٹی نہیں۔",
+    "applies_to_public_website_policy": null
+  },
+  "returns_refunds": {
+    "website_scope": null,
+    "returns_allowed": null,
+    "exchange_eligibility_and_condition": null,
+    "exchange_deduction_rule_20_to_40_percent": null,
+    "exclusions": null,
+    "refund_or_exchange_method": null,
+    "delivery_or_return_cost_rule": null
+  },
+  "warranty_support": {
+    "website_scope": null,
+    "warranty_duration_and_source": null,
+    "touch_screen_camera_exclusion_public_applicability": null,
+    "claim_requirements": null,
+    "other_exclusions": null,
+    "support_channel_commitment": null
+  },
+  "shipping_delivery": {
+    "service_area": null,
+    "delivery_method_or_courier_commitment": null,
+    "delivery_timing_commitment": null,
+    "shipping_charges_rule": null,
+    "failed_delivery_rule": null,
+    "cancellation_boundary": null
+  },
+  "digital_services_terms": {
+    "applicability": null,
+    "deposit_rule": null,
+    "milestone_payment_rule": null,
+    "cancellation_or_termination_rule": null,
+    "refund_rule": null,
+    "revision_or_change_request_rule": null,
+    "deliverable_ownership_or_license_rule": null,
+    "third_party_cost_rule": null
+  },
+  "legal_metadata": {
+    "governing_jurisdiction": null,
+    "privacy_effective_date": null,
+    "terms_effective_date": null,
+    "returns_refunds_effective_date": null,
+    "shipping_delivery_effective_date": null,
+    "warranty_effective_date": null,
+    "digital_services_terms_effective_date": null,
+    "payment_disclosures_effective_date": null
+  },
+  "final_approval": {
+    "exact_final_text_reviewed_by_owner": false,
+    "exact_final_text_owner_approved": false,
+    "approval_reference": null
+  },
+  "technical_facts_locked": {
+    "website_payment_channels": [
+      "Cash on Delivery",
+      "JazzCash",
+      "Easypaisa",
+      "Credit / Debit Card"
+    ],
+    "website_bank_transfer_publicly_approved": false,
+    "external_payment_channels_default_off_until_authentic_activation": true,
+    "raw_pan_cvv_pin_storage_prohibited": true,
+    "cookie_policy_conditional_without_nonessential_tracking": true,
+    "sale_time_warranty_snapshots_immutable": true,
+    "returns_refunds_append_compensating_history": true,
+    "software_project_license_model": "proprietary/all rights reserved; exact legal holder pending"
+  }
+}

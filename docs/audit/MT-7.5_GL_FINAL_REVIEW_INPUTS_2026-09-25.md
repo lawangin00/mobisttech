@@ -35,6 +35,15 @@ The technical/privacy/product facts needed for final legal review are now reconc
    - Effective date and final version for each public Privacy / Terms / Warranty / Returns policy and any Software-specific policy revision.
    - Explicit owner/legal approval of the exact final text. D10=A does not count as that approval; it only authorizes private drafts for review.
 
+
+## Owner-ready review artifacts
+
+- `MT-7.5_GL_PRIVATE_POLICY_REVIEW_PACKET_2026-09-25.md` separates already verified technical/product facts from the exact commercial/legal decisions still requiring human approval for all eight CMS policy types. It is private/unapproved and contains no invented legal commitment.
+- `MT-7.5_GL_OWNER_LEGAL_INTAKE.json` is the single machine-readable owner/legal input record. Null values are deliberate HOLDs.
+- `python tools/docs/gl_owner_legal_intake_check.py` fails closed until the registered holder is verified, every required commercial/legal field is explicitly completed and the exact final text is reviewed/approved by the owner.
+
+Prior conversation/file recovery in this session found no explicit registered proprietor/legal-holder value and no previously approved final Website/public D10 policy set. The brand name, Git author identity, bank/tax identity and unrelated personal names are not accepted as substitutes.
+
 ## Final technical action after inputs
 
 After the exact inputs above are supplied/approved, update only the affected private policy revisions, record truthful approval/review/effective metadata through the existing protected policy workflow, verify release-distribution NOTICE/dependency contents on the exact candidate, and then close G-L. Public publication remains a separate explicit release action; do not infer it from approval.
