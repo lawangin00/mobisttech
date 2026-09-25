@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "stage_id": "MT-7.5",
+  "reason": "milestone",
+  "gate": "full",
+  "source_commit": "6bd7e05910b9558577132e63d41d07f30e1723c4",
+  "requested_at_utc": "2026-09-25T06:08:29Z",
+  "execution_surface": "NORMAL_CHAT",
+  "authorization_ref": "docs/PROJECT_IMPLEMENTATION_STATUS.md:27/Q01 final milestone authorization + local evidence preflight (25-Sep-2026 PKT)",
+  "local_evidence": "Local full backend 439/441 PASS (11707 assertions); two stale test contracts corrected; focused ApiContract 1/1 (21) + WebsiteModePublication 1/1 (15) PASS; no production code change after fa4a3c9.",
+  "hosted_only_need": "Independent clean Linux exact-source final Q01 verification of full backend, builds, Chromium, performance, schema cleanup and tracked worktree."
+}
