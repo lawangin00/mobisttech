@@ -1,6 +1,18 @@
 import {expect, test} from '@playwright/test';
 import {releaseSyntheticAdminSession} from './synthetic-admin-session';
+import {runH01Fixture} from './h01-fixture';
 
+
+let h01FixtureSeeded = false;
+test.beforeAll(() => {
+    runH01Fixture('H01BackupBrowserSeeder', 'MT75_H01_BACKUP_E2E_ENABLED', 'MT75_H01_BACKUP_FIXTURE_ACTION', 'seed');
+    h01FixtureSeeded = true;
+});
+test.afterAll(() => {
+    if (h01FixtureSeeded) {
+        runH01Fixture('H01BackupBrowserSeeder', 'MT75_H01_BACKUP_E2E_ENABLED', 'MT75_H01_BACKUP_FIXTURE_ACTION', 'cleanup');
+    }
+});
 test.afterEach(async ({page}) => { await releaseSyntheticAdminSession(page); });
 
 async function signIn(page: import('@playwright/test').Page, email: string) {

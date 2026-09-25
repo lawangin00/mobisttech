@@ -75,6 +75,7 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
         permission_catalogue: permissions.map((code) => ({ code, label: code })),
         assignable_outlets: [{ id: 'e2e-platform-outlet', name: 'E2E Sales Outlet' }],
         integrations: [{ provider: 'gmail', status: 'connected', account: 'mobisttech@gmail.com' }],
+        website_credentials: [],
         payment_destinations: [{ destination_id: 'destination-1', method: 'bank_transfer', display_name: 'E2E Bank', provider_label: 'Bank', masked_identifier: '****4400', active: true, version: 2 }],
         pos_configuration: {
             domains: {
@@ -169,7 +170,7 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
     await expect.poll(() => calls.some((call) => call.path.endsWith('/pages/draft') && call.body?.title === 'E2E Case Study Updated')).toBe(true);
     const siteMedia = page.getByRole('heading', { name: 'Website media library' }).locator('xpath=ancestor::section[1]');
     await expect(siteMedia).toContainText('e2e-site.webp');
-    await siteMedia.locator('input[type="file"]').setInputFiles({
+    await siteMedia.locator('input[type="file"]').first().setInputFiles({
         name: 'browser-site.png', mimeType: 'image/png',
         buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nS0AAAAASUVORK5CYII=', 'base64'),
     });
