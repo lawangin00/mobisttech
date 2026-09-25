@@ -1,12 +1,12 @@
 # Mobisttech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r25
-**Applied universal implementation epochs:** `U-CI-2026-09-19-1`, `U-CI-MODE-2026-09-21-2`
-**Universal baseline (review provenance):** Registry 1.51 / System 7.12
-**Bootstrap baseline (review provenance):** 1.29
-**Last-reviewed universal commit:** `c51e63879798c594f023527d631513a9ca83d51e`
-**Roadmap specification:** 1.16
-**Date:** 2026-09-25
+**Registry version:** MT-1.1-r26
+**Applied universal implementation epochs:** `U-CI-2026-09-19-1`, `U-CI-MODE-2026-09-21-2`, `U-EXEC-ROUTE-2026-09-26-1`
+**Universal baseline (review provenance):** Registry 1.52 / System 7.13
+**Bootstrap baseline (review provenance):** 1.30
+**Last-reviewed universal commit:** `e82eb044444111ab65ff6d912f76c25f7d8933b7`
+**Roadmap specification:** 1.17
+**Date:** 2026-09-26
 **Repository root:** `C:\mobisttech`
 **Remote:** `lawangin00/mobisttech` (independent, public)
 **Project ID:** `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`
@@ -33,9 +33,9 @@ This is a **delta-only** project registry. At runtime it inherits the current ca
 - Current user instruction has highest authority. Project Goal defines required functionality; approved Preferences and requirements addendum define implementation boundaries. Legacy source documents are technical evidence only; old architecture/command semantics do not carry into this project.
 - `Initialize Project` for this project completes only MT-0.1. Do not rerun initialization merely because Goal/Preferences/addendum/control files are reconciled later.
 - `Y` / `Proceed`: continue an active `In Progress` point, otherwise execute the first verified Pending point. After one point is fully completed, verified, committed and pushed, stop; do not automatically start the next point.
-- Chat/Work/Local Work handoffs are exclusively user-initiated through existing explicit manual commands. Do not propose an automatic conversation-surface handoff, infer one from a task type, or impose proposal/acceptance/decline dependencies on continuing work. An actual missing technical capability may justify suggesting an explicit **execution-mode** command; it must never cause an automatic mode change or handoff.
+- Chat/Work/Local Work handoffs are exclusively user-initiated through existing explicit manual commands. Do not propose an automatic conversation-surface handoff. Normal Chat execution routes inherit the four universal commands (`Shift to LDC`, `Shift to MCP`, `Shift to RDC`, `Shift to Git`) and their connector fallback rules; a capability gap may justify suggesting one of those commands, never an automatic route/surface change.
 - Audit/Verify/Sync/Checkpoint/manual-handoff mutation scope is limited to this monorepo. Never synchronize, repair, pull/fetch, repoint or mutate protected legacy source repositories as a side effect of this project's commands.
-- Authorized implementation on the user-selected execution mode plus intended commit/push to this project's remote are within point scope. Destructive operations, live production/customer-data cutover, real external messaging and provider activation require separate authorization.
+- Authorized implementation on the user-selected execution route plus intended commit/push to this project's remote are within point scope. Routine verification runs on the authorized local PC in every route, including Git; hosted GitHub CI is reserved for a legitimate major milestone, project completion/final audit/release, or documented necessary independent verification. Destructive operations, live production/customer-data cutover, real external messaging and provider activation require separate authorization.
 - Never replace/repoint/overwrite this remote with an existing repository. Never force-push.
 - Project ID/workspace/identity/remote/manual-handoff mismatch is a hard stop before mutation. Never substitute a similarly named/sibling project.
 - Directional manual handoffs must verify Project ID `282dba2f-a2d9-47e8-aa8d-e499fbe1706c`, canonical remote `lawangin00/mobisttech` and intended pushed checkpoint.
@@ -79,11 +79,11 @@ Future universal control fixes auto-apply on canonical first-load/Refresh/new se
 - GitHub plugin and GitHub Actions are the default for authorized website development, builds and automated tests. Local-only acceptance remains pending until genuinely performed following an explicit execution-mode command or exact scoped exception; do not assume a global mode switch implies local acceptance.
 - Preserve the existing MT-7.5 In Progress point and all unrelated gates; mode-policy reconciliation does not restart or close MT-7.5.
 
-## Universal LOCAL mode alignment (23-Sep-2026)
+## Universal execution-route alignment (26-Sep-2026)
 
-The canonical Universal execution-mode policy now names Normal Chat local execution `LOCAL` (`Shift to Local` / `VP:SHIFT-TO-LOCAL`). Verified LocalMCPcoder is the primary Windows PC backend; separately authorized RDC remains an optional fallback. GitHub mode, exact Sync safety, immutable Project ID, approved product scope, CI milestone-vs-routine behavior, existing checkpoint/ledger and manual surface handoffs are unchanged. Old dated GitHub/RDC rollout evidence above is historical, not the current mode state. The project-owned CI gate accepts both canonical LOCAL and legacy persisted RDC during the transition; no tests, feature stage, license state or release acceptance are implied by this documentation/control update.
+Mobisttech inherits the four canonical short commands: `Shift to LDC`, `Shift to MCP`, `Shift to RDC`, and `Shift to Git`. LDC is the default local backend with fallback LDC -> MCP -> RDC; MCP selection uses MCP -> LDC -> RDC; RDC selection uses RDC -> LDC -> MCP. Legacy `Shift to Local` maps to LDC and legacy `Shift to GitHub` maps to Git. `Shift to Git` changes source/code routing only: routine project verification remains local-PC first in every route. Hosted GitHub CI is no longer per-stage; the project gate accepts only exact-source `milestone`, `project_completion`, or documented `necessary` requests with prior authorization, local evidence, hosted-only need, and explicit execution surface. The request-only main/Website workflows retain zero Actions for ordinary source pushes; the separately scoped Linux deployment rehearsal retains its existing ledger-backed milestone preflight. This control change does not advance MT-7.6 or any product acceptance gate.
 
-Audit reconciliation (25-Sep-2026): Current reviewed canonical Universal Registry `1.51`, Bootstrap `1.29`, Roadmap Specification `1.16`, Execution Mode Policy `1.7`, Response Format `2.3`, CI Dispatch Policy `1.2`; verified references commit `c51e63879798c594f023527d631513a9ca83d51e`. Prior dated GitHub/RDC snapshots and original baseline provenance remain historical; current mode must always be freshly read from canonical `UNIVERSAL_EXECUTION_MODE.json`. Project requirements, application code and ledger progress are unchanged.
+Audit reconciliation (26-Sep-2026): Current reviewed canonical Universal Registry `1.52`, Bootstrap `1.30`, Roadmap Specification `1.17`, Execution Mode Policy `1.8`, Response Format `2.3`, CI Dispatch Policy `1.3`; verified references commit `e82eb044444111ab65ff6d912f76c25f7d8933b7`, whose execution-control milestone run `36202533850` is terminal SUCCESS. Prior dated GitHub/RDC/LOCAL snapshots above remain historical; current route must always be freshly read from canonical `UNIVERSAL_EXECUTION_MODE.json`.
 
 ## ChatGPT Project first-command binding
 

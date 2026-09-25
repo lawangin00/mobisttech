@@ -43,8 +43,13 @@ def check() -> None:
     assert '117/117 PASS' in payment_checklist and 'H-02' in payment_checklist and 'PRE-LAUNCH' in payment_checklist
     assert all(s in hold for s in ('JazzCash', 'Easypaisa', 'hosted/tokenized card', 'PRE-LAUNCH PENDING', 'PRE-LAUNCH BLOCKED', 'live'))
     assert 'H-02' in ledger and '16/27 DONE, 11 OPEN' in ledger
-    assert 'LOOP_GUARD' in registry and 'full joined regression' in ci.lower()
-    print(f'MOBISTTECH_PROJECT_WIDE_EXECUTION_POLICY_PASS: 27 stable gates, baseline {complete} DONE, {27 - complete} OPEN; cooperative lock only')
+    assert 'LOOP_GUARD' in registry and 'full joined' in ci.lower() and 'regression' in ci.lower()
+    for command in ('Shift to LDC', 'Shift to MCP', 'Shift to RDC', 'Shift to Git'):
+        assert command in registry and command in agents, f'Execution route missing: {command}'
+    assert 'routine verification runs on the authorized local pc in every route' in ci.lower()
+    assert 'project_completion' in ci and 'reason: stage' not in ci
+    assert 'LDC -> Local MCP Coder -> RDC' in agents
+    print(f'MOBISTTECH_PROJECT_WIDE_EXECUTION_POLICY_PASS: 27 stable gates, baseline {complete} DONE, {27 - complete} OPEN; local-first routes enforced')
 
 
 if __name__ == '__main__':

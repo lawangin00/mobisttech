@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   mode:
-    name: Validate explicit stage or milestone CI request
+    name: Validate explicit milestone/completion CI request
     runs-on: ubuntu-latest
     timeout-minutes: 2
     outputs:
