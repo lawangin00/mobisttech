@@ -103,6 +103,10 @@ The final product also requires manual coverage for these verified workflows; th
 | Payment provider PRE-LAUNCH activation boundary | §§16.1, 24 | Covered |
 | Owner/legal PRE-LAUNCH publication boundary | §§15, 24 | Covered |
 
+## Screenshot evidence checkpoint
+
+Current verified capture state: **18/30 target IDs captured as 20 PNG files**. Exact hashes, routes, synthetic provenance and terminal evidence are recorded in `SCREENSHOT_MANIFEST.md`. S01-S04, S06 and S12-S24 captured targets all have terminal PASS + visual QA; the S01/S02/S03/S04/S06 dedicated split rerun closed the earlier unrelated Platform-assertion evidence gap. Remaining targets: **S05, S07, S08, S09, S10, S11, S25, S26, S27, S28, S29, S30**.
+
 ## Remaining MT-7.6 acceptance work
 
 1. Execute/capture the final UI procedures using safe synthetic data.

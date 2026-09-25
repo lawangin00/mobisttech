@@ -36,6 +36,8 @@ Default local development endpoints are loopback-only. Do not advertise a LAN/QR
 
 Use the protected Admin sign-in page. The backend decides the effective permissions, role membership and outlet assignments; hiding a navigation item never grants or removes the underlying permission.
 
+![Admin sign-in using a safe synthetic account](assets/S01_admin-sign-in.png)
+
 After sign-in:
 - use **My account** for your own profile/security information;
 - select an active outlet before entering outlet-scoped POS workspaces;
@@ -119,6 +121,8 @@ The protected POS navigation is generated from current effective permissions and
 
 Navigation labels/order/visibility may be customized for presentation. A hidden item remains protected by its normal backend permission and may still be reachable only by an authorized direct route.
 
+![Permission-aware POS home using a synthetic salesperson](assets/S02_pos-home.png)
+
 ## 5. Sales, payments, returns and refunds
 
 ### 5.1 Start a sale
@@ -149,6 +153,8 @@ For Cash:
 - verify calculated change;
 - do not represent change as a negative payment line.
 
+![POS sale and payment editor with synthetic data](assets/S03_sales-payment-editor.png)
+
 The sale cannot finalize unless authoritative payment/remaining rules are satisfied.
 
 ### 5.3 Split tender
@@ -160,6 +166,8 @@ Use **Add Payment** for each tender component. Confirm:
 - cash tender/change where applicable
 
 A payment destination is outlet-scoped. Do not reuse another outlet's destination.
+
+![Split tender with cash and card allocations](assets/S04_split-tender.png)
 
 ### 5.4 Returns
 
@@ -223,6 +231,8 @@ Open **POS > Inventory** for products, stock and units.
 Product definition includes the approved catalogue attributes and current warranty configuration. Product name remains editable/manual. Serialized units carry their own unit/IMEI identity and device configuration.
 
 Use **Master data** only with `config.master-data.manage` to maintain controlled option lists. Archiving an option preserves historical labels/usages rather than silently rewriting old records.
+
+![Inventory workspace using a synthetic Inventory Manager](assets/S06_inventory.png)
 
 ### 7.2 Receiving/acquisition
 
@@ -385,6 +395,8 @@ Open **Platform Administration** for protected configuration. Its header also li
 
 Visible links depend on permission.
 
+![Platform Administration with protected configuration controls](assets/S12_platform-administration.png)
+
 ### 11.4 Team Members and delegated roles
 
 Authorized administrators can create/manage Team Members, roles and outlet assignments. Important protections include:
@@ -395,6 +407,8 @@ Authorized administrators can create/manage Team Members, roles and outlet assig
 - last-owner/last-authority safeguards.
 
 Do not grant Full Access merely to make a screen visible. Grant only the permissions required for the person's actual job.
+
+![Team Member and delegated role administration](assets/S13_team-members.png)
 
 ## 12. POS presentation and configuration
 
@@ -431,6 +445,8 @@ Before publishing a mode:
 3. confirm public navigation/content behavior;
 4. publish only with the dedicated mode-publish permission.
 
+![Website operating mode and private presentation controls](assets/S14_website-mode.png)
+
 ## 14. Website CMS, navigation, SEO and media
 
 ### 14.1 CMS publishing model
@@ -456,11 +472,15 @@ Managed navigation supports nested items and approved destinations. A presentati
 
 Preview navigation before publishing, especially after changing Website mode.
 
+![Guided Website navigation, homepage and footer builder](assets/S15_cms-navigation-footer.png)
+
 ### 14.3 Media
 
 Upload only approved safe media. Media usage/history prevents unsafe deletion when an asset remains referenced. Replacement/upload are separate controls.
 
 Do not expose private acquisition/customer/project files through public Website media.
+
+![Website media library with safe synthetic media](assets/S16b_website-media.png)
 
 ### 14.4 SEO
 
@@ -471,6 +491,8 @@ Use the SEO controls for supported:
 - indexing/discovery configuration.
 
 Do not use canonical/external URLs to bypass the application's allowed navigation/URL safety rules.
+
+![Global Website SEO controls](assets/S16a_website-seo.png)
 
 ## 15. Legal policies
 
@@ -488,6 +510,8 @@ Legal-policy workflow is fail-closed:
 
 Cookie policy remains conditional when no non-essential tracking is active.
 
+![Legal and policy draft/review controls with no final unapproved text](assets/S17_legal-policy.png)
+
 ## 16. Website commerce administration
 
 Users with Website commerce permissions can manage the supported order/review administration.
@@ -504,9 +528,13 @@ Website Bank Transfer is not an approved checkout choice.
 
 External electronic channels remain unavailable/default-OFF until their authentic merchant-specific integration, sandbox evidence and separate activation approval are complete.
 
+![Website fixed payment-channel presentation and COD controls](assets/S19_website-payment-settings.png)
+
 ### 16.2 Orders
 
 Use Website commerce administration to review/manage order state according to the protected workflow. Do not mark an order paid from a UI label unless authoritative payment evidence exists.
+
+![Website commerce administration using a guarded synthetic order](assets/S18_website-commerce.png)
 
 ### 16.3 Reviews
 
@@ -542,6 +570,8 @@ Private client files are never public Website media.
 
 Digital-service commercial cancellation/refund/ownership wording remains subject to the final owner/legal policy approval before public legal publication.
 
+![Digital Operations project, proposal and milestone workspace](assets/S20_digital-operations.png)
+
 ## 18. Software Product publishing
 
 Mobisttech provides a reusable Software Product workflow; it is not hard-coded to one product.
@@ -571,6 +601,8 @@ Do not invent a download URL, version/date, license holder or “latest” claim
 
 The reconciled mobiST POS reference set is private factual source material for this workflow; public publication still requires the appropriate owner/legal/product authorization.
 
+![Reusable Software Product create/edit and release management](assets/S21_software-product.png)
+
 ## 19. Google integrations and backup
 
 ### 19.1 Integration configuration
@@ -580,6 +612,8 @@ Use the protected **Google integrations** area only with the required integratio
 Secrets/tokens are backend-only and must not be copied into screenshots/manual examples.
 
 Authentic Gmail/Drive connectivity remains an external acceptance item until the approved account/scopes and genuine test evidence exist.
+
+![Google integration status with credentials kept hidden](assets/S22_integrations.png)
 
 ### 19.2 Backups
 
@@ -593,6 +627,8 @@ Before any destructive action:
 5. retain recovery/audit evidence.
 
 Destructive production restore remains PRE-LAUNCH/action-specific HOLD.
+
+![Backup history using an exact-owned synthetic backup record](assets/S23_backup.png)
 
 ## 20. Data Reset
 
@@ -615,6 +651,10 @@ A changed scope/count/schema/code hash makes the preview stale and blocks execut
 Factory Reset preserves required system/bootstrap authority. The product does not provide an arbitrary SQL/shell reset route.
 
 **Production destructive execution is not authorized by this manual.**
+
+![Production reset HOLD shown in the final Admin UI](assets/S24a_reset-production-hold.png)
+
+![Dry-run reset preview with preserved bootstrap evidence](assets/S24b_reset-dry-run-preview.png)
 
 ## 21. Customer Website
 
