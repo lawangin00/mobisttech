@@ -6,6 +6,8 @@ import type { ConsultationAvailability, DigitalService } from "@/lib/website-api
 type Props = {
   services: DigitalService[];
   defaultService?: string;
+  attributionSource?: string | null;
+  attributionCampaign?: string | null;
   consultation: ConsultationAvailability;
 };
 
@@ -14,7 +16,7 @@ function optional(value: FormDataEntryValue | null) {
   return text === "" ? null : text;
 }
 
-export function DigitalEnquiryForm({ services, defaultService, consultation }: Props) {
+export function DigitalEnquiryForm({ services, defaultService, attributionSource, attributionCampaign, consultation }: Props) {
   const [serviceSlug, setServiceSlug] = useState(defaultService ?? services[0]?.slug ?? "");
   const [consultationRequested, setConsultationRequested] = useState(false);
   const [message, setMessage] = useState("");
@@ -46,7 +48,8 @@ export function DigitalEnquiryForm({ services, defaultService, consultation }: P
         preferred_contact: form.get("preferred_contact") || "whatsapp",
         package_public_id: optional(form.get("package_public_id")),
         addon_public_ids: addonIds,
-        source: "website",
+        source: attributionSource ?? "website",
+        campaign: attributionCampaign ?? null,
         consultation_requested: consultationRequested,
         preferred_timezone: consultationRequested ? consultation.timezone : null,
         preferred_window_start: consultationRequested ? optional(form.get("preferred_window_start")) : null,

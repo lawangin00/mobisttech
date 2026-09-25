@@ -142,6 +142,10 @@ final class DigitalServiceLeads
             'consultation_requested' => 'nullable|boolean', 'preferred_timezone' => 'nullable|string|max:64',
             'preferred_window_start' => 'nullable|string|max:80', 'preferred_window_end' => 'nullable|string|max:80',
         ])->validate();
+        // Attribution is intentionally coarse and non-identifying. Never persist arbitrary
+        // referrer/query text, email-like values, IP addresses or full URLs as source/campaign.
+        $data['source'] = $this->attributionToken($data['source'] ?? null);
+        $data['campaign'] = $this->attributionToken($data['campaign'] ?? null);
         $fileDescriptors = $this->validateFiles($files);
         $fingerprint = hash('sha256', $clientFingerprint);
         $requestHash = $this->digest(['input' => $data, 'files' => array_map(fn ($f) => ['name' => $f['name'], 'sha256' => $f['sha256']], $fileDescriptors)]);
@@ -592,6 +596,16 @@ final class DigitalServiceLeads
     {
         $extra = array_diff(array_keys($input), $allowed);
         abort_if($extra !== [], 422, 'Unknown input fields: '.implode(', ', $extra));
+    }
+
+    private function attributionToken(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+        $value = trim($value);
+
+        return preg_match('/\A[A-Za-z0-9][A-Za-z0-9_-]{0,59}\z/', $value) ? $value : null;
     }
 
     private function nullable(mixed $value): ?string

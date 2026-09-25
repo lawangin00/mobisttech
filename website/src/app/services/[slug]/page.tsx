@@ -75,6 +75,6 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
       {item.packages.length > 0 && <div className="rounded-2xl border bg-white p-5"><h2 className="text-lg font-bold">Packages</h2><div className="mt-3 space-y-3">{item.packages.map((offer) => <div key={offer.public_id} className="rounded-xl bg-slate-50 p-3"><strong>{offer.name}</strong><p className="text-sm text-slate-600">{offer.price ? "PKR " + offer.price : offer.pricing_type}</p></div>)}</div></div>}
       {item.addons.length > 0 && <div className="rounded-2xl border bg-white p-5"><h2 className="text-lg font-bold">Add-ons</h2><div className="mt-3 space-y-3">{item.addons.map((offer) => <div key={offer.public_id} className="rounded-xl bg-slate-50 p-3"><strong>{offer.name}</strong><p className="text-sm text-slate-600">{offer.price ? "PKR " + offer.price : offer.pricing_type}</p></div>)}</div></div>}
     </section>
-    <Link href={"/enquiry?service=" + encodeURIComponent(item.slug)} prefetch={false} className="mt-8 inline-block rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">Discuss this service</Link>
+    <Link href={"/enquiry?service=" + encodeURIComponent(item.slug) + "&source=service_page&campaign=service_" + encodeURIComponent(item.slug)} prefetch={false} className="mt-8 inline-block rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">Discuss this service</Link>
   </main>;
 }

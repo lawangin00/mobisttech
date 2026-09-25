@@ -25,7 +25,7 @@ export default async function ServicesPage() {
       <h2 className="mt-1 text-xl font-bold"><Link href={"/services/" + service.slug} className="hover:underline">{service.name}</Link></h2>
       <p className="mt-2 text-slate-600">{service.short_description}</p>
       <p className="mt-4 font-semibold">{priceLabel(service.price_type, service.price)}</p>
-      <div className="mt-4 flex gap-3"><Link href={"/services/" + service.slug} className="rounded-xl border px-4 py-2">Details</Link><Link href={"/enquiry?service=" + encodeURIComponent(service.slug)} className="rounded-xl bg-slate-950 px-4 py-2 text-white">Enquire</Link></div>
+      <div className="mt-4 flex gap-3"><Link href={"/services/" + service.slug} className="rounded-xl border px-4 py-2">Details</Link><Link href={"/enquiry?service=" + encodeURIComponent(service.slug) + "&source=services_index&campaign=service_" + encodeURIComponent(service.slug)} className="rounded-xl bg-slate-950 px-4 py-2 text-white">Enquire</Link></div>
     </article>)}</div>
   </main>;
 }

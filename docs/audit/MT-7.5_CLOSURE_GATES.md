@@ -181,3 +181,7 @@ Earlier H01 Pending descriptions above are historical. Frozen 1,224 files/316 ro
 ## H01 formal development closure supersession (25-Sep-2026; latest)
 
 All earlier H01 pending/P03 tool-blocked/W02 typed-layout discovery text above is historical and superseded. `MT-7.5_H01_DEVELOPMENT_CLOSURE_2026-09-25.md` documents exact accepted targeted PHP and protected Edge verification/owned cleanup, 1,224/316/45 read-only provenance and 316 route review (not 316 independently tested behaviors). P03 actual synthetic private-image upload/download/archive Edge 2/2 PASS; W02 14 typed private draft/publish/rollback/Next mobile-tablet-desktop and zero-stock adaptation PHP 2/2 and Edge 1/1 PASS. **21/H01 DONE DEVELOPMENT, MT-7.5 20/27 DONE, 7 OPEN, next 22/G-A**; P01/Q01 and owner/legal/provider/production external approvals remain independently OPEN.
+
+## 22/G-A closure supersession — 25-Sep-2026 07:45 PKT
+
+`MT-7.5_GA_CLOSURE_2026-09-25.md` records **22/G-A DONE** with 41/41 approved addendum clauses ACCEPTED via evidence reuse plus focused genuine-gap work. Current changed-route performance terminal Edge 1/1 PASS; no external hold/Q01 closure is inferred. **MT-7.5 21/27 DONE, 6 OPEN; next 23/G-C.**
