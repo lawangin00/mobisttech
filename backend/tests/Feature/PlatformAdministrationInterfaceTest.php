@@ -463,11 +463,17 @@ class PlatformAdministrationInterfaceTest extends TestCase
             'permissions' => $permissions,
             'auth_version' => 1,
         ])->save();
+        $outletCode = $fixtureOutletCode;
+        if ($outletCode === null) {
+            do {
+                $outletCode = (string) random_int(100, 999);
+            } while (Outlet::where('outlet_code', $outletCode)->exists());
+        }
         $outlet = new Outlet;
         $outlet->forceFill([
             'name' => 'MT44 Outlet '.Str::random(5),
             'public_id' => (string) Str::uuid(),
-            'outlet_code' => $fixtureOutletCode ?? (string) random_int(100, 999),
+            'outlet_code' => $outletCode,
         ])->save();
         $admin->shops()->attach($outlet);
 

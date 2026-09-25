@@ -8,8 +8,6 @@ use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\OutletManagementController;
 use App\Http\Controllers\PlatformAdministrationController;
 use App\Http\Controllers\PosAuditController;
-use App\Http\Controllers\WebsiteAuditController;
-use App\Http\Controllers\WebsitePerformanceController;
 use App\Http\Controllers\PosCustomerReportingController;
 use App\Http\Controllers\PosDashboardReportPreferencesController;
 use App\Http\Controllers\PosMasterDataController;
@@ -20,7 +18,9 @@ use App\Http\Controllers\PosStockControlController;
 use App\Http\Controllers\PosTransactionController;
 use App\Http\Controllers\ResetAdministrationController;
 use App\Http\Controllers\TeamMemberController;
+use App\Http\Controllers\WebsiteAuditController;
 use App\Http\Controllers\WebsiteCommerceAdministrationController;
+use App\Http\Controllers\WebsitePerformanceController;
 use Illuminate\Support\Facades\Route;
 
 foreach (['customer', 'admin'] as $realm) {
