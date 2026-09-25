@@ -30,7 +30,7 @@ test('H01 real Inventory private acquisition evidence then zero-stock product ar
     const archive=page.waitForResponse(r=>r.url().endsWith('/archive')&&r.request().method()==='POST');
     await record.getByRole('button',{name:'Archive zero-stock product'}).click();
     expect((await archive).status()).toBe(200);
-    await expect(inventory).not.toContainText('H01 isolated evidence accessory');
+    await expect(inventory.locator('button[data-testid^="product-edit-"]')).toHaveCount(0);
 });
 test('H01 sales-only operator cannot open private acquisition document route',async({page})=>{
     await signIn(page,'e2e-sales@example.invalid');

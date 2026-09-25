@@ -4,6 +4,7 @@ namespace App\Api;
 
 use App\Addendum\WebsiteCapabilities;
 use App\Business\BusinessProfile;
+use App\Cms\CataloguePresentation;
 use App\Cms\WebsiteCms;
 use App\Cms\WebsiteModePublication;
 use App\Digital\DigitalServiceLeads;
@@ -59,7 +60,7 @@ final class WebsiteApi
     {
         $this->assertScope('commerce');
         $data = Validator::make($input, [
-            'limit' => 'sometimes|integer|min:1|max:24',
+            'limit' => 'sometimes|integer|min:1|max:48',
             'after' => 'nullable|string|max:120',
             'category' => 'nullable|string|max:50',
             'subcategory' => 'nullable|string|min:2|max:100|regex:/\A[a-z0-9]+(?:_[a-z0-9]+)*\z/',
@@ -141,7 +142,7 @@ final class WebsiteApi
                 } else {
                     $rows->orderBy($column, $descending ? 'desc' : 'asc')->orderBy('l.id');
                 }
-                $columns = ['l.id as listing_id', 'l.public_id as listing_public_id', 'l.slug', 'l.image_url',
+                $columns = ['l.id as listing_id', 'l.public_id as listing_public_id', 'l.slug', 'l.image_url', 'l.warranty_summary',
                     'p.id as product_id', 'p.public_id as product_public_id', 'p.name', 'p.brand', 'p.model',
                     'p.category', 'p.sale_price', 'p.warranty_type', 'p.track_imei'];
                 if ($availability !== null) {
@@ -312,6 +313,7 @@ final class WebsiteApi
             'header_footer' => $headerFooter,
             'theme' => $theme,
             'branding' => $publicBranding,
+            'catalogue' => app(CataloguePresentation::class)->publicValues(),
         ];
     }
 
@@ -505,6 +507,10 @@ final class WebsiteApi
             'currency' => 'PKR',
             'availability' => ['in_stock' => $snapshot['available'] > 0, 'quantity' => $snapshot['available']],
             'warranty_type' => $row->warranty_type,
+            'warranty_summary' => $row->warranty_summary ?? null,
+            'specs' => ['ram_gb' => $product->ram_gb, 'storage_gb' => $product->storage_gb,
+                'pta_statuses' => $snapshot['units']->pluck('pta_status')->filter()->unique()->take(4)->values()->all()],
+            'colors' => $snapshot['units']->pluck('color')->filter()->unique()->take(6)->values()->all(),
             'image_url' => $row->image_url,
         ];
     }

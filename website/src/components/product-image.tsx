@@ -4,15 +4,17 @@ export function ProductImage({
   src,
   alt,
   priority = false,
+  ratio = "4:3",
 }: {
   src: string | null;
   alt: string;
   priority?: boolean;
+  ratio?: "16:9" | "4:3" | "1:1";
 }) {
   const safe = typeof src === "string" && src.startsWith("/") && !src.startsWith("//");
 
   return (
-    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100">
+    <div className={`relative overflow-hidden rounded-2xl bg-slate-100 ${ratio === "1:1" ? "aspect-square" : ratio === "16:9" ? "aspect-video" : "aspect-[4/3]"}`}>
       {safe ? (
         <Image
           src={src}

@@ -23,6 +23,21 @@ export type WebsiteProfile = {
   business: { business_name: string; business_email: string; public_website: string; version: number };
   content: ContentIndex;
 };
+export type CataloguePresentation = {
+  grid_desktop: 3 | 4 | 5 | 6; grid_tablet: 2 | 3 | 4; grid_mobile: 1 | 2;
+  image_ratio: "16:9" | "4:3" | "1:1"; card_density: "compact" | "comfortable";
+  items_per_page: 12 | 24 | 36 | 48;
+  default_sort: "newest" | "oldest" | "price_asc" | "price_desc" | "name_asc" | "name_desc";
+  badge_behavior: "status_text" | "status_pill" | "hidden";
+  show_brand: boolean; show_specs: boolean; show_colors: boolean;
+  show_warranty: boolean; show_compare: boolean; show_out_of_stock: true;
+};
+export const DEFAULT_CATALOGUE_PRESENTATION: CataloguePresentation = {
+  grid_desktop: 3, grid_tablet: 2, grid_mobile: 1, image_ratio: "4:3",
+  card_density: "comfortable", items_per_page: 12, default_sort: "oldest",
+  badge_behavior: "status_pill", show_brand: true, show_specs: true, show_colors: true,
+  show_warranty: true, show_compare: true, show_out_of_stock: true,
+};
 export type Category = { code: string; label: string; products: number };
 export type ProductVariant = {
   key: string; label: string; color: string | null; condition: string | null; pta_status: string | null;
@@ -32,7 +47,7 @@ export type ProductVariant = {
 export type CatalogueProduct = {
   id: string; listing_id: string; slug: string; name: string; brand: string | null; model: string | null;
   category: { code: string; label: string }; subcategory: {code:string;label:string}|null; price: string; currency: "PKR";
-  availability: { in_stock: boolean; quantity: number }; warranty_type: string | null; image_url: string | null;
+  availability: { in_stock: boolean; quantity: number }; warranty_type: string | null; warranty_summary?: string | null; specs?: {ram_gb:number|null;storage_gb:number|null;pta_statuses:string[]}; colors?: string[]; image_url: string | null;
 };
 export type ProductDetail = CatalogueProduct & {
   description: string | null; warranty_summary: string | null; variants: ProductVariant[];
@@ -76,6 +91,7 @@ export type SitePromotion = {
 };
 export type GlobalSeo = { title: string | null; description: string | null; social_title: string | null; social_description: string | null; canonical_url: string | null };
 export type ContentIndex = {
+  catalogue?: CataloguePresentation;
   homepage: { sections?: Array<{ key: "hero" | "products" | "solutions" | "about" | "contact"; enabled: boolean; order: number }> };
   header_footer: { footer_description?: string | null; footer_copyright?: string | null; show_account?: boolean; show_contact?: boolean; show_policies?: boolean; show_search?: boolean; show_cart?: boolean; sticky?: boolean; footer_show_logo?: boolean; footer_show_navigation?: boolean; footer_navigation_layout?: "one_column" | "two_columns"; contact_cta?: "hidden" | "contact"; contact_cta_label?: string | null };
   seo: GlobalSeo;

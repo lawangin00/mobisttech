@@ -24,7 +24,9 @@ assert 'exact source' in read('docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITIO
 assert 'historical initial-setup checkpoint' in read('README.md')
 assert 'Historical MT-1.3 foundation checkpoint' in read('docs/foundation/WINDOWS_SETUP.md')
 assert '19/27 DONE, 8 OPEN' in read('docs/PROJECT_IMPLEMENTATION_STATUS.md')
-assert '21/H01 OPEN' in read('docs/audit/MT-7.5_H01_FINITE_ACCEPTANCE_2026-09-25.md')
+assert '21/H01 DONE' in read('docs/audit/MT-7.5_H01_FINITE_ACCEPTANCE_2026-09-25.md')
+assert '20/27 DONE, 7 OPEN' in read('docs/PROJECT_IMPLEMENTATION_STATUS.md')
+assert 'H01' in read('docs/audit/MT-7.5_H01_DEVELOPMENT_CLOSURE_2026-09-25.md')
 assert 'P01' in trace['status_boundary'] and 'Q01' in trace['status_boundary'] and 'OPEN' in trace['status_boundary']
 assert len(re.findall(r'^\|\s*\d+\s*\|',read('docs/audit/MT-7.5_P01_ROUTE_CROSSWALK.md'),re.M))==54
 print('H01_DOCUMENT_AUTHORITY_AND_TRACE_GUARD_PASS 1224 files 316 source routes 316 exact route rows 0 unmapped 45 verified provenance originals P01/Q01 OPEN')

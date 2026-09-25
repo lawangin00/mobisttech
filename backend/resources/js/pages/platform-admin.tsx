@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import SoftwareRoutePreview from './software-route-preview';
 import WebsitePresentationBuilder from './website-presentation-builder';
 import WebsiteThemeBuilder from './website-theme-builder';
+import WebsiteCatalogueBuilder from './website-catalogue-builder';
 import WebsiteBrandingBuilder from './website-branding-builder';
 import WebsiteMediaLibrary from './website-media-library';
 import WebsiteSecretEditor from './website-secret-editor';
@@ -31,6 +32,7 @@ type Data = {
     website_mode:Record<string,unknown>&{mode?:string|null}; mode_revisions:ModeRevision[];
     policies:Array<Record<string,unknown>>; policy_history:PolicyRevision[]; templates:Template[];
     presentation_revisions:Revision[]; pages:PageRow[]; media:MediaRow[]; software:Software[];
+    catalogue_presentation:Record<string,unknown>;
     team_members:TeamMember[]; roles:Role[]; permission_catalogue:Array<{code:string;label:string}>; assignable_outlets:Array<{id:string;name:string}>;
     integrations:Array<{provider:string;status:string;account?:string|null}>; payment_destinations:Destination[];
     website_credentials:WebsiteCredential[];
@@ -105,6 +107,10 @@ function WebsiteTab({data,allowed,busy,run}:{data:Data;allowed:(p:string)=>boole
         <WebsiteThemeBuilder snapshot={(data.presentation_revisions.find(row => row.state === 'published')?.snapshot.theme ?? {}) as Record<string,unknown>}
           publishedId={data.presentation_revisions.find(row => row.state === 'published')?.id ?? 0}
           busy={busy} allowed={allowed} save={theme => void run(async()=>{await api('/internal/admin/platform/presentation/draft',{method:'POST',body:JSON.stringify({theme})});})}/>
+        <WebsiteCatalogueBuilder snapshot={data.catalogue_presentation ?? {}}
+          publishedId={data.presentation_revisions.find(row => row.state === 'published')?.id ?? 0}
+          busy={busy} allowed={allowed('website.content.manage')}
+          save={catalogue => void run(async()=>{await api('/internal/admin/platform/presentation/draft',{method:'POST',body:JSON.stringify({catalogue})});})}/>
         <WebsiteBrandingBuilder snapshot={(data.presentation_revisions.find(row => row.state === 'published')?.snapshot.branding ?? {}) as Record<string,unknown>}
           publishedId={data.presentation_revisions.find(row => row.state === 'published')?.id ?? 0}
           media={data.media} busy={busy} allowed={allowed}

@@ -56,6 +56,9 @@ final class WebsiteCms
         foreach (array_keys($snapshot) as $section) {
             abort_unless(app(Access::class)->allows($admin, self::PRESENTATION_PERMISSIONS[$section]), 403);
         }
+        if (array_key_exists('catalogue', $snapshot)) {
+            $snapshot['catalogue'] = app(CataloguePresentation::class)->normalize($snapshot['catalogue']);
+        }
         if (array_key_exists('homepage', $snapshot)) {
             $snapshot['homepage'] = $this->homepageLayoutSnapshot($snapshot['homepage']);
         }
@@ -837,6 +840,9 @@ final class WebsiteCms
 
     private function applyPresentation(Admin $admin, array $snapshot): void
     {
+        if (array_key_exists('catalogue', $snapshot)) {
+            $snapshot['catalogue'] = app(CataloguePresentation::class)->normalize($snapshot['catalogue']);
+        }
         foreach ($snapshot as $section => $value) {
             DB::table('site_settings')->updateOrInsert(['key' => 'cms.presentation.'.$section], [
                 'value' => json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),

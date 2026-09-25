@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Business\BusinessProfile;
+use App\Cms\CataloguePresentation;
 use App\Cms\WebsiteCms;
 use App\Cms\WebsiteModePublication;
 use App\Cms\WebsiteSecretSettings;
@@ -176,6 +177,7 @@ final class PlatformAdministrationController extends Controller
             'website_mode' => $modes->publicProfile(), 'mode_revisions' => $modeRevisions,
             'policies' => $policies, 'policy_history' => $policyHistory, 'templates' => $templates,
             'presentation_revisions' => $presentationRevisions, 'pages' => $pages, 'media' => $media,
+            'catalogue_presentation' => app(CataloguePresentation::class)->publicValues(),
             'software' => $software,
             'team_members' => $actor->hasPermission('team-members.view') ? $team->members($actor) : [],
             'roles' => $actor->hasPermission('team-members.view') ? $team->catalogue($actor) : [],

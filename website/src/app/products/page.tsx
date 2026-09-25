@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
 import { normalizeCatalogueFilters } from "@/lib/catalogue-legacy-filters";
 import {
+  DEFAULT_CATALOGUE_PRESENTATION,
   readCatalogue,
   readCategories,
   readWebsiteProfile,
@@ -25,6 +26,7 @@ export default async function Products({
   const params = normalizeCatalogueFilters(await searchParams);
   const profile = await readWebsiteProfile();
   if (!profile?.capabilities.commerce) notFound();
+  const presentation = profile.content.catalogue ?? DEFAULT_CATALOGUE_PRESENTATION;
 
   const rawQuery = typeof params.q === "string" ? params.q.trim() : "";
   const q = rawQuery.length >= 2 ? rawQuery : "";
@@ -32,7 +34,7 @@ export default async function Products({
   const subcategory = typeof params.subcategory === "string" ? params.subcategory.trim() : "";
   const availability = typeof params.availability === "string" ? params.availability : "";
   const after = typeof params.after === "string" ? params.after : "";
-  const sort = typeof params.sort === "string" ? params.sort : "oldest";
+  const sort = typeof params.sort === "string" ? params.sort : presentation.default_sort;
   const minPrice = typeof params.min_price === "string" ? params.min_price : "";
   const maxPrice = typeof params.max_price === "string" ? params.max_price : "";
   const brand = typeof params.brand === "string" ? params.brand.trim() : "";
@@ -44,7 +46,7 @@ export default async function Products({
   let page;
   try {
     page = await readCatalogue({
-      limit: 12,
+      limit: presentation.items_per_page,
       q: q || undefined,
       category: category || undefined,
       subcategory: subcategory || undefined,
@@ -70,7 +72,7 @@ export default async function Products({
   if (category) next.set("category", category);
   if (subcategory) next.set("subcategory", subcategory);
   if (availability) next.set("availability", availability);
-  if (sort !== "oldest") next.set("sort", sort);
+  if (sort !== presentation.default_sort) next.set("sort", sort);
   if (minPrice) next.set("min_price", minPrice);
   if (maxPrice) next.set("max_price", maxPrice);
   if (brand) next.set("brand", brand);
@@ -137,9 +139,14 @@ export default async function Products({
           Search
         </button>
       </form>
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div data-testid="catalogue-grid" data-mobile={presentation.grid_mobile} data-tablet={presentation.grid_tablet} data-desktop={presentation.grid_desktop} data-image-ratio={presentation.image_ratio} data-page-size={presentation.items_per_page}
+        className={["mt-8 grid", presentation.card_density === "compact" ? "gap-2" : "gap-5",
+          presentation.grid_mobile === 2 ? "grid-cols-2" : "grid-cols-1",
+          ({2:"sm:grid-cols-2",3:"sm:grid-cols-3",4:"sm:grid-cols-4"} as const)[presentation.grid_tablet],
+          ({3:"lg:grid-cols-3",4:"lg:grid-cols-4",5:"lg:grid-cols-5",6:"lg:grid-cols-6"} as const)[presentation.grid_desktop]
+        ].join(" ")}>
         {page.items.map((product, index) => (
-          <ProductCard key={product.id} product={product} priority={index < 2} />
+          <ProductCard key={product.id} product={product} priority={index < 2} presentation={presentation} />
         ))}
       </div>
       {page.items.length === 0 && (
