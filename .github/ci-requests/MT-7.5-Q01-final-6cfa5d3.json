@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "project_id": "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+  "stage_id": "MT-7.5",
+  "reason": "milestone",
+  "gate": "full",
+  "source_commit": "6cfa5d3b027e5768a33121362bf5d03172ecd653",
+  "requested_at_utc": "2026-09-25T13:04:26Z",
+  "execution_surface": "NORMAL_CHAT",
+  "authorization_ref": "docs/PROJECT_IMPLEMENTATION_STATUS.md:27/Q01 final-schema residual checkpoint ? corrected (25-Sep-2026 PKT)",
+  "local_evidence": "Existing run 36132616755 passed every Q01 gate through Website performance and failed only final schema cleanup with publication_versions:1. Exact root was derived cms.media left by exact-owned media teardown. Current source contains fail-closed media cleanup plus focused WebsiteMediaLifecycleTest 1/1 PASS (4 assertions), scoped Pint 3 files PASS, PHP syntax/diff PASS. Resume/control-only docs after the fix do not alter product behavior.",
+  "hosted_only_need": "One terminal exact-source clean Linux full Q01 run proving the corrected media teardown leaves no schema residue and that all previously passed gates remain green on the same candidate."
+}
