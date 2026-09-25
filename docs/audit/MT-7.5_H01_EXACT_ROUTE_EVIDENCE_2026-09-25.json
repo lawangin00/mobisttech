@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "purpose": "Reuse exact already-written original method/URI family review, WITHOUT re-executing accepted source/target tests or conflating 177 mapped routes with completed behavior parity",
+  "purpose": "Reuse existing and bounded H01 original method/URI family review, WITHOUT re-executing accepted source/target tests or conflating 177 mapped routes with completed behavior parity",
   "counts": {
     "source_routes": 316,
-    "matched_preexisting_exact_rows": 275,
-    "still_only_group_family_disposition": 41,
+    "matched_preexisting_exact_rows": 316,
+    "still_only_group_family_disposition": 0,
     "family_exact_doc_rows": {
       "P01": 54,
       "P02": 18,
@@ -14,6 +14,7 @@
       "P06": 36,
       "P07": 32,
       "P08": 19,
+      "W01": 46,
       "W02": 11,
       "W03": 16,
       "W04": 16,
@@ -23,9 +24,7 @@
       "W08": 2,
       "X01": 11
     },
-    "pending_by_primary_family": {
-      "W01": 41
-    }
+    "pending_by_primary_family": {}
   },
   "previous_exact_route_dispositions": [
     {
@@ -3027,6 +3026,23 @@
       "remaining_evidence": "prior accepted family proof only; no new test"
     },
     {
+      "original_route_number": 170,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@entry",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 7
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
       "original_route_number": 171,
       "source": "website",
       "method": "GET|HEAD",
@@ -3037,6 +3053,10 @@
         "W06"
       ],
       "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 8
+        },
         "W06": {
           "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
           "line": 89
@@ -3055,9 +3075,81 @@
         "W06"
       ],
       "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 9
+        },
         "W06": {
           "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
           "line": 90
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 173,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/activity",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminActivityController@index",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 10
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 174,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/administrators",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminUserController@index",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 11
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 175,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/administrators",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminUserController@store",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 12
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 176,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/administrators/{user}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminUserController@update",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 13
         }
       },
       "remaining_evidence": "prior accepted family proof only; no new test"
@@ -3209,6 +3301,10 @@
         "W06"
       ],
       "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 14
+        },
         "W06": {
           "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
           "line": 91
@@ -3227,6 +3323,10 @@
         "W06"
       ],
       "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 15
+        },
         "W06": {
           "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
           "line": 92
@@ -3245,9 +3345,47 @@
         "W06"
       ],
       "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 16
+        },
         "W06": {
           "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
           "line": 93
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 188,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/dashboard",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminDashboardController@index",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 17
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 189,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/dashboard/report.csv",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminDashboardController@export",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 18
         }
       },
       "remaining_evidence": "prior accepted family proof only; no new test"
@@ -3321,6 +3459,74 @@
       "remaining_evidence": "prior accepted family proof only; no new test"
     },
     {
+      "original_route_number": 194,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/home-content",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@homeContent",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 19
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 195,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/home-content",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateHomeContent",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 20
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 196,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/home-content/preview",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@previewHomeContent",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 21
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 197,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/home-content/revisions/{revision}/rollback",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@rollbackHomeContent",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 22
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
       "original_route_number": 198,
       "source": "website",
       "method": "GET|HEAD",
@@ -3367,6 +3573,57 @@
         "W06": {
           "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
           "line": 98
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 201,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/login",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@create",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 23
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 202,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/login",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@store",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 24
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 203,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/logout",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@destroy",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 25
         }
       },
       "remaining_evidence": "prior accepted family proof only; no new test"
@@ -4044,6 +4301,159 @@
       "remaining_evidence": "prior accepted family proof only; no new test"
     },
     {
+      "original_route_number": 242,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/profile",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@edit",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 26
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 243,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "admin/profile/password",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@updatePassword",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 27
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 244,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "admin/profile/photo",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@updatePhoto",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 28
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 245,
+      "source": "website",
+      "method": "DELETE",
+      "uri": "admin/profile/photo",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@destroyPhoto",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 29
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 246,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/project-quotes",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@projectQuotes",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 30
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 247,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/project-quotes",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@storeQuote",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 31
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 248,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/project-quotes/create",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@createQuote",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 32
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 249,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/project-quotes/{projectQuote}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateQuote",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 33
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 250,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/project-quotes/{projectQuote}/edit",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@editQuote",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 34
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
       "original_route_number": 251,
       "source": "website",
       "method": "GET|HEAD",
@@ -4260,6 +4670,142 @@
         "W06": {
           "doc": "docs/audit/MT-7.5_W06_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
           "line": 130
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 264,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/service-requests",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@serviceRequests",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 35
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 265,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/service-requests/{serviceRequest}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@serviceRequest",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 36
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 266,
+      "source": "website",
+      "method": "PATCH",
+      "uri": "admin/service-requests/{serviceRequest}/status",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateServiceRequestStatus",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 37
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 267,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/services",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@services",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 38
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 268,
+      "source": "website",
+      "method": "POST",
+      "uri": "admin/services",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@storeService",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 39
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 269,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/services/create",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@createService",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 40
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 270,
+      "source": "website",
+      "method": "PUT",
+      "uri": "admin/services/{service}",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateService",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 41
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 271,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "admin/services/{service}/edit",
+      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@editService",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 42
         }
       },
       "remaining_evidence": "prior accepted family proof only; no new test"
@@ -4492,6 +5038,108 @@
       "remaining_evidence": "prior accepted family proof only; no new test"
     },
     {
+      "original_route_number": 285,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "customer/account",
+      "action": "App\\Http\\Controllers\\CustomerAccountController",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 43
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 286,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "customer/login",
+      "action": "App\\Http\\Controllers\\CustomerAuthController@login",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 44
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 287,
+      "source": "website",
+      "method": "POST",
+      "uri": "customer/login",
+      "action": "App\\Http\\Controllers\\CustomerAuthController@authenticate",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 45
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 288,
+      "source": "website",
+      "method": "POST",
+      "uri": "customer/logout",
+      "action": "App\\Http\\Controllers\\CustomerAuthController@logout",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 46
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 289,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "customer/register",
+      "action": "App\\Http\\Controllers\\CustomerAuthController@register",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 47
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 290,
+      "source": "website",
+      "method": "POST",
+      "uri": "customer/register",
+      "action": "App\\Http\\Controllers\\CustomerAuthController@store",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 48
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
       "original_route_number": 291,
       "source": "website",
       "method": "POST",
@@ -4572,6 +5220,40 @@
         "W05": {
           "doc": "docs/audit/MT-7.5_W05_SOURCE_BEHAVIOR_DISPOSITION_2026-09-24.md",
           "line": 42
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 296,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "forgot-password",
+      "action": "App\\Http\\Controllers\\WebsitePasswordController@request",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 49
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 297,
+      "source": "website",
+      "method": "POST",
+      "uri": "forgot-password",
+      "action": "App\\Http\\Controllers\\WebsitePasswordController@email",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 50
         }
       },
       "remaining_evidence": "prior accepted family proof only; no new test"
@@ -4871,6 +5553,40 @@
       "remaining_evidence": "prior accepted family proof only; no new test"
     },
     {
+      "original_route_number": 314,
+      "source": "website",
+      "method": "POST",
+      "uri": "reset-password",
+      "action": "App\\Http\\Controllers\\WebsitePasswordController@update",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 51
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
+      "original_route_number": 315,
+      "source": "website",
+      "method": "GET|HEAD",
+      "uri": "reset-password/{token}",
+      "action": "App\\Http\\Controllers\\WebsitePasswordController@reset",
+      "families": [
+        "W01"
+      ],
+      "prior_exact_route_disposition": {
+        "W01": {
+          "doc": "docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md",
+          "line": 52
+        }
+      },
+      "remaining_evidence": "prior accepted family proof only; no new test"
+    },
+    {
       "original_route_number": 316,
       "source": "website",
       "method": "GET|HEAD",
@@ -4888,499 +5604,6 @@
       "remaining_evidence": "prior accepted family proof only; no new test"
     }
   ],
-  "pending_exact_route_review": [
-    {
-      "original_route_number": 170,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@entry",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 173,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/activity",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminActivityController@index",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 174,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/administrators",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminUserController@index",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 175,
-      "source": "website",
-      "method": "POST",
-      "uri": "admin/administrators",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminUserController@store",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 176,
-      "source": "website",
-      "method": "PUT",
-      "uri": "admin/administrators/{user}",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminUserController@update",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 188,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/dashboard",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminDashboardController@index",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 189,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/dashboard/report.csv",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminDashboardController@export",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 194,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/home-content",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@homeContent",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 195,
-      "source": "website",
-      "method": "PUT",
-      "uri": "admin/home-content",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateHomeContent",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 196,
-      "source": "website",
-      "method": "PUT",
-      "uri": "admin/home-content/preview",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@previewHomeContent",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 197,
-      "source": "website",
-      "method": "PUT",
-      "uri": "admin/home-content/revisions/{revision}/rollback",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@rollbackHomeContent",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 201,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/login",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@create",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 202,
-      "source": "website",
-      "method": "POST",
-      "uri": "admin/login",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@store",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 203,
-      "source": "website",
-      "method": "POST",
-      "uri": "admin/logout",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminAuthController@destroy",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 242,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/profile",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@edit",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 243,
-      "source": "website",
-      "method": "PATCH",
-      "uri": "admin/profile/password",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@updatePassword",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 244,
-      "source": "website",
-      "method": "PATCH",
-      "uri": "admin/profile/photo",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@updatePhoto",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 245,
-      "source": "website",
-      "method": "DELETE",
-      "uri": "admin/profile/photo",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminProfileController@destroyPhoto",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 246,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/project-quotes",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@projectQuotes",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 247,
-      "source": "website",
-      "method": "POST",
-      "uri": "admin/project-quotes",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@storeQuote",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 248,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/project-quotes/create",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@createQuote",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 249,
-      "source": "website",
-      "method": "PUT",
-      "uri": "admin/project-quotes/{projectQuote}",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateQuote",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 250,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/project-quotes/{projectQuote}/edit",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@editQuote",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 264,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/service-requests",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@serviceRequests",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 265,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/service-requests/{serviceRequest}",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@serviceRequest",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 266,
-      "source": "website",
-      "method": "PATCH",
-      "uri": "admin/service-requests/{serviceRequest}/status",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateServiceRequestStatus",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 267,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/services",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@services",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 268,
-      "source": "website",
-      "method": "POST",
-      "uri": "admin/services",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@storeService",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 269,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/services/create",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@createService",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 270,
-      "source": "website",
-      "method": "PUT",
-      "uri": "admin/services/{service}",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@updateService",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 271,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "admin/services/{service}/edit",
-      "action": "App\\Http\\Controllers\\Admin\\WebsiteAdminController@editService",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 285,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "customer/account",
-      "action": "App\\Http\\Controllers\\CustomerAccountController",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 286,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "customer/login",
-      "action": "App\\Http\\Controllers\\CustomerAuthController@login",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 287,
-      "source": "website",
-      "method": "POST",
-      "uri": "customer/login",
-      "action": "App\\Http\\Controllers\\CustomerAuthController@authenticate",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 288,
-      "source": "website",
-      "method": "POST",
-      "uri": "customer/logout",
-      "action": "App\\Http\\Controllers\\CustomerAuthController@logout",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 289,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "customer/register",
-      "action": "App\\Http\\Controllers\\CustomerAuthController@register",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 290,
-      "source": "website",
-      "method": "POST",
-      "uri": "customer/register",
-      "action": "App\\Http\\Controllers\\CustomerAuthController@store",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 296,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "forgot-password",
-      "action": "App\\Http\\Controllers\\WebsitePasswordController@request",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 297,
-      "source": "website",
-      "method": "POST",
-      "uri": "forgot-password",
-      "action": "App\\Http\\Controllers\\WebsitePasswordController@email",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 314,
-      "source": "website",
-      "method": "POST",
-      "uri": "reset-password",
-      "action": "App\\Http\\Controllers\\WebsitePasswordController@update",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    },
-    {
-      "original_route_number": 315,
-      "source": "website",
-      "method": "GET|HEAD",
-      "uri": "reset-password/{token}",
-      "action": "App\\Http\\Controllers\\WebsitePasswordController@reset",
-      "families": [
-        "W01"
-      ],
-      "prior_exact_route_disposition": {},
-      "remaining_evidence": "family-level accepted; exact original route-to-target disposition NOT yet individually evidenced"
-    }
-  ],
-  "first_pending": "P08 exact route map identifies backend-only per-backup history/download/delete interface absent in current protected Admin routes. First resolve approved operator behavior: add one scoped recent-auth and permissioned backup history/download/delete flow if required, with safe file/path/role HTTP and real UI checks, or cite explicit approved retirement. Do not treat backend service methods as protected UI PASS; then reconcile remaining source routes starting W01 41 legacy Website identity/admin entries, reusing their family closure. Preserve P01 and Q01 independently OPEN."
+  "pending_exact_route_review": [],
+  "first_pending": "All 316 source method/URI rows now have explicit original-to-target review with traceable evidence, but route identity is NOT full behavior equivalence. P08 local-backup operator UI is now locally accepted; first open original-behavior gap is W01 Website Admin activity log (50/page search/method under website.audit.view), then original combined dashboard CSV/KPI equivalence, P03 two product/private acquisition operator paths and W02 four catalogue presentation actions; link tests only for changed contracts. P01 family and Q01 milestone remain independently OPEN."
 }

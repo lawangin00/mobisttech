@@ -13,6 +13,7 @@ ROUTE_DOCS={
 'P06':'docs/audit/MT-7.5_H01_P06_REPORTING_ROUTE_DISPOSITION_2026-09-25.md',
 'P07':'docs/audit/MT-7.5_P07_SOURCE_CROSSWALK.md',
 'P08':'docs/audit/MT-7.5_H01_P08_BACKUP_ROUTE_DISPOSITION_2026-09-25.md',
+'W01':'docs/audit/MT-7.5_H01_W01_IDENTITY_ROUTE_DISPOSITION_2026-09-25.md',
 'W02':'docs/audit/MT-7.5_H01_W02_CATALOGUE_ROUTE_DISPOSITION_2026-09-25.md',
 'W03':'docs/audit/MT-7.5_H01_W03_CART_ORDER_ROUTE_DISPOSITION_2026-09-25.md',
 'W04':'docs/audit/MT-7.5_W04_ROUTE_CROSSWALK.md',
@@ -67,8 +68,8 @@ def main():
     counts={'source_routes':316,'matched_preexisting_exact_rows':len(found),'still_only_group_family_disposition':len(left),
             'family_exact_doc_rows':{f:len(by_family[f]) for f in by_family},
             'pending_by_primary_family':dict(collections.Counter(next((f for f in r['families'] if f!='F01'),r['families'][0]) for r in left))}
-    result={'schema':1,'purpose':'Reuse exact already-written original method/URI family review, WITHOUT re-executing accepted source/target tests or conflating 177 mapped routes with completed behavior parity',
-        'counts':counts,'previous_exact_route_dispositions':found,'pending_exact_route_review':left,'first_pending':'P08 exact route map identifies backend-only per-backup history/download/delete interface absent in current protected Admin routes. First resolve approved operator behavior: add one scoped recent-auth and permissioned backup history/download/delete flow if required, with safe file/path/role HTTP and real UI checks, or cite explicit approved retirement. Do not treat backend service methods as protected UI PASS; then reconcile remaining source routes starting W01 41 legacy Website identity/admin entries, reusing their family closure. Preserve P01 and Q01 independently OPEN.'}
+    result={'schema':1,'purpose':'Reuse existing and bounded H01 original method/URI family review, WITHOUT re-executing accepted source/target tests or conflating 177 mapped routes with completed behavior parity',
+        'counts':counts,'previous_exact_route_dispositions':found,'pending_exact_route_review':left,'first_pending':'All 316 source method/URI rows now have explicit original-to-target review with traceable evidence, but route identity is NOT full behavior equivalence. P08 local-backup operator UI is now locally accepted; first open original-behavior gap is W01 Website Admin activity log (50/page search/method under website.audit.view), then original combined dashboard CSV/KPI equivalence, P03 two product/private acquisition operator paths and W02 four catalogue presentation actions; link tests only for changed contracts. P01 family and Q01 milestone remain independently OPEN.'}
     text=json.dumps(result,ensure_ascii=False,indent=2)+'\n'
     if a.check:assert OUT.read_text(encoding='utf-8')==text,'H01 exact-route reuse evidence changed'
     else:OUT.write_text(text,encoding='utf-8',newline='\n')

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Backups\BackupService;
+use App\Identity\Access;
 use App\Integrations\IntegrationManager;
 use App\Models\Admin;
 use Illuminate\Http\Request;
@@ -13,7 +14,16 @@ final class IntegrationController extends Controller
 {
     public function page(IntegrationManager $manager)
     {
-        return Inertia::render('integrations', ['integrations' => $manager->statuses($this->actor())]);
+        $actor = $this->actor();
+        $canIntegrations = app(Access::class)->allows($actor, 'admin.integrations.manage');
+        $canBackups = app(Access::class)->allows($actor, 'backups.manage');
+        abort_unless($canIntegrations || $canBackups, 403);
+
+        return Inertia::render('integrations', [
+            'integrations' => $canIntegrations ? $manager->statuses($actor) : [],
+            'can_manage_integrations' => $canIntegrations,
+            'can_manage_backups' => $canBackups,
+        ]);
     }
 
     public function index(IntegrationManager $manager)
@@ -41,6 +51,31 @@ final class IntegrationController extends Controller
     public function disconnect(string $provider, IntegrationManager $manager)
     {
         return response()->json(['data' => $manager->disconnect($this->actor(), $provider)]);
+    }
+
+    public function backupHistory(BackupService $backups)
+    {
+        return response()->json(['data' => $backups->history($this->actor())])
+            ->header('Cache-Control', 'private, no-store');
+    }
+
+    public function backupDownload(int $backup, BackupService $backups)
+    {
+        $file = $backups->readLocal($this->actor(), $backup);
+
+        return response($file['bytes'], 200, [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="'.basename($file['filename']).'"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    public function backupDelete(int $backup, BackupService $backups)
+    {
+        $backups->deleteLocal($this->actor(), $backup);
+
+        return response()->json(['data' => ['deleted' => true]]);
     }
 
     public function backupNow(BackupService $backups)

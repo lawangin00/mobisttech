@@ -68,19 +68,47 @@ final class BackupService
         abort_unless(app(Access::class)->allows($actor, 'backups.manage'), 403);
 
         return DB::table('backup_records as b')->leftJoin('backup_manifests as m', 'm.backup_record_id', '=', 'b.id')
-            ->orderByDesc('b.id')->get(['b.id', 'b.trigger', 'b.status', 'b.filename', 'b.size_bytes', 'b.remote_status',
+            ->orderByDesc('b.id')->limit(50)->get(['b.id', 'b.trigger', 'b.status', 'b.filename', 'b.path', 'b.remote_path', 'b.size_bytes', 'b.remote_status',
                 'b.completed_at', 'b.created_at', 'm.contract_version', 'm.key_id', 'm.manifest_sha256', 'm.verified_at'])
-            ->map(fn ($row) => (array) $row)->all();
+            ->map(function ($row) {
+                $data = (array) $row;
+                $data['local_available'] = $row->status === 'completed' && $row->path !== null;
+                $data['can_delete_local'] = $row->path !== null && $row->remote_path === null
+                    && in_array($row->status, ['completed', 'failed'], true);
+                unset($data['path'], $data['remote_path']);
+
+                return $data;
+            })->all();
     }
 
     public function readLocal(Admin $actor, int $backupRecordId): array
     {
         abort_unless(app(Access::class)->allows($actor, 'backups.manage'), 403);
         $row = DB::table('backup_records')->where('id', $backupRecordId)->firstOrFail();
+        abort_unless($row->status === 'completed' && $row->scope === 'business', 409, 'Backup is not available for download.');
         $path = $this->safeLocalPath($row);
         abort_unless($path !== null && is_file($path), 404);
 
         return ['filename' => $row->filename, 'bytes' => file_get_contents($path)];
+    }
+
+    /** HTTP operator action: local-only, terminal records; never delete a remote backup via a browser request. */
+    public function deleteLocal(Admin $actor, int $backupRecordId): void
+    {
+        abort_unless(app(Access::class)->allows($actor, 'backups.manage'), 403);
+        DB::transaction(function () use ($actor, $backupRecordId) {
+            $row = DB::table('backup_records')->where('id', $backupRecordId)->lockForUpdate()->firstOrFail();
+            abort_unless($row->scope === 'business' && $row->remote_path === null
+                && in_array($row->status, ['completed', 'failed'], true), 409,
+                'Only terminal local-only backup copies can be deleted here.');
+            $path = $this->safeLocalPath($row);
+            abort_unless($path !== null && is_file($path), 404);
+            abort_unless(unlink($path), 409, 'Backup file could not be removed.');
+            DB::table('backup_records')->where('id', $row->id)->update([
+                'path' => null, 'remote_status' => 'deleted', 'updated_at' => now(),
+            ]);
+            $this->audit->admin($actor, 'backup_local_deleted', 'SYSTEM', '/operations/backups', ['backup_id' => $row->id]);
+        });
     }
 
     public function delete(Admin $actor, int $backupRecordId): void
