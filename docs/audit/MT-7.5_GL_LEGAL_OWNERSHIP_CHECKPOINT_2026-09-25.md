@@ -31,8 +31,9 @@ G-L cannot close yet because the following are not authorized/verified:
 
 1. Exact registered sole-proprietor legal copyright holder.
 2. D10 exact final Privacy / Terms / Warranty / Returns wording, effective dates, commercial commitments, jurisdiction and explicit owner/legal approval.
-3. G-R separately shipped desktop mobiST POS factual evidence; product-specific Privacy/Terms cannot be truthfully finalized while its release/data-flow facts remain unverified.
-4. Actual release/distribution contents must still be compared with dependency lockfiles/notices at the final release checkpoint.
-5. No production/public policy publication is authorized by this technical reconciliation.
+3. Actual release/distribution contents must still be compared with dependency lockfiles/notices at the final release checkpoint.
+4. No production/public policy publication is authorized by this technical reconciliation.
+
+G-R desktop product facts are now independently resolved by the authoritative desktop repositories. The remaining human/legal inputs are consolidated in `MT-7.5_GL_FINAL_REVIEW_INPUTS_2026-09-25.md`.
 
 **Result: 26/G-L technical posture is current, but 26/G-L remains OPEN [E,H].**
