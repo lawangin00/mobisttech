@@ -62,7 +62,7 @@ class ApiContractTest extends TestCase
         $this->acquire($first);
         $this->getJson('/api/v1/catalogue/products/alpha-phone')->assertOk()
             ->assertJsonPath('data.availability.quantity', 2);
-        $this->getJson('/api/v1/catalogue/products?limit=25')->assertStatus(422)
+        $this->getJson('/api/v1/catalogue/products?limit=49')->assertStatus(422)
             ->assertJsonPath('error.code', 'api_422');
 
         $this->publishMode('digital_only', 2);
