@@ -38,3 +38,8 @@ These files are not the Website database/CMS source of truth. During MT-3.2/MT-4
 This structural reconciliation does not implement Website routes, change the live domain, publish content, call Google/provider APIs, migrate private data or advance MT-2.11.
 
 H-01 remains authoritative for production domain/DNS/TLS activation. The planned route family becomes live only after the domain/deployment gate is separately authorized.
+## Authoritative desktop validation - 25-Sep-2026
+
+The separately shipped desktop authority is `lawangin00/mobist-pos-ims`, with private paid-license/release tooling in `lawangin00/mobist-pos-license-generator`. Read-only validation confirmed the four preserved files under `docs/reference/mobiST POS-IMS/` exactly match the customer repository's current `docs/customer/` sources. The desktop ledger validates the underlying Windows/offline/SQLite, role, backup/Google Drive, licensing/trial, installer/EULA, manual and release facts; see `docs/audit/MT-7.5_GR_REFERENCE_CLOSURE_2026-09-25.md`.
+
+The documents' `Version 1.0.0` / 6-Sep-2026 wording is retained as canonical V1 source content, not silently rewritten. Later accepted maintenance releases exist, so a public/current release field must be separately reconciled and must not label 1.0.0 as latest. D08=B remains private-draft only and authorizes no public product/download publication.

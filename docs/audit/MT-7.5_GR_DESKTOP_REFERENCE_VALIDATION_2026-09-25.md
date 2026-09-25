@@ -2,7 +2,7 @@
 
 Date: 25-Sep-2026 PKT  
 Stable gate: `25/G-R`  
-Status: **IN PROGRESS / FACTUAL EVIDENCE BLOCKED**  
+Status: **SUPERSEDED ? authoritative desktop repositories subsequently identified and validated**
 Owner decision: `D08=B` — private factual draft only; no public publication.
 
 ## Reference integrity
@@ -56,4 +56,4 @@ Synthetic Software Product fixtures used by G-S remain valid workflow evidence b
 
 Provide or explicitly select authoritative evidence for the separately shipped desktop mobiST POS release: exact release repository/artifact/checkpoint plus version/date, installer/OS-architecture acceptance, local-data/offline behavior, licensing/trial acceptance, Google Drive implementation/backup acceptance, role model and bundled manual/EULA facts. Public publication still requires a later explicit decision beyond D08=B and applicable G-L approval.
 
-**Result: 25/G-R remains OPEN [E,H]. No factual claim was fabricated and no product was published.**
+**Superseded result:** the missing evidence was later found in owner-linked `lawangin00/mobist-pos-ims` and `lawangin00/mobist-pos-license-generator`. See `MT-7.5_GR_REFERENCE_CLOSURE_2026-09-25.md`; no product was publicly published.

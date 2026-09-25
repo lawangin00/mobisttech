@@ -1,6 +1,6 @@
 # MT-7.5 - mobiST POS Software Product reference review
 
-**State:** Unapproved reference reconciliation only. No real Product was inserted, published, licensed or represented as released by the Mobisttech Website. The reusable Software Product workflow is proven with isolated synthetic fixtures; those fixtures are not production legal content. Product-specific assertions must be validated against the independently shipped Windows mobiST POS release and owner-approved documents, never inferred from the browser POS built into Mobisttech.
+**State:** Private factual reconciliation validated against the independently shipped Windows desktop product. D08=B permits protected draft/review only; no real Product was publicly published, no private installer/download URL was exposed, and no product-specific legal text was approved for public use. Browser POS behavior is not used as desktop evidence.
 
 | Reference input | Proposed reusable Software field | Verification needed before approving/publishing |
 |---|---|---|
@@ -11,4 +11,8 @@
 | `FAQ.md`: daily use, roles, backup, sharing and licensing | Per-product FAQ questions/answers | Verify each answer through installer/manual and product acceptance, including exact offline/cloud distinction, permitted backup scopes, desktop roles, trial reset, share/PDF behavior and Windows support. |
 | Release history and public metadata | Releases, SEO, canonical and social information | Import only verified public release notes/version/date; link approved product policy revisions and current manual; preserve earlier releases and protected slug. No invented production release date or download URL. |
 
-**Workflow decision:** Retain original four references and their content hashes as review inputs. Keep real `mobiST POS` publication pending factual release verification, owner-approved policy/terms, application ownership/license decision and reusable Admin preview/public route acceptance. Synthetic `MT75 Synthetic Software` tests are deliberately separate from the business record. Any production domain, provider or authentic customer-data action remains under its separate HOLD gate.
+## Authoritative validation result
+
+The owner-linked private repositories `lawangin00/mobist-pos-ims` and `lawangin00/mobist-pos-license-generator` provide the previously missing independent desktop evidence. The four preserved reference files exactly match the current canonical customer docs in `mobist-pos-ims`. Desktop implementation/release evidence validates local SQLite/offline operation, Owner/Manager/Salesperson roles, retail/invoice/return/report workflows, local backup/restore, `drive.file` Google Drive behavior, device-bound signed trial/licensing, reissue/recovery, Windows x64/x86 installer/EULA and bundled manual. FINAL-AUDIT records the signed V1 `1.0.0` candidate; later accepted maintenance releases mean `Version 1.0.0` must not be presented as the current/latest release without release-record reconciliation. See `MT-7.5_GR_REFERENCE_CLOSURE_2026-09-25.md`.
+
+**Workflow decision:** Retain the original four references and hashes as canonical desktop-source inputs. D08=B allows private managed-draft reconciliation only. Public real-product publication, current-version/download metadata, and final product Privacy/Terms approval remain prohibited unless separately authorized; D10/G-L and production/domain/provider HOLDs remain independent.
