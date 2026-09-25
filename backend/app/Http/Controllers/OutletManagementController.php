@@ -102,9 +102,15 @@ final class OutletManagementController extends Controller
 
     public function archive(Request $request, string $outlet, OutletLifecycleAdministration $service)
     {
-        $data = $request->validate(['version' => ['required', 'integer', 'min:1']]);
-        abort_unless(count($request->all()) === 1, 422, 'Unexpected archive fields.');
+        $data = $request->validate([
+            'version' => ['required', 'integer', 'min:1'],
+            'reviewed_history' => ['sometimes', 'boolean'],
+            'review_note' => ['nullable', 'string', 'min:10', 'max:200'],
+        ]);
+        abort_unless(count($request->all()) === count($data), 422, 'Unexpected archive fields.');
 
-        return response()->json(['data' => $service->archive($this->actor(), $outlet, (int) $data['version'])]);
+        return response()->json(['data' => $service->archive(
+            $this->actor(), $outlet, (int) $data['version'],
+            (bool) ($data['reviewed_history'] ?? false), $data['review_note'] ?? null)]);
     }
 }

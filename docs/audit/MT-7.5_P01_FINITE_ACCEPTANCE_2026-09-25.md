@@ -43,4 +43,4 @@ Implement **one reviewed transition**, not more micro-gaps:
 
 This is the only identified P01 DEVELOPMENT blocker after current evidence reconciliation.
 
-**Result: 06/P01 remains OPEN [I,E]. Completing the single reviewed D03 transition above is the next executable P01 action.**
+**Result: completed by `MT-7.5_P01_DEVELOPMENT_CLOSURE_2026-09-25.md`; retained here as the finite pre-implementation contract.**

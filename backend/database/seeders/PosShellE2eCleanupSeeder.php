@@ -28,7 +28,15 @@ class PosShellE2eCleanupSeeder extends Seeder
                     && ! DB::table('cash_entries')->where('outlet_id', $d03Outlet->id)->exists(), 409);
                 DB::table('cash_sessions')->where('id', $d03Cash[0]->id)->delete();
             }
-            $outletIds = DB::table('outlets')->whereIn('outlet_code', ['E41', 'E42', 'E43'])->pluck('id')->all();
+            $reviewedOutlet = DB::table('outlets')->where('outlet_code', 'E44')->where('name', 'E2E D03 Reviewed History Outlet')->first();
+            if ($reviewedOutlet) {
+                $reviewedProducts = DB::table('products')->where('outlet_id', $reviewedOutlet->id)
+                    ->where('name', 'E2E D03 Retained Product')->get();
+                abort_unless($reviewedProducts->count() === 1 && (int) $reviewedProducts[0]->qty === 0
+                    && (bool) $reviewedProducts[0]->isDeleted, 409);
+                DB::table('products')->where('id', $reviewedProducts[0]->id)->delete();
+            }
+            $outletIds = DB::table('outlets')->whereIn('outlet_code', ['E41', 'E42', 'E43', 'E44'])->pluck('id')->all();
             $outletIds = array_values(array_unique([...$outletIds, ...DB::table('outlets')->where('outlet_code', '908')->where('name', 'MT75 P02 Variant Outlet')->pluck('id')->all()]));
             $outletIds = array_values(array_unique([...$outletIds, ...DB::table('outlets')->where('outlet_code', '909')
                 ->where('name', 'MT75 P02 Linked Outlet')->pluck('id')->all()]));

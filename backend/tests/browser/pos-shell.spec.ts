@@ -194,6 +194,27 @@ test('protected Admin creates and archives an unused outlet and reads its histor
 
 });
 
+test('Full Access reviews and archives reconciled retained business history', async ({page}) => {
+    await login(page,'e2e-protected-owner@example.invalid');
+    expect((await page.goto('/internal/admin/outlet-management'))?.status()).toBe(200);
+    const row=page.getByText('E2E D03 Reviewed History Outlet',{exact:false}).locator('..').locator('..');
+    await expect(row.getByRole('button',{name:'Archive eligible outlet'})).toBeVisible();
+    await page.getByTestId('outlet-owner-password').fill(password);
+    const denied=page.waitForResponse(r=>r.url().endsWith('/archive')&&r.request().method()==='POST');
+    await row.getByRole('button',{name:'Archive eligible outlet'}).click();
+    expect((await denied).status()).toBe(409);
+    await expect(row.getByRole('button',{name:'Archive eligible outlet'})).toBeVisible();
+    await page.getByTestId('outlet-history-reviewed').check();
+    await page.getByTestId('outlet-history-review-note').fill('Reviewed synthetic retained history before archive.');
+    const archived=page.waitForResponse(r=>r.url().endsWith('/archive')&&r.request().method()==='POST');
+    await row.getByRole('button',{name:'Archive eligible outlet'}).click();
+    expect((await archived).status()).toBe(200);
+    await page.getByTestId('outlet-history-E44').click();
+    await expect(page.getByTestId('outlet-archived-stock-E44')).toContainText('Products: 1');
+    await expect(page.getByTestId('outlet-archived-stock-E44')).toContainText('recorded quantity 0');
+    await expect(row.getByRole('button',{name:'Archive eligible outlet'})).toHaveCount(0);
+});
+
 test('Full Access archives synthetic closed-cash outlet and views preserved read-only amount', async ({page}) => {
     await login(page,'e2e-protected-owner@example.invalid');
     expect((await page.goto('/internal/admin/outlet-management'))?.status()).toBe(200);

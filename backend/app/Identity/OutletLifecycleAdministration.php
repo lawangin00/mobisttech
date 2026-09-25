@@ -713,11 +713,78 @@ final class OutletLifecycleAdministration
         });
     }
 
-    public function archive(Admin $actor, string $publicId, int $version): array
+    private function reviewedArchiveState(Outlet $outlet): array
+    {
+        $promotion = $this->archivedPromotionHistory($outlet);
+        $obligations = $this->archivedObligations($outlet, $promotion);
+        $stock = $this->archivedStockReconciliation($outlet);
+        $blockers = [];
+        foreach ([
+            'on_hand_quantity', 'active_custody_hold_quantity', 'unapproved_stocktakes',
+            'unresolved_transfer_quantity', 'open_cash_sessions', 'pending_cash_entries',
+            'unsettled_pos_tenders', 'pos_returns_unmatched_count', 'pos_returns_over_refunded_count',
+            'website_orders_for_review', 'website_payments_for_reconciliation',
+            'website_paid_provider_payments_without_matching_recorded_receipt',
+            'website_refunds_for_reconciliation', 'website_completed_refunds_missing_recorded_evidence',
+            'website_shared_orders_held_for_financial_review', 'active_website_reservations',
+            'pending_trade_ins', 'open_warranty_claims', 'open_purchase_orders',
+            'unreceived_purchase_order_quantity', 'active_paid_repairs', 'active_unbilled_paid_repairs',
+        ] as $key) {
+            if ((int) ($obligations[$key] ?? 0) > 0) {
+                $blockers[] = $key;
+            }
+        }
+        if (bccomp((string) $obligations['pos_refund_difference'], '0.00', 2) !== 0) {
+            $blockers[] = 'pos_refund_difference';
+        }
+        foreach ([
+            'negative_stock_product_count', 'latest_movement_disagreement_count',
+            'tracked_unit_disagreement_count', 'untracked_product_with_units_count',
+            'positive_stock_without_movement_count',
+        ] as $key) {
+            if ((int) ($stock[$key] ?? 0) > 0) {
+                $blockers[] = $key;
+            }
+        }
+        foreach ([
+            'active_claim_count', 'unbound_claim_count', 'shared_order_claims_held_for_review',
+            'missing_financial_references', 'mismatched_financial_references',
+            'unmatched_financial_adjustments', 'financial_snapshot_digest_mismatches',
+            'snapshot_contract_or_amount_mismatches', 'claims_without_matching_claimed_event',
+            'released_claims_without_matching_release_event', 'active_claims_with_release_event',
+        ] as $key) {
+            if ((int) ($promotion[$key] ?? 0) > 0) {
+                $blockers[] = 'promotion_'.$key;
+            }
+        }
+        if (DB::table('promotions')->where('outlet_id', $outlet->id)->where('status', 'active')->exists()) {
+            $blockers[] = 'active_promotions';
+        }
+        if (DB::table('reorder_policies')->where('outlet_id', $outlet->id)->where('is_active', true)->exists()) {
+            $blockers[] = 'active_reorder_policies';
+        }
+        if (DB::table('repair_settings')->where('outlet_id', $outlet->id)->where('enabled', true)->exists()) {
+            $blockers[] = 'enabled_paid_repairs';
+        }
+        if (DB::table('product_listings as l')->join('products as p', 'p.id', '=', 'l.product_id')
+            ->where('p.outlet_id', $outlet->id)->where('l.is_online', true)->exists()) {
+            $blockers[] = 'online_product_listings';
+        }
+        if (DB::table('stock_transfers')->where(fn ($query) => $query
+            ->where('source_outlet_id', $outlet->id)->orWhere('destination_outlet_id', $outlet->id))
+            ->whereNotIn('status', ['received', 'rejected'])->exists()) {
+            $blockers[] = 'nonterminal_stock_transfers';
+        }
+
+        return array_values(array_unique($blockers));
+    }
+
+    public function archive(Admin $actor, string $publicId, int $version,
+        bool $reviewedHistory = false, ?string $reviewNote = null): array
     {
         abort_unless($this->canManage($actor), 403);
 
-        return DB::transaction(function () use ($actor, $publicId, $version) {
+        return DB::transaction(function () use ($actor, $publicId, $version, $reviewedHistory, $reviewNote) {
             DB::table('business_profiles')->where('id', 1)->lockForUpdate()->firstOrFail();
             abort_unless($this->canManage($actor), 403);
             $outlet = Outlet::where('public_id', $publicId)->lockForUpdate()->firstOrFail();
@@ -725,33 +792,52 @@ final class OutletLifecycleAdministration
             abort_if((int) $outlet->version !== $version, 409, 'Outlet changed; reload before archiving.');
             abort_if(Outlet::where('status', false)->whereNull('archived_at')->count() <= 1,
                 409, 'Cannot archive the last open outlet.');
-            // Fail closed by default. Only completed cash history and immutable audit are exempt;
-            // any other present or future linked table, including products, claims and orders,
-            // retains the prior archival block until its obligations have a separate proof.
+
+            $allowedOutletTables = [
+                'backup_records', 'cash_entries', 'cash_sessions', 'claims', 'document_delivery_attempts',
+                'document_sequences', 'identity_audit_events', 'invoices', 'order_items', 'outlet_admins',
+                'pos_audit_logs', 'pos_payment_destinations', 'pos_refund_allocations', 'pos_tender_allocations',
+                'products', 'promotions', 'purchase_order_lines', 'purchase_order_receipts', 'purchase_orders',
+                'reorder_policies', 'repair_jobs', 'repair_settings', 'reservation_lines', 'reservations', 'sales',
+                'stock_acquisitions', 'stock_movements', 'stocktake_lines', 'stocktake_sessions', 'suppliers',
+                'team_member_audit_events', 'trade_ins',
+            ];
+            $baselineHistory = ['outlet_admins', 'identity_audit_events', 'team_member_audit_events',
+                'pos_audit_logs', 'cash_sessions', 'cash_entries'];
+            $historyTables = [];
             $linked = DB::select("SELECT TABLE_NAME AS name FROM INFORMATION_SCHEMA.COLUMNS
                 WHERE TABLE_SCHEMA = DATABASE() AND COLUMN_NAME = 'outlet_id'");
-            $retainedHistory = ['outlet_admins', 'identity_audit_events', 'team_member_audit_events',
-                'pos_audit_logs', 'cash_sessions', 'cash_entries'];
             foreach ($linked as $row) {
-                if (in_array($row->name, $retainedHistory, true)) {
+                if (! DB::table($row->name)->where('outlet_id', $outlet->id)->exists()) {
                     continue;
                 }
-                abort_if(DB::table($row->name)->where('outlet_id', $outlet->id)->exists(),
-                    409, 'Outlet has linked business history or outstanding obligations; archival needs a reviewed transition.');
+                abort_unless(in_array($row->name, $allowedOutletTables, true), 409,
+                    'Outlet has an unclassified linked record family; archival fails closed.');
+                if (! in_array($row->name, $baselineHistory, true)) {
+                    $historyTables[] = $row->name;
+                }
+            }
+            $transferHistory = DB::table('stock_transfers')->where(fn ($query) => $query
+                ->where('source_outlet_id', $outlet->id)->orWhere('destination_outlet_id', $outlet->id))->exists();
+            if ($transferHistory) {
+                $historyTables[] = 'stock_transfers';
             }
             abort_if(DB::table('cash_sessions')->where('outlet_id', $outlet->id)
                 ->where('status', '!=', 'closed')->exists(), 409, 'Close every cash session before archiving.');
             abort_if(DB::table('cash_entries')->where('outlet_id', $outlet->id)
                 ->where('status', 'pending')->exists(), 409, 'Resolve pending cash entries before archiving.');
-            // Transfers may reference an outlet through nonstandard source/destination columns.
-            foreach (['stock_transfers' => ['source_outlet_id', 'destination_outlet_id'],
-                'stock_transfer_lines' => ['source_outlet_id', 'destination_outlet_id'],
-                'stock_transfer_receipts' => ['destination_outlet_id']] as $table => $columns) {
-                foreach ($columns as $column) {
-                    abort_if(DB::table($table)->where($column, $outlet->id)->exists(), 409,
-                        'Outlet has transfer history or outstanding transfer obligations; archival needs reviewed transition.');
-                }
+
+            if ($historyTables !== []) {
+                $note = Str::squish((string) $reviewNote);
+                abort_unless($reviewedHistory && mb_strlen($note) >= 10, 409,
+                    'Review retained history and provide an archive review note before archiving.');
+                $blockers = $this->reviewedArchiveState($outlet);
+                abort_if($blockers !== [], 409,
+                    'Outlet still has unresolved archive blockers: '.implode(', ', array_slice($blockers, 0, 5)).'.');
+                IdentityAudit::record('admin', $actor->id, 'outlet_archive_reviewed',
+                    'outlet:'.$outlet->public_id.';review_sha256:'.hash('sha256', $note), $outlet->id);
             }
+
             $outlet->forceFill(['archived_at' => now(), 'version' => $outlet->version + 1])->save();
             IdentityAudit::record('admin', $actor->id, 'outlet_archived', 'outlet:'.$outlet->public_id, $outlet->id);
 

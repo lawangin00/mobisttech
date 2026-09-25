@@ -277,6 +277,42 @@ class PosShellTest extends TestCase
         $this->assertSame('051', $existing->fresh()->outlet_code);
     }
 
+    public function test_reviewed_future_history_archive_requires_clear_obligations_and_preserves_records(): void
+    {
+        $fallback = $this->outlet('Reviewed archive fallback', '058');
+        $historical = $this->outlet('Reviewed future history', '059');
+        $owner = $this->member('reviewed-archive-owner@example.invalid', ['shops.enter',
+            'team-members.full-access.assign', 'admin.business-profile.manage']);
+        $owner->shops()->attach($fallback);
+        $owner->roles()->attach(Role::where('name', 'Full Access')->firstOrFail()->id, ['assigned_at' => now()]);
+        $product = new Product;
+        $product->forceFill(['public_id' => (string) Str::uuid(), 'name' => 'Retained future product',
+            'outlet_id' => $historical->id, 'category' => 'accessory', 'price' => '20.00', 'qty' => 1])->save();
+        $client = $this->client();
+        $this->login($client, $owner->email)->assertOk();
+        $path = '/internal/admin/outlet-management/'.$historical->public_id.'/archive';
+
+        $this->send($client, 'POST', $path, ['version' => 1])->assertStatus(409);
+        $this->send($client, 'POST', $path, ['version' => 1, 'reviewed_history' => true,
+            'review_note' => 'Reviewed synthetic retained history before archive.'])->assertStatus(409);
+        $this->assertNull($historical->fresh()->archived_at);
+
+        $product->forceFill(['qty' => 0, 'isDeleted' => true])->save();
+        $this->send($client, 'POST', $path, ['version' => 1, 'reviewed_history' => true,
+            'review_note' => 'Reviewed synthetic retained history before archive.'])->assertOk()
+            ->assertJsonPath('data.status', 'archived');
+        $this->assertNotNull($historical->fresh()->archived_at);
+        $this->assertSame(1, DB::table('products')->where('id', $product->id)->count());
+        $this->send($client, 'GET', '/internal/admin/outlet-management/'.$historical->public_id.'/history')->assertOk()
+            ->assertJsonPath('data.stock_history.product_count', 1)
+            ->assertJsonPath('data.stock_history.products.0.quantity', 0)
+            ->assertJsonPath('data.stock_history.products.0.product_archived', true);
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
+            ->where('outlet_id', $historical->id)->where('action', 'outlet_archive_reviewed')->count());
+        $this->assertSame(1, DB::table('identity_audit_events')->where('account_id', $owner->id)
+            ->where('outlet_id', $historical->id)->where('action', 'outlet_archived')->count());
+    }
+
     public function test_closed_cash_history_archive_retains_immutable_records_and_forbids_operational_access(): void
     {
         $active = $this->outlet('Active fallback', '061');

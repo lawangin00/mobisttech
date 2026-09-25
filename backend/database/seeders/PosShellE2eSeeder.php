@@ -89,6 +89,14 @@ class PosShellE2eSeeder extends Seeder
             $this->assign($prefOwner, Role::where('name', 'Full Access')->firstOrFail(), [$salesOutlet]);
             // D03: independent, synthetic closed-cash outlet for actual archived-history UI acceptance.
             $d03Outlet = $this->outlet('E2E D03 Closed Cash Outlet', 'E43');
+            $reviewedOutlet = $this->outlet('E2E D03 Reviewed History Outlet', 'E44');
+            abort_unless(! DB::table('products')->where('outlet_id', $reviewedOutlet->id)->exists(), 409);
+            DB::table('products')->insert([
+                'public_id' => (string) Str::uuid(), 'outlet_id' => $reviewedOutlet->id,
+                'name' => 'E2E D03 Retained Product', 'category' => 'accessory', 'price' => '20.00',
+                'qty' => 0, 'isDeleted' => true, 'track_imei' => false, 'version' => 1,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
             $d03Snapshot = json_encode(['contract' => 'MT75-D03-CLOSED-CASH', 'amount' => '100.00'], JSON_THROW_ON_ERROR);
             abort_unless(! DB::table('cash_sessions')->where('outlet_id', $d03Outlet->id)->exists(), 409);
             DB::table('cash_sessions')->insert([
