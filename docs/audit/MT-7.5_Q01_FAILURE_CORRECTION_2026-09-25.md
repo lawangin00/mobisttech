@@ -40,3 +40,9 @@ This is not an unchanged Q01 retry. The next full hosted run is materially diffe
 No production business behavior was weakened or bypassed. A new exact-source Q01 milestone request is justified once these corrections are committed/pushed. If that run produces a different failure signature, classify it before any further retry.
 
 **27/Q01 remains OPEN [E].**
+## Request-orchestration correction
+
+The first materially changed request commit `e7dc4f5c763d013509966df5a71ba9d5610958ed` did **not** reach clean checkout. Run `36121109557` failed only in request validation because Windows PowerShell 5.1 wrote the JSON with a UTF-8 BOM; `ci-mode-gate.py` intentionally reads strict UTF-8 and rejected it with `JSONDecodeError: Unexpected UTF-8 BOM`. This is an orchestration/file-encoding failure, not a candidate test failure.
+
+The next request must be a new request-only child of a non-request source commit, must point `source_commit` exactly to that parent, and must write JSON as UTF-8 **without BOM**. Do not modify the failed request in-place as a new trigger because the gate requires request `source_commit == HEAD^`.
+
