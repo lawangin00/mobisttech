@@ -1,12 +1,13 @@
 # Third-Party Notices
 
-This file records the deliberate third-party attribution/distribution posture for the private mobiST Tech repository. It is not a license grant for mobiST-owned application code.
+This file records the deliberate third-party attribution/distribution posture for the private Mobisttech application repository. It is not a license grant for application code.
 
 ## Application ownership/license status
 
-- The repository currently has no root project LICENSE.
-- The prior Laravel-starter `MIT` field in `backend/composer.json` has been removed because framework/package metadata must not be represented as the license for the complete mobiST application.
-- The project-level proprietary/open-source license decision remains an explicit owner decision. No license terms are invented by this notice.
+- Owner decision D09=A records the application as proprietary / all rights reserved.
+- The exact registered sole-proprietor legal copyright holder remains VERIFY/HOLD, so the repository intentionally has no root project LICENSE until that factual holder and final release wording are verified.
+- The prior Laravel-starter `MIT` field in `backend/composer.json` has been removed because framework/package metadata must not be represented as the license for the complete Mobisttech application.
+- No open-source grant or unverified legal-holder claim is implied by this notice.
 
 ## PHP/backend runtime
 
