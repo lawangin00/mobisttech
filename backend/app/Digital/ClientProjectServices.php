@@ -342,14 +342,25 @@ final class ClientProjectServices
             ->get()->map(fn ($row) => ['service' => $row->service, 'leads' => (int) $row->leads, 'projects' => (int) $row->projects])->all();
         $source = DB::table('service_requests as r')->join('service_request_details as d', 'd.service_request_id', '=', 'r.id')
             ->leftJoin('client_projects as p', 'p.service_request_id', '=', 'r.id')->whereBetween('r.created_at', [$start, $end])
-            ->groupBy('d.source')->orderBy('d.source')->selectRaw('COALESCE(d.source, ?) as source, COUNT(r.id) as leads, COUNT(p.id) as projects', ['direct'])
-            ->get()->map(fn ($row) => ['source' => $row->source, 'leads' => (int) $row->leads, 'projects' => (int) $row->projects])->all();
+            ->selectRaw("CASE WHEN d.source REGEXP '^[A-Za-z0-9][A-Za-z0-9_-]{0,59}$' THEN d.source ELSE NULL END as source, COUNT(r.id) as leads, COUNT(p.id) as projects")
+            ->groupByRaw("CASE WHEN d.source REGEXP '^[A-Za-z0-9][A-Za-z0-9_-]{0,59}$' THEN d.source ELSE NULL END")
+            ->orderBy('source')->get()->map(fn ($row) => ['source' => $row->source ?? 'direct',
+                'leads' => (int) $row->leads, 'projects' => (int) $row->projects])->all();
+
+        // Campaign is optional and user-supplied. Only short, non-identifying campaign tokens
+        // may be displayed; collapse all other values into one unattributed aggregate.
+        $campaignRows = DB::table('service_requests as r')->join('service_request_details as d', 'd.service_request_id', '=', 'r.id')
+            ->leftJoin('client_projects as p', 'p.service_request_id', '=', 'r.id')->whereBetween('r.created_at', [$start, $end])
+            ->selectRaw("CASE WHEN d.campaign REGEXP '^[A-Za-z0-9][A-Za-z0-9_-]{0,59}$' THEN d.campaign ELSE NULL END as campaign, COUNT(r.id) as leads, COUNT(p.id) as projects")
+            ->groupByRaw("CASE WHEN d.campaign REGEXP '^[A-Za-z0-9][A-Za-z0-9_-]{0,59}$' THEN d.campaign ELSE NULL END")
+            ->orderBy('campaign')->get()->map(fn ($row) => ['campaign' => $row->campaign ?? 'unattributed',
+                'leads' => (int) $row->leads, 'projects' => (int) $row->projects])->all();
 
         return ['from' => $start->toISOString(), 'to' => $end->toISOString(), 'aggregate_only' => true,
             'totals' => ['leads' => $leadBase->count(), 'projects' => $projectBase->count(),
                 'approved_proposals' => $approvedBase->count(), 'paid_milestones' => $paidBase->count(),
                 'completed_projects' => DB::table('client_projects')->where('status', 'completed')->whereBetween('updated_at', [$start, $end])->count()],
-            'by_service' => $service, 'by_source' => $source];
+            'by_service' => $service, 'by_source' => $source, 'by_campaign' => $campaignRows];
     }
 
     private function publicPayload(int $projectId): array

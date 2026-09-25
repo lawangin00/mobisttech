@@ -383,6 +383,79 @@ final class WebsiteApi
         $items = $this->digital->catalogue();
         abort_if(count($items) > 100, 503, 'Published service catalogue exceeds the API payload budget.');
 
+        // Join only active published CMS revisions to the already bounded Digital Service
+        // catalogue. Never read a draft page's mutable display columns or expose admin JSON.
+        $related = [];
+        if ($items !== []) {
+            $rows = DB::table('site_page_service_links as link')
+                ->join('digital_services as service', 'service.id', '=', 'link.digital_service_id')
+                ->join('site_managed_pages as page', 'page.id', '=', 'link.site_managed_page_id')
+                ->join('site_page_revisions as revision', 'revision.id', '=', 'page.current_revision_id')
+                ->whereIn('service.slug', array_column($items, 'slug'))
+                ->where('page.publish_state', 'published')->where('revision.state', 'published')
+                ->whereIn('page.content_purpose', ['service_landing', 'case_study', 'digital_testimonial'])
+                ->orderBy('page.id')->limit(801)
+                ->get(['service.slug as service_slug', 'page.slug as public_slug', 'revision.snapshot']);
+            abort_if($rows->count() > 800, 503, 'Published service content exceeds the bounded API payload.');
+            foreach ($rows as $row) {
+                $snapshot = json_decode($row->snapshot, true, flags: JSON_THROW_ON_ERROR);
+                $kind = $snapshot['content_purpose'] ?? null;
+                if (! in_array($kind, ['service_landing', 'case_study', 'digital_testimonial'], true)
+                    || ! $this->capabilities->allowsScope((string) ($snapshot['capability_scope'] ?? ''))
+                    || ($snapshot['slug'] ?? null) !== $row->public_slug
+                    || ($kind === 'digital_testimonial' && ($snapshot['structured_content']['consent_confirmed'] ?? false) !== true)) {
+                    continue;
+                }
+                $related[$row->service_slug] ??= ['landing' => null, 'related_pages' => []];
+                if ($kind === 'service_landing' && $related[$row->service_slug]['landing'] === null) {
+                    $source = $snapshot['structured_content'] ?? [];
+                    $source = is_array($source) ? $source : [];
+                    $publicStructured = [];
+                    foreach (['hero_heading', 'hero_body', 'problem', 'outcome'] as $field) {
+                        $value = $source[$field] ?? null;
+                        if (is_string($value) && mb_strlen($value) <= 2000) {
+                            $publicStructured[$field] = $value;
+                        }
+                    }
+                    foreach (['features', 'deliverables', 'process', 'technologies'] as $field) {
+                        $values = $source[$field] ?? null;
+                        if (is_array($values) && array_is_list($values)) {
+                            $publicStructured[$field] = array_values(array_filter(array_slice($values, 0, 12),
+                                fn ($value) => is_string($value) && mb_strlen($value) <= 2000));
+                        }
+                    }
+                    $faq = $source['faq'] ?? null;
+                    if (is_array($faq) && array_is_list($faq)) {
+                        $publicStructured['faq'] = [];
+                        foreach (array_slice($faq, 0, 12) as $entry) {
+                            if (is_array($entry) && is_string($entry['question'] ?? null)
+                                && is_string($entry['answer'] ?? null)
+                                && mb_strlen($entry['question']) <= 2000 && mb_strlen($entry['answer']) <= 2000) {
+                                $publicStructured['faq'][] = [
+                                    'question' => $entry['question'], 'answer' => $entry['answer'],
+                                ];
+                            }
+                        }
+                    }
+                    $related[$row->service_slug]['landing'] = [
+                        'slug' => $snapshot['slug'], 'title' => $snapshot['title'],
+                        'content' => $snapshot['content'], 'structured' => $publicStructured,
+                        'seo_title' => $snapshot['seo_title'] ?? null,
+                        'meta_description' => $snapshot['meta_description'] ?? null,
+                    ];
+                } elseif (in_array($kind, ['case_study', 'digital_testimonial'], true)
+                    && ($snapshot['is_indexable'] ?? false) === true
+                    && count($related[$row->service_slug]['related_pages']) < 8) {
+                    $related[$row->service_slug]['related_pages'][] = [
+                        'slug' => $snapshot['slug'], 'title' => $snapshot['title'], 'purpose' => $kind,
+                    ];
+                }
+            }
+        }
+        $items = array_map(fn (array $item) => [...$item, ...($related[$item['slug']] ?? [
+            'landing' => null, 'related_pages' => [],
+        ])], $items);
+
         return ['items' => $items];
     }
 

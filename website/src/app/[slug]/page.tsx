@@ -4,6 +4,11 @@ import { cache } from "react";
 import { readManagedPage, readPolicies, readWebsiteProfile, WebsiteApiError } from "@/lib/website-api";
 import { readBusinessProfile } from "@/lib/business-profile";
 
+const caseText = (value: unknown): string | null =>
+  typeof value === "string" && value.trim().length > 0 && value.length <= 2000 ? value.trim() : null;
+const caseList = (value: unknown): string[] => Array.isArray(value)
+  ? value.slice(0, 12).map(caseText).filter((entry): entry is string => entry !== null) : [];
+
 export const dynamic = "force-dynamic";
 
 const resolve = cache(async function resolve(slug: string) {
@@ -57,8 +62,30 @@ export default async function PublishedContentPage({ params }: { params: Promise
   }
 
   const page = item.page.snapshot;
+  const story = page.content_purpose === "case_study" ? page.structured_content : null;
+  const disclosure = story?.client_disclosure;
+  const category = caseText(story?.category);
+  const industry = disclosure === 'named' || disclosure === 'industry_only' ? caseText(story?.industry) : null;
+  const problem = caseText(story?.problem);
+  const solution = caseText(story?.solution);
+  const technologies = caseList(story?.technologies);
+  const outcomes = caseList(story?.outcomes);
   return <main className={(page.template === "wide" ? "max-w-7xl" : "max-w-5xl") + " mx-auto px-4 py-10 sm:px-6"} data-page-template={page.template}>
     <h1 className="text-3xl font-bold">{page.title}</h1>
+    {story && <p className="mt-2 text-sm text-slate-500" data-testid="case-disclosure">
+      {category && <span>{category} · </span>}{industry && <span>{industry} · </span>}
+      {disclosure === "anonymous" ? "Anonymous case study" : disclosure === "industry_only" ? "Industry-only case study" : "Published case study"}
+    </p>}
     <article className="mt-8 space-y-4 text-slate-700" dangerouslySetInnerHTML={{ __html: page.content }} />
+    {story && (problem || solution) && <section className="mt-8 grid gap-4 sm:grid-cols-2">
+      {problem && <div><h2 className="font-semibold">The challenge</h2><p className="mt-2 whitespace-pre-wrap">{problem}</p></div>}
+      {solution && <div><h2 className="font-semibold">The solution</h2><p className="mt-2 whitespace-pre-wrap">{solution}</p></div>}
+    </section>}
+    {story && technologies.length > 0 && <section className="mt-6"><h2 className="font-semibold">Technologies</h2>
+      <ul className="mt-2 list-inside list-disc">{technologies.map((technology, index) => <li key={index}>{technology}</li>)}</ul>
+    </section>}
+    {story && outcomes.length > 0 && <section className="mt-6"><h2 className="font-semibold">Outcomes</h2>
+      <ul className="mt-2 list-inside list-disc">{outcomes.map((outcome, index) => <li key={index}>{outcome}</li>)}</ul>
+    </section>}
   </main>;
 }

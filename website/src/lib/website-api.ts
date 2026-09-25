@@ -72,10 +72,17 @@ export type Policy = {
   effective_date: string; version: number; content: string; content_sha256: string;
 };
 export type ServiceOffer = { public_id: string; code: string; name: string; pricing_type: string; price: string | null; currency: "PKR"; version: number };
+export type ServiceLanding = {
+  slug: string; title: string; content: string;
+  seo_title: string | null; meta_description: string | null;
+  structured: Record<string, unknown>;
+};
+export type RelatedServicePage = { slug: string; title: string; purpose: "case_study" | "digital_testimonial" };
 export type DigitalService = {
   slug: string; name: string; category: string | null; short_description: string; description: string | null;
   price_type: "quote" | "fixed" | "starting_from" | "package"; price: string | null;
   packages: ServiceOffer[]; addons: ServiceOffer[];
+  landing?: ServiceLanding | null; related_pages?: RelatedServicePage[];
 };
 export type ConsultationAvailability = {
   enabled: boolean; timezone: string | null;

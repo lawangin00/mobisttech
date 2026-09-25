@@ -278,6 +278,19 @@ class ClientProjectServicesTest extends TestCase
         $this->assertSame(1, $summary['totals']['leads']);
         $this->assertSame(1, $summary['totals']['projects']);
         $this->assertSame(1, $summary['totals']['approved_proposals']);
+        $this->assertSame([['campaign' => 'unattributed', 'leads' => 1, 'projects' => 1]], $summary['by_campaign']);
+        DB::table('service_request_details')->where('service_request_id', DB::table('service_requests')->where('public_id', $this->lead['public_id'])->value('id'))->update(['campaign' => 'fall_launch']);
+        $named = $projects->conversionSummary($this->actor, now()->subDay()->toIso8601String(), now()->addDay()->toIso8601String());
+        $this->assertSame([['campaign' => 'fall_launch', 'leads' => 1, 'projects' => 1]], $named['by_campaign']);
+        DB::table('service_request_details')->where('service_request_id', DB::table('service_requests')->where('public_id', $this->lead['public_id'])->value('id'))->update(['campaign' => 'lead-contact@example.invalid']);
+        $sensitive = $projects->conversionSummary($this->actor, now()->subDay()->toIso8601String(), now()->addDay()->toIso8601String());
+        $this->assertSame([['campaign' => 'unattributed', 'leads' => 1, 'projects' => 1]], $sensitive['by_campaign']);
+        $this->assertStringNotContainsString('lead-contact@example.invalid', json_encode($sensitive, JSON_THROW_ON_ERROR));
+        DB::table('service_request_details')->where('service_request_id', DB::table('service_requests')->where('public_id', $this->lead['public_id'])->value('id'))->update(['source' => 'lead-contact@example.invalid']);
+        $noSourcePii = $projects->conversionSummary($this->actor, now()->subDay()->toIso8601String(), now()->addDay()->toIso8601String());
+        $this->assertSame([['source' => 'direct', 'leads' => 1, 'projects' => 1]], $noSourcePii['by_source']);
+        $this->assertStringNotContainsString('lead-contact@example.invalid', json_encode($noSourcePii, JSON_THROW_ON_ERROR));
+
         $encoded = json_encode($summary, JSON_THROW_ON_ERROR);
         $this->assertStringNotContainsString($this->customer->email, $encoded);
         $this->assertStringNotContainsString($this->customer->mobile, $encoded);

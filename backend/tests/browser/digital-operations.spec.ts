@@ -88,6 +88,7 @@ test('MT-4.8 digital operations administers services leads projects private file
         totals: { leads: 8, projects: 5, approved_proposals: 4, paid_milestones: 3, completed_projects: 2 },
         by_service: [{ service: 'web-development', leads: 8, projects: 5 }],
         by_source: [{ source: 'website', leads: 8, projects: 5 }],
+        by_campaign: [{ campaign: 'fall_launch', leads: 8, projects: 5 }],
     };
 
     const fulfill = async (route: Route, payload: unknown = {}) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: payload }) });
@@ -157,6 +158,8 @@ test('MT-4.8 digital operations administers services leads projects private file
     await page.getByRole('button', { name: 'Reporting' }).click();
     await page.getByRole('button', { name: 'Run aggregate report' }).click();
     await expect(page.getByText('Approved proposals')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'By campaign' })).toBeVisible();
+    await expect(page.getByText(/fall_launch: 8 leads/)).toBeVisible();
     await expect(page.getByText('web-development: 8 leads · 5 projects')).toBeVisible();
     await expect.poll(() => calls.some(c => c.path.endsWith('/conversions') && c.method === 'GET')).toBe(true);
 
