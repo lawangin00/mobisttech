@@ -1,0 +1,13 @@
+﻿{
+    "schema_version":  1,
+    "project_id":  "282dba2f-a2d9-47e8-aa8d-e499fbe1706c",
+    "stage_id":  "MT-7.5",
+    "reason":  "milestone",
+    "gate":  "full",
+    "source_commit":  "b951623bc451972591a8beadeff098af0855d8a5",
+    "requested_at_utc":  "2026-09-25T09:55:05Z",
+    "execution_surface":  "NORMAL_CHAT",
+    "authorization_ref":  "docs/PROJECT_IMPLEMENTATION_STATUS.md:27/Q01 first exact-source failure classification + bounded corrections (25-Sep-2026 PKT)",
+    "local_evidence":  "Prior full backend 440/441 PASS (11705 assertions) isolated random synthetic outlet-code collision; corrected fresh-schema PlatformAdministrationInterfaceTest 6/6 PASS (240 assertions); scoped Pint 2 files PASS; first hosted run 36101561600 failed only Pint ordered_imports before tests.",
+    "hosted_only_need":  "One materially changed exact-source clean Linux final Q01 verification after correcting the hosted Pint failure and local synthetic outlet-code collision."
+}
