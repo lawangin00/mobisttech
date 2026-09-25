@@ -175,12 +175,23 @@ test('MT-4.4 platform administration delegates protected CMS POS team payment in
     });
     await expect.poll(() => calls.some((call) => call.path.endsWith('/platform/media'))).toBe(true);
     const policy = page.getByRole('heading', { name: 'Legal & policy content' }).locator('xpath=ancestor::section[1]');
-    await policy.locator('textarea').fill('<p>E2E unreviewed privacy policy draft.</p>');
-    await policy.getByRole('button', { name: 'Save unreviewed policy draft' }).click();
+    await expect(policy.getByLabel('Policy approval state')).toHaveValue('draft');
+    await expect(policy.getByLabel('Policy factual review state')).toHaveValue('pending');
+    await policy.getByPlaceholder('Policy text').fill('<p>E2E unreviewed privacy policy draft.</p>');
+    await policy.getByRole('button', { name: 'Save policy draft' }).click();
     await expect.poll(() => calls.some((call) => call.path.includes('/policies/privacy/draft')
         && call.body?.approval_state === 'draft'
         && call.body?.factual_review_state === 'pending'
         && Array.isArray(call.body?.unresolved_decisions))).toBe(true);
+    await policy.getByLabel('Policy approval state').selectOption('owner_approved');
+    await policy.getByLabel('Policy factual review state').selectOption('verified');
+    await policy.getByPlaceholder('Policy text').fill('<p>E2E synthetically reviewed policy draft.</p>');
+    await policy.getByLabel('Professional review reference').fill('synthetic-browser-review');
+    await policy.getByRole('button', { name: 'Save policy draft' }).click();
+    await expect.poll(() => calls.some((call) => call.path.includes('/policies/privacy/draft')
+        && call.body?.approval_state === 'owner_approved'
+        && call.body?.factual_review_state === 'verified'
+        && call.body?.professional_review_reference === 'synthetic-browser-review')).toBe(true);
     const policyHistory = page.getByRole('heading', { name: 'Policy revisions' }).locator('xpath=ancestor::section[1]');
     await policyHistory.getByRole('button', { name: 'Publish' }).click();
     await expect.poll(() => calls.some((call) => call.path.endsWith('/policies/21/publish'))).toBe(true);

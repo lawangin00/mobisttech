@@ -42,3 +42,7 @@ Status: Active review; no whole-product parity or production approval is asserte
 ## 20-Sep-2026 fresh-business scope supersession
 
 The newly binding `MT-7.5_FRESH_BUSINESS_SCOPE.md` displaces any old POS/Website source identity/business-row import, real legacy-data cutover, locked SQLite snapshot or old financial/archival reconciliation as an active MT-7.5 closure condition in the historical matrix above. All originally required FEATURES/BUSINESS RULES still require new-target Admin/outlet/POS/Website implementation and isolated synthetic end-to-end evidence; future-generated financial/stock/warranty/history protections remain intact. External Gmail/payment actual connectivity is separately UNVERIFIED and authorized later without blocking independent mock-ready functional work. Previously completed source-characterization and migration-mapper synthetic tests remain as labelled historical evidence, not required UI inputs or prerequisites.
+
+## 23/G-C supersession — 25-Sep-2026
+
+The consolidated Documents/Payments/Legal cross-requirement row is development-accepted by `MT-7.5_GC_FINITE_ACCEPTANCE_2026-09-25.md` and `MT-7.5_GC_DEVELOPMENT_CLOSURE_2026-09-25.md`. Existing document/payment evidence was reused; all applicable typed policy routes/footer and guided protected approval/review controls received focused current evidence. Live external providers and final owner/legal/license decisions remain separate holds; user manual remains MT-7.6.
