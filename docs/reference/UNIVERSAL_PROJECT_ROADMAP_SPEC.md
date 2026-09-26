@@ -1,7 +1,7 @@
 # Universal Project Roadmap Specification
 
-**Specification version:** 1.17
-**System version:** 7.13
+**Specification version:** 1.18
+**System version:** 7.14
 **Canonical remote:** `lawangin00/references`
 **Canonical path:** `UNIVERSAL_PROJECT_ROADMAP_SPEC.md`
 **Control bootstrap:** `UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md`
@@ -100,7 +100,7 @@ The roadmap should contain, as applicable:
 
 ## Execution-mode switching and roadmap continuity
 
-- `Shift to LDC` / `VP:SHIFT-TO-LDC`, `Shift to MCP` / `VP:SHIFT-TO-MCP`, `Shift to RDC` / `VP:SHIFT-TO-RDC`, and `Shift to Git` / `VP:SHIFT-TO-GIT` are universal explicit Normal Chat route commands; verified Local Work remains native `DIRECT_LOCAL`. `Execution Status` is read-only. Legacy `Shift to Local` maps to LDC and `Shift to GitHub` maps to Git. Route changes never alter project binding, surface, completed/pending work or roadmap structure.
+- `Shift to LDC` / `VP:SHIFT-TO-LDC`, `Shift to MCP` / `VP:SHIFT-TO-MCP`, `Shift to RDC` / `VP:SHIFT-TO-RDC`, and `Shift to Git` / `VP:SHIFT-TO-GIT` are the only universal explicit Normal Chat route commands; verified Local Work remains native `DIRECT_LOCAL`. `Execution Status` is read-only. Route changes never alter project binding, surface, completed/pending work or roadmap structure.
 - A temporary project-specific exception changes only the selected verified Project ID's effective source/local route. It never changes the default for other projects and never authorizes an automatic surface handoff.
 - A genuine route-specific capability blocker may be recorded against the existing `In Progress` point without adding/reopening roadmap work. Suggest only the appropriate **Shift to LDC/MCP/RDC/Git** command; never auto-switch route or conversation.
 - Existing manual Chat/Work handoff aliases remain separate, exclusively user-initiated commands. The control system contains no automatic Chat/Work/Local Work handoff recommendation/acceptance/decline mechanism.
@@ -117,14 +117,14 @@ When one project spans multiple repositories and each repository carries project
 
 ## Mandatory mode-aware verification and new-project adoption
 
-- Every newly initialized roadmap references `UNIVERSAL_EXECUTION_MODE_POLICY.md`, `UNIVERSAL_CI_REQUEST_DISPATCH_POLICY.md`, and fresh `UNIVERSAL_EXECUTION_MODE.json`. Route is live universal state resolved with the immutable Project ID; never bake stale route into identity/roadmap/DOCX. Verify local connector/fallback behavior and request-only hosted gate wiring before recording `U-EXEC-ROUTE-2026-09-26-1`.
-- Each stage/sub-stage names its actual quality gates and execution venue. Normal Chat follows source route + selected local backend/exception; verified Local Work runs DIRECT_LOCAL. Routine verification runs locally in every route, including Git. A raw source push is not validation, but ordinary stage completion also does not justify hosted CI.
-- Ordinary source pushes start no GitHub Actions. Use exact-source hosted verification only at a major milestone, project completion/final audit/release, or a documented necessary independent check, with prior local evidence and authorization recorded. Switching routes never starts tests and never restores routine per-stage hosted requests.
+- Every newly initialized roadmap references `UNIVERSAL_EXECUTION_MODE_POLICY.md`, `UNIVERSAL_CI_REQUEST_DISPATCH_POLICY.md`, and fresh `UNIVERSAL_EXECUTION_MODE.json`. Route is live universal state resolved with the immutable Project ID; never bake stale route into identity/roadmap/DOCX. Verify exact four-command routing, local connector/fallback behavior, Git-route routine hosted CI, and local-route milestone/final hosted gates before recording `U-EXEC-ROUTE-2026-09-26-2`.
+- Each stage/sub-stage names its actual quality gates and execution venue. Normal Chat follows source route + selected local backend/exception; verified Local Work runs DIRECT_LOCAL. In Git route, routine automated verification runs through source-bound hosted GitHub CI. In LDC/MCP/RDC and Local Work, routine verification runs locally.
+- Ordinary source pushes alone start no GitHub Actions. In Git route the controller creates an exact-source CI request for required routine stage/sub-stage verification. In LDC/MCP/RDC and Local Work, hosted verification is limited to a major milestone, project completion/final audit/release, or a documented necessary independent check with prior local evidence and authorization.
 - Final audit/project completion requires the applicable exact-source independent hosted acceptance when the project has a relevant workflow, plus all required local/GUI/VM/customer evidence. A missing runner, tailored workflow, identity, write access or terminal verdict keeps completion open and cannot yield `Project complete: 100%`.
 - Initialization must derive relevant hosted and local test commands from the project's real stack, not use a generic placeholder `echo PASS` workflow. A non-code project may record a verified not-applicable CI receipt. New project adoption means rules plus tested project-specific wiring on the selected repository; universal Markdown alone does not install runners in arbitrary repos.
 
 ## FINAL-AUDIT requirement
 
-Every new roadmap must end with `FINAL-AUDIT` or explicitly designate an equivalent. That gate independently verifies Project ID/remote identity, requirements, roadmap/ledger, Git/code/data, migrations/recovery, applicable local tests/build/security/integration, documentation, HOLD/Deferred boundaries and repository sync, plus one non-duplicate exact-source GitHub Actions project-completion/final verification when applicable. Before declaring completion, regenerate/render/verify the final archival DOCX snapshot from canonical Markdown.
+Every new roadmap must end with `FINAL-AUDIT` or explicitly designate an equivalent. That gate independently verifies Project ID/remote identity, requirements, roadmap/ledger, Git/code/data, migrations/recovery, all route-appropriate tests/build/security/integration gates, documentation, HOLD/Deferred boundaries and repository sync, plus one non-duplicate exact-source GitHub Actions project-completion/final verification when applicable. Before declaring completion, regenerate/render/verify the final archival DOCX snapshot from canonical Markdown.
 
 A real gap reopens remediation. Only a clean final audit may permit `Project complete: 100%`.

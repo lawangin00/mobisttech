@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source-bound Mobisttech hosted-CI gate: routine verification is local in every route."""
+"""Source-bound Mobisttech CI gate with route-dependent verification."""
 import argparse
 import base64
 import json
@@ -14,7 +14,8 @@ STATE_API = 'https://api.github.com/repos/lawangin00/references/contents/UNIVERS
 STATE_RAW = 'https://raw.githubusercontent.com/lawangin00/references/refs/heads/main/UNIVERSAL_EXECUTION_MODE.json'
 REQUEST_ROOT = '.github/ci-requests/'
 FOCUSED_SCOPES = ('W01-customer', 'W01-identity', 'P02-variants', 'W03-commerce')
-HOSTED_REASONS = ('milestone', 'project_completion', 'necessary')
+REASONS = ('stage', 'milestone', 'project_completion', 'necessary')
+INDEPENDENT_REASONS = ('milestone', 'project_completion', 'necessary')
 
 
 def present(request, field):
@@ -30,24 +31,39 @@ def validate_state(state):
     assert all(value in ('GITHUB', 'LOCAL', 'LDC', 'MCP', 'RDC') for value in exceptions.values())
 
 
+def effective_route(state):
+    value = state['exceptions'].get(PROJECT_ID, state['global_mode'])
+    if value == 'GITHUB':
+        return 'GITHUB'
+    if value == 'LOCAL':
+        return state.get('local_backend', 'LDC')
+    return value
+
+
 def allowed(state, event, request=None):
     validate_state(state)
-
-    # workflow_dispatch does not establish authorization. Hosted verification is
-    # always an exact-source request commit after local evidence exists.
     if event != 'push' or not isinstance(request, dict):
         return False
 
     assert request.get('project_id') == PROJECT_ID
-    assert request.get('reason') in HOSTED_REASONS
+    assert request.get('reason') in REASONS
     assert request.get('gate') in ('website', 'full', 'all', 'verify')
     assert present(request, 'stage_id') and present(request, 'requested_at_utc')
-    assert request.get('execution_surface') in ('NORMAL_CHAT', 'LOCAL_WORK')
+    surface = request.get('execution_surface')
+    assert surface in ('NORMAL_CHAT', 'LOCAL_WORK')
     if request['gate'] == 'verify':
         assert request['stage_id'] == 'MT-7.5' and request.get('focus') in FOCUSED_SCOPES
 
-    # This is intentionally route-independent: Shift to Git also keeps routine
-    # tests local. Every hosted run needs prior authorization + local evidence.
+    route = effective_route(state)
+
+    # Git route is used when local PC execution is unavailable/not selected.
+    # Routine stage verification therefore runs in source-bound GitHub CI.
+    if surface == 'NORMAL_CHAT' and route == 'GITHUB':
+        return True
+
+    # LDC/MCP/RDC and native Local Work keep routine verification local.
+    if request['reason'] not in INDEPENDENT_REASONS:
+        return False
     if not all(present(request, field) for field in
                ('authorization_ref', 'local_evidence', 'hosted_only_need')):
         return False
@@ -57,46 +73,44 @@ def allowed(state, event, request=None):
 
 
 def self_test():
-    states = (
-        {'schema_version': 1, 'global_mode': 'GITHUB', 'local_backend': 'LDC', 'exceptions': {}},
-        {'schema_version': 1, 'global_mode': 'LOCAL', 'local_backend': 'LDC', 'exceptions': {}},
-        {'schema_version': 1, 'global_mode': 'LOCAL', 'local_backend': 'MCP', 'exceptions': {}},
-        {'schema_version': 1, 'global_mode': 'LOCAL', 'local_backend': 'RDC', 'exceptions': {}},
-    )
+    github = {'schema_version': 1, 'global_mode': 'GITHUB', 'local_backend': 'LDC', 'exceptions': {}}
+    local_ldc = {'schema_version': 1, 'global_mode': 'LOCAL', 'local_backend': 'LDC', 'exceptions': {}}
+    local_mcp = {**local_ldc, 'local_backend': 'MCP'}
+    local_rdc = {**local_ldc, 'local_backend': 'RDC'}
     routine = {'project_id': PROJECT_ID, 'reason': 'stage', 'gate': 'all',
                'stage_id': 'MT-7.6', 'requested_at_utc': '2026-09-26T00:00:00Z',
                'execution_surface': 'NORMAL_CHAT'}
-    approved = {**routine, 'reason': 'milestone',
-                'authorization_ref': 'ledger:MT-7.6:approved-milestone',
-                'local_evidence': 'ledger:MT-7.6:local-PASS',
-                'hosted_only_need': 'Independent clean Linux milestone verification'}
+    independent = {**routine, 'reason': 'milestone',
+                   'authorization_ref': 'ledger:MT-7.6:approved-milestone',
+                   'local_evidence': 'ledger:MT-7.6:local-PASS',
+                   'hosted_only_need': 'Independent clean Linux milestone verification'}
 
-    for state in states:
-        try:
-            allowed(state, 'push', routine)
-        except AssertionError:
-            pass
-        else:
-            raise AssertionError('Routine/stage hosted request accepted')
-        assert allowed(state, 'push', approved)
-        assert allowed(state, 'push', {**approved, 'reason': 'project_completion'})
-        assert allowed(state, 'push', {**approved, 'reason': 'necessary'})
-        assert not allowed(state, 'workflow_dispatch', approved)
-        assert not allowed(state, 'push', {**approved, 'authorization_ref': ''})
-        assert not allowed(state, 'push', {**approved, 'hosted_only_need': 'repeat local tests'})
+    assert allowed(github, 'push', routine)
+    assert not allowed(github, 'push', {**routine, 'execution_surface': 'LOCAL_WORK'})
+    assert not allowed(github, 'workflow_dispatch', routine)
 
-    assert allowed(states[0], 'push', {**approved, 'execution_surface': 'LOCAL_WORK'})
-    assert allowed({**states[0], 'exceptions': {PROJECT_ID: 'MCP'}}, 'push', approved)
-    for invalid in ({**approved, 'project_id': 'wrong'},
-                    {**approved, 'gate': 'wrong'},
-                    {**approved, 'gate': 'verify', 'focus': 'wrong'}):
+    for state in (local_ldc, local_mcp, local_rdc):
+        assert not allowed(state, 'push', routine)
+        assert allowed(state, 'push', independent)
+        assert allowed(state, 'push', {**independent, 'reason': 'project_completion'})
+        assert allowed(state, 'push', {**independent, 'reason': 'necessary'})
+        assert not allowed(state, 'push', {**independent, 'authorization_ref': ''})
+        assert not allowed(state, 'push', {**independent, 'hosted_only_need': 'repeat local tests'})
+
+    assert not allowed({**github, 'exceptions': {PROJECT_ID: 'MCP'}}, 'push', routine)
+    assert allowed({**github, 'exceptions': {PROJECT_ID: 'MCP'}}, 'push', independent)
+
+    for invalid in ({**independent, 'project_id': 'wrong'},
+                    {**independent, 'gate': 'wrong'},
+                    {**independent, 'gate': 'verify', 'focus': 'wrong'}):
         try:
-            allowed(states[0], 'push', invalid)
+            allowed(github, 'push', invalid)
         except AssertionError:
             pass
         else:
             raise AssertionError('Invalid request accepted')
-    print('CI_LOCAL_FIRST_HOSTED_FIXTURES=PASS')
+
+    print('CI_ROUTE_DEPENDENT_FIXTURES=PASS')
 
 
 def git(*args):
@@ -149,9 +163,9 @@ def main():
         return
 
     event = os.environ['GITHUB_EVENT_NAME']
-    assert event == 'push', 'Unapproved manual CI dispatch: use a justified CI request commit'
+    assert event == 'push', 'Unapproved manual CI dispatch: use a source-bound CI request commit'
     req = read_request()
-    assert allowed(canonical_mode(), event, req), 'CI blocked: local-first hosted-CI authorization mismatch'
+    assert allowed(canonical_mode(), event, req), 'CI blocked: execution-route authorization mismatch'
     focus = req['focus'] if req['gate'] == 'verify' else 'full'
     with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
         output.write('run_tests=true\nrun_scope=' + focus + '\n')

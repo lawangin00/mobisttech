@@ -46,10 +46,13 @@ def check() -> None:
     assert 'LOOP_GUARD' in registry and 'full joined' in ci.lower() and 'regression' in ci.lower()
     for command in ('Shift to LDC', 'Shift to MCP', 'Shift to RDC', 'Shift to Git'):
         assert command in registry and command in agents, f'Execution route missing: {command}'
-    assert 'routine verification runs on the authorized local pc in every route' in ci.lower()
-    assert 'project_completion' in ci and 'reason: stage' not in ci
+    for removed in ('Shift to Local', 'VP:SHIFT-TO-LOCAL', 'Shift to GitHub', 'VP:SHIFT-TO-GITHUB'):
+        assert removed not in registry and removed not in agents and removed not in ci, f'Removed route alias still active: {removed}'
+    assert 'git route' in ci.lower() and 'reason: stage' in ci.lower() and 'local pc access is not required' in ci.lower()
+    assert 'ldc/mcp/rdc' in ci.lower() and 'routine `reason: stage` hosted requests are rejected' in ci.lower()
+    assert 'project_completion' in ci and 'U-EXEC-ROUTE-2026-09-26-2' in registry
     assert 'LDC -> Local MCP Coder -> RDC' in agents
-    print(f'MOBISTTECH_PROJECT_WIDE_EXECUTION_POLICY_PASS: 27 stable gates, baseline {complete} DONE, {27 - complete} OPEN; local-first routes enforced')
+    print(f'MOBISTTECH_PROJECT_WIDE_EXECUTION_POLICY_PASS: 27 stable gates, baseline {complete} DONE, {27 - complete} OPEN; route-dependent CI enforced')
 
 
 if __name__ == '__main__':
