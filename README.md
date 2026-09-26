@@ -38,6 +38,6 @@ The backend and MySQL are the authoritative owners of shared business data. The 
 
 The Windows foundation runbook is a **historical initial-setup checkpoint**, not a current install/production procedure. Consult the [current fresh-business first-Admin/outlet boundary](docs/operations/FRESH_BUSINESS_BOOTSTRAP.md) and [non-production deployment readiness runbook](docs/deploy/MT-7.4_RUNBOOK.md); verify the current ledger, schema and owned target state before any authorized local operation. No old POS/Website business rows, old credentials, separate databases or source launch commands are deployment inputs. The implementation ledger is the only live progress/next-point authority; historical source tests are characterization, not target acceptance.
 
-The original `C:\mobiST\mobiST-POS` and `C:\mobiST\mobiST-Website` repositories and their GitHub remotes are protected read-only references. No edits, installs, builds, migrations, commits, pushes or remote changes are allowed there.
+The former local legacy POS/Website checkouts are retired and are not required for Mobisttech runtime, build, test, migration, acceptance or release. Their historical provenance remains preserved in this repository's committed source snapshot, inventories, characterization and audit records. Historical GitHub remotes remain provenance only; no Mobisttech command should require the retired local paths to exist.
 
 Canonical remote: `https://github.com/lawangin00/mobisttech` (public). Verify repository status and synchronization from the status ledger and actual Git state.

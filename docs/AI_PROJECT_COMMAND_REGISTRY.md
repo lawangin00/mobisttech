@@ -1,6 +1,6 @@
 # Mobisttech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r27
+**Registry version:** MT-1.1-r28
 **Applied universal implementation epochs:** `U-CI-2026-09-19-1`, `U-CI-MODE-2026-09-21-2`, `U-EXEC-ROUTE-2026-09-26-1`, `U-EXEC-ROUTE-2026-09-26-2`
 **Universal baseline (review provenance):** Registry 1.53 / System 7.14
 **Bootstrap baseline (review provenance):** 1.31
@@ -29,7 +29,7 @@ This is a **delta-only** project registry. At runtime it inherits the current ca
 
 - This is the new independent Mobisttech project. Do not resume or advance old DP-* task position.
 - `C:\mobisttech` is this project's exact local hard boundary when local execution is explicitly selected. Canonical remote is only `lawangin00/mobisttech`.
-- Protected legacy sources are `C:\mobiST\mobiST-POS` and `C:\mobiST\mobiST-Website`. Their files, Git metadata, remotes, databases and services are read-only evidence for this project; source tests/builds may run only in isolated exported copies.
+- The former local legacy POS/Website checkouts are retired and may be absent. They are not runtime, build, test, migration, acceptance or release dependencies. Historical source provenance is retained in committed `docs/SOURCE_SNAPSHOT.json`, migration inventories, characterization and audit evidence; no project command may require the retired local paths to exist. Any future source comparison must use preserved evidence or separately authorized source material, never assume the retired checkouts remain on disk.
 - Current user instruction has highest authority. Project Goal defines required functionality; approved Preferences and requirements addendum define implementation boundaries. Legacy source documents are technical evidence only; old architecture/command semantics do not carry into this project.
 - `Initialize Project` for this project completes only MT-0.1. Do not rerun initialization merely because Goal/Preferences/addendum/control files are reconciled later.
 - `Y` / `Proceed`: continue an active `In Progress` point, otherwise execute the first verified Pending point. After one point is fully completed, verified, committed and pushed, stop; do not automatically start the next point.

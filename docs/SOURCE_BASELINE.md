@@ -1,5 +1,9 @@
 # Source baseline and migration risks
 
+## Local source retirement (26-Sep-2026)
+
+The local legacy POS and Website working checkouts used for the original 31-Aug source characterization have been retired as operational dependencies. The paths listed below are historical capture provenance only and may no longer exist on disk. Mobisttech runtime, build, test, migration, acceptance and release must not depend on them. The committed `docs/SOURCE_SNAPSHOT.json`, `docs/migration/SOURCE_FILE_INVENTORY.json`, `docs/migration/SOURCE_SYMBOL_INVENTORY.json`, `docs/migration/CHARACTERIZATION.md`, feature-parity/audit evidence, and the isolated characterization exports preserve the required source evidence. The owner-approved fresh-business scope makes real legacy business-data cutover/D04 source-copy migration RETIRED / NOT APPLICABLE.
+
 Date: 2026-08-31. Scope: read-only initialization review. The full feature-parity audit was still pending under MT-1.1 at the time this baseline was created.
 
 ## Verified references
