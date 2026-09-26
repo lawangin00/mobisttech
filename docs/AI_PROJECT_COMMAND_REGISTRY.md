@@ -1,10 +1,10 @@
 # Mobisttech - AI Project Command Registry
 
-**Registry version:** MT-1.1-r28
+**Registry version:** MT-1.1-r29
 **Applied universal implementation epochs:** `U-CI-2026-09-19-1`, `U-CI-MODE-2026-09-21-2`, `U-EXEC-ROUTE-2026-09-26-1`, `U-EXEC-ROUTE-2026-09-26-2`
 **Universal baseline (review provenance):** Registry 1.53 / System 7.14
 **Bootstrap baseline (review provenance):** 1.31
-**Last-reviewed universal commit:** `a7e09c8020b13ad2017eb1127babf359a2a73b92`
+**Last-reviewed universal commit:** `626ff61c14ed36134fe2bc6ace35fd6be4943d93` (`lawangin00/AI-Project-Control`, `references/` subtree)
 **Roadmap specification:** 1.18
 **Date:** 2026-09-26
 **Repository root:** `C:\mobisttech`
@@ -47,7 +47,7 @@ This is a **delta-only** project registry. At runtime it inherits the current ca
 
 ## Inherited universal command-specific response formats (binding)
 
-Mobisttech applies the current canonical command-specific output router (`lawangin00/references/UNIVERSAL_PROJECT_RESPONSE_FORMAT.md`) at every canonical load: five adjacent lines ONLY for authorized project task `Y`/`Proceed`/`Resume`/execution; `Next` is read-only and exactly three lines (`Next`, `Proceed? Y/N`, timestamp); all other aliases retain their own registry output and scope. Do not apply five-line default to Status, Progress, audits, Verify, Sync Check, Checkpoint, handoffs, Refresh or Help. The project ledger supplies verified facts; old chat examples and earlier five-line-for-all wording are superseded. Formatting does not advance MT-7.5 or permit task continuation on a read-only alias.
+Mobisttech applies the current canonical command-specific output router (`lawangin00/AI-Project-Control/references/UNIVERSAL_PROJECT_RESPONSE_FORMAT.md`) at every canonical load: five adjacent lines ONLY for authorized project task `Y`/`Proceed`/`Resume`/execution; `Next` is read-only and exactly three lines (`Next`, `Proceed? Y/N`, timestamp); all other aliases retain their own registry output and scope. Do not apply five-line default to Status, Progress, audits, Verify, Sync Check, Checkpoint, handoffs, Refresh or Help. The project ledger supplies verified facts; old chat examples and earlier five-line-for-all wording are superseded. Formatting does not advance MT-7.5 or permit task continuation on a read-only alias.
 
 ## Project performance specialization
 
@@ -72,7 +72,7 @@ Future universal control fixes auto-apply on canonical first-load/Refresh/new se
 
 ## GitHub-only execution status (22-Sep-2026)
 
-- Canonical global state `lawangin00/references/UNIVERSAL_EXECUTION_MODE.json` remains `global_mode=GITHUB`, `exceptions={}` at verified reference `3f4ba9a73f769538f96fe2979cd3a8c2e94d618b`. The canonical state, not this project copy, governs later user-issued mode transitions.
+- Historical 22-Sep-2026 state was `global_mode=GITHUB`, `exceptions={}` at pre-consolidation reference `3f4ba9a73f769538f96fe2979cd3a8c2e94d618b`; it is provenance only and is not a runtime fetch target. Current state must be fresh-read from `lawangin00/AI-Project-Control/references/UNIVERSAL_EXECUTION_MODE.json`.
 - Mode-aware CI rollout `U-CI-MODE-2026-09-21-2`: the existing `.github/workflows/ci.yml` and `.github/workflows/github-only-website.yml` already restrict push triggers to `.github/ci-requests/**`, retain `workflow_dispatch`, run `tools/ci-mode-gate.py --self-test` plus exact-parent/project/mode request validation, and contain real backend/Website quality gates; `deployment-rehearsal.yml` remains separately manual. No workflow edit was needed. Exact-source W04 full request `c7c26ca21e05a0bd95aae71e01d0c99894976a21` produced successful request validation plus clean-checkout acceptance in run `35738247964`; independent Website verification `35738247946` passed. The receipt reflects this existing tested project configuration, not new activation or acceptance of unrun local-only gates.
 - GitHub-only website pilot: `bd18cffc2c56f849060b8fbedbec2583fede45c5`, run `35546044796`, successful checkout, pinned dependency installation, website typecheck, lint and production build. This focused pass is not final backend, browser or release acceptance.
 - The historical private-repository Actions rejection must not be reported as a current website CI blocker; use actual fresh run evidence for the current public repository and exact candidate.
@@ -83,7 +83,7 @@ Future universal control fixes auto-apply on canonical first-load/Refresh/new se
 
 Mobisttech inherits exactly four canonical short commands: `Shift to LDC`, `Shift to MCP`, `Shift to RDC`, and `Shift to Git`; no compatibility aliases are valid. LDC is the default local backend with fallback LDC -> MCP -> RDC; MCP selection uses MCP -> LDC -> RDC; RDC selection uses RDC -> LDC -> MCP. `Shift to Git` routes source/code execution and routine automated verification to GitHub, so local PC access is not required. In LDC/MCP/RDC routes routine verification remains local, and hosted CI there is limited to `milestone`, `project_completion`, or documented `necessary` independent checks with prior local evidence and authorization. The request-only main/Website workflows retain zero Actions for ordinary source pushes; Git-route stage verification is triggered by exact-source CI request commits. The separately scoped Linux deployment rehearsal retains its existing ledger-backed milestone preflight. This control change does not advance MT-7.6 or any product acceptance gate.
 
-Audit reconciliation (26-Sep-2026): Current reviewed canonical Universal Registry `1.53`, Bootstrap `1.31`, Roadmap Specification `1.18`, Execution Mode Policy `1.9`, Response Format `2.3`, CI Dispatch Policy `1.4`; verified references commit `a7e09c8020b13ad2017eb1127babf359a2a73b92`, whose execution-control run `36203787023` is terminal SUCCESS. Prior dated GitHub/RDC/LOCAL snapshots above remain historical; current route must always be freshly read from canonical `UNIVERSAL_EXECUTION_MODE.json`.
+Audit reconciliation (26-Sep-2026): Current reviewed canonical Universal Registry `1.53`, Bootstrap `1.31`, Roadmap Specification `1.18`, Execution Mode Policy `1.9`, Response Format `2.3`, CI Dispatch Policy `1.4`; controlled migration is bound to `lawangin00/AI-Project-Control@626ff61c14ed36134fe2bc6ace35fd6be4943d93` with universal files under `references/`. The earlier references-only review commit and execution-control run `36203787023` remain historical evidence. Prior dated GitHub/RDC/LOCAL snapshots above remain historical; current route must always be freshly read from canonical `references/UNIVERSAL_EXECUTION_MODE.json` in the consolidated control repository.
 
 ## ChatGPT Project first-command binding
 

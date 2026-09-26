@@ -1,6 +1,6 @@
 # mobiST Tech — enforced CI execution behavior
 
-Canonical authority: `lawangin00/references/UNIVERSAL_EXECUTION_MODE.json`, `UNIVERSAL_EXECUTION_MODE_POLICY.md` v1.9 and `UNIVERSAL_CI_REQUEST_DISPATCH_POLICY.md` v1.4. This project inherits current universal rules through `docs/AI_PROJECT_COMMAND_REGISTRY.md`.
+Canonical authority: `lawangin00/AI-Project-Control/references/UNIVERSAL_EXECUTION_MODE.json`, `UNIVERSAL_EXECUTION_MODE_POLICY.md` v1.9 and `UNIVERSAL_CI_REQUEST_DISPATCH_POLICY.md` v1.4. This project inherits current universal rules through `docs/AI_PROJECT_COMMAND_REGISTRY.md`.
 
 ## Execution routes and routine testing
 

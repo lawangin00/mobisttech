@@ -10,8 +10,8 @@ import urllib.error
 import urllib.request
 
 PROJECT_ID = '282dba2f-a2d9-47e8-aa8d-e499fbe1706c'
-STATE_API = 'https://api.github.com/repos/lawangin00/references/contents/UNIVERSAL_EXECUTION_MODE.json?ref=main'
-STATE_RAW = 'https://raw.githubusercontent.com/lawangin00/references/refs/heads/main/UNIVERSAL_EXECUTION_MODE.json'
+STATE_API = 'https://api.github.com/repos/lawangin00/AI-Project-Control/contents/references/UNIVERSAL_EXECUTION_MODE.json?ref=main'
+STATE_RAW = 'https://raw.githubusercontent.com/lawangin00/AI-Project-Control/refs/heads/main/references/UNIVERSAL_EXECUTION_MODE.json'
 REQUEST_ROOT = '.github/ci-requests/'
 FOCUSED_SCOPES = ('W01-customer', 'W01-identity', 'P02-variants', 'W03-commerce')
 REASONS = ('stage', 'milestone', 'project_completion', 'necessary')

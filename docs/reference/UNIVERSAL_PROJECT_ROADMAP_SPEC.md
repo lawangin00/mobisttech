@@ -2,7 +2,7 @@
 
 **Specification version:** 1.18
 **System version:** 7.14
-**Canonical remote:** `lawangin00/references`
+**Canonical remote:** `lawangin00/AI-Project-Control` (`references/` control subtree)
 **Canonical path:** `UNIVERSAL_PROJECT_ROADMAP_SPEC.md`
 **Control bootstrap:** `UNIVERSAL_PROJECT_CONTROL_BOOTSTRAP.md`
 
